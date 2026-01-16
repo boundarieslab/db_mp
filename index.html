@@ -53,10 +53,10 @@
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script>
 // CONFIG
-const DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?gid=0&single=true&output=csv';
+const DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?output=csv';
 
 // CHANGE THIS to your Cargo site URL
-const CARGO_BASE_URL = 'https://dirtybusiness.no';
+const CARGO_BASE_URL = 'https://dirtybusiness.cargo.site/';
 
 const MARKER_STYLES = {
     'Deponi': { color: '#ff00ff', symbol: '●' },
@@ -74,7 +74,7 @@ const MARKER_STYLES = {
 const map = L.map('map', { zoomControl: false }).setView([60.0, 10.5], 8);
 
 // Zoom control
-L.control.zoom({ position: 'topleft' }).addTo(map);
+L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
 // Scale bar
 L.control.scale({ position: 'bottomleft', metric: true, imperial: false, maxWidth: 120 }).addTo(map);
