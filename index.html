@@ -126,7 +126,7 @@
             width: 20px;
             text-align: center;
             margin-right: 8px;
-            font-size: 14px;
+            font-size: 18px; /* Bigger legend symbols */
             color: #000;
         }
         .legend-label {
@@ -280,7 +280,7 @@ L.control.scale({
 
 // Layer groups
 const markersLayer = L.layerGroup().addTo(map);
-const polygonsLayer = L.layerGroup(); // For future polygon data
+const polygonsLayer = L.layerGroup(); 
 
 // Layer control
 const baseMaps = {
@@ -320,26 +320,17 @@ Papa.parse(DATA_URL, {
     header: true,
     skipEmptyLines: true,
     complete: function(results) {
-        console.log('CSV loaded, rows:', results.data.length);
-        console.log('Headers:', results.meta.fields);
-        console.log('First row:', results.data[0]);
         
         results.data.forEach((site, index) => {
-            // Helper to parse numbers with comma or dot as decimal separator
             function parseCoord(val) {
                 if (!val) return NaN;
-                // Replace comma with dot for European format
                 return parseFloat(String(val).replace(',', '.'));
             }
             
-            // Try different possible column names
             const lat = parseCoord(site.Latitude || site.latitude || site.Lat || site.lat || site.Y || site.y);
             const lon = parseCoord(site.Longitude || site.longitude || site.Lon || site.lon || site.Long || site.long || site.X || site.x);
             
-            if (isNaN(lat) || isNaN(lon)) {
-                console.log('Invalid coordinates for row', index, site);
-                return;
-            }
+            if (isNaN(lat) || isNaN(lon)) return;
             
             const type = site.Type || site.type || site.TYPE || 'default';
             const name = site.Name || site.name || site.NAME || site.Navn || site.navn || 'Unknown';
@@ -349,11 +340,13 @@ Papa.parse(DATA_URL, {
             const style = MARKER_STYLES[type] || MARKER_STYLES['default'];
             const slug = createSlug(name);
             
+            // --- UPDATED: BIGGER ICONS ---
             const icon = L.divIcon({
                 className: 'custom-marker',
-                html: `<div style="color:#000;font-size:16px;line-height:1;">${style.symbol}</div>`,
-                iconSize: [16, 16],
-                iconAnchor: [8, 8]
+                // Increased font size to 32px
+                html: `<div style="color:#000;font-size:32px;line-height:1;text-shadow: 0 0 2px #fff;">${style.symbol}</div>`,
+                iconSize: [32, 32], // Bigger click area
+                iconAnchor: [16, 16] // Center point (half of 32)
             });
             
             const place = [municipality, county].filter(p => p).join(', ');
@@ -365,10 +358,20 @@ Papa.parse(DATA_URL, {
                 <a href="${CARGO_BASE_URL}${slug}" target="_top" class="popup-link">View details →</a>
             `;
             
-            L.marker([lat, lon], { icon })
+            // --- UPDATED: ZOOM ON CLICK ---
+            const marker = L.marker([lat, lon], { icon })
                 .addTo(markersLayer)
                 .bindPopup(popupContent, { closeButton: false })
-                .bindTooltip(name, { direction: 'top', offset: [0, -8] });
+                .bindTooltip(name, { direction: 'top', offset: [0, -16] }); // Tooltip slightly higher
+
+            // Add click listener to zoom
+            marker.on('click', function() {
+                // Fly to location (lat, lon) at Zoom Level 14
+                map.flyTo([lat, lon], 14, {
+                    animate: true,
+                    duration: 1.5 // Speed of zoom animation
+                });
+            });
         });
         
         console.log('Markers added:', markersLayer.getLayers().length);
@@ -377,26 +380,6 @@ Papa.parse(DATA_URL, {
         console.error('Error loading CSV:', error);
     }
 });
-
-// ============ POLYGON LOADING (example) ============
-// To add polygons from a GeoJSON URL or file:
-// 
-// fetch('https://your-geojson-url.json')
-//     .then(response => response.json())
-//     .then(data => {
-//         L.geoJSON(data, {
-//             style: {
-//                 color: '#000',
-//                 weight: 1,
-//                 fillOpacity: 0.2
-//             },
-//             onEachFeature: function(feature, layer) {
-//                 if (feature.properties && feature.properties.name) {
-//                     layer.bindPopup(feature.properties.name);
-//                 }
-//             }
-//         }).addTo(polygonsLayer);
-//     });
 
 </script>
 </body>
