@@ -97,7 +97,7 @@
             padding: 4px; 
         }
         
-        /* Legend */
+        /* Legend - Black symbols only */
         .legend {
             position: absolute;
             bottom: 30px;
@@ -127,16 +127,10 @@
             text-align: center;
             margin-right: 8px;
             font-size: 14px;
+            color: #000;
         }
         .legend-label {
             color: #333;
-        }
-        
-        /* Grid lines */
-        .leaflet-grid-label {
-            font-size: 9px !important;
-            font-family: monospace;
-            color: #666;
         }
     </style>
 </head>
@@ -154,19 +148,19 @@
 <div class="legend">
     <div class="legend-title">Anleggstype</div>
     <div class="legend-item">
-        <span class="legend-symbol" style="color: #ff00ff;">●</span>
+        <span class="legend-symbol">●</span>
         <span class="legend-label">Deponi</span>
     </div>
     <div class="legend-item">
-        <span class="legend-symbol" style="color: #00cccc;">■</span>
+        <span class="legend-symbol">■</span>
         <span class="legend-label">Massemottak</span>
     </div>
     <div class="legend-item">
-        <span class="legend-symbol" style="color: #99cc00;">▲</span>
+        <span class="legend-symbol">▲</span>
         <span class="legend-label">Pukkverk</span>
     </div>
     <div class="legend-item">
-        <span class="legend-symbol" style="color: #ff6600;">◆</span>
+        <span class="legend-symbol">◆</span>
         <span class="legend-label">Gjenvinning</span>
     </div>
 </div>
@@ -174,27 +168,25 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-<!-- Graticule plugin for coordinate grid -->
-<script src="https://cdn.jsdelivr.net/npm/leaflet-graticule@1.0.0/Leaflet.Graticule.min.js"></script>
-
 <script>
 // CONFIG
 const DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?output=csv';
 const CARGO_BASE_URL = 'https://dirtybusiness.cargo.site/';
 
+// Marker styles - BLACK symbols
 const MARKER_STYLES = {
-    'Deponi': { color: '#ff00ff', symbol: '●' },
-    'Spesialdeponi': { color: '#ff00ff', symbol: '●' },
-    'Industrideponi': { color: '#ff00ff', symbol: '●' },
-    'Miljøpark': { color: '#ff00ff', symbol: '●' },
-    'Massemottak': { color: '#00cccc', symbol: '■' },
-    'Massesenter': { color: '#00cccc', symbol: '■' },
-    'Pukkverk': { color: '#99cc00', symbol: '▲' },
-    'Gjenvinning': { color: '#ff6600', symbol: '◆' },
-    'default': { color: '#666', symbol: '●' }
+    'Deponi': { symbol: '●' },
+    'Spesialdeponi': { symbol: '●' },
+    'Industrideponi': { symbol: '●' },
+    'Miljøpark': { symbol: '●' },
+    'Massemottak': { symbol: '■' },
+    'Massesenter': { symbol: '■' },
+    'Pukkverk': { symbol: '▲' },
+    'Gjenvinning': { symbol: '◆' },
+    'default': { symbol: '●' }
 };
 
-// Initialize map (no default layers - we'll add them via control)
+// Initialize map
 const map = L.map('map', { 
     zoomControl: false,
     center: [60.0, 10.5],
@@ -202,6 +194,12 @@ const map = L.map('map', {
 });
 
 // ============ BASEMAP LAYERS ============
+
+// Esri World Imagery (Current)
+const esriImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '© Esri',
+    maxZoom: 19
+});
 
 // Geonorge Grayscale (WMS)
 const geonorgeGray = L.tileLayer.wms('https://openwms.statkart.no/skwms1/wms.topograatone', {
@@ -211,14 +209,7 @@ const geonorgeGray = L.tileLayer.wms('https://openwms.statkart.no/skwms1/wms.top
     attribution: '© Kartverket'
 });
 
-// Esri World Imagery (Current)
-const esriImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: '© Esri',
-    maxZoom: 19
-});
-
 // Esri Wayback Historical Imagery
-// These are approximate release numbers - you can find more at https://livingatlas.arcgis.com/wayback/
 const wayback2023 = L.tileLayer('https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/48852/{z}/{y}/{x}', {
     attribution: '© Esri Wayback 2023',
     maxZoom: 19
@@ -239,7 +230,7 @@ const wayback2014 = L.tileLayer('https://wayback.maptiles.arcgis.com/arcgis/rest
     maxZoom: 19
 });
 
-// OpenStreetMap (as backup option)
+// OpenStreetMap
 const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
     maxZoom: 19
@@ -248,12 +239,38 @@ const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.
 // Set default basemap
 esriImagery.addTo(map);
 
+// ============ WMS OVERLAY LAYERS ============
+
+// Matrikkelkart (property boundaries)
+const matrikkelkart = L.tileLayer.wms('https://wms.geonorge.no/skwms1/wms.matrikkelkart', {
+    layers: 'matrikkelkart',
+    format: 'image/png',
+    transparent: true,
+    attribution: '© Kartverket'
+});
+
+// Kommune boundaries
+const kommuner = L.tileLayer.wms('https://openwms.statkart.no/skwms1/wms.administrative_enheter', {
+    layers: 'Kommunegrense',
+    format: 'image/png',
+    transparent: true,
+    attribution: '© Kartverket'
+});
+
+// Fylke boundaries
+const fylker = L.tileLayer.wms('https://openwms.statkart.no/skwms1/wms.administrative_enheter', {
+    layers: 'Fylkesgrense',
+    format: 'image/png',
+    transparent: true,
+    attribution: '© Kartverket'
+});
+
 // ============ CONTROLS ============
 
-// Zoom control (bottomleft, will appear above scale)
+// Zoom control
 L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-// Scale bar (bottomleft, below zoom)
+// Scale bar
 L.control.scale({ 
     position: 'bottomleft', 
     metric: true, 
@@ -261,39 +278,27 @@ L.control.scale({
     maxWidth: 120 
 }).addTo(map);
 
+// Layer groups
+const markersLayer = L.layerGroup().addTo(map);
+const polygonsLayer = L.layerGroup(); // For future polygon data
+
 // Layer control
 const baseMaps = {
-    "Esri Satellite (Current)": esriImagery,
-    "Esri Satellite 2023": wayback2023,
-    "Esri Satellite 2020": wayback2020,
-    "Esri Satellite 2017": wayback2017,
-    "Esri Satellite 2014": wayback2014,
-    "Geonorge Gråtone": geonorgeGray,
+    "Esri Satellite": esriImagery,
+    "Esri 2023": wayback2023,
+    "Esri 2020": wayback2020,
+    "Esri 2017": wayback2017,
+    "Esri 2014": wayback2014,
+    "Gråtone": geonorgeGray,
     "OpenStreetMap": osmStandard
 };
 
-// Create a layer group for markers (so we can toggle them)
-const markersLayer = L.layerGroup().addTo(map);
-
-// Coordinate grid (optional overlay)
-const graticule = L.latlngGraticule({
-    showLabel: true,
-    color: 'rgba(0,0,0,0.3)',
-    weight: 0.5,
-    font: '9px monospace',
-    fontColor: '#666',
-    zoomInterval: [
-        {start: 2, end: 4, interval: 5},
-        {start: 5, end: 7, interval: 2},
-        {start: 8, end: 10, interval: 1},
-        {start: 11, end: 13, interval: 0.5},
-        {start: 14, end: 20, interval: 0.1}
-    ]
-});
-
 const overlayMaps = {
-    "Koordinatrutenett": graticule,
-    "Anlegg": markersLayer
+    "Anlegg": markersLayer,
+    "Områder": polygonsLayer,
+    "Matrikkelkart": matrikkelkart,
+    "Kommunegrenser": kommuner,
+    "Fylkesgrenser": fylker
 };
 
 L.control.layers(baseMaps, overlayMaps, { 
@@ -315,37 +320,86 @@ Papa.parse(DATA_URL, {
     header: true,
     skipEmptyLines: true,
     complete: function(results) {
-        results.data.forEach(site => {
-            const lat = parseFloat(site.Latitude);
-            const lon = parseFloat(site.Longitude);
-            if (isNaN(lat) || isNaN(lon)) return;
+        console.log('CSV loaded, rows:', results.data.length);
+        console.log('Headers:', results.meta.fields);
+        console.log('First row:', results.data[0]);
+        
+        results.data.forEach((site, index) => {
+            // Helper to parse numbers with comma or dot as decimal separator
+            function parseCoord(val) {
+                if (!val) return NaN;
+                // Replace comma with dot for European format
+                return parseFloat(String(val).replace(',', '.'));
+            }
             
-            const style = MARKER_STYLES[site.Type] || MARKER_STYLES['default'];
-            const slug = createSlug(site.Name || 'site');
+            // Try different possible column names
+            const lat = parseCoord(site.Latitude || site.latitude || site.Lat || site.lat || site.Y || site.y);
+            const lon = parseCoord(site.Longitude || site.longitude || site.Lon || site.lon || site.Long || site.long || site.X || site.x);
+            
+            if (isNaN(lat) || isNaN(lon)) {
+                console.log('Invalid coordinates for row', index, site);
+                return;
+            }
+            
+            const type = site.Type || site.type || site.TYPE || 'default';
+            const name = site.Name || site.name || site.NAME || site.Navn || site.navn || 'Unknown';
+            const municipality = site.Municipality || site.municipality || site.Kommune || site.kommune || '';
+            const county = site.County || site.county || site.Fylke || site.fylke || '';
+            
+            const style = MARKER_STYLES[type] || MARKER_STYLES['default'];
+            const slug = createSlug(name);
             
             const icon = L.divIcon({
                 className: 'custom-marker',
-                html: `<div style="color:${style.color};font-size:16px;line-height:1;">${style.symbol}</div>`,
+                html: `<div style="color:#000;font-size:16px;line-height:1;">${style.symbol}</div>`,
                 iconSize: [16, 16],
                 iconAnchor: [8, 8]
             });
             
-            const place = [site.Municipality, site.County].filter(p => p).join(', ');
+            const place = [municipality, county].filter(p => p).join(', ');
             
             const popupContent = `
-                <div class="popup-name">${site.Name || 'Unknown'}</div>
-                <div class="popup-type">${site.Type || ''}</div>
+                <div class="popup-name">${name}</div>
+                <div class="popup-type">${type}</div>
                 <div class="popup-place">${place}</div>
-                <a href="${CARGO_BASE_URL}/${slug}" target="_top" class="popup-link">View details →</a>
+                <a href="${CARGO_BASE_URL}${slug}" target="_top" class="popup-link">View details →</a>
             `;
             
             L.marker([lat, lon], { icon })
                 .addTo(markersLayer)
                 .bindPopup(popupContent, { closeButton: false })
-                .bindTooltip(site.Name, { direction: 'top', offset: [0, -8] });
+                .bindTooltip(name, { direction: 'top', offset: [0, -8] });
         });
+        
+        console.log('Markers added:', markersLayer.getLayers().length);
+    },
+    error: function(error) {
+        console.error('Error loading CSV:', error);
     }
 });
+
+// ============ POLYGON LOADING (example) ============
+// To add polygons from a GeoJSON URL or file:
+// 
+// fetch('https://your-geojson-url.json')
+//     .then(response => response.json())
+//     .then(data => {
+//         L.geoJSON(data, {
+//             style: {
+//                 color: '#000',
+//                 weight: 1,
+//                 fillOpacity: 0.2
+//             },
+//             onEachFeature: function(feature, layer) {
+//                 if (feature.properties && feature.properties.name) {
+//                     layer.bindPopup(feature.properties.name);
+//                 }
+//             }
+//         }).addTo(polygonsLayer);
+//     });
+
 </script>
+</body>
+</html>
 </body>
 </html>
