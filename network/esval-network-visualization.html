@@ -2,74 +2,133 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Esval Sørum Inert Deponi Network</title>
+    <title>Esval Massedeponi (Veidekke) Network</title>
     <style>
-        /* Ensures the widget fills the specific frame provided by the site */
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fcfcfc; font-family: Helvetica, Arial, sans-serif; }
         #network-container { width: 100%; height: 100vh; display: block; position: relative; }
     </style>
 </head>
 <body>
 
 <div id="network-container">
-    <div style="position: absolute; bottom: 8px; right: 10px; font: 9px Helvetica, Arial, sans-serif; color: #ccc; pointer-events: none; z-index: 100;">
-        Kilde: Proff.no
+    <div style="position: absolute; top: 20px; left: 20px; z-index: 100;">
+        <h3 style="margin:0; font: bold 14px Helvetica, Arial, sans-serif; color: #111; letter-spacing: 0.5px;">NETTVERK & EIERSTRUKTUR</h3>
+        <p style="margin:4px 0 0 0; font: 10px Helvetica, Arial, sans-serif; color: #666;">
+            Viser koblinger for: <span style="color:#ff003c; font-weight:bold;">Esval Massedeponi (Veidekke)</span>
+        </p>
     </div>
-</div>
 
-<div style="position: absolute; top: 10px; left: 10px; display:flex; flex-wrap:wrap; gap:12px; font:9px Helvetica,Arial,sans-serif; color:#000; z-index:10; background:rgba(255,255,255,0.8); padding:5px; border-radius:4px;">
-    <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#000" transform="translate(5,5)"/></svg> Eier (Kommune)
+    <div style="position: absolute; bottom: 10px; right: 15px; font: 10px Helvetica, Arial, sans-serif; color: #ccc; pointer-events: none; z-index: 100;">
+        Kilde: Brønnøysundregistrene, Skatteetaten
     </div>
-    <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#3b82f6" transform="translate(5,5)"/></svg> Foretak (KF)
-    </div>
-    <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><polygon points="-4,-3 4,-3 0,5" fill="#ff003c" transform="translate(5,5)"/></svg> Deponi (Aktiv)
-    </div>
-    <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><polygon points="0,-5 5,0 0,5 -5,0" fill="#39ff14" transform="translate(5,5)"/></svg> Gjenvinning
+
+    <div style="position: absolute; bottom: 10px; left: 20px; display:flex; flex-wrap:wrap; gap:15px; font:10px Helvetica,Arial,sans-serif; color:#333; z-index:10;">
+        <div style="display:flex; align-items:center; gap:6px;">
+            <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#111"/></svg> <b>Konsern (ASA)</b>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+            <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#000EFF"/></svg> Operatør
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+            <svg width="10" height="10" style="overflow:visible"><polygon points="-4,-3 4,-3 0,5" fill="#ff003c"/></svg> Deponi (Aktiv)
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+            <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#e0e0e0" stroke="#999" stroke-width="0.5"/></svg> Datter/Søster
+        </div>
     </div>
 </div>
 
 <script>
 (function(){
-    // --- 1. DATA FOR ESVAL SØRUM INERT DEPONI ---
+    // --- DATA: VEIDEKKE STRUCTURE (USER PROVIDED LIST) ---
     var NODES = [
-        // OWNER
-        {id:"Nes Kommune", t:"p"},
+        // ROOT
+        {id:"Veidekke ASA", t:"p"},
 
-        // OPERATOR (Kommunalt Foretak)
-        {id:"Esval Miljøpark KF", t:"op"},
+        // MAJOR DIVISIONS (TIER 1)
+        {id:"Veidekke Entreprenør AS", t:"p", l:"(Owner)"},
+        {id:"Veidekke Industri AS", t:"s"},
+        {id:"Veidekke Fellestjenester AS", t:"s"},
+        {id:"Industrivegen 2 Jessheim AS", t:"s"},
+        {id:"Nordre Fokserød Utvikling AS", t:"s"},
 
-        // ACTIVE SITE (Deponi)
-        {id:"Esval Sørum Inert Deponi", t:"deponi", active:true},
+        // OPERATOR & ACTIVE SITE
+        // Placing Esval under the "Sirkulær" (Circular/Waste) or "Industri" division usually. 
+        // Based on typical Veidekke structure, mass handling often falls under Industri or Sirkulær.
+        {id:"Veidekke Sirkulær AS", t:"op"},
+        {id:"Esval Massedeponi", t:"deponi", active:true},
 
-        // SISTER SITE (Main facility)
-        {id:"Esval Miljøpark", t:"mottak", l:"(Hovedanlegg)"},
+        // SUBSIDIARIES OF ENTREPRENØR (TIER 2 - Based on user list)
+        {id:"Leif Grimsrud AS", t:"s"},
+        {id:"Øst AS", t:"s"},
+        {id:"Kystmiljø AS", t:"s"},
+        {id:"Veidekke Prefab AS", t:"s"},
+        {id:"Block Berge Bygg II AS", t:"s"}, // Sub of Prefab usually
+        {id:"Båsum Boring AS", t:"s"},
+        {id:"Geoenergi AS", t:"s"}, // Sub of Båsum
+        {id:"Veihande AS", t:"s"},
+        {id:"Hande AS", t:"s"}, // Sub of Veihande
+        {id:"Seby AS", t:"s"},
+        {id:"Valdresbygg AS", t:"s"}, // Sub of Seby
+        {id:"Veidekke Logistikkbygg AS", t:"s"},
+        {id:"Rudsflata 11 AS", t:"s"}, // Sub of Logistikkbygg
+        {id:"Geo Fundamentering AS", t:"s", l:"(Bergboring)"},
+        {id:"Tore Løkke A/S", t:"s"},
+        {id:"Grande Entreprenør AS", t:"s"},
+        {id:"Rauma Bygg AS", t:"s"},
+        {id:"Ttb Eiendom AS", t:"s"},
+        {id:"Øst Boligprosjekt AS", t:"s"},
         
-        // CONTEXT / PARTNERS (Often linked to surrounding municipalities for mass handling)
-        {id:"Lillestrøm Kommune", t:"p", l:"(Kunde/Partner)"}, 
-        {id:"Ullensaker Kommune", t:"p", l:"(Kunde/Partner)"}
+        // SUBSIDIARIES OF INDUSTRI
+        {id:"Amrock AS", t:"s"},
+        {id:"Bergmesteren Raudsand AS", t:"s"}
     ];
     
     // Links: Child -> Parent
     var LINKS = [
-        // Ownership
-        ["Esval Miljøpark KF", "Nes Kommune"],
+        // Level 1: ASA -> Major Divs
+        ["Veidekke Entreprenør AS", "Veidekke ASA"],
+        ["Veidekke Industri AS", "Veidekke ASA"],
+        ["Veidekke Fellestjenester AS", "Veidekke ASA"],
+        ["Industrivegen 2 Jessheim AS", "Veidekke ASA"],
+        ["Nordre Fokserød Utvikling AS", "Veidekke ASA"],
 
-        // Sites to Operator
-        ["Esval Sørum Inert Deponi", "Esval Miljøpark KF"], // ACTIVE
-        ["Esval Miljøpark", "Esval Miljøpark KF"],
+        // Level 2: Entreprenør Subs
+        ["Leif Grimsrud AS", "Veidekke Entreprenør AS"],
+        ["Øst AS", "Veidekke Entreprenør AS"],
+        ["Kystmiljø AS", "Veidekke Entreprenør AS"],
+        ["Veidekke Prefab AS", "Veidekke Entreprenør AS"],
+        ["Båsum Boring AS", "Veidekke Entreprenør AS"],
+        ["Veihande AS", "Veidekke Entreprenør AS"],
+        ["Seby AS", "Veidekke Entreprenør AS"],
+        ["Veidekke Logistikkbygg AS", "Veidekke Entreprenør AS"],
+        ["Geo Fundamentering AS", "Veidekke Entreprenør AS"],
+        ["Tore Løkke A/S", "Veidekke Entreprenør AS"],
+        ["Grande Entreprenør AS", "Veidekke Entreprenør AS"],
+        ["Rauma Bygg AS", "Veidekke Entreprenør AS"],
+        ["Ttb Eiendom AS", "Veidekke Entreprenør AS"],
+        ["Øst Boligprosjekt AS", "Veidekke Entreprenør AS"],
+        ["Veidekke Sirkulær AS", "Veidekke Entreprenør AS"], // Usually under Entr. or Ind.
 
-        // Contextual Links (Mass flow/Cooperation)
-        ["Esval Miljøpark KF", "Lillestrøm Kommune"], 
-        ["Esval Miljøpark KF", "Ullensaker Kommune"]
+        // Level 3: Nested Subs
+        ["Block Berge Bygg II AS", "Veidekke Prefab AS"],
+        ["Geoenergi AS", "Båsum Boring AS"],
+        ["Hande AS", "Veihande AS"],
+        ["Valdresbygg AS", "Seby AS"],
+        ["Rudsflata 11 AS", "Veidekke Logistikkbygg AS"],
+
+        // Level 2: Industri Subs
+        ["Amrock AS", "Veidekke Industri AS"],
+        ["Bergmesteren Raudsand AS", "Veidekke Industri AS"],
+
+        // ACTIVE SITE CONNECTION
+        // Linking Esval to Sirkulær (Circular/Waste division)
+        ["Esval Massedeponi", "Veidekke Sirkulær AS"]
     ];
 
     var COLORS = {
-        p: "#000000", s: "#e0e0e0", op: "#3b82f6",      
-        deponi: "#ff003c", pukk: "#ff9500", mottak: "#39ff14", gjenvinning: "#39ff14"
+        p: "#111111", s: "#e0e0e0", op: "#000EFF",      
+        deponi: "#ff003c", pukk: "#ff9900", mottak: "#39ff14", gjenvinning: "#39ff14"
     };
 
     var el = document.getElementById("network-container");
@@ -79,8 +138,6 @@
         let pathNodes = new Set();
         let pathLinks = new Set();
         pathNodes.add(startNode);
-        
-        // Trace Up
         let curr = startNode;
         while(curr) {
             let parentId = parentMap[curr.id];
@@ -93,7 +150,6 @@
                 curr = parentNode;
             } else break;
         }
-        // Trace Down
         function addChildren(pNode) {
             let kids = childrenMap[pNode.id] || [];
             kids.forEach(kidId => {
@@ -115,21 +171,22 @@
         var shape;
         if (type === 'p') { 
             shape = document.createElementNS(ns, "rect");
-            shape.setAttribute("x", -6); shape.setAttribute("y", -6);
-            shape.setAttribute("width", 12); shape.setAttribute("height", 12);
-        } else if (type === 'op') { 
-            shape = document.createElementNS(ns, "rect");
             shape.setAttribute("x", -5); shape.setAttribute("y", -5);
             shape.setAttribute("width", 10); shape.setAttribute("height", 10);
-        } else if (type === 'mottak') { 
-            shape = document.createElementNS(ns, "polygon");
-            shape.setAttribute("points", "0,-6 6,0 0,6 -6,0");
+        } else if (type === 'op') { 
+            shape = document.createElementNS(ns, "rect");
+            shape.setAttribute("x", -4); shape.setAttribute("y", -4);
+            shape.setAttribute("width", 8); shape.setAttribute("height", 8);
         } else if (type === 'deponi') { 
             shape = document.createElementNS(ns, "polygon");
-            shape.setAttribute("points", "-5,-4 5,-4 0,5");
+            shape.setAttribute("points", "-4,-3 4,-3 0,4");
+        } else if (type === 's') { 
+            shape = document.createElementNS(ns, "rect");
+            shape.setAttribute("x", -3); shape.setAttribute("y", -3);
+            shape.setAttribute("width", 6); shape.setAttribute("height", 6);
         } else { 
             shape = document.createElementNS(ns, "circle");
-            shape.setAttribute("r", 4);
+            shape.setAttribute("r", 3);
         }
         if(isActive) shape.setAttribute("transform", "scale(1.5)");
         return shape;
@@ -137,7 +194,6 @@
 
     function init() {
         if(!el) return;
-        
         LINKS.forEach(pair => {
             let child = pair[0];
             let parent = pair[1];
@@ -146,7 +202,6 @@
             childrenMap[parent].push(child);
         });
 
-        // Setup SVG
         W = el.offsetWidth; H = el.offsetHeight;
         el.innerHTML = "";
         var ns = "http://www.w3.org/2000/svg";
@@ -155,9 +210,10 @@
         svg.setAttribute("height", "100%");
         svg.setAttribute("viewBox", "0 0 " + W + " " + H);
         svg.style.display = "block";
-        el.appendChild(svg);
+        svg.style.position = "absolute";
+        svg.style.top = "0"; svg.style.left = "0"; svg.style.zIndex = "1";
+        el.insertBefore(svg, el.firstChild);
 
-        // Resize Listener
         window.addEventListener('resize', function() {
             W = el.offsetWidth; H = el.offsetHeight;
             svg.setAttribute("viewBox", "0 0 " + W + " " + H);
@@ -181,7 +237,7 @@
         svg.appendChild(linkG);
         links.forEach(l => {
             var line = document.createElementNS(ns, "line");
-            line.setAttribute("stroke", "#ddd");
+            line.setAttribute("stroke", "#e5e5e5");
             line.setAttribute("stroke-width", "1");
             linkG.appendChild(line);
             l.el = line;
@@ -198,7 +254,7 @@
                 var ring = document.createElementNS(ns, "circle");
                 ring.setAttribute("r", 18);
                 ring.setAttribute("fill", "transparent");
-                ring.setAttribute("stroke", "#000");
+                ring.setAttribute("stroke", "#ff003c"); // Red Ring for Deponi
                 ring.setAttribute("stroke-width", "1");
                 ring.setAttribute("stroke-dasharray", "2,2");
                 var anim = document.createElementNS(ns, "animateTransform");
@@ -219,7 +275,6 @@
             var shape = createShape(n.type, n.active);
             shape.setAttribute("fill", COLORS[n.type] || "#999");
             if (n.active) { shape.setAttribute("stroke", "#000"); shape.setAttribute("stroke-width", "1.5"); }
-            else if (n.type !== 's') { shape.setAttribute("stroke", "#fff"); shape.setAttribute("stroke-width", "1"); }
             g.appendChild(shape);
             n.shapeEl = shape;
 
@@ -228,7 +283,7 @@
             if(n.label) textContent += " " + n.label;
             txt.textContent = textContent;
             txt.setAttribute("x", 12); txt.setAttribute("y", 3);
-            txt.setAttribute("fill", n.active ? "#000" : "#999"); 
+            txt.setAttribute("fill", n.active ? "#000" : "#bbb"); // Grey for non-active subs
             txt.style.font = n.active ? "bold 10px Helvetica, Arial, sans-serif" : "9px Helvetica, Arial, sans-serif"; 
             txt.style.pointerEvents = "none";
             g.appendChild(txt);
@@ -258,10 +313,10 @@
                 nodes.forEach(node => {
                     node.shapeEl.setAttribute("opacity", "1");
                     node.tEl.setAttribute("opacity", "1");
-                    node.tEl.setAttribute("fill", node.active ? "#000" : "#999");
+                    node.tEl.setAttribute("fill", node.active ? "#000" : "#bbb");
                 });
                 links.forEach(link => {
-                    link.el.setAttribute("stroke", "#ddd");
+                    link.el.setAttribute("stroke", "#e5e5e5");
                     link.el.setAttribute("opacity", "1");
                 });
             };
@@ -324,8 +379,6 @@
         });
         if(document.contains(el)) requestAnimationFrame(tick);
     }
-    
-    // Delayed init to ensure container size is ready
     setTimeout(init, 100);
 })();
 </script>
