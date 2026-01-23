@@ -1,49 +1,53 @@
-<div id="network-container" style="width:100%; height:600px; background:#fff; position: relative; overflow: hidden; border: 1px solid #eee; margin: 0 auto;">
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Asak Massemottak Network</title>
+    <style>
+        /* Ensures the widget fills the specific frame provided by the site */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff; }
+        #network-container { width: 100%; height: 100vh; display: block; position: relative; }
+    </style>
+</head>
+<body>
+
+<div id="network-container">
     <div style="position: absolute; bottom: 8px; right: 10px; font: 9px Helvetica, Arial, sans-serif; color: #ccc; pointer-events: none; z-index: 100;">
         Kilde: Proff.no
     </div>
 </div>
 
-<div style="display:flex; flex-wrap:wrap; gap:12px; font:9px Helvetica,Arial,sans-serif; color:#000; padding:10px 0; justify-content: center; text-transform: uppercase; letter-spacing: 0.5px;">
+<div style="position: absolute; top: 10px; left: 10px; display:flex; flex-wrap:wrap; gap:12px; font:9px Helvetica,Arial,sans-serif; color:#000; z-index:10; background:rgba(255,255,255,0.8); padding:5px; border-radius:4px;">
     <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#000" transform="translate(5,5)"/></svg> Parent
+        <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#000" transform="translate(5,5)"/></svg> Eier / Konsern
     </div>
     <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#e0e0e0" stroke="#000" stroke-width="0.5" transform="translate(5,5)"/></svg> Sub
+        <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#3b82f6" transform="translate(5,5)"/></svg> Divisjon (M3)
     </div>
     <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#3b82f6" transform="translate(5,5)"/></svg> Operator
+        <svg width="10" height="10" style="overflow:visible"><polygon points="0,-5 5,0 0,5 -5,0" fill="#39ff14" transform="translate(5,5)"/></svg> Asak (Aktiv)
     </div>
     <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><polygon points="-4,4 4,4 0,-4" fill="#ff9500" transform="translate(5,5)"/></svg> Pukk
-    </div>
-    <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><polygon points="0,-5 5,0 0,5 -5,0" fill="#39ff14" transform="translate(5,5)"/></svg> Mottak
-    </div>
-    <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><circle r="3" fill="#39ff14" transform="translate(5,5)"/></svg> Gjenvinning
-    </div>
-    <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><polygon points="-4,-3 4,-3 0,5" fill="#ff003c" transform="translate(5,5)"/></svg> Deponi
+        <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#e0e0e0" stroke="#000" stroke-width="0.5" transform="translate(5,5)"/></svg> Søsterselskap
     </div>
 </div>
 
 <script>
 (function(){
-    // --- 1. DATA CONFIGURATION ---
+    // --- 1. DATA FOR ASAK MASSEMOTTAK (NG GROUP) ---
     var NODES = [
-        // TOP HOLDING
+        // PARENT HOLDINGS
         {id:"Summa Circular Holdco AS", t:"p"},
         {id:"Ng Midco AS", t:"p"},
         {id:"Norsk Gjenvinning Norge AS", t:"p", l:"(Group)"},
 
-        // NG M3 DIVISION (Mass Handling)
-        {id:"Norsk Gjenvinning M3 AS", t:"s", l:"(M3)"},
+        // DIVISION: M3 (Masses)
+        {id:"Norsk Gjenvinning M3 AS", t:"op", l:"(M3 Divisjon)"},
 
         // ACTIVE SITE
         {id:"Asak Massemottak AS", t:"mottak", active:true},
 
-        // M3 SIBLINGS (Sites)
+        // SIBLING SITES (M3)
         {id:"Hauka Deponi AS", t:"deponi"},
         {id:"Holmen Massemottak AS", t:"mottak"},
         {id:"Eikefet Massemottak AS", t:"mottak"},
@@ -51,39 +55,33 @@
         {id:"Kopstad Massemottak AS", t:"mottak"},
         {id:"Borge Massemottak AS", t:"mottak"},
 
-        // OTHER MAJOR DIVISIONS
-        {id:"Norsk Gjenvinning AS", t:"op"}, // Main Operator
+        // SISTER DIVISIONS (Context)
+        {id:"Norsk Gjenvinning AS", t:"s", l:"(Avfall)"},
+        {id:"Norsk Gjenvinning Downstream AS", t:"s"},
         {id:"Zirq Solutions AS", t:"s"},
         {id:"Urban Reuse AS", t:"s"},
-        {id:"Norsk Gjenvinning Downstream AS", t:"s"},
         {id:"Reen AS", t:"s"},
-        
-        // SUBSIDIARIES (Selection for context)
-        {id:"Norsk Gjenvinning Renovasjon AS", t:"s"},
-        {id:"Norsk Gjenvinning Metall AS", t:"s"},
-        {id:"Ibka Norge AS", t:"s"},
-        {id:"Ng Vekst AS", t:"s"},
-        {id:"Zirq Cables AS", t:"s"}
+        {id:"Ibka Norge AS", t:"s"}
     ];
     
-    // FORMAT: [Child, Parent]
+    // Links: Child -> Parent
     var LINKS = [
-        // Top Structure
+        // Hierarchy
         ["Ng Midco AS", "Summa Circular Holdco AS"],
         ["Norsk Gjenvinning Norge AS", "Ng Midco AS"],
-
-        // Major Branches from NG Norge
+        
+        // Divisions to Group
         ["Norsk Gjenvinning M3 AS", "Norsk Gjenvinning Norge AS"],
-        ["Norsk Gjenvinning AS", "Norsk Gjenvinning Norge AS"], // via Renovasjon usually, simplified to Group
+        ["Norsk Gjenvinning AS", "Norsk Gjenvinning Norge AS"],
         ["Norsk Gjenvinning Downstream AS", "Norsk Gjenvinning Norge AS"],
         ["Zirq Solutions AS", "Norsk Gjenvinning Norge AS"],
         ["Urban Reuse AS", "Norsk Gjenvinning Norge AS"],
         ["Reen AS", "Norsk Gjenvinning Norge AS"],
-        ["Ng Vekst AS", "Norsk Gjenvinning Norge AS"],
-        ["Norsk Gjenvinning Renovasjon AS", "Norsk Gjenvinning Norge AS"],
 
-        // M3 Division (The Sites)
+        // Active Site to M3
         ["Asak Massemottak AS", "Norsk Gjenvinning M3 AS"],
+
+        // Siblings to M3
         ["Hauka Deponi AS", "Norsk Gjenvinning M3 AS"],
         ["Holmen Massemottak AS", "Norsk Gjenvinning M3 AS"],
         ["Eikefet Massemottak AS", "Norsk Gjenvinning M3 AS"],
@@ -91,10 +89,8 @@
         ["Kopstad Massemottak AS", "Norsk Gjenvinning M3 AS"],
         ["Borge Massemottak AS", "Norsk Gjenvinning M3 AS"],
 
-        // Other Sub-connections
-        ["Norsk Gjenvinning Metall AS", "Norsk Gjenvinning Downstream AS"],
-        ["Ibka Norge AS", "Norsk Gjenvinning Downstream AS"],
-        ["Zirq Cables AS", "Zirq Solutions AS"]
+        // Subsidiaries
+        ["Ibka Norge AS", "Norsk Gjenvinning Downstream AS"]
     ];
 
     var COLORS = {
@@ -105,13 +101,12 @@
     var el = document.getElementById("network-container");
     var W, H, svg, nodes=[], links=[], parentMap={}, childrenMap={};
 
-    // --- 2. STRICT LINEAGE HELPER ---
     function getStrictLineage(startNode) {
         let pathNodes = new Set();
         let pathLinks = new Set();
         pathNodes.add(startNode);
-
-        // Trace Upwards
+        
+        // Trace Up
         let curr = startNode;
         while(curr) {
             let parentId = parentMap[curr.id];
@@ -124,8 +119,7 @@
                 curr = parentNode;
             } else break;
         }
-
-        // Trace Downwards
+        // Trace Down
         function addChildren(pNode) {
             let kids = childrenMap[pNode.id] || [];
             kids.forEach(kidId => {
@@ -139,7 +133,6 @@
             });
         }
         addChildren(startNode);
-
         return {nodes: pathNodes, links: pathLinks};
     }
 
@@ -169,7 +162,7 @@
             shape = document.createElementNS(ns, "circle");
             shape.setAttribute("r", 4);
         }
-        if(isActive && type !== 'p' && type !== 's') shape.setAttribute("transform", "scale(1.5)");
+        if(isActive) shape.setAttribute("transform", "scale(1.5)");
         return shape;
     }
 
@@ -184,23 +177,22 @@
             childrenMap[parent].push(child);
         });
 
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                W = entry.contentRect.width; H = entry.contentRect.height;
-                if(svg) svg.setAttribute("viewBox", "0 0 " + W + " " + H);
-            }
-        });
-        resizeObserver.observe(el);
+        // Setup SVG
         W = el.offsetWidth; H = el.offsetHeight;
-        
         el.innerHTML = "";
         var ns = "http://www.w3.org/2000/svg";
         svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("width", "100%");
+        svg.setAttribute("height", "100%");
         svg.setAttribute("viewBox", "0 0 " + W + " " + H);
         svg.style.display = "block";
-        svg.style.width = "100%";
-        svg.style.height = "100%";
         el.appendChild(svg);
+
+        // Resize Listener
+        window.addEventListener('resize', function() {
+            W = el.offsetWidth; H = el.offsetHeight;
+            svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+        });
 
         nodes = NODES.map(d => ({
             id: d.id, type: d.t, label: d.l, active: d.active,
@@ -258,7 +250,7 @@
             var shape = createShape(n.type, n.active);
             shape.setAttribute("fill", COLORS[n.type] || "#999");
             if (n.active) { shape.setAttribute("stroke", "#000"); shape.setAttribute("stroke-width", "1.5"); }
-            else if (n.type !== 's') { shape.setAttribute("stroke", "#fff"); shape.setAttribute("stroke-width", "1"); }
+            else { shape.setAttribute("stroke", "#fff"); shape.setAttribute("stroke-width", "1"); }
             g.appendChild(shape);
             n.shapeEl = shape;
 
@@ -280,7 +272,6 @@
                     node.tEl.setAttribute("opacity", "0.1");
                 });
                 links.forEach(link => {
-                    link.el.setAttribute("stroke", "#eee");
                     link.el.setAttribute("opacity", "0.1");
                 });
                 lineage.nodes.forEach(node => {
@@ -292,7 +283,6 @@
                     link.el.setAttribute("stroke", "#000"); 
                     link.el.setAttribute("opacity", "1");
                 });
-                n.shapeEl.setAttribute("transform", "scale(1.3)");
             };
 
             g.onmouseleave = function() {
@@ -300,7 +290,6 @@
                     node.shapeEl.setAttribute("opacity", "1");
                     node.tEl.setAttribute("opacity", "1");
                     node.tEl.setAttribute("fill", node.active ? "#000" : "#999");
-                    if(!node.active) node.shapeEl.setAttribute("transform", "scale(1)");
                 });
                 links.forEach(link => {
                     link.el.setAttribute("stroke", "#ddd");
@@ -366,6 +355,10 @@
         });
         if(document.contains(el)) requestAnimationFrame(tick);
     }
-    setTimeout(init, 500);
+    
+    // Delayed init to ensure container size is ready
+    setTimeout(init, 100);
 })();
 </script>
+</body>
+</html>
