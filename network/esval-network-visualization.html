@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>Esval Massedeponi (Veidekke) Network</title>
     <style>
+        /* Ensures the widget fills the specific frame provided by the site */
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fcfcfc; font-family: Helvetica, Arial, sans-serif; }
         #network-container { width: 100%; height: 100vh; display: block; position: relative; }
     </style>
@@ -27,7 +28,7 @@
             <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#111"/></svg> <b>Konsern (ASA)</b>
         </div>
         <div style="display:flex; align-items:center; gap:6px;">
-            <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#000EFF"/></svg> Operatør
+            <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#000EFF"/></svg> Avdeling/Drift
         </div>
         <div style="display:flex; align-items:center; gap:6px;">
             <svg width="10" height="10" style="overflow:visible"><polygon points="-4,-3 4,-3 0,5" fill="#ff003c"/></svg> Deponi (Aktiv)
@@ -40,38 +41,37 @@
 
 <script>
 (function(){
-    // --- DATA: VEIDEKKE STRUCTURE (USER PROVIDED LIST) ---
+    // --- DATA: VEIDEKKE STRUCTURE ---
     var NODES = [
         // ROOT
         {id:"Veidekke ASA", t:"p"},
 
         // MAJOR DIVISIONS (TIER 1)
-        {id:"Veidekke Entreprenør AS", t:"p", l:"(Owner)"},
-        {id:"Veidekke Industri AS", t:"s"},
+        {id:"Veidekke Entreprenør AS", t:"p", l:"(Eier)"},
+        {id:"Veidekke Industri AS", t:"op"}, // Often parent to mass handling
         {id:"Veidekke Fellestjenester AS", t:"s"},
         {id:"Industrivegen 2 Jessheim AS", t:"s"},
         {id:"Nordre Fokserød Utvikling AS", t:"s"},
 
         // OPERATOR & ACTIVE SITE
-        // Placing Esval under the "Sirkulær" (Circular/Waste) or "Industri" division usually. 
-        // Based on typical Veidekke structure, mass handling often falls under Industri or Sirkulær.
+        // Placing Esval under "Sirkulær" or "Industri" context
         {id:"Veidekke Sirkulær AS", t:"op"},
         {id:"Esval Massedeponi", t:"deponi", active:true},
 
-        // SUBSIDIARIES OF ENTREPRENØR (TIER 2 - Based on user list)
+        // SUBSIDIARIES OF ENTREPRENØR (TIER 2 - From user list)
         {id:"Leif Grimsrud AS", t:"s"},
         {id:"Øst AS", t:"s"},
         {id:"Kystmiljø AS", t:"s"},
         {id:"Veidekke Prefab AS", t:"s"},
-        {id:"Block Berge Bygg II AS", t:"s"}, // Sub of Prefab usually
+        {id:"Block Berge Bygg II AS", t:"s"}, 
         {id:"Båsum Boring AS", t:"s"},
-        {id:"Geoenergi AS", t:"s"}, // Sub of Båsum
+        {id:"Geoenergi AS", t:"s"}, 
         {id:"Veihande AS", t:"s"},
-        {id:"Hande AS", t:"s"}, // Sub of Veihande
+        {id:"Hande AS", t:"s"}, 
         {id:"Seby AS", t:"s"},
-        {id:"Valdresbygg AS", t:"s"}, // Sub of Seby
+        {id:"Valdresbygg AS", t:"s"}, 
         {id:"Veidekke Logistikkbygg AS", t:"s"},
-        {id:"Rudsflata 11 AS", t:"s"}, // Sub of Logistikkbygg
+        {id:"Rudsflata 11 AS", t:"s"}, 
         {id:"Geo Fundamentering AS", t:"s", l:"(Bergboring)"},
         {id:"Tore Løkke A/S", t:"s"},
         {id:"Grande Entreprenør AS", t:"s"},
@@ -108,7 +108,7 @@
         ["Rauma Bygg AS", "Veidekke Entreprenør AS"],
         ["Ttb Eiendom AS", "Veidekke Entreprenør AS"],
         ["Øst Boligprosjekt AS", "Veidekke Entreprenør AS"],
-        ["Veidekke Sirkulær AS", "Veidekke Entreprenør AS"], // Usually under Entr. or Ind.
+        ["Veidekke Sirkulær AS", "Veidekke Entreprenør AS"], 
 
         // Level 3: Nested Subs
         ["Block Berge Bygg II AS", "Veidekke Prefab AS"],
@@ -122,7 +122,6 @@
         ["Bergmesteren Raudsand AS", "Veidekke Industri AS"],
 
         // ACTIVE SITE CONNECTION
-        // Linking Esval to Sirkulær (Circular/Waste division)
         ["Esval Massedeponi", "Veidekke Sirkulær AS"]
     ];
 
@@ -254,7 +253,7 @@
                 var ring = document.createElementNS(ns, "circle");
                 ring.setAttribute("r", 18);
                 ring.setAttribute("fill", "transparent");
-                ring.setAttribute("stroke", "#ff003c"); // Red Ring for Deponi
+                ring.setAttribute("stroke", "#ff003c"); // Red Ring
                 ring.setAttribute("stroke-width", "1");
                 ring.setAttribute("stroke-dasharray", "2,2");
                 var anim = document.createElementNS(ns, "animateTransform");
@@ -283,7 +282,7 @@
             if(n.label) textContent += " " + n.label;
             txt.textContent = textContent;
             txt.setAttribute("x", 12); txt.setAttribute("y", 3);
-            txt.setAttribute("fill", n.active ? "#000" : "#bbb"); // Grey for non-active subs
+            txt.setAttribute("fill", n.active ? "#000" : "#bbb");
             txt.style.font = n.active ? "bold 10px Helvetica, Arial, sans-serif" : "9px Helvetica, Arial, sans-serif"; 
             txt.style.pointerEvents = "none";
             g.appendChild(txt);
