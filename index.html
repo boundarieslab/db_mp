@@ -7,23 +7,16 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        /* --- VARIABLES --- */
         :root {
             --bg: #ffffff;
             --fg: #000000;
-            
-            /* NEON COLORS */
-            --col-deponi: #FF0000;    /* Red */
-            --col-pukk: #FFA500;      /* Orange */
-            --col-mottak: #39FF14;    /* Green */
-            --col-gjenvin: #FF6600;   /* Deep Orange */
-            --col-blue: #00CCCC;      /* Fallback */
-            
+            --col-project: #ff0066;
+            --col-facility: #39FF14;
             --sidebar-width: 30vw;
+            --ui-width: 200px;
             --font-stack: 'Diatype Mono', 'JetBrains Mono', 'Courier New', monospace;
         }
 
-        /* FONTS */
         @font-face {
             font-family: 'Diatype Mono';
             src: url('https://freight.cargo.site/t/original/i/34e062220d932607590d93991273932252277d33d93566736279930922253303/DiatypeMono-Regular.woff2') format('woff2');
@@ -35,219 +28,633 @@
             font-weight: bold;
         }
 
-        /* RESET */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { width: 100%; height: 100%; overflow: hidden; font-family: var(--font-stack); background: var(--bg); }
 
         #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #f0f0f0; }
 
-        /* --- UI CONTROLS --- */
-        .map-ui-element {
-            position: absolute; left: 20px; z-index: 2000;
-            background: #fff; border: 1px solid #000;
+        /* UI BOX BASE */
+        .ui-box {
+            position: absolute;
+            left: 10px;
+            z-index: 2000;
+            background: #fff;
+            border: 1px solid #000;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: var(--ui-width);
         }
 
-        /* North */
-        .north-arrow { top: 20px; padding: 6px 5px; }
+        /* SEARCH */
+        .search-box { top: 10px; }
+        .search-input {
+            border: none;
+            outline: none;
+            padding: 10px;
+            font-family: var(--font-stack);
+            font-size: 10px;
+            width: 100%;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: #fff;
+            border: 1px solid #000;
+            border-top: none;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 3000;
+        }
+        .search-item {
+            padding: 8px 10px;
+            font-size: 9px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            text-transform: uppercase;
+        }
+        .search-item:hover { background: #f5f5f5; }
 
-        /* Zoom */
+        /* LAYERS */
+        .layers-box { top: 52px; padding: 10px; }
+        .layers-section { margin-bottom: 8px; }
+        .layers-section:last-child { margin-bottom: 0; }
+        .layers-title {
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 6px;
+        }
+        .layer-option {
+            display: flex;
+            align-items: center;
+            padding: 3px 0;
+            font-size: 10px;
+            cursor: pointer;
+        }
+        .layer-option input { margin-right: 6px; }
+        .layer-option label { cursor: pointer; text-transform: uppercase; }
+
+        /* ZOOM */
         .leaflet-control-zoom {
-            position: absolute !important; top: 70px !important; left: 20px !important; margin: 0 !important;
-            border: 1px solid #000 !important; border-radius: 0 !important;
+            position: absolute !important;
+            top: 52px !important;
+            left: 220px !important;
+            margin: 0 !important;
+            border: 1px solid #000 !important;
+            border-radius: 0 !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
         }
         .leaflet-control-zoom a {
-            background: #fff !important; color: #000 !important;
+            background: #fff !important;
+            color: #000 !important;
             border-bottom: 1px solid #ccc !important;
-            font-family: var(--font-stack) !important; font-weight: bold;
+            font-family: var(--font-stack) !important;
+            font-weight: bold;
+            width: 24px !important;
+            height: 24px !important;
+            line-height: 24px !important;
+            font-size: 14px !important;
         }
+        .leaflet-control-zoom a:last-child { border-bottom: none !important; }
 
-        /* Language */
-        .lang-switcher {
-            top: 135px; display: flex; cursor: pointer;
-            font-family: var(--font-stack); font-size: 11px;
+        /* LANGUAGE */
+        .lang-box { top: 178px; display: flex; }
+        .lang-btn {
+            padding: 8px;
+            background: #fff;
+            color: #000;
+            border-right: 1px solid #000;
+            flex: 1;
+            text-align: center;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
         }
-        .lang-btn { padding: 8px 12px; background: #fff; color: #000; }
+        .lang-btn:last-child { border-right: none; }
         .lang-btn.active { background: #000; color: #fff; }
+        .lang-btn:hover { background: #f5f5f5; }
+        .lang-btn.active:hover { background: #000; }
 
-        /* Search (Clean - No Icon) */
-        .search-wrapper {
-            top: 180px; display: flex; align-items: center; 
+        /* TIMELINE */
+        .timeline-box { top: 220px; padding: 10px; }
+        .timeline-title {
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 6px;
         }
-        .search-input {
-            border: none; outline: none; padding: 10px;
-            font-family: var(--font-stack); font-size: 11px; width: 200px;
-            text-transform: uppercase; color: var(--fg); font-weight: bold;
+        .timeline-toggle {
+            display: flex;
+            align-items: center;
+            font-size: 9px;
+            margin-bottom: 8px;
         }
-        .search-results {
-            position: absolute; top: 100%; left: -1px; width: calc(100% + 2px);
-            background: var(--bg); border: 1px solid #000; border-top: none;
-            max-height: 300px; overflow-y: auto; display: none;
+        .timeline-toggle input { margin-right: 6px; }
+        .timeline-toggle label { cursor: pointer; text-transform: uppercase; }
+        .timeline-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 3px;
+            background: #ddd;
+            outline: none;
+            cursor: pointer;
         }
-        .search-item {
-            padding: 8px 10px; font-family: var(--font-stack); font-size: 10px;
-            cursor: pointer; border-bottom: 1px solid #eee; text-transform: uppercase;
+        .timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #000;
+            cursor: pointer;
         }
-        .search-item:hover { background: #f5f5f5; color: var(--col-deponi); }
+        .timeline-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: #000;
+            cursor: pointer;
+            border: none;
+        }
+        .timeline-slider:disabled { opacity: 0.3; cursor: not-allowed; }
+        .timeline-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 7px;
+            color: #999;
+        }
+        .timeline-year {
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 4px;
+        }
 
-        /* Layer Control */
-        .leaflet-control-layers {
-            position: absolute !important; top: 230px !important; left: 20px !important; margin: 0 !important;
-            border: 1px solid #000 !important; border-radius: 0 !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-            font-family: var(--font-stack); font-size: 10px; text-transform: uppercase;
-            min-width: 140px;
+        /* FILTER TOGGLE */
+        .filter-toggle {
+            top: 330px;
+            padding: 10px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-align: center;
         }
-        .leaflet-control-layers-separator { display: none; }
+        .filter-toggle:hover { background: #f5f5f5; }
 
-        /* --- LEGEND --- */
-        .legend {
-            position: absolute; bottom: 30px; left: 20px; z-index: 2000;
-            background: #fff; border: 1px solid #000; padding: 15px; min-width: 130px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        /* FILTER PANEL */
+        .filter-panel {
+            position: absolute;
+            top: 372px;
+            left: 10px;
+            z-index: 3500;
+            background: #fff;
+            border: 1px solid #000;
+            padding: 12px;
+            width: var(--ui-width);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            max-height: 50vh;
+            overflow-y: auto;
+            display: none;
         }
-        .legend-title {
-            font-family: var(--font-stack); font-size: 10px; font-weight: bold;
-            text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px;
+        .filter-panel.open { display: block; }
+        .filter-close {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
         }
-        .legend-item { display: flex; align-items: center; margin-bottom: 6px; font-family: var(--font-stack); font-size: 10px; text-transform: uppercase; }
-        .legend-symbol { width: 14px; height: 14px; margin-right: 10px; display: flex; align-items: center; justify-content: center; }
+        .filter-close:hover { opacity: 0.5; }
 
-        /* --- POPUP --- */
+        .panel-section {
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #eee;
+        }
+        .panel-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .panel-title {
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .filter-group { margin-bottom: 10px; }
+        .filter-main {
+            display: flex;
+            align-items: center;
+            font-size: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .filter-main input { margin-right: 8px; }
+        .filter-sub {
+            padding-left: 20px;
+        }
+        .filter-sub label {
+            display: flex;
+            align-items: center;
+            font-size: 9px;
+            cursor: pointer;
+            text-transform: uppercase;
+            padding: 2px 0;
+        }
+        .filter-sub input { margin-right: 6px; }
+
+        /* LEGEND */
+        .legend-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .legend-column-title {
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #ccc;
+        }
+        .legend-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 9px;
+        }
+        .legend-symbol {
+            width: 18px;
+            height: 18px;
+            margin-right: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .legend-label { text-transform: lowercase; }
+
+        /* SCALE */
+        .leaflet-control-scale { bottom: 10px !important; left: 10px !important; }
+        .leaflet-control-scale-line {
+            border: 1px solid #000 !important;
+            border-top: none !important;
+            background: rgba(255,255,255,0.8) !important;
+            font-family: var(--font-stack) !important;
+            font-size: 8px !important;
+            padding: 2px 4px !important;
+        }
+
+        /* MARKERS - SMALL */
+        .custom-marker { background: transparent !important; border: none !important; }
+        .marker-icon { display: flex; align-items: center; justify-content: center; }
+        .marker-icon svg { transition: transform 0.2s ease; }
+        .leaflet-marker-icon:hover .marker-icon svg { transform: scale(1.8); }
+
+        /* POPUP */
         .leaflet-popup-content-wrapper {
-            background: #fff; border: 1px solid #000; border-radius: 0;
-            box-shadow: 2px 2px 0 rgba(0,0,0,0.1); padding: 0;
+            background: #fff;
+            border: 1px solid #000;
+            border-radius: 0;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+            padding: 0;
         }
         .leaflet-popup-tip { background: #fff; border: 1px solid #000; border-top: none; border-left: none; }
-        .leaflet-popup-content { margin: 15px; font-family: var(--font-stack); min-width: 180px; }
-        
-        .popup-title { font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        .popup-type { font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 2px; display: block; }
-        .popup-loc { font-size: 10px; color: #666; margin-bottom: 10px; display: block; }
-        .popup-link { 
-            font-size: 10px; font-weight: bold; color: var(--col-blue); 
-            text-transform: uppercase; text-decoration: none; border-bottom: 1px solid var(--col-blue);
+        .leaflet-popup-content { margin: 12px; font-family: var(--font-stack); min-width: 160px; }
+        .popup-title { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .popup-type { font-size: 8px; color: #666; text-transform: uppercase; display: block; }
+        .popup-loc { font-size: 8px; color: #666; margin-bottom: 8px; display: block; }
+        .popup-link {
+            font-size: 9px;
+            font-weight: bold;
+            color: #0066CC;
+            text-transform: uppercase;
+            text-decoration: none;
+            border-bottom: 1px solid #0066CC;
             cursor: pointer;
         }
         .popup-link:hover { color: #000; border-color: #000; }
 
-        .custom-marker { background: transparent !important; border: none !important; }
-
-        /* --- SIDEBAR --- */
+        /* SIDEBAR */
         #sidebar {
-            position: absolute; top: 0; right: calc(var(--sidebar-width) * -1);
-            width: var(--sidebar-width); height: 100%;
-            background: var(--bg); z-index: 3000;
+            position: absolute;
+            top: 0;
+            right: calc(var(--sidebar-width) * -1);
+            width: var(--sidebar-width);
+            height: 100%;
+            background: #fff;
+            z-index: 4000;
             border-left: 1px solid #000;
-            transition: right 0.6s cubic-bezier(0.19, 1, 0.22, 1);
-            display: flex; flex-direction: column;
-            box-shadow: -10px 0 40px rgba(0,0,0,0.1);
+            transition: right 0.5s ease;
+            display: flex;
+            flex-direction: column;
         }
         #sidebar.active { right: 0; }
-
         .close-btn {
-            position: absolute; top: 15px; right: 15px;
-            width: 30px; height: 30px; font-size: 24px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 2001; color: #000;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 2001;
         }
         .close-btn:hover { opacity: 0.5; }
-
-        .sb-scroll-area { flex: 1; overflow-y: auto; padding-bottom: 50px; }
-        .sb-image-container {
-            width: 100%; height: 18vw; 
-            background-color: #f0f0f0; background-size: cover; background-position: center;
-            display: none; 
-            /* No border bottom here as requested */
+        .share-btn {
+            position: absolute;
+            top: 10px;
+            right: 40px;
+            padding: 5px 10px;
+            font-size: 8px;
+            background: #000;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
         }
-        .sb-content { padding: 2.5vw; }
+        .sb-scroll-area { flex: 1; overflow-y: auto; padding-bottom: 40px; }
 
+        /* SLIDESHOW */
+        .slideshow-container {
+            width: 100%;
+            height: 20vw;
+            min-height: 180px;
+            position: relative;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+        .slideshow-slide {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .slideshow-slide.active { opacity: 1; }
+        .slideshow-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            background: rgba(255,255,255,0.9);
+            border: 1px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .slideshow-prev { left: 8px; }
+        .slideshow-next { right: 8px; }
+        .slideshow-counter {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 3px 8px;
+            font-size: 8px;
+        }
+        .no-images {
+            width: 100%;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            color: #999;
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+
+        .sb-content { padding: 20px; }
         .status-badge {
-            display: inline-block; padding: 5px 12px;
-            text-align: center; color: #fff;
-            font-family: var(--font-stack); font-size: 10px; font-weight: bold;
-            text-transform: uppercase; letter-spacing: 1px;
-            margin-bottom: 25px; background: var(--col-deponi);
+            display: inline-block;
+            padding: 4px 10px;
+            color: #fff;
+            font-size: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            background: #000;
         }
-
-        h1 { font-family: var(--font-stack); font-size: 28px; font-weight: bold; text-transform: uppercase; line-height: 1; margin-bottom: 5px; }
-        .sb-uid { font-family: var(--font-stack); font-size: 10px; color: #666; margin-bottom: 10px; display: block; }
-        .sb-location { font-family: var(--font-stack); font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 20px; }
-        .sb-desc { font-family: var(--font-stack); font-size: 13px; line-height: 1.5; margin-bottom: 30px; }
-
-        b { 
-            font-family: var(--font-stack); font-size: 10px; text-transform: uppercase; 
-            letter-spacing: 1px; display: block; margin-top: 35px; margin-bottom: 10px; 
-            color: #000; font-weight: bold;
-        }
-
-        .column-set { display: flex; justify-content: space-between; font-family: var(--font-stack); font-size: 11px; padding: 2px 0; }
-        .col-0 { color: #888; width: 40%; font-weight: normal; }
-        .col-1 { color: #000; width: 60%; text-align: right; font-weight: normal; }
-
+        h1 { font-size: 22px; font-weight: bold; text-transform: uppercase; line-height: 1.1; margin-bottom: 4px; }
+        .sb-uid { font-size: 8px; color: #666; margin-bottom: 8px; display: block; }
+        .sb-location { font-size: 10px; text-transform: uppercase; font-weight: bold; margin-bottom: 14px; }
+        .sb-desc { font-size: 11px; line-height: 1.5; margin-bottom: 20px; }
+        .sb-content b { font-size: 9px; text-transform: uppercase; display: block; margin-top: 20px; margin-bottom: 8px; }
+        .column-set { display: flex; justify-content: space-between; font-size: 9px; padding: 2px 0; }
+        .col-0 { color: #888; width: 40%; }
+        .col-1 { color: #000; width: 60%; text-align: right; }
         .link-row { text-align: right; margin-bottom: 4px; }
-        .link-row a {
-            font-family: var(--font-stack); font-size: 11px; color: var(--fg);
-            text-decoration: underline; text-transform: uppercase; cursor: pointer;
-        }
-        .link-row a:hover { color: var(--col-deponi); }
-
-        #graph-container { width: 100%; height: 350px; background: #fff; border: 1px solid #eee; margin-top: 10px; position: relative; }
+        .link-row a { font-size: 9px; color: #000; text-decoration: underline; text-transform: uppercase; }
+        #graph-container { width: 100%; height: 280px; background: #fff; border: 1px solid #eee; margin-top: 8px; }
         iframe { width: 100%; height: 100%; border: none; }
 
+        .leaflet-control-attribution { font-family: var(--font-stack) !important; font-size: 8px !important; }
+
+        /* MOBILE */
         @media (max-width: 768px) {
-            :root { --sidebar-width: 100%; }
-            .search-wrapper { width: 180px; top: 180px; }
-            h1 { font-size: 24px; }
-            .sb-image-container { height: 200px; }
+            :root { --sidebar-width: 100vw; --ui-width: 160px; }
+            .leaflet-control-zoom { left: 175px !important; }
+            .slideshow-container { height: 180px; min-height: 140px; }
+            h1 { font-size: 18px; }
         }
+
+        .share-notification {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: #000;
+            color: #fff;
+            padding: 14px 24px;
+            font-size: 11px;
+            text-transform: uppercase;
+            z-index: 5000;
+            display: none;
+        }
+        .share-notification.show { display: block; animation: fadeInOut 2s; }
+        @keyframes fadeInOut { 0% { opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
     </style>
 </head>
 <body>
 
 <div id="map"></div>
 
-<div class="map-ui-element north-arrow">
-    <svg width="14" height="24" viewBox="0 0 14 24"><path d="M7 0 L14 24 L7 18 L0 24 Z" fill="black"/></svg>
-</div>
-
-<div class="map-ui-element lang-switcher" id="lang-toggle">
-    <div class="lang-btn active" id="btn-en">EN</div>
-    <div class="lang-btn" id="btn-no">NO</div>
-</div>
-
-<div class="map-ui-element search-wrapper">
+<!-- SEARCH -->
+<div class="ui-box search-box">
     <input type="text" class="search-input" id="search-input" placeholder="SEARCH...">
     <div class="search-results" id="search-results"></div>
 </div>
 
-<div class="legend">
-    <div class="legend-title" data-en="LEGEND" data-no="TEGNFORKLARING">LEGEND</div>
-    <div class="legend-item">
-        <div class="legend-symbol"><svg width="12" height="12"><path d="M6 1 L11 6 L6 11 L1 6 Z" fill="#39FF14" stroke="black" stroke-width="0.5"/></svg></div>
-        <span data-en="Mottak" data-no="Mottak">Mottak</span>
+<!-- LAYERS -->
+<div class="ui-box layers-box">
+    <div class="layers-section">
+        <div class="layers-title" data-en="Base" data-no="Bakgrunn">Base</div>
+        <div class="layer-option">
+            <input type="radio" name="basemap" id="base-gray" value="graytone" checked>
+            <label for="base-gray">Graytone</label>
+        </div>
+        <div class="layer-option">
+            <input type="radio" name="basemap" id="base-sat" value="satellite">
+            <label for="base-sat">Satellite</label>
+        </div>
     </div>
-    <div class="legend-item">
-        <div class="legend-symbol"><svg width="12" height="12"><path d="M1 1 L11 1 L6 11 Z" fill="#FF0000" stroke="black" stroke-width="0.5"/></svg></div>
-        <span data-en="Deponi" data-no="Deponi">Deponi</span>
-    </div>
-    <div class="legend-item">
-        <div class="legend-symbol"><svg width="12" height="12"><path d="M1 11 L11 11 L6 1 Z" fill="#FFA500" stroke="black" stroke-width="0.5"/></svg></div>
-        <span data-en="Pukkverk" data-no="Pukkverk">Pukkverk</span>
-    </div>
-    <div class="legend-item">
-        <div class="legend-symbol"><svg width="12" height="12"><path d="M6 1 L11 6 L6 11 L1 6 Z" fill="#FF6600" stroke="black" stroke-width="0.5"/></svg></div>
-        <span data-en="Gjenvinning" data-no="Gjenvinning">Gjenvinning</span>
+    <div class="layers-section">
+        <div class="layers-title" data-en="Overlay" data-no="Overlegg">Overlay</div>
+        <div class="layer-option">
+            <input type="checkbox" id="overlay-dtm">
+            <label for="overlay-dtm">Terrain (DTM)</label>
+        </div>
     </div>
 </div>
 
+<!-- LANGUAGE -->
+<div class="ui-box lang-box">
+    <div class="lang-btn active" id="btn-en">EN</div>
+    <div class="lang-btn" id="btn-no">NO</div>
+</div>
+
+<!-- TIMELINE -->
+<div class="ui-box timeline-box">
+    <div class="timeline-title" data-en="Historical Imagery" data-no="Historiske Bilder">Historical Imagery</div>
+    <div class="timeline-toggle">
+        <input type="checkbox" id="timeline-enabled">
+        <label for="timeline-enabled" data-en="Enable" data-no="Aktiver">Enable</label>
+    </div>
+    <input type="range" class="timeline-slider" id="timeline-slider" min="0" max="8" value="0" disabled>
+    <div class="timeline-labels">
+        <span>14</span><span>16</span><span>18</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span>
+    </div>
+    <div class="timeline-year" id="timeline-year">—</div>
+</div>
+
+<!-- FILTER TOGGLE -->
+<div class="ui-box filter-toggle" onclick="toggleFilter()">
+    <span data-en="FILTER & LEGEND ▼" data-no="FILTER & TEGNFORKLARING ▼">FILTER & LEGEND ▼</span>
+</div>
+
+<!-- FILTER PANEL -->
+<div class="filter-panel" id="filter-panel">
+    <span class="filter-close" onclick="toggleFilter()">✕</span>
+    
+    <div class="panel-section">
+        <div class="panel-title" data-en="FILTER" data-no="FILTER">FILTER</div>
+        
+        <div class="filter-group">
+            <label class="filter-main">
+                <input type="checkbox" id="filter-projects" checked>
+                <span data-en="Construction Projects" data-no="Byggeprosjekter">Construction Projects</span>
+            </label>
+            <div class="filter-sub">
+                <label><input type="checkbox" class="filter-project-sub" value="producing" checked> <span data-en="Producing" data-no="Produserer">Producing</span></label>
+                <label><input type="checkbox" class="filter-project-sub" value="receiving" checked> <span data-en="Receiving" data-no="Mottar">Receiving</span></label>
+                <label><input type="checkbox" class="filter-project-sub" value="mixed" checked> <span data-en="Mixed" data-no="Blandet">Mixed</span></label>
+            </div>
+        </div>
+        
+        <div class="filter-group">
+            <label class="filter-main">
+                <input type="checkbox" id="filter-facilities" checked>
+                <span data-en="Facilities" data-no="Anlegg">Facilities</span>
+            </label>
+            <div class="filter-sub">
+                <label><input type="checkbox" class="filter-facility-sub" value="producing" checked> <span data-en="Producing" data-no="Produserer">Producing</span></label>
+                <label><input type="checkbox" class="filter-facility-sub" value="receiving" checked> <span data-en="Receiving" data-no="Mottar">Receiving</span></label>
+                <label><input type="checkbox" class="filter-facility-sub" value="mixed" checked> <span data-en="Mixed" data-no="Blandet">Mixed</span></label>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEGEND - NO ARROWS -->
+    <div class="panel-section">
+        <div class="panel-title" data-en="LEGEND" data-no="TEGNFORKLARING">LEGEND</div>
+        <div class="legend-grid">
+            <div class="legend-column">
+                <div class="legend-column-title" data-en="Construction project" data-no="Byggeprosjekt">Construction project</div>
+                <div class="legend-row">
+                    <div class="legend-symbol">
+                        <svg width="16" height="16" viewBox="0 0 16 16">
+                            <rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/>
+                            <polygon points="1,15 15,15 1,1" fill="#000"/>
+                        </svg>
+                    </div>
+                    <span class="legend-label" data-en="producing" data-no="produserer">producing</span>
+                </div>
+                <div class="legend-row">
+                    <div class="legend-symbol">
+                        <svg width="16" height="16" viewBox="0 0 16 16">
+                            <rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/>
+                            <polygon points="15,1 15,15 1,1" fill="#000"/>
+                        </svg>
+                    </div>
+                    <span class="legend-label" data-en="receiving" data-no="mottar">receiving</span>
+                </div>
+                <div class="legend-row">
+                    <div class="legend-symbol">
+                        <svg width="16" height="16" viewBox="0 0 16 16">
+                            <rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/>
+                            <polygon points="1,1 8,8 1,15" fill="#000"/>
+                            <polygon points="15,1 8,8 15,15" fill="#000"/>
+                        </svg>
+                    </div>
+                    <span class="legend-label" data-en="mixed" data-no="blandet">mixed</span>
+                </div>
+            </div>
+            <div class="legend-column">
+                <div class="legend-column-title" data-en="Facility" data-no="Anlegg">Facility</div>
+                <div class="legend-row">
+                    <div class="legend-symbol">
+                        <svg width="16" height="16" viewBox="0 0 16 16">
+                            <circle cx="8" cy="8" r="7" fill="#fff" stroke="#39FF14" stroke-width="1.5"/>
+                            <path d="M1,8 A7,7 0 0,1 15,8 Z" fill="#000"/>
+                        </svg>
+                    </div>
+                    <span class="legend-label" data-en="producing" data-no="produserer">producing</span>
+                </div>
+                <div class="legend-row">
+                    <div class="legend-symbol">
+                        <svg width="16" height="16" viewBox="0 0 16 16">
+                            <circle cx="8" cy="8" r="7" fill="#fff" stroke="#39FF14" stroke-width="1.5"/>
+                            <path d="M1,8 A7,7 0 0,0 15,8 Z" fill="#000"/>
+                        </svg>
+                    </div>
+                    <span class="legend-label" data-en="receiving" data-no="mottar">receiving</span>
+                </div>
+                <div class="legend-row">
+                    <div class="legend-symbol">
+                        <svg width="16" height="16" viewBox="0 0 16 16">
+                            <circle cx="8" cy="8" r="7" fill="#fff" stroke="#39FF14" stroke-width="1.5"/>
+                            <path d="M8,1 A7,7 0 0,1 15,8 L8,8 Z" fill="#000"/>
+                            <path d="M8,15 A7,7 0 0,1 1,8 L8,8 Z" fill="#000"/>
+                        </svg>
+                    </div>
+                    <span class="legend-label" data-en="mixed" data-no="blandet">mixed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SIDEBAR -->
 <div id="sidebar">
     <div class="close-btn" onclick="closeSidebar()">✕</div>
+    <button class="share-btn" onclick="shareLink()">SHARE</button>
     <div class="sb-scroll-area">
         <div id="sb-dynamic-content"></div>
     </div>
 </div>
+
+<div class="share-notification" id="share-notification">LINK COPIED!</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -255,93 +662,220 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
-    // CONFIG
-    const DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?output=csv';
+    const FACILITIES_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?output=csv';
+    const PROJECTS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR8NceaLhnLslv2TKIReqCnB1q0UON_yEef-vs7zfKxnQc8LaxiNfSKTTp8528mKG882T3XlxF59437/pub?output=csv';
+    
+    const WAYBACK_YEARS = [
+        { year: 2014, release: 10 },
+        { year: 2016, release: 2168 },
+        { year: 2018, release: 6984 },
+        { year: 2020, release: 9812 },
+        { year: 2021, release: 12428 },
+        { year: 2022, release: 13851 },
+        { year: 2023, release: 23001 },
+        { year: 2024, release: 25285 },
+        { year: 2025, release: 47963 }
+    ];
+    
     let allSites = [];
-    let currentLang = 'en'; 
+    let allMarkers = [];
+    let currentLang = 'en';
     let currentSite = null;
+    let currentSlideIndex = 0;
+    let currentImages = [];
+    let historicalLayer = null;
 
-    // MAP INIT
     const map = L.map('map', { zoomControl: false, center: [59.91, 10.75], zoom: 10 });
 
-    // LAYERS (Correct 2014 Wayback URL)
-    const basemaps = {
-        "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'ESRI', maxZoom: 19 }),
-        "Graytone": L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png', { attribution: 'Kartverket', maxZoom: 18 }),
-        "2014 Historic": L.tileLayer('https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/3646/{z}/{y}/{x}', { attribution: 'Esri Wayback 2014', maxZoom: 18 })
-    };
-    basemaps["Satellite"].addTo(map);
-
-    L.control.zoom({ position: 'topleft' }).addTo(map);
-    L.control.layers(basemaps, null, { position: 'topleft', collapsed: false }).addTo(map);
-
-    // FETCH DATA
-    Papa.parse(DATA_URL, {
-        download: true, header: true, skipEmptyLines: true,
-        complete: function(res) {
-            allSites = res.data;
-            renderMarkers(allSites);
-        }
+    const graytoneLayer = L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png', {
+        attribution: '© <a href="https://kartverket.no">Kartverket</a>', maxZoom: 18
+    });
+    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© <a href="https://www.esri.com">Esri</a>', maxZoom: 19
+    });
+    const dtmLayer = L.tileLayer.wms('https://wms.geonorge.no/skwms1/wms.hoyde-dom1_33?', {
+        layers: 'DOM1_33_Terrengskygge', format: 'image/png', transparent: true,
+        attribution: '© <a href="https://geonorge.no">Geonorge</a>', opacity: 0.5
     });
 
-    // MARKER LOGIC
-    function getMarkerSVG(type) {
-        type = (type || "").toLowerCase();
+    graytoneLayer.addTo(map);
+    L.control.zoom({ position: 'topleft' }).addTo(map);
+    L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(map);
+
+    // Basemap switching
+    document.querySelectorAll('input[name="basemap"]').forEach(r => {
+        r.addEventListener('change', e => {
+            map.removeLayer(graytoneLayer);
+            map.removeLayer(satelliteLayer);
+            (e.target.value === 'graytone' ? graytoneLayer : satelliteLayer).addTo(map);
+        });
+    });
+
+    // DTM toggle
+    document.getElementById('overlay-dtm').addEventListener('change', e => {
+        e.target.checked ? dtmLayer.addTo(map) : map.removeLayer(dtmLayer);
+    });
+
+    // Timeline
+    const timelineSlider = document.getElementById('timeline-slider');
+    const timelineEnabled = document.getElementById('timeline-enabled');
+    const timelineYear = document.getElementById('timeline-year');
+
+    function updateHistoricalLayer(index) {
+        if (historicalLayer) map.removeLayer(historicalLayer);
+        const wb = WAYBACK_YEARS[index];
+        historicalLayer = L.tileLayer(
+            `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${wb.release}/{z}/{y}/{x}`,
+            { attribution: `© Esri Wayback ${wb.year}`, maxZoom: 19 }
+        );
+        historicalLayer.addTo(map);
+        timelineYear.textContent = wb.year;
+    }
+
+    timelineEnabled.addEventListener('change', e => {
+        timelineSlider.disabled = !e.target.checked;
+        if (e.target.checked) updateHistoricalLayer(parseInt(timelineSlider.value));
+        else {
+            if (historicalLayer) { map.removeLayer(historicalLayer); historicalLayer = null; }
+            timelineYear.textContent = '—';
+        }
+    });
+    timelineSlider.addEventListener('input', e => {
+        if (timelineEnabled.checked) updateHistoricalLayer(parseInt(e.target.value));
+    });
+
+    window.toggleFilter = () => document.getElementById('filter-panel').classList.toggle('open');
+
+    // Slideshow
+    window.slideshowPrev = () => { if (currentImages.length > 1) { currentSlideIndex = (currentSlideIndex - 1 + currentImages.length) % currentImages.length; updateSlideshow(); } };
+    window.slideshowNext = () => { if (currentImages.length > 1) { currentSlideIndex = (currentSlideIndex + 1) % currentImages.length; updateSlideshow(); } };
+    function updateSlideshow() {
+        document.querySelectorAll('.slideshow-slide').forEach((s, i) => s.classList.toggle('active', i === currentSlideIndex));
+        const c = document.querySelector('.slideshow-counter');
+        if (c) c.textContent = `${currentSlideIndex + 1} / ${currentImages.length}`;
+    }
+
+    // SVG Markers - SMALL (14px), NO ARROWS
+    function createProjectMarker(dir) {
+        const s = 14;
+        if (dir === 'producing') {
+            return `<svg width="${s}" height="${s}" viewBox="0 0 16 16">
+                <rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/>
+                <polygon points="1,15 15,15 1,1" fill="#000"/>
+            </svg>`;
+        } else if (dir === 'receiving') {
+            return `<svg width="${s}" height="${s}" viewBox="0 0 16 16">
+                <rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/>
+                <polygon points="15,1 15,15 1,1" fill="#000"/>
+            </svg>`;
+        } else {
+            return `<svg width="${s}" height="${s}" viewBox="0 0 16 16">
+                <rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/>
+                <polygon points="1,1 8,8 1,15" fill="#000"/>
+                <polygon points="15,1 8,8 15,15" fill="#000"/>
+            </svg>`;
+        }
+    }
+
+    function createFacilityMarker(dir) {
+        const s = 14;
+        if (dir === 'producing') {
+            return `<svg width="${s}" height="${s}" viewBox="0 0 16 16">
+                <circle cx="8" cy="8" r="7" fill="#fff" stroke="#39FF14" stroke-width="1.5"/>
+                <path d="M1,8 A7,7 0 0,1 15,8 Z" fill="#000"/>
+            </svg>`;
+        } else if (dir === 'receiving') {
+            return `<svg width="${s}" height="${s}" viewBox="0 0 16 16">
+                <circle cx="8" cy="8" r="7" fill="#fff" stroke="#39FF14" stroke-width="1.5"/>
+                <path d="M1,8 A7,7 0 0,0 15,8 Z" fill="#000"/>
+            </svg>`;
+        } else {
+            return `<svg width="${s}" height="${s}" viewBox="0 0 16 16">
+                <circle cx="8" cy="8" r="7" fill="#fff" stroke="#39FF14" stroke-width="1.5"/>
+                <path d="M8,1 A7,7 0 0,1 15,8 L8,8 Z" fill="#000"/>
+                <path d="M8,15 A7,7 0 0,1 1,8 L8,8 Z" fill="#000"/>
+            </svg>`;
+        }
+    }
+
+    function getMarkerInfo(site) {
+        const sr = (site["source /reception"] || site["source/reception"] || "").toLowerCase().trim();
+        const type = (site.Type || "").toLowerCase();
+        let category = 'facility', direction = 'receiving';
         
-        if(type.includes("gjenvinning") || type.includes("avfall") || type.includes("roaf")) 
-            return `<svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 1 L11 6 L6 11 L1 6 Z" fill="#FF6600" stroke="black" stroke-width="0.5"/></svg>`;
-        
-        if(type.includes("mottak")) return `<svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 1 L11 6 L6 11 L1 6 Z" fill="#39FF14" stroke="black" stroke-width="0.5"/></svg>`;
-        if(type.includes("deponi")) return `<svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1 L11 1 L6 11 Z" fill="#FF0000" stroke="black" stroke-width="0.5"/></svg>`;
-        if(type.includes("pukk")) return `<svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 11 L11 11 L6 1 Z" fill="#FFA500" stroke="black" stroke-width="0.5"/></svg>`;
-        
-        return `<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4" fill="#00CCCC" stroke="black" stroke-width="0.5"/></svg>`;
+        if (sr) {
+            category = 'project';
+            if (sr.includes('source') && sr.includes('reception')) direction = 'mixed';
+            else if (sr.includes('source')) direction = 'producing';
+            else direction = 'receiving';
+        } else {
+            if (type.includes('pukkverk')) direction = 'producing';
+            else if (type.includes('deponi') || type.includes('massemottak')) direction = 'receiving';
+            else if (type.includes('gjenvinning')) direction = 'mixed';
+        }
+        return { category, direction };
     }
 
     function renderMarkers(data) {
+        allMarkers.forEach(m => map.removeLayer(m));
+        allMarkers = [];
+        
         data.forEach(site => {
-            const lat = parseFloat((site.Latitude || "").replace(",","."));
-            const lon = parseFloat((site.Longitude || "").replace(",","."));
-            if(isNaN(lat)) return;
+            const lat = parseFloat((site.Latitude || "").toString().replace(",", "."));
+            const lon = parseFloat((site.Longitude || "").toString().replace(",", "."));
+            if (isNaN(lat) || isNaN(lon)) return;
 
+            const info = getMarkerInfo(site);
+            const svg = info.category === 'project' ? createProjectMarker(info.direction) : createFacilityMarker(info.direction);
+            
             const icon = L.divIcon({
                 className: 'custom-marker',
-                html: getMarkerSVG(site.Type),
-                iconSize: [12, 12], iconAnchor: [6, 6]
+                html: `<div class="marker-icon">${svg}</div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7],
+                popupAnchor: [0, -7]
             });
 
-            const m = L.marker([lat, lon], { icon }).addTo(map);
+            const m = L.marker([lat, lon], { icon });
+            m.siteData = site;
+            m.markerCategory = info.category;
+            m.markerDirection = info.direction;
+            m.addTo(map);
+            allMarkers.push(m);
             
-            // POPUP
-            const popupContent = document.createElement('div');
-            popupContent.innerHTML = `
+            m.bindPopup(`
                 <span class="popup-title">${site.Name}</span>
-                <span class="popup-type">${site.Type}</span>
+                <span class="popup-type">${site.Type || ''}</span>
                 <span class="popup-loc">${site.Municipality || ''}</span>
-                <a class="popup-link" id="btn-${site.UID}">VIS DETALJER →</a>
-            `;
-            m.bindPopup(popupContent, { minWidth: 180 });
+                <a class="popup-link" id="btn-${site.UID || site.fid}">VIS DETALJER →</a>
+            `, { minWidth: 160 });
 
             m.on('popupopen', () => {
-                const btn = document.getElementById(`btn-${site.UID}`);
-                if(btn) {
-                    btn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        currentSite = site;
-                        openSidebar(site);
-                        map.closePopup();
-                        smartZoom(lat, lon);
-                    });
-                }
+                const btn = document.getElementById(`btn-${site.UID || site.fid}`);
+                if (btn) btn.onclick = e => {
+                    e.preventDefault();
+                    currentSite = site;
+                    openSidebar(site);
+                    map.closePopup();
+                    smartZoom(lat, lon);
+                };
             });
         });
+        applyFilters();
     }
 
     function smartZoom(lat, lon) {
-        map.flyTo([lat, lon], 15, { animate: true, duration: 1.2 });
+        const sb = document.getElementById('sidebar');
+        if (sb.classList.contains('active') && window.innerWidth > 768) {
+            const offset = window.innerWidth * 0.15;
+            const pt = map.project([lat, lon], 17);
+            pt.x -= offset;
+            map.flyTo(map.unproject(pt, 17), 17, { duration: 1 });
+        } else {
+            map.flyTo([lat, lon], 17, { duration: 1 });
+        }
     }
 
-    // TRANSLATIONS
     const i18n = {
         prop: { en: "PROPERTY", no: "EIENDOM" },
         comp: { en: "Company", no: "Selskap" },
@@ -357,6 +891,7 @@ document.addEventListener('DOMContentLoaded', function() {
         capyr: { en: "Capacity/Yr", no: "Kapasitet/År" },
         tot: { en: "Total Capacity", no: "Total Kapasitet" },
         mat: { en: "Materials", no: "Masser" },
+        prod: { en: "Produced", no: "Produsert" },
         env: { en: "ENVIRONMENT & RISKS", no: "MILJØ & RISIKO" },
         code: { en: "Waste Codes", no: "Avfallskoder" },
         cont: { en: "Contamination", no: "Forurensning" },
@@ -367,131 +902,161 @@ document.addEventListener('DOMContentLoaded', function() {
         auth: { en: "Authority", no: "Myndighet" },
         link: { en: "LINKS", no: "LENKER" }
     };
-    function t(key) { return i18n[key] ? i18n[key][currentLang] : key; }
+    const t = k => i18n[k] ? i18n[k][currentLang] : k;
 
-    // SIDEBAR
     window.openSidebar = function(site) {
         document.getElementById('sidebar').classList.add('active');
         const container = document.getElementById('sb-dynamic-content');
         
-        const status = (site.Status || "").toLowerCase().includes("active");
-        const statusText = status ? (currentLang==='en'?"ACTIVE":"AKTIV") : (currentLang==='en'?"CLOSED":"LUKKET");
-        const statusColor = status ? "var(--col-deponi)" : "#999";
+        const status = (site.Status || "").toLowerCase().includes("active") || (site.Status || "").toLowerCase().includes("aktiv");
+        const statusText = status ? (currentLang === 'en' ? "ACTIVE" : "AKTIV") : (currentLang === 'en' ? "CLOSED" : "LUKKET");
         const desc = currentLang === 'no' ? (site.Description_NO || site.Description) : site.Description;
 
-        let imgHtml = '';
-        if(site.ImageURL) {
-            imgHtml = `<div class="sb-image-container" style="display:flex; background-image: url('${site.ImageURL}');"></div>`;
+        currentImages = site.Images ? site.Images.split(',').map(u => u.trim()).filter(u => u) : [];
+        currentSlideIndex = 0;
+        
+        let slideshowHtml = '';
+        if (currentImages.length > 0) {
+            const slides = currentImages.map((u, i) => `<div class="slideshow-slide ${i===0?'active':''}" style="background-image:url('${u}')"></div>`).join('');
+            slideshowHtml = `<div class="slideshow-container">${slides}${currentImages.length > 1 ? `
+                <div class="slideshow-nav slideshow-prev" onclick="slideshowPrev()">←</div>
+                <div class="slideshow-nav slideshow-next" onclick="slideshowNext()">→</div>
+                <div class="slideshow-counter">1 / ${currentImages.length}</div>` : ''}</div>`;
+        } else {
+            slideshowHtml = '<div class="no-images">No images available</div>';
         }
 
-        let graphHtml = `<div id="graph-container" style="display:flex; align-items:center; justify-content:center; color:#999; font-family:var(--font-stack); font-size:10px;">NO GRAPH AVAILABLE</div>`;
-        if(site.GraphURL && site.GraphURL.includes('.html')) {
-            graphHtml = `<div id="graph-container"><iframe src="${site.GraphURL}"></iframe></div>`;
-        }
+        let graphHtml = `<div id="graph-container" style="display:flex;align-items:center;justify-content:center;color:#999;font-size:8px;">NO GRAPH AVAILABLE</div>`;
+        if (site.GraphURL && site.GraphURL.includes('.html')) graphHtml = `<div id="graph-container"><iframe src="${site.GraphURL}"></iframe></div>`;
 
         let linksHtml = '';
-        if(site.Website) linksHtml += `<div class="link-row"><a href="${site.Website}" target="_blank">↗ WEBSITE</a></div>`;
-        if(site.PermitDocuments) linksHtml += `<div class="link-row"><a href="${site.PermitDocuments}" target="_blank">↗ PERMIT DOC</a></div>`;
+        if (site.Website) linksHtml += `<div class="link-row"><a href="${site.Website}" target="_blank">↗ WEBSITE</a></div>`;
+        if (site.PermitDocuments) linksHtml += `<div class="link-row"><a href="${site.PermitDocuments}" target="_blank">↗ PERMIT DOC</a></div>`;
 
-        function row(labelKey, val) {
-            if(!val) return '';
-            return `<div class="column-set"><div class="col-0">${t(labelKey)}</div><div class="col-1">${val}</div></div>`;
-        }
+        const row = (k, v) => v ? `<div class="column-set"><div class="col-0">${t(k)}</div><div class="col-1">${v}</div></div>` : '';
 
-        container.innerHTML = `
-            ${imgHtml}
-            <div class="sb-content">
-                <span class="status-badge" style="background-color: ${statusColor}">${statusText}</span>
-                <h1>${site.Name}</h1>
-                <span class="sb-uid">${site.UID || ''}</span>
-                <div class="sb-location">${site.Municipality || ''}, ${site.County || ''}<br>${site.Type || ''}</div>
-                <div class="sb-desc">${desc || ''}</div>
-
-                <b>${t('prop')}</b>
-                ${row('comp', site.Company)}
-                ${row('op', site.Operator)}
-                ${row('par', site.ParentCompany)}
-
-                <b>${t('net')}</b>
-                ${graphHtml}
-
-                <b>${t('loc')}</b>
-                ${row('coord', site.Latitude + ', ' + site.Longitude)}
-                ${row('wat', site.WaterRecipient)}
-
-                <b>${t('cap')}</b>
-                ${row('capyr', site.AnnualCapacity)}
-                ${row('tot', site.TotalCapacity)}
-                ${row('mat', site.MassesAccepted)}
-
-                <b>${t('env')}</b>
-                ${row('code', site.WasteCodes)}
-                ${row('cont', site.Contamination)}
-                ${row('risk', site.EnvironmentalRisk)}
-
-                <b>${t('perm')}</b>
-                ${row('ref', site.PermitRef)}
-                ${row('start', site.StartYear)}
-                ${row('auth', site.Authority)}
-
-                <b>${t('link')}</b>
-                ${linksHtml}
-            </div>
-        `;
+        container.innerHTML = `${slideshowHtml}<div class="sb-content">
+            <span class="status-badge">${statusText}</span>
+            <h1>${site.Name}</h1>
+            <span class="sb-uid">${site.UID || site.fid || ''}</span>
+            <div class="sb-location">${site.Municipality || ''}, ${site.County || ''}<br>${site.Type || ''}</div>
+            <div class="sb-desc">${desc || ''}</div>
+            <b>${t('prop')}</b>${row('comp', site.Company)}${row('op', site.Operator)}${row('org', site.OrgNr)}${row('par', site.ParentCompany)}
+            <b>${t('net')}</b>${graphHtml}
+            <b>${t('loc')}</b>${row('coord', site.Latitude + ', ' + site.Longitude)}${row('mun', site.Municipality)}${row('wat', site.WaterRecipient)}
+            <b>${t('cap')}</b>${row('capyr', site.AnnualCapacity)}${row('tot', site.TotalCapacity)}${row('mat', site.MassesAccepted)}${row('prod', site.MassesProduced)}
+            <b>${t('env')}</b>${row('code', site.WasteCodes)}${row('cont', site.Contaminants || site.Contamination)}${row('risk', site.EnvironmentalRisk)}
+            <b>${t('perm')}</b>${row('ref', site.PermitRef)}${row('start', site.StartYear)}${row('auth', site.PermitAuthority || site.Authority)}
+            <b>${t('link')}</b>${linksHtml}
+        </div>`;
+        
+        if (site.UID || site.fid) window.location.hash = 'site=' + (site.UID || site.fid);
     };
 
     window.closeSidebar = function() {
         document.getElementById('sidebar').classList.remove('active');
         currentSite = null;
+        window.location.hash = '';
         map.invalidateSize();
     };
 
-    // EVENTS
+    window.shareLink = function() {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            const n = document.getElementById('share-notification');
+            n.classList.add('show');
+            setTimeout(() => n.classList.remove('show'), 2000);
+        });
+    };
+
+    // FILTERS with subcategories
+    function applyFilters() {
+        const showProjects = document.getElementById('filter-projects').checked;
+        const showFacilities = document.getElementById('filter-facilities').checked;
+        
+        const projectSubs = Array.from(document.querySelectorAll('.filter-project-sub:checked')).map(c => c.value);
+        const facilitySubs = Array.from(document.querySelectorAll('.filter-facility-sub:checked')).map(c => c.value);
+        
+        allMarkers.forEach(m => {
+            let show = false;
+            if (m.markerCategory === 'project' && showProjects && projectSubs.includes(m.markerDirection)) show = true;
+            if (m.markerCategory === 'facility' && showFacilities && facilitySubs.includes(m.markerDirection)) show = true;
+            
+            m.setOpacity(show ? 1 : 0);
+            if (m.getElement()) m.getElement().style.pointerEvents = show ? 'auto' : 'none';
+        });
+    }
+
+    // Main category toggles all subcategories
+    document.getElementById('filter-projects').addEventListener('change', e => {
+        document.querySelectorAll('.filter-project-sub').forEach(c => c.checked = e.target.checked);
+        applyFilters();
+    });
+    document.getElementById('filter-facilities').addEventListener('change', e => {
+        document.querySelectorAll('.filter-facility-sub').forEach(c => c.checked = e.target.checked);
+        applyFilters();
+    });
+    document.querySelectorAll('.filter-project-sub, .filter-facility-sub').forEach(c => c.addEventListener('change', applyFilters));
+
+    // Language
     const btnEn = document.getElementById('btn-en');
     const btnNo = document.getElementById('btn-no');
-    
     function setLanguage(lang) {
         currentLang = lang;
-        if(lang === 'en') { btnEn.classList.add('active'); btnNo.classList.remove('active'); }
-        else { btnNo.classList.add('active'); btnEn.classList.remove('active'); }
-        document.querySelectorAll('[data-en]').forEach(el => {
-            el.innerText = el.getAttribute(`data-${lang}`);
-        });
-        if(currentSite) openSidebar(currentSite);
+        btnEn.classList.toggle('active', lang === 'en');
+        btnNo.classList.toggle('active', lang === 'no');
+        document.querySelectorAll('[data-en]').forEach(el => el.innerText = el.getAttribute(`data-${lang}`));
+        if (currentSite) openSidebar(currentSite);
     }
     btnEn.onclick = () => setLanguage('en');
     btnNo.onclick = () => setLanguage('no');
 
+    // Search
     const sInput = document.getElementById('search-input');
     const sResults = document.getElementById('search-results');
-
-    function performSearch() {
+    sInput.addEventListener('input', () => {
         const val = sInput.value.toLowerCase();
         sResults.innerHTML = '';
-        if(val.length < 2) { sResults.style.display = 'none'; return; }
-        
+        if (val.length < 2) { sResults.style.display = 'none'; return; }
         const matches = allSites.filter(s => (s.Name || "").toLowerCase().includes(val));
-        if(matches.length) {
+        if (matches.length) {
             sResults.style.display = 'block';
-            matches.slice(0,8).forEach(site => {
+            matches.slice(0, 8).forEach(site => {
                 const div = document.createElement('div');
                 div.className = 'search-item';
                 div.innerText = site.Name;
                 div.onclick = () => {
-                    const lat = parseFloat((site.Latitude || "").replace(",","."));
-                    const lon = parseFloat((site.Longitude || "").replace(",","."));
                     currentSite = site;
-                    smartZoom(lat, lon);
+                    smartZoom(parseFloat((site.Latitude||"").toString().replace(",",".")), parseFloat((site.Longitude||"").toString().replace(",",".")));
                     openSidebar(site);
                     sResults.style.display = 'none';
                     sInput.value = '';
                 };
                 sResults.appendChild(div);
             });
-        } else { sResults.style.display = 'none'; }
-    }
+        } else sResults.style.display = 'none';
+    });
 
-    sInput.addEventListener('input', performSearch);
+    // Load data
+    Promise.all([
+        new Promise((res, rej) => Papa.parse(FACILITIES_CSV, { download: true, header: true, skipEmptyLines: true, complete: r => res(r.data), error: rej })),
+        new Promise((res, rej) => Papa.parse(PROJECTS_CSV, { download: true, header: true, skipEmptyLines: true, complete: r => res(r.data), error: rej }))
+    ]).then(([facilities, projects]) => {
+        allSites = [...facilities, ...projects];
+        renderMarkers(allSites);
+        const hash = window.location.hash;
+        if (hash.startsWith('#site=')) {
+            const site = allSites.find(s => (s.UID || s.fid) === hash.replace('#site=', ''));
+            if (site) setTimeout(() => { openSidebar(site); smartZoom(parseFloat(site.Latitude), parseFloat(site.Longitude)); }, 500);
+        }
+    });
+    
+    window.addEventListener('hashchange', () => {
+        const hash = window.location.hash;
+        if (hash.startsWith('#site=')) {
+            const site = allSites.find(s => (s.UID || s.fid) === hash.replace('#site=', ''));
+            if (site) { openSidebar(site); smartZoom(parseFloat(site.Latitude), parseFloat(site.Longitude)); }
+        }
+    });
 });
 </script>
 </body>
