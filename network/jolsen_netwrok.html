@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Esval Massedeponi - Master Network</title>
+    <title>Jølsen Miljøpark - Master Network</title>
     
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     
@@ -29,7 +29,6 @@
         .legend-item { display: flex; align-items: center; gap: 6px; }
         .legend-item svg { width: 14px !important; height: 14px !important; flex-shrink: 0; overflow: visible; }
 
-        /* Overganger for utheving */
         .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
         .dimmed { opacity: 0.15 !important; }
         .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
@@ -65,24 +64,56 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Veidekke ASA", type:"p"},
-        {id:"Veidekke Industri AS", type:"div_ind"},
-        {id:"Veidekke Entreprenør AS", type:"div_ent"},
-        {id:"Veidekke Sirkulær AS", type:"s"},
-        {id:"Leif Grimsrud AS", type:"s"},
-        {id:"Grande Entreprenør AS", type:"s"},
-        {id:"Amrock AS", type:"s"},
-        {id:"Esval Massedeponi", type:"receiving", active:true}
+        // KONSERN
+        {id:"AF Gruppen ASA", type:"p"},
+        
+        // DIVISJONER
+        {id:"AF Gruppen Norge AS", type:"div_ind"},
+        {id:"AF Energi og Miljø AS", type:"div_ent"},
+        {id:"AF Offshore AS", type:"div_ent"},
+        
+        // SØSTERAVDELINGER
+        {id:"AF Decom AS", type:"s"},
+        {id:"Nes Miljøpark AS", type:"s"},
+        {id:"Mepex AS", type:"s", l:"(Consulting)"},
+        {id:"AF Energi AS", type:"s"},
+        {id:"Jølsen Eiendom 1 AS", type:"s"},
+        {id:"Jølsen Eiendom 4 AS", type:"s"},
+        {id:"Betonmast AS", type:"s", l:"(Construction)"},
+        {id:"Strøm Gundersen AS", type:"s"},
+        {id:"AF Offshore Decom AS", type:"s"},
+        {id:"AF Miljøbase Vats AS", type:"s"},
+        
+        // ACTIVE SITE
+        {id:"Jølsen Miljøpark AS", type:"receiving", active:true}
     ];
     
     var LINKS = [
-        ["Veidekke Industri AS", "Veidekke ASA"],
-        ["Veidekke Entreprenør AS", "Veidekke ASA"],
-        ["Veidekke Sirkulær AS", "Veidekke Entreprenør AS"],
-        ["Leif Grimsrud AS", "Veidekke Entreprenør AS"],
-        ["Grande Entreprenør AS", "Veidekke Entreprenør AS"],
-        ["Amrock AS", "Veidekke Industri AS"],
-        ["Esval Massedeponi", "Veidekke Sirkulær AS"]
+        // Chain to Jølsen
+        ["AF Gruppen Norge AS", "AF Gruppen ASA"],
+        ["AF Energi og Miljø AS", "AF Gruppen Norge AS"],
+        ["AF Decom AS", "AF Energi og Miljø AS"],
+        ["Jølsen Miljøpark AS", "AF Decom AS"],
+        
+        // Jølsen subsidiaries
+        ["Jølsen Eiendom 1 AS", "Jølsen Miljøpark AS"],
+        ["Jølsen Eiendom 4 AS", "Jølsen Miljøpark AS"],
+        
+        // Siblings under AF Decom
+        ["Nes Miljøpark AS", "AF Decom AS"],
+        
+        // Siblings under AF Energi og Miljø
+        ["Mepex AS", "AF Energi og Miljø AS"],
+        ["AF Energi AS", "AF Energi og Miljø AS"],
+        
+        // Other branches under Norge
+        ["AF Offshore AS", "AF Gruppen Norge AS"],
+        ["Betonmast AS", "AF Gruppen Norge AS"],
+        ["Strøm Gundersen AS", "AF Gruppen Norge AS"],
+        
+        // Offshore sub-branch
+        ["AF Offshore Decom AS", "AF Offshore AS"],
+        ["AF Miljøbase Vats AS", "AF Offshore Decom AS"]
     ];
 
     var el = document.getElementById(containerID);
@@ -112,20 +143,34 @@
     function createShape(type, isActive) {
         var ns = "http://www.w3.org/2000/svg";
         var g = document.createElementNS(ns, "g");
-        var r = 6; 
+        var r = 5; 
+        var p = 3; // padding for white background
         
         if (type === 'p') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var rect = document.createElementNS(ns, "rect");
             rect.setAttribute("x", -r); rect.setAttribute("y", -r);
             rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
             rect.setAttribute("fill", "#000");
             g.appendChild(rect);
         } else if (type === 'div_ind') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var poly = document.createElementNS(ns, "polygon");
             poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
             poly.setAttribute("fill", "#666");
             g.appendChild(poly);
         } else if (type === 'div_ent') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var poly = document.createElementNS(ns, "polygon");
             poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
             poly.setAttribute("fill", "none");
@@ -133,6 +178,11 @@
             poly.setAttribute("stroke-width", "1.5");
             g.appendChild(poly);
         } else if (type === 's') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var rect = document.createElementNS(ns, "rect");
             rect.setAttribute("x", -r); rect.setAttribute("y", -r);
             rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
@@ -141,14 +191,16 @@
             rect.setAttribute("stroke-width", "1.5");
             g.appendChild(rect);
         } else if (type === 'receiving') { 
+            var bg = document.createElementNS(ns, "circle");
+            bg.setAttribute("r", r+p); bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var c = document.createElementNS(ns, "circle");
             c.setAttribute("r", r); c.setAttribute("fill", "none");
             c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.5");
-            var p = document.createElementNS(ns, "path");
-            p.setAttribute("fill", "#000");
-            // Bunn halvdel
-            p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
-            g.appendChild(c); g.appendChild(p);
+            var pa = document.createElementNS(ns, "path");
+            pa.setAttribute("fill", "#000");
+            pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
+            g.appendChild(c); g.appendChild(pa);
         }
 
         if(isActive) {
@@ -196,18 +248,6 @@
             var hit = document.createElementNS(ns, "circle");
             hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
             g.appendChild(hit);
-
-            if (n.active) {
-                var ring = document.createElementNS(ns, "circle");
-                ring.setAttribute("r", 17); ring.setAttribute("fill", "none");
-                ring.setAttribute("stroke", "#000"); ring.setAttribute("stroke-width", "0.5");
-                ring.setAttribute("stroke-dasharray", "2,3");
-                var anim = document.createElementNS(ns, "animateTransform");
-                anim.setAttribute("attributeName", "transform"); anim.setAttribute("type", "rotate");
-                anim.setAttribute("from", "0 0 0"); anim.setAttribute("to", "360 0 0");
-                anim.setAttribute("dur", "20s"); anim.setAttribute("repeatCount", "indefinite");
-                ring.appendChild(anim); g.appendChild(ring);
-            }
             
             var shape = createShape(n.type, n.active);
             shape.style.pointerEvents = "none";
