@@ -3,21 +3,37 @@
 <head>
     <meta charset="utf-8">
     <title>Elvestad Massemottak Network</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
     <style>
         /* Ensures the widget fills the specific frame provided by the site */
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff; }
-        #network-container { width: 100%; height: 100vh; display: block; position: relative; }
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            background: #fff; 
+            font-family: 'IBM Plex Mono', monospace; /* Default font set here */
+        }
+        #network-container { 
+            width: 100%; 
+            height: 100vh; 
+            display: block; 
+            position: relative; 
+        }
     </style>
 </head>
 <body>
 
 <div id="network-container">
-    <div style="position: absolute; bottom: 8px; right: 10px; font: 9px Helvetica, Arial, sans-serif; color: #ccc; pointer-events: none; z-index: 100;">
+    <div style="position: absolute; bottom: 8px; right: 10px; font-size: 9px; color: #ccc; pointer-events: none; z-index: 100;">
         Kilde: Proff.no
     </div>
 </div>
 
-<div style="position: absolute; top: 10px; left: 10px; display:flex; flex-wrap:wrap; gap:12px; font:9px Helvetica,Arial,sans-serif; color:#000; z-index:10; background:rgba(255,255,255,0.8); padding:5px; border-radius:4px;">
+<div style="position: absolute; top: 10px; left: 10px; display:flex; flex-wrap:wrap; gap:12px; font-size:9px; color:#000; z-index:10; background:rgba(255,255,255,0.8); padding:5px; border-radius:4px;">
     <div style="display:flex; align-items:center; gap:4px;">
         <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#000" transform="translate(5,5)"/></svg> Konsern (ASA)
     </div>
@@ -36,57 +52,36 @@
 (function(){
     // --- 1. DATA FOR ELVESTAD MASSEMOTTAK (VEIDEKKE) ---
     var NODES = [
-        // GROUP PARENT
         {id:"Veidekke ASA", t:"p"},
-
-        // DIVISION A: INDUSTRI (Masses/Stone)
         {id:"Veidekke Industri AS", t:"op"},
         {id:"Veidekke Geomaterialer", t:"s", l:"(Avdeling)"}, 
-
-        // ACTIVE SITE (Under Geomaterialer)
         {id:"Elvestad Massemottak", t:"mottak", active:true},
-
-        // SISTER SITES (Context)
         {id:"Veidekke Gardermoen", t:"mottak"},
         {id:"Alnabru Massemottak", t:"mottak"},
         {id:"Gran Pukkverk", t:"pukk"},
         {id:"Rambydalen Pukkverk", t:"pukk"},
-
-        // DIVISION B: ENTREPRENØR (Construction/Waste)
         {id:"Veidekke Entreprenør AS", t:"s", l:"(Bygg/Anlegg)"},
-        
-        // SISTER OPERATION (Context)
         {id:"Veidekke Sirkulær AS", t:"gjenvinning", l:"(Avfall)"},
-
-        // OTHER DIVISIONS (Selected)
         {id:"Veidekke Asfalt", t:"s"},
         {id:"Veidekke Pukk og Grus", t:"s"},
         {id:"Amrock AS", t:"s", l:"(Stein)"},
         {id:"Kystmiljø AS", t:"s"}
     ];
     
-    // Links: Child -> Parent
     var LINKS = [
-        // Top Level
         ["Veidekke Industri AS", "Veidekke ASA"],
         ["Veidekke Entreprenør AS", "Veidekke ASA"],
-
-        // Industri Branch (Masses)
         ["Veidekke Geomaterialer", "Veidekke Industri AS"],
-        ["Elvestad Massemottak", "Veidekke Geomaterialer"], // ACTIVE
+        ["Elvestad Massemottak", "Veidekke Geomaterialer"], 
         ["Veidekke Gardermoen", "Veidekke Geomaterialer"],
         ["Alnabru Massemottak", "Veidekke Geomaterialer"],
         ["Gran Pukkverk", "Veidekke Geomaterialer"],
         ["Rambydalen Pukkverk", "Veidekke Geomaterialer"],
-        
-        // Other Industri Units
         ["Veidekke Asfalt", "Veidekke Industri AS"],
         ["Veidekke Pukk og Grus", "Veidekke Industri AS"],
         ["Amrock AS", "Veidekke Industri AS"],
-
-        // Entreprenør Branch
         ["Veidekke Sirkulær AS", "Veidekke Entreprenør AS"],
-        ["Kystmiljø AS", "Veidekke ASA"] // Often direct sub or close associate
+        ["Kystmiljø AS", "Veidekke ASA"] 
     ];
 
     var COLORS = {
@@ -209,7 +204,7 @@
         links.forEach(l => {
             var line = document.createElementNS(ns, "line");
             line.setAttribute("stroke", "#ddd");
-            line.setAttribute("stroke-width", "1");
+            line.setAttribute("stroke-width", "0.4"); // <-- THINNER LINES HERE
             linkG.appendChild(line);
             l.el = line;
         });
@@ -256,7 +251,10 @@
             txt.textContent = textContent;
             txt.setAttribute("x", 12); txt.setAttribute("y", 3);
             txt.setAttribute("fill", n.active ? "#000" : "#999"); 
-            txt.style.font = n.active ? "bold 10px Helvetica, Arial, sans-serif" : "9px Helvetica, Arial, sans-serif"; 
+            
+            // <-- IBM PLEX MONO APPLIED HERE
+            txt.style.font = n.active ? "600 10px 'IBM Plex Mono', monospace" : "400 9px 'IBM Plex Mono', monospace"; 
+            
             txt.style.pointerEvents = "none";
             g.appendChild(txt);
             n.tEl = txt;
