@@ -2,9 +2,9 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Elvestad Massemottak Kompakt Network</title>
+    <title>Elvestad Massemottak Network</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
     <style>
         body, html { 
@@ -13,242 +13,207 @@
             font-family: 'IBM Plex Mono', monospace; 
         }
         #network-container { 
-            width: 100%; height: calc(100vh - 100px); /* Juster høyde for å gi plass til legenden */
+            width: 100%; height: calc(100vh - 40px); 
             display: block; position: relative; 
-            margin-top: 100px; /* Plass til legenden */
+            margin-top: 40px; 
         }
         
-        /* --- Kompakt Legende-stiler --- */
-        #main-legend {
-            position: fixed; top: 0; left: 0; width: 100%; 
-            background: rgba(255,255,255,0.9); z-index: 10;
-            display: flex; flex-direction: column; 
-            font-size: 8px; color: #000; padding: 5px; 
-            border-bottom: 1px solid #ddd; box-sizing: border-box;
+        /* --- SINGLE LINE LEGEND --- */
+        #single-line-legend {
+            position: fixed; top: 0; left: 0; width: 100%; height: 40px;
+            background: rgba(255,255,255,0.95); z-index: 10;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; color: #000; padding: 0 10px; 
+            border-bottom: 1px solid #eee; box-sizing: border-box;
+            gap: 20px; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap;
         }
-        #legend-top, #legend-bottom { display: flex; flex-wrap: wrap; gap: 8px; justify-content: start; width: 100%; }
-        #legend-bottom { margin-top: 5px; gap: 15px; border-top: 1px solid #eee; padding-top: 5px; }
-        .legend-group { display: flex; flex-direction: column; gap: 3px; }
-        .legend-group-title { font-weight: 600; font-size: 9px; margin-bottom: 2px; text-transform: uppercase; }
-        .legend-item { display:flex; align-items:center; gap:3px; white-space: nowrap; }
-        .legend-sub-items { display: flex; gap: 8px; }
-        .legend-sub-item { display: flex; align-items: center; gap: 2px; }
+        
+        .legend-section { display: flex; align-items: center; gap: 10px; }
+        .legend-divider { width: 1px; height: 20px; background: #ccc; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-title { font-weight: 600; text-transform: uppercase; margin-right: 5px; }
     </style>
 </head>
 <body>
 
-<div id="main-legend">
-    <div id="legend-top">
-        <div class="legend-item"><svg width="8" height="8"><rect width="8" height="8" fill="#000"/></svg> Konsern (ASA)</div>
-        <div class="legend-item"><svg width="8" height="8" style="overflow:visible"><polygon points="0,-4 4,3 -4,3" fill="#666" transform="translate(4,4)"/></svg> Divisjon (Industri)</div>
-        <div class="legend-item"><svg width="8" height="8" style="overflow:visible"><polygon points="0,-4 4,3 -4,3" fill="none" stroke="#666" stroke-width="0.5" transform="translate(4,4)"/></svg> Divisjon (Entreprenør)</div>
-        <div class="legend-item"><svg width="8" height="8"><rect x="0.25" y="0.25" width="7.5" height="7.5" fill="none" stroke="#666" stroke-width="0.5"/></svg> Søsteravdeling</div>
+<div id="single-line-legend">
+    <div class="legend-section">
+        <div class="legend-item"><svg width="12" height="12"><rect width="12" height="12" fill="#000"/></svg> Konsern</div>
+        <div class="legend-item"><svg width="12" height="12"><polygon points="0,12 6,0 12,12" fill="#666"/></svg> Divisjon (Ind)</div>
+        <div class="legend-item"><svg width="12" height="12"><polygon points="0,12 6,0 12,12" fill="none" stroke="#666" stroke-width="1.5"/></svg> Divisjon (Ent)</div>
+        <div class="legend-item"><svg width="12" height="12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="#666" stroke-width="1.5"/></svg> Søsteravd.</div>
     </div>
-    <div id="legend-bottom">
-        <div class="legend-group">
-            <div class="legend-group-title">CONSTRUCTION PROJECT (Byggeplass)</div>
-            <div class="legend-sub-items">
-                <div class="legend-sub-item">
-                    <svg width="8" height="8"><rect x="0.25" y="0.25" width="7.5" height="7.5" fill="none" stroke="#ff003c" stroke-width="0.5"/><path d="M0,0 L0,4 L4,0 Z" fill="#000"/></svg> producing
-                </div>
-                <div class="legend-sub-item">
-                    <svg width="8" height="8"><rect x="0.25" y="0.25" width="7.5" height="7.5" fill="none" stroke="#ff003c" stroke-width="0.5"/><path d="M4,4 L8,4 L8,8 L4,8 Z" fill="#000" transform="translate(-4,-4)"/></svg> receiving
-                </div>
-                <div class="legend-sub-item">
-                    <svg width="8" height="8"><rect x="0.25" y="0.25" width="7.5" height="7.5" fill="none" stroke="#ff003c" stroke-width="0.5"/><path d="M0,0 L0,4 L4,0 Z" fill="#000"/><path d="M4,4 L8,4 L8,8 L4,8 Z" fill="#000" transform="translate(-4,-4)"/></svg> mixed
-                </div>
-            </div>
+    
+    <div class="legend-divider"></div>
+    
+    <div class="legend-section">
+        <span class="legend-title">Construction:</span>
+        <div class="legend-item">
+            <svg width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#ff003c" stroke-width="1.5"/><path d="M1,1 L13,1 L1,13 Z" fill="#000"/></svg> Producing
         </div>
-        <div class="legend-group">
-            <div class="legend-group-title">FACILITY (Anlegg/Stasjon)</div>
-            <div class="legend-sub-items">
-                <div class="legend-sub-item">
-                    <svg width="8" height="8"><circle cx="4" cy="4" r="3.75" fill="none" stroke="#39ff14" stroke-width="0.5"/><path d="M4,0 A4,4 0 0,0 4,8 Z" fill="#000" transform="translate(0,0)"/></svg> producing
-                </div>
-                <div class="legend-sub-item">
-                    <svg width="8" height="8"><circle cx="4" cy="4" r="3.75" fill="none" stroke="#39ff14" stroke-width="0.5"/><path d="M4,0 A4,4 0 0,1 4,8 Z" fill="#000" transform="translate(0,0)"/></svg> receiving
-                </div>
-                <div class="legend-sub-item">
-                    <svg width="8" height="8"><circle cx="4" cy="4" r="3.75" fill="none" stroke="#39ff14" stroke-width="0.5"/><path d="M4,0 A4,4 0 0,0 8,4 L8,0 Z M0,4 A4,4 0 0,0 4,8 L0,8 Z" fill="#000" transform="translate(-4,-4)"/></svg> mixed
-                </div>
-            </div>
+        <div class="legend-item">
+            <svg width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#ff003c" stroke-width="1.5"/><path d="M13,13 L1,13 L13,1 Z" fill="#000"/></svg> Receiving
+        </div>
+        <div class="legend-item">
+            <svg width="14" height="14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#ff003c" stroke-width="1.5"/><path d="M1,1 L13,1 L7,7 Z" fill="#000"/><path d="M1,13 L13,13 L7,7 Z" fill="#000"/></svg> Mixed
+        </div>
+    </div>
+
+    <div class="legend-divider"></div>
+    
+    <div class="legend-section">
+        <span class="legend-title">Facility:</span>
+        <div class="legend-item">
+            <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="none" stroke="#39ff14" stroke-width="1.5"/><path d="M1,7 A6,6 0 0,1 13,7 Z" fill="#000"/></svg> Producing
+        </div>
+        <div class="legend-item">
+            <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="none" stroke="#39ff14" stroke-width="1.5"/><path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/></svg> Receiving
+        </div>
+        <div class="legend-item">
+            <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="none" stroke="#39ff14" stroke-width="1.5"/><path d="M7,7 L1,7 A6,6 0 0,1 7,1 Z M7,7 L13,7 A6,6 0 0,1 7,13 Z" fill="#000"/></svg> Mixed
         </div>
     </div>
 </div>
 
-<div id="network-container">
-    <div style="position: absolute; bottom: 8px; right: 10px; font-size: 8px; color: #ddd; pointer-events: none; z-index: 100;">
-        Kilde: Proff.no
-    </div>
-</div>
+<div id="network-container"></div>
 
 <script>
 (function(){
-    // --- 1. KOMPAKT DATA FOR VEIDEKKE ---
     var NODES = [
-        // Parent/Division: squares/triangles (black/grey)
-        {id:"Veidekke ASA", type:"p", cargo_type:"parent", cargo_sub:"parent"},
-        {id:"Veidekke Industri AS", type:"op_industri", cargo_type:"parent", cargo_sub:"division_industri"},
-        {id:"Geomaterialer", type:"s", l:"(Avdeling)", cargo_type:"parent", cargo_sub:"dept"}, 
-        {id:"Asfalt", type:"s", cargo_type:"parent", cargo_sub:"dept"},
-        {id:"Pukk og Grus", type:"s", cargo_type:"parent", cargo_sub:"dept"},
-        {id:"Veidekke Entreprenør AS", type:"op_entreprenør", l:"(Bygg/Anlegg)", cargo_type:"parent", cargo_sub:"division_entreprenør"},
+        // CORPORATE (Black/Grey Shapes)
+        {id:"Veidekke ASA", cargo_type:"parent", cargo_sub:"parent"},
+        {id:"Veidekke Industri AS", cargo_type:"parent", cargo_sub:"division_industri"},
+        {id:"Veidekke Entreprenør AS", l:"(Bygg)", cargo_type:"parent", cargo_sub:"division_entreprenør"},
+        {id:"Geomaterialer", l:"(Avdeling)", cargo_type:"parent", cargo_sub:"dept"}, 
+        {id:"Asfalt", cargo_type:"parent", cargo_sub:"dept"},
+        {id:"Pukk og Grus", cargo_type:"parent", cargo_sub:"dept"},
         
-        // Facilities (green circles) from new legend
+        // FACILITIES (Green Circles)
         {id:"Elvestad Massemottak", cargo_type:"facility", cargo_sub:"mixed", active:true},
-        {id:"Veidekke Gardermoen", cargo_type:"facility", cargo_sub:"receiving"},
-        {id:"Alnabru Massemottak", cargo_type:"facility", cargo_sub:"producing"},
-        {id:"Gran Pukkverk", cargo_type:"facility", cargo_sub:"mixed"},
-        {id:"Rambydalen Pukkverk", cargo_type:"facility", cargo_sub:"receiving"},
-        {id:"Veidekke Sirkulær AS", cargo_type:"facility", cargo_sub:"producing", l:"(Avfall)"},
+        {id:"Veidekke Gardermoen", cargo_type:"facility", cargo_sub:"receiving"}, // Massemottak = Receiving
+        {id:"Alnabru Massemottak", cargo_type:"facility", cargo_sub:"receiving"}, // Massemottak = Receiving
+        {id:"Gran Pukkverk", cargo_type:"facility", cargo_sub:"producing"}, // Pukkverk = Producing
+        {id:"Rambydalen Pukkverk", cargo_type:"facility", cargo_sub:"producing"}, // Pukkverk = Producing
+        {id:"Veidekke Sirkulær AS", l:"(Avfall)", cargo_type:"facility", cargo_sub:"mixed"},
 
-        // Projects/Affiliates (pink squares) from new legend & context
-        {id:"Amrock AS", cargo_type:"construction", cargo_sub:"producing", l:"(Stein)"},
+        // CONSTRUCTION/PROJECTS (Pink Squares)
+        {id:"Amrock AS", l:"(Stein)", cargo_type:"construction", cargo_sub:"producing"},
         {id:"Kystmiljø AS", cargo_type:"construction", cargo_sub:"mixed"}
     ];
     
-    // Links: Child -> Parent
     var LINKS = [
         ["Geomaterialer", "Veidekke Industri AS"],
         ["Asfalt", "Veidekke Industri AS"],
         ["Pukk og Grus", "Veidekke Industri AS"],
         ["Veidekke Industri AS", "Veidekke ASA"],
         ["Veidekke Entreprenør AS", "Veidekke ASA"],
-        ["Elvestad Massemottak", "Geomaterialer"], // ACTIVE link, contextual
+        ["Elvestad Massemottak", "Geomaterialer"], 
         ["Veidekke Gardermoen", "Geomaterialer"],
         ["Alnabru Massemottak", "Geomaterialer"],
         ["Gran Pukkverk", "Geomaterialer"],
         ["Rambydalen Pukkverk", "Geomaterialer"],
         ["Veidekke Sirkulær AS", "Veidekke Entreprenør AS"],
-        ["Amrock AS", "Veidekke ASA"], // Affiliate
-        ["Kystmiljø AS", "Veidekke ASA"] // Affiliate
+        ["Amrock AS", "Veidekke ASA"], 
+        ["Kystmiljø AS", "Veidekke ASA"] 
     ];
 
     var el = document.getElementById("network-container");
     var W, H, svg, nodes=[], links=[], parentMap={}, childrenMap={};
 
-    function createShape(node) {
+    function createIcon(node) {
         var ns = "http://www.w3.org/2000/svg";
-        var shape = document.createElementNS(ns, "g");
-        shape.setAttribute("transform", "translate(0,0)"); // anchor center
+        var g = document.createElementNS(ns, "g");
+        var size = 8; // Base radius/half-width for bigger icons
 
-        // Parent/Division: squares and triangles (grey/black)
         if (node.cargo_type === 'parent') {
             if (node.cargo_sub === 'parent') {
                 var r = document.createElementNS(ns, "rect");
-                r.setAttribute("x", -3.5); r.setAttribute("y", -3.5);
-                r.setAttribute("width", 7); r.setAttribute("height", 7);
+                r.setAttribute("x", -size); r.setAttribute("y", -size);
+                r.setAttribute("width", size*2); r.setAttribute("height", size*2);
                 r.setAttribute("fill", "#000");
-                shape.appendChild(r);
+                g.appendChild(r);
             } else if (node.cargo_sub === 'division_industri') {
                 var p = document.createElementNS(ns, "polygon");
-                p.setAttribute("points", "0,-4 4,3 -4,3");
+                p.setAttribute("points", `0,-${size} ${size},${size} -${size},${size}`);
                 p.setAttribute("fill", "#666");
-                shape.appendChild(p);
+                g.appendChild(p);
             } else if (node.cargo_sub === 'division_entreprenør') {
                 var p = document.createElementNS(ns, "polygon");
-                p.setAttribute("points", "0,-4 4,3 -4,3");
+                p.setAttribute("points", `0,-${size} ${size},${size} -${size},${size}`);
                 p.setAttribute("fill", "none");
-                p.setAttribute("stroke", "#666"); p.setAttribute("stroke-width", "0.5");
-                shape.appendChild(p);
-            } else { // dept/affiliate open square
+                p.setAttribute("stroke", "#666"); p.setAttribute("stroke-width", "1.5");
+                g.appendChild(p);
+            } else { 
                 var r = document.createElementNS(ns, "rect");
-                r.setAttribute("x", -3.25); r.setAttribute("y", -3.25);
-                r.setAttribute("width", 6.5); r.setAttribute("height", 6.5);
+                r.setAttribute("x", -size+1); r.setAttribute("y", -size+1);
+                r.setAttribute("width", (size*2)-2); r.setAttribute("height", (size*2)-2);
                 r.setAttribute("fill", "none");
-                r.setAttribute("stroke", "#666"); r.setAttribute("stroke-width", "0.5");
-                shape.appendChild(r);
+                r.setAttribute("stroke", "#666"); r.setAttribute("stroke-width", "1.5");
+                g.appendChild(r);
             }
         } 
-        // Projects: pink outlined squares with internal black shapes
         else if (node.cargo_type === 'construction') {
             var r = document.createElementNS(ns, "rect");
-            r.setAttribute("x", -3.25); r.setAttribute("y", -3.25);
-            r.setAttribute("width", 6.5); r.setAttribute("height", 6.5);
+            r.setAttribute("x", -size); r.setAttribute("y", -size);
+            r.setAttribute("width", size*2); r.setAttribute("height", size*2);
             r.setAttribute("fill", "none");
-            r.setAttribute("stroke", "#ff003c"); r.setAttribute("stroke-width", "0.5");
-            shape.appendChild(r);
+            r.setAttribute("stroke", "#ff003c"); r.setAttribute("stroke-width", "1.5");
+            g.appendChild(r);
 
+            var path = document.createElementNS(ns, "path");
+            path.setAttribute("fill", "#000");
             if (node.cargo_sub === 'producing') {
-                var path = document.createElementNS(ns, "path");
-                path.setAttribute("d", "M-3.5,-3.5 L-3.5,0 L0,-3.5 Z");
-                path.setAttribute("fill", "#000");
-                shape.appendChild(path);
+                path.setAttribute("d", `M-${size},-${size} L${size},-${size} L-${size},${size} Z`);
             } else if (node.cargo_sub === 'receiving') {
-                var path = document.createElementNS(ns, "path");
-                path.setAttribute("d", "M0,0 L3.5,0 L3.5,3.5 L0,3.5 Z");
-                path.setAttribute("fill", "#000");
-                shape.appendChild(path);
+                path.setAttribute("d", `M${size},${size} L-${size},${size} L${size},-${size} Z`);
             } else if (node.cargo_sub === 'mixed') {
-                var path = document.createElementNS(ns, "path");
-                path.setAttribute("d", "M-3.5,-3.5 L-3.5,0 L0,-3.5 Z");
-                path.setAttribute("fill", "#000");
-                shape.appendChild(path);
-                var path2 = document.createElementNS(ns, "path");
-                path2.setAttribute("d", "M0,0 L3.5,0 L3.5,3.5 L0,3.5 Z");
-                path2.setAttribute("fill", "#000");
-                shape.appendChild(path2);
+                path.setAttribute("d", `M-${size},-${size} L${size},-${size} L0,0 Z M-${size},${size} L${size},${size} L0,0 Z`);
             }
+            g.appendChild(path);
         }
-        // Facilities: green outlined circles with internal black shapes
         else if (node.cargo_type === 'facility') {
             var c = document.createElementNS(ns, "circle");
-            c.setAttribute("r", 3.25);
+            c.setAttribute("r", size);
             c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "0.5");
-            shape.appendChild(c);
+            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.5");
+            g.appendChild(c);
 
+            var path = document.createElementNS(ns, "path");
+            path.setAttribute("fill", "#000");
             if (node.cargo_sub === 'producing') {
-                var path = document.createElementNS(ns, "path");
-                path.setAttribute("d", "M0,0 A3.5,3.5 0 0,0 0,7 Z");
-                path.setAttribute("fill", "#000"); path.setAttribute("transform", "translate(0,-3.5)");
-                shape.appendChild(path);
+                path.setAttribute("d", `M-${size},0 A${size},${size} 0 0,1 ${size},0 Z`);
             } else if (node.cargo_sub === 'receiving') {
-                var path = document.createElementNS(ns, "path");
-                path.setAttribute("d", "M0,0 A3.5,3.5 0 0,1 0,7 Z");
-                path.setAttribute("fill", "#000"); path.setAttribute("transform", "translate(0,-3.5)");
-                shape.appendChild(path);
+                path.setAttribute("d", `M-${size},0 A${size},${size} 0 0,0 ${size},0 Z`);
             } else if (node.cargo_sub === 'mixed') {
-                var path = document.createElementNS(ns, "path");
-                path.setAttribute("d", "M0,0 A3.5,3.5 0 0,0 3.5,3.5 L3.5,0 Z M-3.5,3.5 A3.5,3.5 0 0,0 0,7 L-3.5,7 Z");
-                path.setAttribute("fill", "#000"); path.setAttribute("transform", "translate(0,-3.5)");
-                shape.appendChild(path);
+                path.setAttribute("d", `M0,0 L-${size},0 A${size},${size} 0 0,1 0,-${size} Z M0,0 L${size},0 A${size},${size} 0 0,1 0,${size} Z`);
             }
+            g.appendChild(path);
         }
 
-        // Active node (Elvestad) highlight
-        if(node.active) {
-            shape.setAttribute("transform", "scale(1.2)");
-        }
-        return shape;
+        if(node.active) g.setAttribute("transform", "scale(1.3)");
+        return g;
     }
 
     function init() {
         if(!el) return;
         
-        // Setup SVG
         W = el.offsetWidth; H = el.offsetHeight;
         el.innerHTML = "";
         var ns = "http://www.w3.org/2000/svg";
         svg = document.createElementNS(ns, "svg");
         svg.setAttribute("width", "100%");
         svg.setAttribute("height", "100%");
-        svg.setAttribute("viewBox", "0 0 " + W + " " + H);
-        svg.style.display = "block";
         el.appendChild(svg);
 
-        // Resize Listener
         window.addEventListener('resize', function() {
             W = el.offsetWidth; H = el.offsetHeight;
-            svg.setAttribute("viewBox", "0 0 " + W + " " + H);
         });
 
-        // Setup Nodes and map positions
         nodes = NODES.map(d => ({
-            id: d.id, type: d.type, l: d.l, active: d.active, 
+            id: d.id, l: d.l, active: d.active, 
             cargo_type: d.cargo_type, cargo_sub: d.cargo_sub,
-            x: W/2 + (Math.random()-0.5)*W/2,
-            y: H/2 + (Math.random()-0.5)*H/2,
+            x: W/2 + (Math.random()-0.5)*200,
+            y: H/2 + (Math.random()-0.5)*200,
             vx: 0, vy: 0
         }));
 
@@ -259,147 +224,77 @@
             if(s && t) links.push({s:s, t:t});
         });
 
-        // Draw Links
         var linkG = document.createElementNS(ns, "g");
         svg.appendChild(linkG);
         links.forEach(l => {
             var line = document.createElementNS(ns, "line");
             line.setAttribute("stroke", "#ddd");
-            line.setAttribute("stroke-width", "0.4");
+            line.setAttribute("stroke-width", "0.6");
             linkG.appendChild(line);
             l.el = line;
         });
 
-        // Draw Nodes
         var nodeG = document.createElementNS(ns, "g");
         svg.appendChild(nodeG);
 
         nodes.forEach(n => {
             var g = document.createElementNS(ns, "g");
-            g.style.cursor = "default";
+            g.style.cursor = "pointer";
             
-            // Active ring as in original, but compact
             if (n.active) {
                 var ring = document.createElementNS(ns, "circle");
-                ring.setAttribute("r", 14);
+                ring.setAttribute("r", 18);
                 ring.setAttribute("fill", "none");
                 ring.setAttribute("stroke", "#000");
-                ring.setAttribute("stroke-width", "1");
-                ring.setAttribute("stroke-dasharray", "2,2");
+                ring.setAttribute("stroke-dasharray", "3,3");
                 g.appendChild(ring);
             }
 
-            // Simple hit area
             var hit = document.createElementNS(ns, "circle");
-            hit.setAttribute("r", 10); hit.setAttribute("fill", "transparent");
+            hit.setAttribute("r", 20); hit.setAttribute("fill", "transparent");
             g.appendChild(hit);
 
-            // The compact shape
-            var shape = createShape(n);
+            var shape = createIcon(n);
             g.appendChild(shape);
             n.shapeEl = shape;
 
-            // Compact text
             var txt = document.createElementNS(ns, "text");
-            var textContent = n.id;
-            if(n.l) textContent += " " + n.l;
+            var textContent = n.id + (n.l ? " " + n.l : "");
             txt.textContent = textContent;
-            txt.setAttribute("x", 8); txt.setAttribute("y", 2.5);
-            txt.setAttribute("fill", n.active ? "#000" : "#888"); 
-            txt.style.font = n.active ? "600 8px 'IBM Plex Mono', monospace" : "400 7.5px 'IBM Plex Mono', monospace"; 
+            txt.setAttribute("x", 12); txt.setAttribute("y", 3);
+            txt.setAttribute("fill", n.active ? "#000" : "#666"); 
+            txt.style.font = n.active ? "600 11px 'IBM Plex Mono', monospace" : "400 10px 'IBM Plex Mono', monospace"; 
             txt.style.pointerEvents = "none";
             g.appendChild(txt);
             n.tEl = txt;
 
-            // Interactive highlighting
-            g.onmouseenter = function() {
-                var relatedNodes = getStrictLineage(n);
-                nodes.forEach(node => {
-                    node.shapeEl.setAttribute("opacity", "0.1");
-                    node.tEl.setAttribute("opacity", "0.1");
-                });
-                links.forEach(link => { link.el.setAttribute("opacity", "0.1"); });
-                relatedNodes.nodes.forEach(node => {
-                    node.shapeEl.setAttribute("opacity", "1");
-                    node.tEl.setAttribute("opacity", "1");
-                    node.tEl.setAttribute("fill", "#000");
-                });
-                relatedNodes.links.forEach(link => {
-                    link.el.setAttribute("stroke", "#000"); 
-                    link.el.setAttribute("opacity", "1");
-                });
-            };
-
-            g.onmouseleave = function() {
-                nodes.forEach(node => {
-                    node.shapeEl.setAttribute("opacity", "1");
-                    node.tEl.setAttribute("opacity", "1");
-                    node.tEl.setAttribute("fill", node.active ? "#000" : "#888");
-                });
-                links.forEach(link => {
-                    link.el.setAttribute("stroke", "#ddd");
-                    link.el.setAttribute("opacity", "1");
-                });
-            };
-
+            g.onmousedown = function(e){ e.preventDefault(); n.dragging = true; };
             nodeG.appendChild(g);
             n.el = g;
         });
 
-        // Building map of parents/children for lineage
-        LINKS.forEach(pair => {
-            var child = pair[0];
-            var parent = pair[1];
-            parentMap[child] = parent;
-            if(!childrenMap[parent]) childrenMap[parent] = [];
-            childrenMap[parent].push(child);
+        window.addEventListener("mousemove", function(e){
+            nodes.forEach(n => {
+                if(n.dragging) {
+                    var rect = svg.getBoundingClientRect();
+                    n.x = e.clientX - rect.left;
+                    n.y = e.clientY - rect.top;
+                    n.vx = 0; n.vy = 0;
+                }
+            });
         });
+        window.addEventListener("mouseup", function(){ nodes.forEach(n => n.dragging = false); });
 
         requestAnimationFrame(tick);
     }
 
-    // Standard lineage tracing for highlighting
-    function getStrictLineage(startNode) {
-        let pathNodes = new Set();
-        let pathLinks = new Set();
-        pathNodes.add(startNode);
-        
-        let curr = startNode;
-        while(curr) {
-            let parentId = parentMap[curr.id];
-            if(!parentId) break;
-            let parentNode = nodes.find(n => n.id === parentId);
-            if(parentNode) {
-                let link = links.find(l => (l.s === curr && l.t === parentNode) || (l.t === curr && l.s === parentNode));
-                if(link) pathLinks.add(link);
-                pathNodes.add(parentNode);
-                curr = parentNode;
-            } else break;
-        }
-        function addChildren(pNode) {
-            let kids = childrenMap[pNode.id] || [];
-            kids.forEach(kidId => {
-                let kNode = nodes.find(n => n.id === kidId);
-                if(kNode) {
-                    let link = links.find(l => (l.s === kNode && l.t === pNode) || (l.t === kNode && l.s === pNode));
-                    if(link) pathLinks.add(link);
-                    pathNodes.add(kNode);
-                    addChildren(kNode);
-                }
-            });
-        }
-        addChildren(startNode);
-        return {nodes: pathNodes, links: pathLinks};
-    }
-
-    // Force-directed tick
     function tick() {
         links.forEach(l => {
             var dx = l.t.x - l.s.x; var dy = l.t.y - l.s.y;
             var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-            var restLen = 35; // tighter restLen
-            if(l.s.active || l.t.active) restLen = 50;
-            var force = (dist - restLen) * 0.05;
+            var restLen = 80; // Spread nodes out more
+            if(l.s.active || l.t.active) restLen = 120;
+            var force = (dist - restLen) * 0.03;
             var fx = (dx/dist)*force; var fy = (dy/dist)*force;
             l.s.vx += fx; l.s.vy += fy; l.t.vx -= fx; l.t.vy -= fy;
         });
@@ -409,18 +304,19 @@
                 if(n===n2) return;
                 var dx = n.x - n2.x; var dy = n.y - n2.y;
                 var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                if(dist < 50) { // tighter repulsion
-                    var f = (50-dist) * 0.05; 
+                if(dist < 90) { // Keep them from overlapping
+                    var f = (90-dist) * 0.05; 
                     n.vx += (dx/dist)*f; n.vy += (dy/dist)*f; 
                 }
             });
-            n.vx += (W/2 - n.x) * 0.02; 
-            n.vy += (H/2 - n.y) * 0.02;
+            n.vx += (W/2 - n.x) * 0.015; // Pull to center
+            n.vy += (H/2 - n.y) * 0.015;
             
-            n.x += n.vx; n.y += n.vy; n.vx *= 0.85; n.vy *= 0.85;
-            // set window boundaries
-            n.x = Math.max(20, Math.min(W - 60, n.x));
-            n.y = Math.max(20, Math.min(H - 20, n.y));
+            if(!n.dragging) { n.x += n.vx; n.y += n.vy; }
+            n.vx *= 0.85; n.vy *= 0.85;
+            
+            n.x = Math.max(30, Math.min(W - 150, n.x));
+            n.y = Math.max(30, Math.min(H - 30, n.y));
             if(n.el) n.el.setAttribute("transform", "translate("+n.x+","+n.y+")");
         });
 
@@ -433,9 +329,9 @@
         if(document.contains(el)) requestAnimationFrame(tick);
     }
     
-    // Delayed init to ensure container size is ready and legend is placed
     setTimeout(init, 100);
 })();
 </script>
 </body>
+</html>
 </html>
