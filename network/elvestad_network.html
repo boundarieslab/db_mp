@@ -7,21 +7,13 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
     
     <style>
-        /* Ensures the widget fills the specific frame provided by the site */
         body, html { 
-            margin: 0; 
-            padding: 0; 
-            width: 100%; 
-            height: 100%; 
-            overflow: hidden; 
-            background: #fff; 
-            font-family: 'IBM Plex Mono', monospace; /* Default font set here */
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: #fff; 
+            font-family: 'IBM Plex Mono', monospace; 
         }
         #network-container { 
-            width: 100%; 
-            height: 100vh; 
-            display: block; 
-            position: relative; 
+            width: 100%; height: 100vh; display: block; position: relative; 
         }
     </style>
 </head>
@@ -50,13 +42,12 @@
 
 <script>
 (function(){
-    // --- 1. DATA FOR ELVESTAD MASSEMOTTAK (VEIDEKKE) ---
     var NODES = [
         {id:"Veidekke ASA", t:"p"},
         {id:"Veidekke Industri AS", t:"op"},
         {id:"Veidekke Geomaterialer", t:"s", l:"(Avdeling)"}, 
-        {id:"Elvestad Massemottak", t:"mottak", active:true},
-        {id:"Veidekke Gardermoen", t:"mottak"},
+        {id:"Elvestad Massemottak", t:"mottak", active:true, url: "/Elvestad-Massemottak"}, // Replace with your Cargo URL
+        {id:"Veidekke Gardermoen", t:"mottak", url: "/Gardermoen"}, // Replace with your Cargo URL
         {id:"Alnabru Massemottak", t:"mottak"},
         {id:"Gran Pukkverk", t:"pukk"},
         {id:"Rambydalen Pukkverk", t:"pukk"},
@@ -97,7 +88,6 @@
         let pathLinks = new Set();
         pathNodes.add(startNode);
         
-        // Trace Up
         let curr = startNode;
         while(curr) {
             let parentId = parentMap[curr.id];
@@ -110,7 +100,6 @@
                 curr = parentNode;
             } else break;
         }
-        // Trace Down
         function addChildren(pNode) {
             let kids = childrenMap[pNode.id] || [];
             kids.forEach(kidId => {
@@ -168,7 +157,6 @@
             childrenMap[parent].push(child);
         });
 
-        // Setup SVG
         W = el.offsetWidth; H = el.offsetHeight;
         el.innerHTML = "";
         var ns = "http://www.w3.org/2000/svg";
@@ -179,14 +167,13 @@
         svg.style.display = "block";
         el.appendChild(svg);
 
-        // Resize Listener
         window.addEventListener('resize', function() {
             W = el.offsetWidth; H = el.offsetHeight;
             svg.setAttribute("viewBox", "0 0 " + W + " " + H);
         });
 
         nodes = NODES.map(d => ({
-            id: d.id, type: d.t, label: d.l, active: d.active,
+            id: d.id, type: d.t, label: d.l, active: d.active, url: d.url,
             x: W/2 + (Math.random()-0.5)*100,
             y: H/2 + (Math.random()-0.5)*100,
             vx: 0, vy: 0
@@ -204,7 +191,7 @@
         links.forEach(l => {
             var line = document.createElementNS(ns, "line");
             line.setAttribute("stroke", "#ddd");
-            line.setAttribute("stroke-width", "0.4"); // <-- THINNER LINES HERE
+            line.setAttribute("stroke-width", "0.4");
             linkG.appendChild(line);
             l.el = line;
         });
@@ -248,13 +235,14 @@
             var txt = document.createElementNS(ns, "text");
             var textContent = n.id;
             if(n.label) textContent += " " + n.label;
+            
+            // Add a little arrow if it's a clickable link
+            if(n.url) textContent += " ↗"; 
+            
             txt.textContent = textContent;
             txt.setAttribute("x", 12); txt.setAttribute("y", 3);
             txt.setAttribute("fill", n.active ? "#000" : "#999"); 
-            
-            // <-- IBM PLEX MONO APPLIED HERE
             txt.style.font = n.active ? "600 10px 'IBM Plex Mono', monospace" : "400 9px 'IBM Plex Mono', monospace"; 
-            
             txt.style.pointerEvents = "none";
             g.appendChild(txt);
             n.tEl = txt;
@@ -265,9 +253,7 @@
                     node.shapeEl.setAttribute("opacity", "0.1");
                     node.tEl.setAttribute("opacity", "0.1");
                 });
-                links.forEach(link => {
-                    link.el.setAttribute("opacity", "0.1");
-                });
+                links.forEach(link => { link.el.setAttribute("opacity", "0.1"); });
                 lineage.nodes.forEach(node => {
                     node.shapeEl.setAttribute("opacity", "1");
                     node.tEl.setAttribute("opacity", "1");
@@ -291,7 +277,12 @@
                 });
             };
 
-            g.onmousedown = function(e){ e.preventDefault(); n.dragging = true; };
+            g.onmousedown = function(e){ 
+                e.preventDefault(); 
+                n.dragging = true; 
+                n.startX = e.clientX;
+                n.startY = e.clientY;
+            };
             nodeG.appendChild(g);
             n.el = g;
         });
@@ -306,7 +297,27 @@
                 }
             });
         });
-        window.addEventListener("mouseup", function(){ nodes.forEach(n => n.dragging = false); });
+        
+        // --- NEW CLICK HANDLING LOGIC FOR CARGO ---
+        window.addEventListener("mouseup", function(e){ 
+            nodes.forEach(n => {
+                if(n.dragging) {
+                    n.dragging = false;
+                    // Check if it was a click (mouse didn't move) and if the node has a URL
+                    if (Math.abs(e.clientX - n.startX) < 5 && Math.abs(e.clientY - n.startY) < 5) {
+                        if (n.url) {
+                            // Create a temporary link and click it so Cargo's native scripts intercept it
+                            var tempLink = document.createElement("a");
+                            tempLink.href = n.url;
+                            tempLink.target = "_top"; // Ensures it breaks out of the embed iframe
+                            document.body.appendChild(tempLink);
+                            tempLink.click();
+                            document.body.removeChild(tempLink);
+                        }
+                    }
+                }
+            }); 
+        });
 
         requestAnimationFrame(tick);
     }
@@ -350,7 +361,6 @@
         if(document.contains(el)) requestAnimationFrame(tick);
     }
     
-    // Delayed init to ensure container size is ready
     setTimeout(init, 100);
 })();
 </script>
