@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Esval Massedeponi - Master Network</title>
+    <title>Elvestad Massemottak - Master Network</title>
     
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
@@ -43,12 +43,17 @@
     <div class="legend-section">
         <div class="legend-item"><svg viewBox="0 0 10 10"><rect width="10" height="10" fill="#000"/></svg> Konsern</div>
         <div class="legend-item"><svg viewBox="0 0 10 10"><polygon points="0,10 5,0 10,10" fill="#666"/></svg> Divisjon</div>
-        <div class="legend-item"><svg viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" fill="none" stroke="#666" stroke-width="1.2"/></svg> Søsteravd.</div>
     </div>
     <div class="legend-divider"></div>
     <div class="legend-section">
         <div class="legend-item">
-            <svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="none" stroke="#39ff14" stroke-width="1.5"/><path d="M1,6 A5,5 0 0,0 11,6 Z" fill="#000"/></svg> Receiving (Esval)
+            <svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#ff003c" stroke-width="1.5"/><path d="M1,1 L13,1 L7,7 Z M1,13 L13,13 L7,7 Z" fill="#000"/></svg> Const. Mixed
+        </div>
+    </div>
+    <div class="legend-divider"></div>
+    <div class="legend-section">
+        <div class="legend-item">
+            <svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="none" stroke="#39ff14" stroke-width="1.5"/><path d="M6,6 L1,6 A5,5 0 0,1 6,1 Z M6,6 L11,6 A5,5 0 0,1 6,11 Z" fill="#000"/></svg> Facility Mixed (Aktiv)
         </div>
     </div>
 </div>
@@ -60,34 +65,34 @@
     var NODES = [
         {id:"Veidekke ASA", cargo_type:"parent", cargo_sub:"parent"},
         {id:"Veidekke Industri AS", cargo_type:"parent", cargo_sub:"division_industri"},
-        {id:"Veidekke Entreprenør AS", cargo_type:"parent", cargo_sub:"division_entreprenør"},
-        {id:"Esval Massedeponi", cargo_type:"facility", cargo_sub:"receiving", active:true},
-        {id:"Veidekke Sirkulær AS", cargo_type:"parent", cargo_sub:"dept"},
-        {id:"Leif Grimsrud AS", cargo_type:"parent", cargo_sub:"dept"},
-        {id:"Øst AS", cargo_type:"parent", cargo_sub:"dept"},
-        {id:"Kystmiljø AS", cargo_type:"parent", cargo_sub:"dept"},
-        {id:"Veidekke Prefab AS", cargo_type:"parent", cargo_sub:"dept"},
-        {id:"Båsum Boring AS", cargo_type:"parent", cargo_sub:"dept"},
-        {id:"Seby AS", cargo_type:"parent", cargo_sub:"dept"},
-        {id:"Grande Entreprenør AS", cargo_type:"parent", cargo_sub:"dept"},
-        {id:"Amrock AS", cargo_type:"parent", cargo_sub:"dept"},
-        {id:"Bergmesteren Raudsand AS", cargo_type:"parent", cargo_sub:"dept"}
+        {id:"Veidekke Entreprenør AS", l:"(Bygg)", cargo_type:"parent", cargo_sub:"division_entreprenør"},
+        {id:"Geomaterialer", l:"(Avdeling)", cargo_type:"parent", cargo_sub:"dept"}, 
+        {id:"Asfalt", cargo_type:"parent", cargo_sub:"dept"},
+        {id:"Pukk og Grus", cargo_type:"parent", cargo_sub:"dept"},
+        {id:"Elvestad Massemottak", cargo_type:"facility", cargo_sub:"mixed", active:true},
+        {id:"Veidekke Gardermoen", cargo_type:"facility", cargo_sub:"receiving"},
+        {id:"Alnabru Massemottak", cargo_type:"facility", cargo_sub:"receiving"},
+        {id:"Gran Pukkverk", cargo_type:"facility", cargo_sub:"producing"},
+        {id:"Rambydalen Pukkverk", cargo_type:"facility", cargo_sub:"producing"},
+        {id:"Veidekke Sirkulær AS", l:"(Avfall)", cargo_type:"facility", cargo_sub:"mixed"},
+        {id:"Amrock AS", l:"(Stein)", cargo_type:"construction", cargo_sub:"producing"},
+        {id:"Kystmiljø AS", cargo_type:"construction", cargo_sub:"mixed"}
     ];
     
     var LINKS = [
+        ["Geomaterialer", "Veidekke Industri AS"],
+        ["Asfalt", "Veidekke Industri AS"],
+        ["Pukk og Grus", "Veidekke Industri AS"],
         ["Veidekke Industri AS", "Veidekke ASA"],
         ["Veidekke Entreprenør AS", "Veidekke ASA"],
+        ["Elvestad Massemottak", "Geomaterialer"], 
+        ["Veidekke Gardermoen", "Geomaterialer"],
+        ["Alnabru Massemottak", "Geomaterialer"],
+        ["Gran Pukkverk", "Geomaterialer"],
+        ["Rambydalen Pukkverk", "Geomaterialer"],
         ["Veidekke Sirkulær AS", "Veidekke Entreprenør AS"],
-        ["Leif Grimsrud AS", "Veidekke Entreprenør AS"],
-        ["Øst AS", "Veidekke Entreprenør AS"],
-        ["Kystmiljø AS", "Veidekke Entreprenør AS"],
-        ["Veidekke Prefab AS", "Veidekke Entreprenør AS"],
-        ["Båsum Boring AS", "Veidekke Entreprenør AS"],
-        ["Seby AS", "Veidekke Entreprenør AS"],
-        ["Grande Entreprenør AS", "Veidekke Entreprenør AS"],
-        ["Amrock AS", "Veidekke Industri AS"],
-        ["Bergmesteren Raudsand AS", "Veidekke Industri AS"],
-        ["Esval Massedeponi", "Veidekke Sirkulær AS"]
+        ["Amrock AS", "Veidekke ASA"], 
+        ["Kystmiljø AS", "Veidekke ASA"] 
     ];
 
     var el = document.getElementById("network-container");
@@ -117,35 +122,48 @@
     function createIcon(node) {
         var ns = "http://www.w3.org/2000/svg";
         var g = document.createElementNS(ns, "g");
-        var s = 4.5; 
+        var r = 5; 
+        
         if (node.cargo_type === 'parent') {
             if (node.cargo_sub === 'parent') {
-                var r = document.createElementNS(ns, "rect");
-                r.setAttribute("x", -s); r.setAttribute("y", -s);
-                r.setAttribute("width", s*2); r.setAttribute("height", s*2);
-                r.setAttribute("fill", "#000"); g.appendChild(r);
+                var shape = document.createElementNS(ns, "rect");
+                shape.setAttribute("x", -r); shape.setAttribute("y", -r);
+                shape.setAttribute("width", r*2); shape.setAttribute("height", r*2);
+                shape.setAttribute("fill", "#000"); g.appendChild(shape);
             } else if (node.cargo_sub.includes('division')) {
-                var p = document.createElementNS(ns, "polygon");
-                p.setAttribute("points", `0,-${s+1} ${s+1},${s+1} -${s+1},${s+1}`);
-                p.setAttribute("fill", node.cargo_sub.includes('industri') ? "#666" : "none");
-                if (!node.cargo_sub.includes('industri')) { p.setAttribute("stroke", "#666"); p.setAttribute("stroke-width", "1"); }
-                g.appendChild(p);
+                var shape = document.createElementNS(ns, "polygon");
+                shape.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+                shape.setAttribute("fill", node.cargo_sub.includes('industri') ? "#666" : "none");
+                if (!node.cargo_sub.includes('industri')) { shape.setAttribute("stroke", "#666"); shape.setAttribute("stroke-width", "1"); }
+                g.appendChild(shape);
             } else {
-                var r = document.createElementNS(ns, "rect");
-                r.setAttribute("x", -s); r.setAttribute("y", -s);
-                r.setAttribute("width", s*2); r.setAttribute("height", s*2);
-                r.setAttribute("fill", "none"); r.setAttribute("stroke", "#666"); r.setAttribute("stroke-width", "1");
-                g.appendChild(r);
+                var shape = document.createElementNS(ns, "rect");
+                shape.setAttribute("x", -r); shape.setAttribute("y", -r);
+                shape.setAttribute("width", r*2); shape.setAttribute("height", r*2);
+                shape.setAttribute("fill", "none"); shape.setAttribute("stroke", "#666"); shape.setAttribute("stroke-width", "1.2");
+                g.appendChild(shape);
             }
+        } else if (node.cargo_type === 'construction') {
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "none"); rect.setAttribute("stroke", "#ff003c"); rect.setAttribute("stroke-width", "1.2");
+            g.appendChild(rect);
+            var p = document.createElementNS(ns, "path"); p.setAttribute("fill", "#000");
+            if (node.cargo_sub === 'producing') p.setAttribute("d", `M -${r} -${r} L ${r} -${r} L -${r} ${r} Z`);
+            else if (node.cargo_sub === 'receiving') p.setAttribute("d", `M ${r} ${r} L -${r} ${r} L ${r} -${r} Z`);
+            else p.setAttribute("d", `M -${r} -${r} L ${r} -${r} L 0 0 Z M -${r} ${r} L ${r} -${r} L 0 0 Z`);
+            g.appendChild(p);
         } else {
             var c = document.createElementNS(ns, "circle");
-            c.setAttribute("r", s+1); c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.3");
-            var p = document.createElementNS(ns, "path");
-            p.setAttribute("fill", "#000");
-            p.setAttribute("d", `M0,0 A${s+1},${s+1} 0 0,0 ${s+1},${s+1} L0,${s+1} Z`);
-            p.setAttribute("transform", `translate(0,-${s+1})`);
-            g.appendChild(c); g.appendChild(p);
+            c.setAttribute("r", r); c.setAttribute("fill", "none");
+            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.5");
+            g.appendChild(c);
+            var p = document.createElementNS(ns, "path"); p.setAttribute("fill", "#000");
+            if (node.cargo_sub === 'producing') p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 1 ${r} 0 Z`);
+            else if (node.cargo_sub === 'receiving') p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
+            else p.setAttribute("d", `M 0 0 L -${r} 0 A ${r} ${r} 0 0 1 0 -${r} Z M 0 0 L ${r} 0 A ${r} ${r} 0 0 1 0 ${r} Z`);
+            g.appendChild(p);
         }
         return g;
     }
@@ -153,6 +171,7 @@
     function init() {
         W = el.offsetWidth || window.innerWidth;
         H = el.offsetHeight || 600;
+        el.innerHTML = "";
         var ns = "http://www.w3.org/2000/svg";
         svg = document.createElementNS(ns, "svg");
         svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -206,7 +225,7 @@
             var txt = document.createElementNS(ns, "text");
             txt.textContent = n.id; txt.setAttribute("x", 10); txt.setAttribute("y", 3);
             txt.setAttribute("fill", n.active ? "#000" : "#bbb"); 
-            txt.style.font = n.active ? "600 10px 'IBM Plex Mono'" : "400 9px 'IBM Plex Mono'"; 
+            txt.style.font = n.active ? "600 9px 'IBM Plex Mono'" : "400 9px 'IBM Plex Mono'"; 
             txt.style.pointerEvents = "none";
             g.appendChild(txt); n.tEl = txt;
 
@@ -232,7 +251,7 @@
 
     function tick() {
         time += 0.005;
-        const restLen = 90, centerG = 0.008;
+        const restLen = 85, centerG = 0.008;
         links.forEach(l => {
             var dx = l.t.x - l.s.x, dy = l.t.y - l.s.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
             var force = (dist - restLen) * 0.02;
@@ -248,7 +267,7 @@
                 nodes.forEach(n2 => {
                     if(n === n2) return;
                     var dx = n.x - n2.x, dy = n.y - n2.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                    if(dist < 110) { var f = (110 - dist) * 0.04; n.vx += (dx/dist) * f; n.vy += (dy/dist) * f; }
+                    if(dist < 100) { var f = (100 - dist) * 0.04; n.vx += (dx/dist) * f; n.vy += (dy/dist) * f; }
                 });
                 n.x += n.vx; n.y += n.vy; n.vx *= 0.88; n.vy *= 0.88;
             }
