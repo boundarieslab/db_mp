@@ -1,346 +1,307 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-	<title></title>
-	<meta name="generator" content="LibreOffice 25.8.4.2 (Linux)"/>
-	<meta name="created" content="00:00:00"/>
-	<meta name="changed" content="00:00:00"/>
-	<style type="text/css">
-		@page { size: 8.27in 11.69in; margin: 0.79in }
-		p { margin-bottom: 0.1in; line-height: 115%; background: transparent }
-		pre { font-size: 10pt; font-family: "Liberation Mono", monospace; background: transparent }
-	</style>
+    <meta charset="utf-8">
+    <title>Mr. Pukk Høland - Master Network</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: #fff; 
+            font-family: 'IBM Plex Mono', monospace; 
+        }
+
+        #network-container svg { width: 100%; height: 100%; display: block; }
+        #network-container { width: 100%; height: calc(100vh - 40px); display: block; position: relative; }
+        
+        #single-line-legend {
+            position: relative; width: 100%; height: 40px;
+            background: #fff; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; color: #000; border-bottom: 1px solid #f0f0f0; 
+            box-sizing: border-box; gap: 20px;
+        }
+        
+        .legend-section { display: flex; align-items: center; gap: 8px; }
+        .legend-divider { width: 1px; height: 15px; background: #eee; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-item svg { width: 14px !important; height: 14px !important; flex-shrink: 0; }
+
+        /* Overganger for utheving */
+        .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
+        .dimmed { opacity: 0.15 !important; }
+        .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
+
+        svg { user-select: none; -webkit-user-select: none; }
+    </style>
 </head>
-<body lang="en-US" link="#000080" vlink="#800000" dir="ltr"><pre>&lt;column-set&gt;&lt;column-unit slot=&quot;0&quot;&gt;Parent company&lt;br&gt;&lt;/column-unit&gt;&lt;column-unit slot=&quot;1&quot;&gt;N/A&lt;/column-unit&gt;&lt;/column-set&gt;&lt;br&gt;
-&lt;b&gt;NETWORK&lt;br&gt;
-&lt;br&gt;
-&lt;div id=&quot;mr-pukk-main-network&quot; style=&quot;width:100%; height:600px; background:#fff; position: relative; overflow: hidden; border: 1px solid #eee; margin: 0 auto; z-index:10; display:block;&quot;&gt;&lt;svg viewBox=&quot;0 0 669.734375 598&quot; style=&quot;display: block; width: 100%; height: 100%;&quot;&gt;&lt;g&gt;&lt;line stroke=&quot;#ddd&quot; stroke-width=&quot;1&quot; x1=&quot;266.9555017753607&quot; y1=&quot;225.972843054496&quot; x2=&quot;334.36353610330934&quot; y2=&quot;300.7628149660839&quot;&gt;&lt;/line&gt;&lt;line stroke=&quot;#ddd&quot; stroke-width=&quot;1&quot; x1=&quot;383.48316083316746&quot; y1=&quot;279.7902590300022&quot; x2=&quot;334.36353610330934&quot; y2=&quot;300.7628149660839&quot;&gt;&lt;/line&gt;&lt;line stroke=&quot;#ddd&quot; stroke-width=&quot;1&quot; x1=&quot;388.53615195614805&quot; y1=&quot;367.000268506314&quot; x2=&quot;334.36353610330934&quot; y2=&quot;300.7628149660839&quot;&gt;&lt;/line&gt;&lt;line stroke=&quot;#ddd&quot; stroke-width=&quot;1&quot; x1=&quot;311.8521470220368&quot; y1=&quot;383.10041871550516&quot; x2=&quot;334.36353610330934&quot; y2=&quot;300.7628149660839&quot;&gt;&lt;/line&gt;&lt;line stroke=&quot;#ddd&quot; stroke-width=&quot;1&quot; x1=&quot;357.2890469857939&quot; y1=&quot;213.14388527108082&quot; x2=&quot;334.36353610330934&quot; y2=&quot;300.7628149660839&quot;&gt;&lt;/line&gt;&lt;line stroke=&quot;#ddd&quot; stroke-width=&quot;1&quot; x1=&quot;316.69800904114066&quot; y1=&quot;250.97675922105088&quot; x2=&quot;334.36353610330934&quot; y2=&quot;300.7628149660839&quot;&gt;&lt;/line&gt;&lt;line stroke=&quot;#ddd&quot; stroke-width=&quot;1&quot; x1=&quot;260.13445773585704&quot; y1=&quot;294.1527340622751&quot; x2=&quot;334.36353610330934&quot; y2=&quot;300.7628149660839&quot;&gt;&lt;/line&gt;&lt;line stroke=&quot;#ddd&quot; stroke-width=&quot;1&quot; x1=&quot;418.0464109344222&quot; y1=&quot;317.70623125567397&quot; x2=&quot;334.36353610330934&quot; y2=&quot;300.7628149660839&quot;&gt;&lt;/line&gt;&lt;line stroke=&quot;#ddd&quot; stroke-width=&quot;1&quot; x1=&quot;436.03821825954407&quot; y1=&quot;239.88655031873895&quot; x2=&quot;418.0464109344222&quot; y2=&quot;317.70623125567397&quot;&gt;&lt;/line&gt;&lt;line stroke=&quot;#ddd&quot; stroke-width=&quot;1&quot; x1=&quot;312.6363996695616&quot; y1=&quot;341.13359905950756&quot; x2=&quot;260.13445773585704&quot; y2=&quot;294.1527340622751&quot;&gt;&lt;/line&gt;&lt;line stroke=&quot;#ddd&quot; stroke-width=&quot;1&quot; x1=&quot;229.90633059476377&quot; y1=&quot;357.0728994365093&quot; x2=&quot;260.13445773585704&quot; y2=&quot;294.1527340622751&quot;&gt;&lt;/line&gt;&lt;/g&gt;&lt;g&gt;&lt;g transform=&quot;translate(334.36353610330934,300.7628149660839)&quot; style=&quot;cursor: pointer;&quot;&gt;&lt;circle r=&quot;25&quot; fill=&quot;transparent&quot;&gt;&lt;/circle&gt;&lt;rect x=&quot;-6&quot; y=&quot;-6&quot; width=&quot;12&quot; height=&quot;12&quot; fill=&quot;#000000&quot; stroke=&quot;#fff&quot; stroke-width=&quot;1&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;12&quot; y=&quot;3&quot; fill=&quot;#999&quot; style=&quot;font: 9px Helvetica, Arial, sans-serif; pointer-events: none;&quot;&gt;Heffalompen Holding AS&lt;/text&gt;&lt;/g&gt;&lt;g transform=&quot;translate(266.9555017753607,225.972843054496)&quot; style=&quot;cursor: pointer;&quot;&gt;&lt;circle r=&quot;18&quot; fill=&quot;transparent&quot; stroke=&quot;#000&quot; stroke-width=&quot;1&quot; stroke-dasharray=&quot;2,2&quot;&gt;&lt;animateTransform attributeName=&quot;transform&quot; type=&quot;rotate&quot; from=&quot;0 0 0&quot; to=&quot;360 0 0&quot; dur=&quot;10s&quot; repeatCount=&quot;indefinite&quot;&gt;&lt;/animateTransform&gt;&lt;/circle&gt;&lt;circle r=&quot;25&quot; fill=&quot;transparent&quot;&gt;&lt;/circle&gt;&lt;rect x=&quot;-5&quot; y=&quot;-5&quot; width=&quot;10&quot; height=&quot;10&quot; transform=&quot;scale(1.5)&quot; fill=&quot;#3b82f6&quot; stroke=&quot;#000&quot; stroke-width=&quot;1.5&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;12&quot; y=&quot;3&quot; fill=&quot;#000&quot; style=&quot;font: bold 10px Helvetica, Arial, sans-serif; pointer-events: none;&quot;&gt;Mr. Pukk AS&lt;/text&gt;&lt;/g&gt;&lt;g transform=&quot;translate(383.48316083316746,279.7902590300022)&quot; style=&quot;cursor: pointer;&quot;&gt;&lt;circle r=&quot;25&quot; fill=&quot;transparent&quot;&gt;&lt;/circle&gt;&lt;polygon points=&quot;-5,5 5,5 0,-5&quot; fill=&quot;#ff9500&quot; stroke=&quot;#fff&quot; stroke-width=&quot;1&quot;&gt;&lt;/polygon&gt;&lt;text x=&quot;12&quot; y=&quot;3&quot; fill=&quot;#999&quot; style=&quot;font: 9px Helvetica, Arial, sans-serif; pointer-events: none;&quot;&gt;Mr. Pukk Høland AS&lt;/text&gt;&lt;/g&gt;&lt;g transform=&quot;translate(388.53615195614805,367.000268506314)&quot; style=&quot;cursor: pointer;&quot;&gt;&lt;circle r=&quot;25&quot; fill=&quot;transparent&quot;&gt;&lt;/circle&gt;&lt;polygon points=&quot;-5,5 5,5 0,-5&quot; fill=&quot;#ff9500&quot; stroke=&quot;#fff&quot; stroke-width=&quot;1&quot;&gt;&lt;/polygon&gt;&lt;text x=&quot;12&quot; y=&quot;3&quot; fill=&quot;#999&quot; style=&quot;font: 9px Helvetica, Arial, sans-serif; pointer-events: none;&quot;&gt;Mr. Pukk Øst AS&lt;/text&gt;&lt;/g&gt;&lt;g transform=&quot;translate(311.8521470220368,383.10041871550516)&quot; style=&quot;cursor: pointer;&quot;&gt;&lt;circle r=&quot;25&quot; fill=&quot;transparent&quot;&gt;&lt;/circle&gt;&lt;polygon points=&quot;-5,5 5,5 0,-5&quot; fill=&quot;#ff9500&quot; stroke=&quot;#fff&quot; stroke-width=&quot;1&quot;&gt;&lt;/polygon&gt;&lt;text x=&quot;12&quot; y=&quot;3&quot; fill=&quot;#999&quot; style=&quot;font: 9px Helvetica, Arial, sans-serif; pointer-events: none;&quot;&gt;Torperåsen AS&lt;/text&gt;&lt;/g&gt;&lt;g transform=&quot;translate(418.0464109344222,317.70623125567397)&quot; style=&quot;cursor: pointer;&quot;&gt;&lt;circle r=&quot;25&quot; fill=&quot;transparent&quot;&gt;&lt;/circle&gt;&lt;rect x=&quot;-4&quot; y=&quot;-4&quot; width=&quot;8&quot; height=&quot;8&quot; stroke=&quot;#000&quot; stroke-width=&quot;0.5&quot; fill=&quot;#e0e0e0&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;12&quot; y=&quot;3&quot; fill=&quot;#999&quot; style=&quot;font: 9px Helvetica, Arial, sans-serif; pointer-events: none;&quot;&gt;Mr. Pukk Gjenvinning AS&lt;/text&gt;&lt;/g&gt;&lt;g transform=&quot;translate(436.03821825954407,239.88655031873895)&quot; style=&quot;cursor: pointer;&quot;&gt;&lt;circle r=&quot;25&quot; fill=&quot;transparent&quot;&gt;&lt;/circle&gt;&lt;polygon points=&quot;0,-6 6,0 0,6 -6,0&quot; fill=&quot;#39ff14&quot; stroke=&quot;#fff&quot; stroke-width=&quot;1&quot;&gt;&lt;/polygon&gt;&lt;text x=&quot;12&quot; y=&quot;3&quot; fill=&quot;#999&quot; style=&quot;font: 9px Helvetica, Arial, sans-serif; pointer-events: none;&quot;&gt;Mr. Pukk Furuset AS&lt;/text&gt;&lt;/g&gt;&lt;g transform=&quot;translate(260.13445773585704,294.1527340622751)&quot; style=&quot;cursor: pointer;&quot;&gt;&lt;circle r=&quot;25&quot; fill=&quot;transparent&quot;&gt;&lt;/circle&gt;&lt;rect x=&quot;-4&quot; y=&quot;-4&quot; width=&quot;8&quot; height=&quot;8&quot; stroke=&quot;#000&quot; stroke-width=&quot;0.5&quot; fill=&quot;#e0e0e0&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;12&quot; y=&quot;3&quot; fill=&quot;#999&quot; style=&quot;font: 9px Helvetica, Arial, sans-serif; pointer-events: none;&quot;&gt;Mr. Pukk Eiendom AS&lt;/text&gt;&lt;/g&gt;&lt;g transform=&quot;translate(312.6363996695616,341.13359905950756)&quot; style=&quot;cursor: pointer;&quot;&gt;&lt;circle r=&quot;25&quot; fill=&quot;transparent&quot;&gt;&lt;/circle&gt;&lt;rect x=&quot;-4&quot; y=&quot;-4&quot; width=&quot;8&quot; height=&quot;8&quot; stroke=&quot;#000&quot; stroke-width=&quot;0.5&quot; fill=&quot;#e0e0e0&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;12&quot; y=&quot;3&quot; fill=&quot;#999&quot; style=&quot;font: 9px Helvetica, Arial, sans-serif; pointer-events: none;&quot;&gt;Bokerøya AS&lt;/text&gt;&lt;/g&gt;&lt;g transform=&quot;translate(229.90633059476377,357.0728994365093)&quot; style=&quot;cursor: pointer;&quot;&gt;&lt;circle r=&quot;25&quot; fill=&quot;transparent&quot;&gt;&lt;/circle&gt;&lt;rect x=&quot;-4&quot; y=&quot;-4&quot; width=&quot;8&quot; height=&quot;8&quot; stroke=&quot;#000&quot; stroke-width=&quot;0.5&quot; fill=&quot;#e0e0e0&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;12&quot; y=&quot;3&quot; fill=&quot;#999&quot; style=&quot;font: 9px Helvetica, Arial, sans-serif; pointer-events: none;&quot;&gt;Ramnes Næringseiendom AS&lt;/text&gt;&lt;/g&gt;&lt;g transform=&quot;translate(357.2890469857939,213.14388527108082)&quot; style=&quot;cursor: pointer;&quot;&gt;&lt;circle r=&quot;25&quot; fill=&quot;transparent&quot;&gt;&lt;/circle&gt;&lt;rect x=&quot;-4&quot; y=&quot;-4&quot; width=&quot;8&quot; height=&quot;8&quot; stroke=&quot;#000&quot; stroke-width=&quot;0.5&quot; fill=&quot;#e0e0e0&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;12&quot; y=&quot;3&quot; fill=&quot;#999&quot; style=&quot;font: 9px Helvetica, Arial, sans-serif; pointer-events: none;&quot;&gt;Mysen Asfalt AS&lt;/text&gt;&lt;/g&gt;&lt;g transform=&quot;translate(316.69800904114066,250.97675922105088)&quot; style=&quot;cursor: pointer;&quot;&gt;&lt;circle r=&quot;25&quot; fill=&quot;transparent&quot;&gt;&lt;/circle&gt;&lt;rect x=&quot;-4&quot; y=&quot;-4&quot; width=&quot;8&quot; height=&quot;8&quot; stroke=&quot;#000&quot; stroke-width=&quot;0.5&quot; fill=&quot;#e0e0e0&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;12&quot; y=&quot;3&quot; fill=&quot;#999&quot; style=&quot;font: 9px Helvetica, Arial, sans-serif; pointer-events: none;&quot;&gt;Maur Tipp og Slep AS (Transport)&lt;/text&gt;&lt;/g&gt;&lt;/g&gt;&lt;/svg&gt;&lt;/div&gt;
+<body>
 
-&lt;div style=&quot;display:flex; flex-wrap:wrap; gap:12px; font:9px Helvetica,Arial,sans-serif; color:#000; padding:10px 0; justify-content: center; text-transform: uppercase; letter-spacing: 0.5px; position:relative; z-index:10;&quot;&gt;
-    &lt;div style=&quot;display:flex; align-items:center; gap:4px;&quot;&gt;
-        &lt;svg height=&quot;10&quot; style=&quot;overflow:visible&quot; width=&quot;10&quot;&gt;&lt;rect fill=&quot;#000&quot; height=&quot;6&quot; transform=&quot;translate(5,5)&quot; width=&quot;6&quot; x=&quot;-3&quot; y=&quot;-3&quot;&gt;&lt;/rect&gt;&lt;/svg&gt;&amp;nbsp;Parent
- &amp;nbsp; &amp;nbsp;&lt;/div&gt;
-    &lt;div style=&quot;display:flex; align-items:center; gap:4px;&quot;&gt;
-        &lt;svg height=&quot;10&quot; style=&quot;overflow:visible&quot; width=&quot;10&quot;&gt;&lt;rect fill=&quot;#e0e0e0&quot; height=&quot;6&quot; stroke=&quot;#000&quot; stroke-width=&quot;0.5&quot; transform=&quot;translate(5,5)&quot; width=&quot;6&quot; x=&quot;-3&quot; y=&quot;-3&quot;&gt;&lt;/rect&gt;&lt;/svg&gt;&amp;nbsp;Sub
- &amp;nbsp; &amp;nbsp;&lt;/div&gt;
-    &lt;div style=&quot;display:flex; align-items:center; gap:4px;&quot;&gt;
-        &lt;svg height=&quot;10&quot; style=&quot;overflow:visible&quot; width=&quot;10&quot;&gt;&lt;rect fill=&quot;#3b82f6&quot; height=&quot;6&quot; transform=&quot;translate(5,5)&quot; width=&quot;6&quot; x=&quot;-3&quot; y=&quot;-3&quot;&gt;&lt;/rect&gt;&lt;/svg&gt;&amp;nbsp;Operator (Active)
- &amp;nbsp; &amp;nbsp;&lt;/div&gt;
-    &lt;div style=&quot;display:flex; align-items:center; gap:4px;&quot;&gt;
-        &lt;svg height=&quot;10&quot; style=&quot;overflow:visible&quot; width=&quot;10&quot;&gt;&lt;polygon fill=&quot;#ff9500&quot; points=&quot;-4,4 4,4 0,-4&quot; transform=&quot;translate(5,5)&quot;&gt;&lt;/polygon&gt;&lt;/svg&gt;&amp;nbsp;Pukkverk
- &amp;nbsp; &amp;nbsp;&lt;/div&gt;
-    &lt;div style=&quot;display:flex; align-items:center; gap:4px;&quot;&gt;
-        &lt;svg height=&quot;10&quot; style=&quot;overflow:visible&quot; width=&quot;10&quot;&gt;&lt;polygon fill=&quot;#39ff14&quot; points=&quot;0,-5 5,0 0,5 -5,0&quot; transform=&quot;translate(5,5)&quot;&gt;&lt;/polygon&gt;&lt;/svg&gt;&amp;nbsp;Mottak
- &amp;nbsp; &amp;nbsp;&lt;/div&gt;
-&lt;/div&gt;
+<div id="single-line-legend">
+    <div class="legend-section">
+        <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="#000"/></svg> Konsern</div>
+        <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="#3b82f6"/></svg> Operatør</div>
+        <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#666" stroke-width="1.5"/></svg> Søsteravd.</div>
+    </div>
+    <div class="legend-divider"></div>
+    <div class="legend-section">
+        <div class="legend-item">
+            <svg viewBox="0 0 14 14">
+                <circle cx="7" cy="7" r="6" fill="none" stroke="#39ff14" stroke-width="1.5"/>
+                <path d="M1,7 A6,6 0 0,1 7,1 L7,7 Z M7,7 L13,7 A6,6 0 0,1 7,13 Z" fill="#000"/>
+            </svg> 
+            Facility Mixed (Aktiv)
+        </div>
+    </div>
+</div>
 
-&lt;script&gt;
+<div id="network-container"></div>
+
+<script>
 (function(){
- &nbsp; &nbsp;// --- 1. CONFIG ---
- &nbsp; &nbsp;var containerID = &quot;mr-pukk-main-network&quot;; 
+    var containerID = "network-container"; 
 
-&nbsp; &nbsp; var NODES = [
- &nbsp; &nbsp; &nbsp; &nbsp;{id:&quot;Heffalompen Holding AS&quot;, t:&quot;p&quot;},
- &nbsp; &nbsp; &nbsp; &nbsp;{id:&quot;Mr. Pukk AS&quot;, t:&quot;op&quot;, active:true},
- &nbsp; &nbsp; &nbsp; &nbsp;{id:&quot;Mr. Pukk Høland AS&quot;, t:&quot;pukk&quot;},
- &nbsp; &nbsp; &nbsp; &nbsp;{id:&quot;Mr. Pukk Øst AS&quot;, t:&quot;pukk&quot;},
- &nbsp; &nbsp; &nbsp; &nbsp;{id:&quot;Torperåsen AS&quot;, t:&quot;pukk&quot;},
- &nbsp; &nbsp; &nbsp; &nbsp;{id:&quot;Mr. Pukk Gjenvinning AS&quot;, t:&quot;s&quot;},
- &nbsp; &nbsp; &nbsp; &nbsp;{id:&quot;Mr. Pukk Furuset AS&quot;, t:&quot;mottak&quot;},
- &nbsp; &nbsp; &nbsp; &nbsp;{id:&quot;Mr. Pukk Eiendom AS&quot;, t:&quot;s&quot;},
- &nbsp; &nbsp; &nbsp; &nbsp;{id:&quot;Bokerøya AS&quot;, t:&quot;s&quot;},
- &nbsp; &nbsp; &nbsp; &nbsp;{id:&quot;Ramnes Næringseiendom AS&quot;, t:&quot;s&quot;},
- &nbsp; &nbsp; &nbsp; &nbsp;{id:&quot;Mysen Asfalt AS&quot;, t:&quot;s&quot;},
- &nbsp; &nbsp; &nbsp; &nbsp;{id:&quot;Maur Tipp og Slep AS&quot;, t:&quot;s&quot;, l:&quot;(Transport)&quot;}
- &nbsp; &nbsp;];
- &nbsp; &nbsp;
- &nbsp; &nbsp;var LINKS = [
- &nbsp; &nbsp; &nbsp; &nbsp;[&quot;Mr. Pukk AS&quot;, &quot;Heffalompen Holding AS&quot;],
- &nbsp; &nbsp; &nbsp; &nbsp;[&quot;Mr. Pukk Høland AS&quot;, &quot;Heffalompen Holding AS&quot;],
- &nbsp; &nbsp; &nbsp; &nbsp;[&quot;Mr. Pukk Øst AS&quot;, &quot;Heffalompen Holding AS&quot;],
- &nbsp; &nbsp; &nbsp; &nbsp;[&quot;Torperåsen AS&quot;, &quot;Heffalompen Holding AS&quot;],
- &nbsp; &nbsp; &nbsp; &nbsp;[&quot;Mysen Asfalt AS&quot;, &quot;Heffalompen Holding AS&quot;],
- &nbsp; &nbsp; &nbsp; &nbsp;[&quot;Maur Tipp og Slep AS&quot;, &quot;Heffalompen Holding AS&quot;],
- &nbsp; &nbsp; &nbsp; &nbsp;[&quot;Mr. Pukk Eiendom AS&quot;, &quot;Heffalompen Holding AS&quot;],
- &nbsp; &nbsp; &nbsp; &nbsp;[&quot;Mr. Pukk Gjenvinning AS&quot;, &quot;Heffalompen Holding AS&quot;],
- &nbsp; &nbsp; &nbsp; &nbsp;[&quot;Mr. Pukk Furuset AS&quot;, &quot;Mr. Pukk Gjenvinning AS&quot;],
- &nbsp; &nbsp; &nbsp; &nbsp;[&quot;Bokerøya AS&quot;, &quot;Mr. Pukk Eiendom AS&quot;],
- &nbsp; &nbsp; &nbsp; &nbsp;[&quot;Ramnes Næringseiendom AS&quot;, &quot;Mr. Pukk Eiendom AS&quot;]
- &nbsp; &nbsp;];
+    // Hele Mr. Pukk nettverket
+    var NODES = [
+        {id:"Heffalompen Holding AS", type:"parent", sub:"parent"},
+        {id:"Mr. Pukk AS", type:"parent", sub:"operator"},
+        {id:"Mr. Pukk Høland AS", type:"facility", sub:"mixed", active:true}, // Nå riktig satt til Mixed
+        {id:"Mr. Pukk Øst AS", type:"facility", sub:"producing"},
+        {id:"Torperåsen AS", type:"facility", sub:"producing"},
+        {id:"Mr. Pukk Furuset AS", type:"facility", sub:"receiving"},
+        {id:"Mr. Pukk Gjenvinning AS", type:"parent", sub:"dept"},
+        {id:"Mr. Pukk Eiendom AS", type:"parent", sub:"dept"},
+        {id:"Bokerøya AS", type:"parent", sub:"dept"},
+        {id:"Ramnes Næringseiendom AS", type:"parent", sub:"dept"},
+        {id:"Mysen Asfalt AS", type:"parent", sub:"dept"},
+        {id:"Maur Tipp og Slep AS", type:"parent", sub:"dept", l:"(Transport)"}
+    ];
+    
+    var LINKS = [
+        ["Mr. Pukk AS", "Heffalompen Holding AS"],
+        ["Mr. Pukk Høland AS", "Heffalompen Holding AS"],
+        ["Mr. Pukk Øst AS", "Heffalompen Holding AS"],
+        ["Torperåsen AS", "Heffalompen Holding AS"],
+        ["Mysen Asfalt AS", "Heffalompen Holding AS"],
+        ["Maur Tipp og Slep AS", "Heffalompen Holding AS"],
+        ["Mr. Pukk Eiendom AS", "Heffalompen Holding AS"],
+        ["Mr. Pukk Gjenvinning AS", "Heffalompen Holding AS"],
+        ["Mr. Pukk Furuset AS", "Mr. Pukk Gjenvinning AS"],
+        ["Bokerøya AS", "Mr. Pukk Eiendom AS"],
+        ["Ramnes Næringseiendom AS", "Mr. Pukk Eiendom AS"]
+    ];
 
- &nbsp; &nbsp;var COLORS = {
- &nbsp; &nbsp; &nbsp; &nbsp;p: &quot;#000000&quot;, s: &quot;#e0e0e0&quot;, op: &quot;#3b82f6&quot;, &nbsp; &nbsp; &nbsp;
- &nbsp; &nbsp; &nbsp; &nbsp;deponi: &quot;#ff003c&quot;, pukk: &quot;#ff9500&quot;, mottak: &quot;#39ff14&quot;, gjenvinning: &quot;#39ff14&quot;
- &nbsp; &nbsp;};
+    var el = document.getElementById(containerID);
+    var W, H, svg, nodes=[], links=[], parentMap={}, childMap={};
+    var time = 0;
 
- &nbsp; &nbsp;var el = document.getElementById(containerID);
- &nbsp; &nbsp;// FALLBACK DIMENSIONS to prevent (0,0) issue
- &nbsp; &nbsp;var W = el.offsetWidth || 800;
- &nbsp; &nbsp;var H = el.offsetHeight || 600;
- &nbsp; &nbsp;
- &nbsp; &nbsp;var svg, nodes=[], links=[], parentMap={}, childrenMap={};
+    function getStrictLineage(startNode) {
+        let pathNodes = new Set([startNode.id]);
+        let pathLinks = new Set();
+        let curr = startNode.id;
+        while(parentMap[curr]) {
+            pathLinks.add(curr + "-" + parentMap[curr]);
+            curr = parentMap[curr];
+            pathNodes.add(curr);
+        }
+        function findChildren(id) {
+            if(childMap[id]) childMap[id].forEach(c => {
+                pathNodes.add(c);
+                pathLinks.add(c + "-" + id);
+                findChildren(c);
+            });
+        }
+        findChildren(startNode.id);
+        return {nodes: pathNodes, links: pathLinks};
+    }
 
- &nbsp; &nbsp;function getStrictLineage(startNode) {
- &nbsp; &nbsp; &nbsp; &nbsp;let pathNodes = new Set();
- &nbsp; &nbsp; &nbsp; &nbsp;let pathLinks = new Set();
- &nbsp; &nbsp; &nbsp; &nbsp;pathNodes.add(startNode);
- &nbsp; &nbsp; &nbsp; &nbsp;let curr = startNode;
- &nbsp; &nbsp; &nbsp; &nbsp;while(curr) {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;let parentId = parentMap[curr.id];
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(!parentId) break;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;let parentNode = nodes.find(n =&gt; n.id === parentId);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(parentNode) {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;let link = links.find(l =&gt; (l.s === curr &amp;&amp; l.t === parentNode) || (l.t === curr &amp;&amp; l.s === parentNode));
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(link) pathLinks.add(link);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;pathNodes.add(parentNode);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;curr = parentNode;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;} else break;
- &nbsp; &nbsp; &nbsp; &nbsp;}
- &nbsp; &nbsp; &nbsp; &nbsp;function addChildren(pNode) {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;let kids = childrenMap[pNode.id] || [];
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;kids.forEach(kidId =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;let kNode = nodes.find(n =&gt; n.id === kidId);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(kNode) {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;let link = links.find(l =&gt; (l.s === kNode &amp;&amp; l.t === pNode) || (l.t === kNode &amp;&amp; l.s === pNode));
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(link) pathLinks.add(link);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;pathNodes.add(kNode);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;addChildren(kNode);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;}
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;});
- &nbsp; &nbsp; &nbsp; &nbsp;}
- &nbsp; &nbsp; &nbsp; &nbsp;addChildren(startNode);
- &nbsp; &nbsp; &nbsp; &nbsp;return {nodes: pathNodes, links: pathLinks};
- &nbsp; &nbsp;}
+    function createIcon(node) {
+        var ns = "http://www.w3.org/2000/svg";
+        var g = document.createElementNS(ns, "g");
+        var r = 6; 
+        
+        if (node.type === 'parent') {
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", node.sub === 'operator' ? "#3b82f6" : (node.sub === 'parent' ? "#000" : "none"));
+            if (node.sub === 'dept') {
+                rect.setAttribute("stroke", "#666"); 
+                rect.setAttribute("stroke-width", "1.5");
+            }
+            g.appendChild(rect);
+        } else if (node.type === 'construction') {
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "none"); 
+            rect.setAttribute("stroke", "#ff003c"); 
+            rect.setAttribute("stroke-width", "1.5");
+            var p = document.createElementNS(ns, "path");
+            p.setAttribute("fill", "#000");
+            if (node.sub === 'producing') {
+                p.setAttribute("d", `M -${r} -${r} L ${r} ${r} L -${r} ${r} Z`); 
+            } else if (node.sub === 'receiving') {
+                p.setAttribute("d", `M -${r} -${r} L ${r} -${r} L -${r} ${r} Z`); 
+            } else if (node.sub === 'mixed') {
+                p.setAttribute("d", `M -${r} -${r} L 0 0 L -${r} ${r} Z M ${r} -${r} L ${r} ${r} L 0 0 Z`); 
+            }
+            g.appendChild(rect); g.appendChild(p);
+        } else { // Facility
+            var c = document.createElementNS(ns, "circle");
+            c.setAttribute("r", r); c.setAttribute("fill", "none");
+            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.5");
+            var p = document.createElementNS(ns, "path");
+            p.setAttribute("fill", "#000");
+            if (node.sub === 'producing') {
+                p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 1 ${r} 0 Z`); 
+            } else if (node.sub === 'receiving') {
+                p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`); 
+            } else if (node.sub === 'mixed') {
+                p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 1 0 -${r} L 0 0 Z M 0 0 L ${r} 0 A ${r} ${r} 0 0 1 0 ${r} Z`); 
+            }
+            g.appendChild(c); g.appendChild(p);
+        }
+        return g;
+    }
 
- &nbsp; &nbsp;function createShape(type, isActive) {
- &nbsp; &nbsp; &nbsp; &nbsp;var ns = &quot;http://www.w3.org/2000/svg&quot;;
- &nbsp; &nbsp; &nbsp; &nbsp;var shape;
- &nbsp; &nbsp; &nbsp; &nbsp;if (type === 'p') { 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; shape = document.createElementNS(ns, &quot;rect&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;shape.setAttribute(&quot;x&quot;, -6); shape.setAttribute(&quot;y&quot;, -6);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;shape.setAttribute(&quot;width&quot;, 12); shape.setAttribute(&quot;height&quot;, 12);
- &nbsp; &nbsp; &nbsp; &nbsp;} else if (type === 's') { 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; shape = document.createElementNS(ns, &quot;rect&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;shape.setAttribute(&quot;x&quot;, -4); shape.setAttribute(&quot;y&quot;, -4);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;shape.setAttribute(&quot;width&quot;, 8); shape.setAttribute(&quot;height&quot;, 8);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;shape.setAttribute(&quot;stroke&quot;, &quot;#000&quot;); shape.setAttribute(&quot;stroke-width&quot;, &quot;0.5&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp;} else if (type === 'op') { 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; shape = document.createElementNS(ns, &quot;rect&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;shape.setAttribute(&quot;x&quot;, -5); shape.setAttribute(&quot;y&quot;, -5);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;shape.setAttribute(&quot;width&quot;, 10); shape.setAttribute(&quot;height&quot;, 10);
- &nbsp; &nbsp; &nbsp; &nbsp;} else if (type === 'mottak') { 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; shape = document.createElementNS(ns, &quot;polygon&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;shape.setAttribute(&quot;points&quot;, &quot;0,-6 6,0 0,6 -6,0&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp;} else if (type === 'pukk') { 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; shape = document.createElementNS(ns, &quot;polygon&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;shape.setAttribute(&quot;points&quot;, &quot;-5,5 5,5 0,-5&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp;} else { 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; shape = document.createElementNS(ns, &quot;circle&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;shape.setAttribute(&quot;r&quot;, 4);
- &nbsp; &nbsp; &nbsp; &nbsp;}
- &nbsp; &nbsp; &nbsp; &nbsp;if(isActive &amp;&amp; type !== 'p' &amp;&amp; type !== 's') shape.setAttribute(&quot;transform&quot;, &quot;scale(1.5)&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp;return shape;
- &nbsp; &nbsp;}
+    function init() {
+        W = el.offsetWidth || window.innerWidth;
+        H = el.offsetHeight || 500;
+        el.innerHTML = "";
+        var ns = "http://www.w3.org/2000/svg";
+        svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+        el.appendChild(svg);
 
- &nbsp; &nbsp;function init() {
- &nbsp; &nbsp; &nbsp; &nbsp;if(!el) return;
- &nbsp; &nbsp; &nbsp; &nbsp;
- &nbsp; &nbsp; &nbsp; &nbsp;LINKS.forEach(pair =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;let child = pair[0];
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;let parent = pair[1];
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;parentMap[child] = parent;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(!childrenMap[parent]) childrenMap[parent] = [];
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;childrenMap[parent].push(child);
- &nbsp; &nbsp; &nbsp; &nbsp;});
+        LINKS.forEach(l => {
+            parentMap[l[0]] = l[1];
+            if(!childMap[l[1]]) childMap[l[1]] = [];
+            childMap[l[1]].push(l[0]);
+        });
 
- &nbsp; &nbsp; &nbsp; &nbsp;const resizeObserver = new ResizeObserver(entries =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;for (let entry of entries) {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;// UPDATE DIMENSIONS ON RESIZE
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;W = entry.contentRect.width || el.offsetWidth || 800;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;H = entry.contentRect.height || el.offsetHeight || 600;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(svg) svg.setAttribute(&quot;viewBox&quot;, &quot;0 0 &quot; + W + &quot; &quot; + H);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;}
- &nbsp; &nbsp; &nbsp; &nbsp;});
- &nbsp; &nbsp; &nbsp; &nbsp;resizeObserver.observe(el);
- &nbsp; &nbsp; &nbsp; &nbsp;
- &nbsp; &nbsp; &nbsp; &nbsp;el.innerHTML = &quot;&quot;;
- &nbsp; &nbsp; &nbsp; &nbsp;var ns = &quot;http://www.w3.org/2000/svg&quot;;
- &nbsp; &nbsp; &nbsp; &nbsp;svg = document.createElementNS(ns, &quot;svg&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp;svg.setAttribute(&quot;viewBox&quot;, &quot;0 0 &quot; + W + &quot; &quot; + H);
- &nbsp; &nbsp; &nbsp; &nbsp;svg.style.display = &quot;block&quot;;
- &nbsp; &nbsp; &nbsp; &nbsp;svg.style.width = &quot;100%&quot;;
- &nbsp; &nbsp; &nbsp; &nbsp;svg.style.height = &quot;100%&quot;;
- &nbsp; &nbsp; &nbsp; &nbsp;el.appendChild(svg);
+        nodes = NODES.map(d => ({
+            ...d, x: W/2 + (Math.random()-0.5)*200, y: H/2 + (Math.random()-0.5)*200,
+            vx: 0, vy: 0, noiseOffset: Math.random() * 100
+        }));
 
- &nbsp; &nbsp; &nbsp; &nbsp;nodes = NODES.map(d =&gt; ({
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;id: d.id, type: d.t, label: d.l, active: d.active,
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;// START CENTERED
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;x: W/2 + (Math.random()-0.5)*50,
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;y: H/2 + (Math.random()-0.5)*50,
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;vx: 0, vy: 0
- &nbsp; &nbsp; &nbsp; &nbsp;}));
+        var linkG = document.createElementNS(ns, "g"); svg.appendChild(linkG);
+        links = LINKS.map(l => {
+            var sNode = nodes.find(n => n.id === l[0]), tNode = nodes.find(n => n.id === l[1]);
+            var line = document.createElementNS(ns, "line");
+            line.setAttribute("class", "link-line");
+            line.setAttribute("stroke", "#f2f2f2"); line.setAttribute("stroke-width", "1");
+            linkG.appendChild(line);
+            return { s: sNode, t: tNode, el: line };
+        });
 
- &nbsp; &nbsp; &nbsp; &nbsp;links = [];
- &nbsp; &nbsp; &nbsp; &nbsp;LINKS.forEach(pair =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var s = nodes.find(n=&gt;n.id===pair[0]);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var t = nodes.find(n=&gt;n.id===pair[1]);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(s &amp;&amp; t) links.push({s:s, t:t});
- &nbsp; &nbsp; &nbsp; &nbsp;});
+        var nodeG = document.createElementNS(ns, "g"); svg.appendChild(nodeG);
+        nodes.forEach(n => {
+            var g = document.createElementNS(ns, "g");
+            g.setAttribute("class", "node-group");
+            g.style.cursor = "grab";
 
- &nbsp; &nbsp; &nbsp; &nbsp;var linkG = document.createElementNS(ns, &quot;g&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp;svg.appendChild(linkG);
- &nbsp; &nbsp; &nbsp; &nbsp;links.forEach(l =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var line = document.createElementNS(ns, &quot;line&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;line.setAttribute(&quot;stroke&quot;, &quot;#ddd&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;line.setAttribute(&quot;stroke-width&quot;, &quot;1&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;linkG.appendChild(line);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;l.el = line;
- &nbsp; &nbsp; &nbsp; &nbsp;});
+            var hit = document.createElementNS(ns, "circle");
+            hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
+            g.appendChild(hit);
 
- &nbsp; &nbsp; &nbsp; &nbsp;var nodeG = document.createElementNS(ns, &quot;g&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp;svg.appendChild(nodeG);
+            if (n.active) {
+                var ring = document.createElementNS(ns, "circle");
+                ring.setAttribute("r", 17); ring.setAttribute("fill", "none");
+                ring.setAttribute("stroke", "#000"); ring.setAttribute("stroke-width", "0.5");
+                ring.setAttribute("stroke-dasharray", "2,3");
+                var anim = document.createElementNS(ns, "animateTransform");
+                anim.setAttribute("attributeName", "transform"); anim.setAttribute("type", "rotate");
+                anim.setAttribute("from", "0 0 0"); anim.setAttribute("to", "360 0 0");
+                anim.setAttribute("dur", "20s"); anim.setAttribute("repeatCount", "indefinite");
+                ring.appendChild(anim); g.appendChild(ring);
+            }
+            
+            var icon = createIcon(n); icon.style.pointerEvents = "none";
+            g.appendChild(icon); n.shapeEl = icon;
+            
+            var txt = document.createElementNS(ns, "text");
+            txt.textContent = n.id + (n.l ? " " + n.l : "");
+            txt.setAttribute("x", 12); txt.setAttribute("y", 3);
+            txt.setAttribute("fill", n.active ? "#000" : "#bbb"); 
+            txt.style.font = n.active ? "600 10px 'IBM Plex Mono'" : "400 9px 'IBM Plex Mono'"; 
+            txt.style.pointerEvents = "none";
+            g.appendChild(txt); n.tEl = txt;
 
- &nbsp; &nbsp; &nbsp; &nbsp;nodes.forEach(n =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var g = document.createElementNS(ns, &quot;g&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;g.style.cursor = &quot;pointer&quot;;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if (n.active) {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var ring = document.createElementNS(ns, &quot;circle&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;ring.setAttribute(&quot;r&quot;, 18);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;ring.setAttribute(&quot;fill&quot;, &quot;transparent&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;ring.setAttribute(&quot;stroke&quot;, &quot;#000&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;ring.setAttribute(&quot;stroke-width&quot;, &quot;1&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;ring.setAttribute(&quot;stroke-dasharray&quot;, &quot;2,2&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var anim = document.createElementNS(ns, &quot;animateTransform&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;anim.setAttribute(&quot;attributeName&quot;, &quot;transform&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;anim.setAttribute(&quot;type&quot;, &quot;rotate&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;anim.setAttribute(&quot;from&quot;, &quot;0 0 0&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;anim.setAttribute(&quot;to&quot;, &quot;360 0 0&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;anim.setAttribute(&quot;dur&quot;, &quot;10s&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;anim.setAttribute(&quot;repeatCount&quot;, &quot;indefinite&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;ring.appendChild(anim);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;g.appendChild(ring);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;}
+            g.onmouseenter = () => {
+                var lineage = getStrictLineage(n);
+                nodes.forEach(node => { 
+                    node.el.classList.toggle("dimmed", !lineage.nodes.has(node.id));
+                    if(lineage.nodes.has(node.id)) {
+                        node.tEl.style.fontWeight = "bold";
+                        node.tEl.setAttribute("fill", "#000");
+                    }
+                });
+                links.forEach(link => {
+                    var isH = lineage.links.has(link.s.id + "-" + link.t.id) || lineage.links.has(link.t.id + "-" + link.s.id);
+                    link.el.classList.toggle("dimmed", !isH);
+                    link.el.classList.toggle("highlight-link", isH);
+                });
+            };
 
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var hit = document.createElementNS(ns, &quot;circle&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;hit.setAttribute(&quot;r&quot;, 25); hit.setAttribute(&quot;fill&quot;, &quot;transparent&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;g.appendChild(hit);
+            g.onmouseleave = () => {
+                nodes.forEach(node => {
+                    node.el.classList.remove("dimmed");
+                    node.tEl.style.fontWeight = node.active ? "bold" : "normal";
+                    node.tEl.setAttribute("fill", node.active ? "#000" : "#bbb");
+                });
+                links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
+            };
 
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var shape = createShape(n.type, n.active);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;shape.setAttribute(&quot;fill&quot;, COLORS[n.type] || &quot;#999&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if (n.active) { shape.setAttribute(&quot;stroke&quot;, &quot;#000&quot;); shape.setAttribute(&quot;stroke-width&quot;, &quot;1.5&quot;); }
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;else if (n.type !== 's') { shape.setAttribute(&quot;stroke&quot;, &quot;#fff&quot;); shape.setAttribute(&quot;stroke-width&quot;, &quot;1&quot;); }
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;g.appendChild(shape);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;n.shapeEl = shape;
+            g.onmousedown = (e) => { e.preventDefault(); n.dragging = true; g.style.cursor = "grabbing"; };
+            nodeG.appendChild(g); n.el = g;
+        });
 
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var txt = document.createElementNS(ns, &quot;text&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var textContent = n.id;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(n.label) textContent += &quot; &quot; + n.label;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;txt.textContent = textContent;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;txt.setAttribute(&quot;x&quot;, 12); txt.setAttribute(&quot;y&quot;, 3);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;txt.setAttribute(&quot;fill&quot;, n.active ? &quot;#000&quot; : &quot;#999&quot;); 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; txt.style.font = n.active ? &quot;bold 10px Helvetica, Arial, sans-serif&quot; : &quot;9px Helvetica, Arial, sans-serif&quot;; 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; txt.style.pointerEvents = &quot;none&quot;;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;g.appendChild(txt);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;n.tEl = txt;
+        requestAnimationFrame(tick);
+    }
 
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;g.onmouseenter = function() {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var lineage = getStrictLineage(n);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;nodes.forEach(node =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;node.shapeEl.setAttribute(&quot;opacity&quot;, &quot;0.1&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;node.tEl.setAttribute(&quot;opacity&quot;, &quot;0.1&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;});
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;links.forEach(link =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;link.el.setAttribute(&quot;stroke&quot;, &quot;#eee&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;link.el.setAttribute(&quot;opacity&quot;, &quot;0.1&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;});
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;lineage.nodes.forEach(node =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;node.shapeEl.setAttribute(&quot;opacity&quot;, &quot;1&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;node.tEl.setAttribute(&quot;opacity&quot;, &quot;1&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;node.tEl.setAttribute(&quot;fill&quot;, &quot;#000&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;});
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;lineage.links.forEach(link =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;link.el.setAttribute(&quot;stroke&quot;, &quot;#000&quot;); 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; link.el.setAttribute(&quot;opacity&quot;, &quot;1&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;});
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;n.shapeEl.setAttribute(&quot;transform&quot;, &quot;scale(1.3)&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;};
+    function tick() {
+        time += 0.005;
+        const restLen = 95, centerG = 0.01;
+        links.forEach(l => {
+            var dx = l.t.x - l.s.x, dy = l.t.y - l.s.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
+            var force = (dist - restLen) * 0.02;
+            l.s.vx += (dx/dist)*force; l.s.vy += (dy/dist)*force;
+            l.t.vx -= (dx/dist)*force; l.t.vy -= (dy/dist)*force;
+        });
+        nodes.forEach(n => {
+            if (!n.dragging) {
+                n.vx += Math.sin(time + n.noiseOffset) * 0.04;
+                n.vy += Math.cos(time + n.noiseOffset) * 0.04;
+                n.vx += (W/2 - n.x) * centerG;
+                n.vy += (H/2 - n.y) * centerG;
+                nodes.forEach(n2 => {
+                    if(n === n2) return;
+                    var dx = n.x - n2.x, dy = n.y - n2.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                    if(dist < 100) { var f = (100 - dist) * 0.04; n.vx += (dx/dist) * f; n.vy += (dy/dist) * f; }
+                });
+                n.x += n.vx; n.y += n.vy; n.vx *= 0.88; n.vy *= 0.88;
+            }
+            n.x = Math.max(100, Math.min(W - 150, n.x)); n.y = Math.max(50, Math.min(H - 50, n.y));
+            if(n.el) n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
+        });
+        links.forEach(l => {
+            l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
+            l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
+        });
+        requestAnimationFrame(tick);
+    }
 
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;g.onmouseleave = function() {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;nodes.forEach(node =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;node.shapeEl.setAttribute(&quot;opacity&quot;, &quot;1&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;node.tEl.setAttribute(&quot;opacity&quot;, &quot;1&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;node.tEl.setAttribute(&quot;fill&quot;, node.active ? &quot;#000&quot; : &quot;#999&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(!node.active) node.shapeEl.setAttribute(&quot;transform&quot;, &quot;scale(1)&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;});
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;links.forEach(link =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;link.el.setAttribute(&quot;stroke&quot;, &quot;#ddd&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;link.el.setAttribute(&quot;opacity&quot;, &quot;1&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;});
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;};
-
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;g.onmousedown = function(e){ e.preventDefault(); n.dragging = true; };
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;nodeG.appendChild(g);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;n.el = g;
- &nbsp; &nbsp; &nbsp; &nbsp;});
-
- &nbsp; &nbsp; &nbsp; &nbsp;window.addEventListener(&quot;mousemove&quot;, function(e){
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;nodes.forEach(n =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(n.dragging) {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var rect = svg.getBoundingClientRect();
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;n.x = (e.clientX - rect.left) * (W/rect.width);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;n.y = (e.clientY - rect.top) * (H/rect.height);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;n.vx = 0; n.vy = 0;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;}
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;});
- &nbsp; &nbsp; &nbsp; &nbsp;});
- &nbsp; &nbsp; &nbsp; &nbsp;window.addEventListener(&quot;mouseup&quot;, function(){ nodes.forEach(n =&gt; n.dragging = false); });
-
- &nbsp; &nbsp; &nbsp; &nbsp;requestAnimationFrame(tick);
- &nbsp; &nbsp;}
-
- &nbsp; &nbsp;function tick() {
- &nbsp; &nbsp; &nbsp; &nbsp;links.forEach(l =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var dx = l.t.x - l.s.x; var dy = l.t.y - l.s.y;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var dist = Math.sqrt(dx*dx + dy*dy) || 1;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var restLen = 60;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(l.s.active || l.t.active) restLen = 90;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var force = (dist - restLen) * 0.05;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var fx = (dx/dist)*force; var fy = (dy/dist)*force;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;l.s.vx += fx; l.s.vy += fy; l.t.vx -= fx; l.t.vy -= fy;
- &nbsp; &nbsp; &nbsp; &nbsp;});
-
- &nbsp; &nbsp; &nbsp; &nbsp;nodes.forEach(n =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;nodes.forEach(n2 =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(n===n2) return;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var dx = n.x - n2.x; var dy = n.y - n2.y;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;var dist = Math.sqrt(dx*dx + dy*dy) || 1;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(dist &lt; 100) { 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; var f = (100-dist) * 0.05; 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; n.vx += (dx/dist)*f; n.vy += (dy/dist)*f; 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; }
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;});
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;// FORCE CENTER
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;n.vx += (W/2 - n.x) * 0.02; 
-&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; n.vy += (H/2 - n.y) * 0.02;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(!n.dragging) { n.x += n.vx; n.y += n.vy; n.vx *= 0.85; n.vy *= 0.85; }
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;n.x = Math.max(20, Math.min(W - 40, n.x));
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;n.y = Math.max(20, Math.min(H - 20, n.y));
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(n.el) n.el.setAttribute(&quot;transform&quot;, &quot;translate(&quot;+n.x+&quot;,&quot;+n.y+&quot;)&quot;);
- &nbsp; &nbsp; &nbsp; &nbsp;});
-
- &nbsp; &nbsp; &nbsp; &nbsp;links.forEach(l =&gt; {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;if(l.el) {
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;l.el.setAttribute(&quot;x1&quot;, l.s.x); l.el.setAttribute(&quot;y1&quot;, l.s.y);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;l.el.setAttribute(&quot;x2&quot;, l.t.x); l.el.setAttribute(&quot;y2&quot;, l.t.y);
- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;}
- &nbsp; &nbsp; &nbsp; &nbsp;});
- &nbsp; &nbsp; &nbsp; &nbsp;if(document.contains(el)) requestAnimationFrame(tick);
- &nbsp; &nbsp;}
- &nbsp; &nbsp;setTimeout(init, 500);
+    window.addEventListener("mousemove", (e) => {
+        var rect = el.getBoundingClientRect();
+        nodes.forEach(n => { if(n.dragging) { n.x = e.clientX - rect.left; n.y = e.clientY - rect.top; n.vx = 0; n.vy = 0; }});
+    });
+    window.addEventListener("mouseup", () => nodes.forEach(n => n.dragging = false));
+    
+    setTimeout(init, 500);
 })();
-&lt;/script&gt;</pre>
+</script>
 </body>
 </html>
