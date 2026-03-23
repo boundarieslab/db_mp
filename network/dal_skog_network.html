@@ -1,323 +1,234 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>Dal Skog ØRAS Network</title>
-    <style>
-        /* Ensures the widget fills the specific frame provided by the site */
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff; }
-        #network-container { width: 100%; height: 100vh; display: block; position: relative; }
-    </style>
+<meta charset="utf-8">
+<title>Dal Skog ØRAS Network</title>
+
+<!-- IBM Plex Mono -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #fff;
+    font-family: "IBM Plex Mono", monospace;
+}
+#network-container {
+    width: 100%;
+    height: 100vh;
+    display: block;
+    position: relative;
+}
+</style>
 </head>
+
 <body>
 
-<div id="network-container">
-    <div style="position: absolute; bottom: 8px; right: 10px; font: 9px Helvetica, Arial, sans-serif; color: #ccc; pointer-events: none; z-index: 100;">
-        Kilde: Proff.no
-    </div>
-</div>
-
-<div style="position: absolute; top: 10px; left: 10px; display:flex; flex-wrap:wrap; gap:12px; font:9px Helvetica,Arial,sans-serif; color:#000; z-index:10; background:rgba(255,255,255,0.8); padding:5px; border-radius:4px;">
-    <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#000" transform="translate(5,5)"/></svg> Eierkommune
-    </div>
-    <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#3b82f6" transform="translate(5,5)"/></svg> Selskap (IKS)
-    </div>
-    <div style="display:flex; align-items:center; gap:4px;">
-        <svg width="10" height="10" style="overflow:visible"><polygon points="0,-5 5,0 0,5 -5,0" fill="#39ff14" transform="translate(5,5)"/></svg> Anlegg (Aktivt)
-    </div>
-</div>
+<div id="network-container"></div>
 
 <script>
 (function(){
-    // --- 1. DATA FOR DAL SKOG ---
-    var NODES = [
-        // OWNERS (Municipalities)
-        {id:"Eidsvoll Kommune", t:"p"},
-        {id:"Hurdal Kommune", t:"p"},
-        {id:"Nannestad Kommune", t:"p"},
-        {id:"Ullensaker Kommune", t:"p"},
 
-        // OPERATOR (IKS)
-        {id:"Øvre Romerike Avfallsselskap IKS", t:"op", l:"(ØRAS)"},
+var NODES = [
+    {id:"Eidsvoll Kommune", t:"p"},
+    {id:"Hurdal Kommune", t:"p"},
+    {id:"Nannestad Kommune", t:"p"},
+    {id:"Ullensaker Kommune", t:"p"},
 
-        // ACTIVE SITE (Main Facility)
-        {id:"Miljøstasjon Dal Skog", t:"mottak", active:true}
-    ];
-    
-    // Links: Child -> Parent
-    var LINKS = [
-        // Owners -> Company
-        ["Øvre Romerike Avfallsselskap IKS", "Eidsvoll Kommune"],
-        ["Øvre Romerike Avfallsselskap IKS", "Hurdal Kommune"],
-        ["Øvre Romerike Avfallsselskap IKS", "Nannestad Kommune"],
-        ["Øvre Romerike Avfallsselskap IKS", "Ullensaker Kommune"],
+    {id:"Øvre Romerike Avfallsselskap IKS", t:"op", l:"(ØRAS)"},
+    {id:"Miljøstasjon Dal Skog", t:"mottak", active:true}
+];
 
-        // Company -> Site
-        ["Miljøstasjon Dal Skog", "Øvre Romerike Avfallsselskap IKS"]
-    ];
+var LINKS = [
+    ["Øvre Romerike Avfallsselskap IKS", "Eidsvoll Kommune"],
+    ["Øvre Romerike Avfallsselskap IKS", "Hurdal Kommune"],
+    ["Øvre Romerike Avfallsselskap IKS", "Nannestad Kommune"],
+    ["Øvre Romerike Avfallsselskap IKS", "Ullensaker Kommune"],
+    ["Miljøstasjon Dal Skog", "Øvre Romerike Avfallsselskap IKS"]
+];
 
-    var COLORS = {
-        p: "#000000", s: "#e0e0e0", op: "#3b82f6",      
-        deponi: "#ff003c", pukk: "#ff9500", mottak: "#39ff14", gjenvinning: "#39ff14"
-    };
+var COLORS = {
+    p: "#000",
+    op: "#3b82f6",
+    mottak: "#39ff14"
+};
 
-    var el = document.getElementById("network-container");
-    var W, H, svg, nodes=[], links=[], parentMap={}, childrenMap={};
+var el = document.getElementById("network-container");
+var W, H, svg, nodes=[], links=[];
 
-    function getStrictLineage(startNode) {
-        let pathNodes = new Set();
-        let pathLinks = new Set();
-        pathNodes.add(startNode);
-        
-        // Trace Up
-        let curr = startNode;
-        while(curr) {
-            let parentId = parentMap[curr.id];
-            if(!parentId) break;
-            let parentNode = nodes.find(n => n.id === parentId);
-            if(parentNode) {
-                let link = links.find(l => (l.s === curr && l.t === parentNode) || (l.t === curr && l.s === parentNode));
-                if(link) pathLinks.add(link);
-                pathNodes.add(parentNode);
-                curr = parentNode;
-            } else break;
-        }
-        // Trace Down
-        function addChildren(pNode) {
-            let kids = childrenMap[pNode.id] || [];
-            kids.forEach(kidId => {
-                let kNode = nodes.find(n => n.id === kidId);
-                if(kNode) {
-                    let link = links.find(l => (l.s === kNode && l.t === pNode) || (l.t === kNode && l.s === pNode));
-                    if(link) pathLinks.add(link);
-                    pathNodes.add(kNode);
-                    addChildren(kNode);
-                }
-            });
-        }
-        addChildren(startNode);
-        return {nodes: pathNodes, links: pathLinks};
+function createShape(type, isActive) {
+    var ns = "http://www.w3.org/2000/svg";
+    var shape;
+
+    if (type === 'p') {
+        shape = document.createElementNS(ns, "rect");
+        shape.setAttribute("x", -4);
+        shape.setAttribute("y", -4);
+        shape.setAttribute("width", 8);
+        shape.setAttribute("height", 8);
+
+    } else if (type === 'op') {
+        shape = document.createElementNS(ns, "rect");
+        shape.setAttribute("x", -3.5);
+        shape.setAttribute("y", -3.5);
+        shape.setAttribute("width", 7);
+        shape.setAttribute("height", 7);
+
+    } else if (type === 'mottak') {
+        shape = document.createElementNS(ns, "polygon");
+        shape.setAttribute("points", "0,-4 4,0 0,4 -4,0");
+
+    } else {
+        shape = document.createElementNS(ns, "circle");
+        shape.setAttribute("r", 3);
     }
 
-    function createShape(type, isActive) {
-        var ns = "http://www.w3.org/2000/svg";
-        var shape;
-        if (type === 'p') { 
-            shape = document.createElementNS(ns, "rect");
-            shape.setAttribute("x", -6); shape.setAttribute("y", -6);
-            shape.setAttribute("width", 12); shape.setAttribute("height", 12);
-        } else if (type === 'op') { 
-            shape = document.createElementNS(ns, "rect");
-            shape.setAttribute("x", -5); shape.setAttribute("y", -5);
-            shape.setAttribute("width", 10); shape.setAttribute("height", 10);
-        } else if (type === 'mottak') { 
-            shape = document.createElementNS(ns, "polygon");
-            shape.setAttribute("points", "0,-6 6,0 0,6 -6,0");
-        } else { 
-            shape = document.createElementNS(ns, "circle");
-            shape.setAttribute("r", 4);
+    if(isActive) shape.setAttribute("transform", "scale(1.25)");
+    return shape;
+}
+
+function init(){
+
+    W = el.offsetWidth;
+    H = el.offsetHeight;
+
+    var ns = "http://www.w3.org/2000/svg";
+    svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("width","100%");
+    svg.setAttribute("height","100%");
+    svg.setAttribute("viewBox","0 0 "+W+" "+H);
+    el.appendChild(svg);
+
+    nodes = NODES.map(d => ({
+        id:d.id,
+        type:d.t,
+        label:d.l,
+        active:d.active,
+        x:W/2 + (Math.random()-0.5)*80,
+        y:H/2 + (Math.random()-0.5)*80,
+        vx:0, vy:0
+    }));
+
+    LINKS.forEach(pair=>{
+        var s = nodes.find(n=>n.id===pair[0]);
+        var t = nodes.find(n=>n.id===pair[1]);
+        if(s && t) links.push({s:s,t:t});
+    });
+
+    var linkG = document.createElementNS(ns,"g");
+    svg.appendChild(linkG);
+
+    links.forEach(l=>{
+        var line = document.createElementNS(ns,"line");
+        line.setAttribute("stroke","#bbb");
+        line.setAttribute("stroke-width","0.6");
+        line.setAttribute("stroke-linecap","round");
+        line.setAttribute("opacity","0.8");
+        linkG.appendChild(line);
+        l.el = line;
+    });
+
+    var nodeG = document.createElementNS(ns,"g");
+    svg.appendChild(nodeG);
+
+    nodes.forEach(n=>{
+        var g = document.createElementNS(ns,"g");
+
+        if(n.active){
+            var ring = document.createElementNS(ns,"circle");
+            ring.setAttribute("r",14);
+            ring.setAttribute("fill","none");
+            ring.setAttribute("stroke","#000");
+            ring.setAttribute("stroke-width","0.6");
+            ring.setAttribute("stroke-dasharray","1.5,2");
+            g.appendChild(ring);
         }
-        if(isActive) shape.setAttribute("transform", "scale(1.5)");
-        return shape;
-    }
 
-    function init() {
-        if(!el) return;
-        
-        // Build maps
-        LINKS.forEach(pair => {
-            let child = pair[0];
-            let parent = pair[1];
-            parentMap[child] = parent;
-            if(!childrenMap[parent]) childrenMap[parent] = [];
-            childrenMap[parent].push(child);
-        });
+        var shape = createShape(n.type,n.active);
+        shape.setAttribute("fill", COLORS[n.type] || "#999");
+        shape.setAttribute("stroke","#fff");
+        shape.setAttribute("stroke-width", n.active ? "1" : "0.6");
+        g.appendChild(shape);
 
-        // Setup SVG
-        W = el.offsetWidth; H = el.offsetHeight;
-        el.innerHTML = "";
-        var ns = "http://www.w3.org/2000/svg";
-        svg = document.createElementNS(ns, "svg");
-        svg.setAttribute("width", "100%");
-        svg.setAttribute("height", "100%");
-        svg.setAttribute("viewBox", "0 0 " + W + " " + H);
-        svg.style.display = "block";
-        el.appendChild(svg);
+        var txt = document.createElementNS(ns,"text");
+        var label = n.id + (n.label ? " " + n.label : "");
+        txt.textContent = label;
 
-        // Handle Resize
-        window.addEventListener('resize', function() {
-            W = el.offsetWidth; H = el.offsetHeight;
-            svg.setAttribute("viewBox", "0 0 " + W + " " + H);
-        });
+        txt.setAttribute("x",8);
+        txt.setAttribute("y",2);
+        txt.setAttribute("fill", n.active ? "#000" : "#666");
+        txt.setAttribute("letter-spacing","0.3px");
 
-        // Nodes & Links
-        nodes = NODES.map(d => ({
-            id: d.id, type: d.t, label: d.l, active: d.active,
-            x: W/2 + (Math.random()-0.5)*100,
-            y: H/2 + (Math.random()-0.5)*100,
-            vx: 0, vy: 0
-        }));
+        txt.style.font = n.active
+            ? "500 9px 'IBM Plex Mono'"
+            : "400 8px 'IBM Plex Mono'";
 
-        links = [];
-        LINKS.forEach(pair => {
-            var s = nodes.find(n=>n.id===pair[0]);
-            var t = nodes.find(n=>n.id===pair[1]);
-            if(s && t) links.push({s:s, t:t});
-        });
+        g.appendChild(txt);
 
-        var linkG = document.createElementNS(ns, "g");
-        svg.appendChild(linkG);
-        links.forEach(l => {
-            var line = document.createElementNS(ns, "line");
-            line.setAttribute("stroke", "#ddd");
-            line.setAttribute("stroke-width", "1");
-            linkG.appendChild(line);
-            l.el = line;
-        });
+        n.el = g;
 
-        var nodeG = document.createElementNS(ns, "g");
-        svg.appendChild(nodeG);
+        nodeG.appendChild(g);
+    });
 
-        nodes.forEach(n => {
-            var g = document.createElementNS(ns, "g");
-            g.style.cursor = "pointer";
-            
-            if (n.active) {
-                var ring = document.createElementNS(ns, "circle");
-                ring.setAttribute("r", 18);
-                ring.setAttribute("fill", "transparent");
-                ring.setAttribute("stroke", "#000");
-                ring.setAttribute("stroke-width", "1");
-                ring.setAttribute("stroke-dasharray", "2,2");
-                var anim = document.createElementNS(ns, "animateTransform");
-                anim.setAttribute("attributeName", "transform");
-                anim.setAttribute("type", "rotate");
-                anim.setAttribute("from", "0 0 0");
-                anim.setAttribute("to", "360 0 0");
-                anim.setAttribute("dur", "10s");
-                anim.setAttribute("repeatCount", "indefinite");
-                ring.appendChild(anim);
-                g.appendChild(ring);
-            }
+    requestAnimationFrame(tick);
+}
 
-            var hit = document.createElementNS(ns, "circle");
-            hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
-            g.appendChild(hit);
+function tick(){
 
-            var shape = createShape(n.type, n.active);
-            shape.setAttribute("fill", COLORS[n.type] || "#999");
-            if (n.active) { shape.setAttribute("stroke", "#000"); shape.setAttribute("stroke-width", "1.5"); }
-            else { shape.setAttribute("stroke", "#fff"); shape.setAttribute("stroke-width", "1"); }
-            g.appendChild(shape);
-            n.shapeEl = shape;
+    links.forEach(l=>{
+        var dx=l.t.x-l.s.x, dy=l.t.y-l.s.y;
+        var dist=Math.sqrt(dx*dx+dy*dy)||1;
+        var restLen=45;
+        var force=(dist-restLen)*0.05;
 
-            var txt = document.createElementNS(ns, "text");
-            var textContent = n.id;
-            if(n.label) textContent += " " + n.label;
-            txt.textContent = textContent;
-            txt.setAttribute("x", 12); txt.setAttribute("y", 3);
-            txt.setAttribute("fill", n.active ? "#000" : "#999"); 
-            txt.style.font = n.active ? "bold 10px Helvetica, Arial, sans-serif" : "9px Helvetica, Arial, sans-serif"; 
-            txt.style.pointerEvents = "none";
-            g.appendChild(txt);
-            n.tEl = txt;
+        var fx=(dx/dist)*force;
+        var fy=(dy/dist)*force;
 
-            g.onmouseenter = function() {
-                var lineage = getStrictLineage(n);
-                nodes.forEach(node => {
-                    node.shapeEl.setAttribute("opacity", "0.1");
-                    node.tEl.setAttribute("opacity", "0.1");
-                });
-                links.forEach(link => {
-                    link.el.setAttribute("opacity", "0.1");
-                });
-                lineage.nodes.forEach(node => {
-                    node.shapeEl.setAttribute("opacity", "1");
-                    node.tEl.setAttribute("opacity", "1");
-                    node.tEl.setAttribute("fill", "#000");
-                });
-                lineage.links.forEach(link => {
-                    link.el.setAttribute("stroke", "#000"); 
-                    link.el.setAttribute("opacity", "1");
-                });
-            };
+        l.s.vx+=fx; l.s.vy+=fy;
+        l.t.vx-=fx; l.t.vy-=fy;
+    });
 
-            g.onmouseleave = function() {
-                nodes.forEach(node => {
-                    node.shapeEl.setAttribute("opacity", "1");
-                    node.tEl.setAttribute("opacity", "1");
-                    node.tEl.setAttribute("fill", node.active ? "#000" : "#999");
-                });
-                links.forEach(link => {
-                    link.el.setAttribute("stroke", "#ddd");
-                    link.el.setAttribute("opacity", "1");
-                });
-            };
-
-            g.onmousedown = function(e){ e.preventDefault(); n.dragging = true; };
-            nodeG.appendChild(g);
-            n.el = g;
-        });
-
-        window.addEventListener("mousemove", function(e){
-            nodes.forEach(n => {
-                if(n.dragging) {
-                    var rect = svg.getBoundingClientRect();
-                    n.x = (e.clientX - rect.left) * (W/rect.width);
-                    n.y = (e.clientY - rect.top) * (H/rect.height);
-                    n.vx = 0; n.vy = 0;
-                }
-            });
-        });
-        window.addEventListener("mouseup", function(){ nodes.forEach(n => n.dragging = false); });
-
-        requestAnimationFrame(tick);
-    }
-
-    function tick() {
-        links.forEach(l => {
-            var dx = l.t.x - l.s.x; var dy = l.t.y - l.s.y;
-            var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-            var restLen = 60;
-            if(l.s.active || l.t.active) restLen = 90;
-            var force = (dist - restLen) * 0.05;
-            var fx = (dx/dist)*force; var fy = (dy/dist)*force;
-            l.s.vx += fx; l.s.vy += fy; l.t.vx -= fx; l.t.vy -= fy;
-        });
-
-        nodes.forEach(n => {
-            nodes.forEach(n2 => {
-                if(n===n2) return;
-                var dx = n.x - n2.x; var dy = n.y - n2.y;
-                var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                if(dist < 100) { 
-                    var f = (100-dist) * 0.05; 
-                    n.vx += (dx/dist)*f; n.vy += (dy/dist)*f; 
-                }
-            });
-            n.vx += (W/2 - n.x) * 0.02; 
-            n.vy += (H/2 - n.y) * 0.02;
-            
-            if(!n.dragging) { n.x += n.vx; n.y += n.vy; n.vx *= 0.85; n.vy *= 0.85; }
-            n.x = Math.max(20, Math.min(W - 40, n.x));
-            n.y = Math.max(20, Math.min(H - 20, n.y));
-            if(n.el) n.el.setAttribute("transform", "translate("+n.x+","+n.y+")");
-        });
-
-        links.forEach(l => {
-            if(l.el) {
-                l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
-                l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
+    nodes.forEach(n=>{
+        nodes.forEach(n2=>{
+            if(n===n2) return;
+            var dx=n.x-n2.x, dy=n.y-n2.y;
+            var dist=Math.sqrt(dx*dx+dy*dy)||1;
+            if(dist<80){
+                var f=(80-dist)*0.05;
+                n.vx+=(dx/dist)*f;
+                n.vy+=(dy/dist)*f;
             }
         });
-        if(document.contains(el)) requestAnimationFrame(tick);
-    }
-    
-    // DELAY INIT TO ENSURE CONTAINER HAS SIZE
-    setTimeout(init, 100);
+
+        n.vx+=(W/2-n.x)*0.02;
+        n.vy+=(H/2-n.y)*0.02;
+
+        n.x+=n.vx;
+        n.y+=n.vy;
+        n.vx*=0.85;
+        n.vy*=0.85;
+
+        n.el.setAttribute("transform","translate("+n.x+","+n.y+")");
+    });
+
+    links.forEach(l=>{
+        l.el.setAttribute("x1",l.s.x);
+        l.el.setAttribute("y1",l.s.y);
+        l.el.setAttribute("x2",l.t.x);
+        l.el.setAttribute("y2",l.t.y);
+    });
+
+    requestAnimationFrame(tick);
+}
+
+init();
+
 })();
 </script>
+
 </body>
 </html>
