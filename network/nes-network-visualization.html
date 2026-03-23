@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>NOAH Engadalen - Master Network</title>
+    <title>Nes Miljøpark - Master Network</title>
     
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     
@@ -65,41 +65,55 @@
 
     var NODES = [
         // KONSERN
-        {id:"Gjelsten Holding AS", type:"p"},
+        {id:"AF Gruppen ASA", type:"p"},
         
         // DIVISJONER
-        {id:"NOAH AS", type:"div_ind"},
-        {id:"NOAH Solutions", type:"div_ent", l:"(Langøya)"},
-        {id:"NOAH Environment", type:"div_ent"},
+        {id:"AF Gruppen Norge AS", type:"div_ind"},
+        {id:"AF Energi og Miljø AS", type:"div_ent"},
+        {id:"AF Offshore AS", type:"div_ent"},
         
         // SØSTERAVDELINGER
-        {id:"FRANO", type:"s", l:"(50%, m/Franzefoss)"},
-        {id:"Rekefjord Stone AS", type:"s", l:"(Steinbrudd)"},
-        {id:"Aas Gård", type:"s", l:"(50% medeier Engadalen)"},
-        {id:"Fabritius Gruppen", type:"s", l:"(Eiendom)"},
-        {id:"Profier AS", type:"s", l:"(Eiendom)"},
+        {id:"AF Decom AS", type:"s"},
+        {id:"Jølsen Miljøpark AS", type:"s"},
+        {id:"Mepex AS", type:"s", l:"(Consulting)"},
+        {id:"AF Energi AS", type:"s"},
+        {id:"Betonmast AS", type:"s", l:"(Construction)"},
+        {id:"Strøm Gundersen AS", type:"s"},
+        {id:"JR Anlegg AS", type:"s"},
+        {id:"Lab Entreprenør AS", type:"s"},
+        {id:"Haga & Berg Entreprenør AS", type:"s"},
+        {id:"AF Offshore Decom AS", type:"s"},
+        {id:"AF Miljøbase Vats AS", type:"s"},
         
         // ACTIVE SITE
-        {id:"NOAH Engadalen AS", type:"receiving", active:true}
+        {id:"Nes Miljøpark AS", type:"receiving", active:true}
     ];
     
     var LINKS = [
-        // Main chain to Engadalen
-        ["NOAH AS", "Gjelsten Holding AS"],
-        ["NOAH Solutions", "NOAH AS"],
-        ["NOAH Environment", "NOAH AS"],
-        ["NOAH Engadalen AS", "NOAH Environment"],
+        // Chain to Nes
+        ["AF Gruppen Norge AS", "AF Gruppen ASA"],
+        ["AF Energi og Miljø AS", "AF Gruppen Norge AS"],
+        ["AF Decom AS", "AF Energi og Miljø AS"],
+        ["Nes Miljøpark AS", "AF Decom AS"],
         
-        // Environment siblings
-        ["FRANO", "NOAH Environment"],
-        ["Rekefjord Stone AS", "NOAH Environment"],
+        // Decom siblings
+        ["Jølsen Miljøpark AS", "AF Decom AS"],
         
-        // Co-owner of Engadalen
-        ["Aas Gård", "NOAH Engadalen AS"],
+        // Energi og Miljø siblings
+        ["Mepex AS", "AF Energi og Miljø AS"],
+        ["AF Energi AS", "AF Energi og Miljø AS"],
         
-        // Gjelsten siblings (context)
-        ["Fabritius Gruppen", "Gjelsten Holding AS"],
-        ["Profier AS", "Gjelsten Holding AS"]
+        // Offshore branch
+        ["AF Offshore AS", "AF Gruppen Norge AS"],
+        ["AF Offshore Decom AS", "AF Offshore AS"],
+        ["AF Miljøbase Vats AS", "AF Offshore Decom AS"],
+        
+        // Other branches under Norge
+        ["Betonmast AS", "AF Gruppen Norge AS"],
+        ["Strøm Gundersen AS", "AF Gruppen Norge AS"],
+        ["JR Anlegg AS", "AF Gruppen Norge AS"],
+        ["Lab Entreprenør AS", "AF Gruppen Norge AS"],
+        ["Haga & Berg Entreprenør AS", "AF Gruppen Norge AS"]
     ];
 
     var el = document.getElementById(containerID);
