@@ -2,340 +2,316 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Rambydalen Massemottak Network</title>
+    <title>Rambydalen Massemottak - Master Network</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fcfcfc; font-family: Helvetica, Arial, sans-serif; }
-        #network-container { width: 100%; height: 100vh; display: block; position: relative; }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: #fff; 
+            font-family: 'IBM Plex Mono', monospace; 
+        }
+
+        #network-container svg { width: 100%; height: 100%; display: block; }
+        #network-container { width: 100%; height: calc(100vh - 40px); display: block; position: relative; margin-top: 5px;}
+        
+        #single-line-legend {
+            position: relative; width: 100%; height: 40px;
+            background: #fff; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; color: #000; border-bottom: 1px solid #f0f0f0; 
+            box-sizing: border-box; gap: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        
+        .legend-section { display: flex; align-items: center; gap: 12px; }
+        .legend-divider { width: 1px; height: 15px; background: #eee; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-item svg { width: 14px !important; height: 14px !important; flex-shrink: 0; overflow: visible; }
+
+        .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
+        .dimmed { opacity: 0.15 !important; }
+        .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
+
+        svg { user-select: none; -webkit-user-select: none; }
     </style>
 </head>
 <body>
 
-<div id="network-container">
-    <div style="position: absolute; top: 20px; left: 20px; z-index: 100;">
-        <h3 style="margin:0; font: bold 14px Helvetica, Arial, sans-serif; color: #111; letter-spacing: 0.5px;">NETTVERK & EIERSTRUKTUR</h3>
-        <p style="margin:4px 0 0 0; font: 10px Helvetica, Arial, sans-serif; color: #666;">
-            Viser koblinger for: <span style="color:#ff003c; font-weight:bold;">Rambydalen Massemottak</span>
-        </p>
+<div id="single-line-legend">
+    <div class="legend-section">
+        <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="#000"/></svg> Konsern</div>
+        <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="#666"/></svg> Divisjon (Ind)</div>
+        <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="none" stroke="#666" stroke-width="1.5"/></svg> Divisjon (Ent)</div>
+        <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#666" stroke-width="1.5"/></svg> Søsteravd.</div>
     </div>
-
-    <div style="position: absolute; bottom: 10px; right: 15px; font: 10px Helvetica, Arial, sans-serif; color: #ccc; pointer-events: none; z-index: 100;">
-        Kilde: Proff.no
-    </div>
-
-    <div style="position: absolute; bottom: 10px; left: 20px; display:flex; flex-wrap:wrap; gap:15px; font:10px Helvetica,Arial,sans-serif; color:#333; z-index:10;">
-        <div style="display:flex; align-items:center; gap:6px;">
-            <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#111"/></svg> <b>Konsern (ASA)</b>
-        </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-            <svg width="10" height="10" style="overflow:visible"><rect x="-3" y="-3" width="6" height="6" fill="#000EFF"/></svg> Operatør
-        </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-            <svg width="10" height="10" style="overflow:visible"><polygon points="-4,4 4,4 0,-4" fill="#ff9900"/></svg> Rambydalen (Aktiv)
-        </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-            <svg width="10" height="10" style="overflow:visible"><polygon points="0,-4 4,0 0,4 -4,0" fill="#39ff14"/></svg> Søsteranlegg
+    <div class="legend-divider"></div>
+    <div class="legend-section">
+        <div class="legend-item">
+            <svg viewBox="0 0 14 14">
+                <circle cx="7" cy="7" r="6" fill="none" stroke="#39ff14" stroke-width="1.5"/>
+                <path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/>
+            </svg> 
+            Receiving (Aktiv)
         </div>
     </div>
 </div>
 
+<div id="network-container"></div>
+
 <script>
 (function(){
-    // --- DATA: RAMBYDALEN (VEIDEKKE) ---
+    var containerID = "network-container"; 
+
     var NODES = [
-        // PARENT
-        {id:"Veidekke ASA", t:"p"},
-
-        // DIVISION
-        {id:"Veidekke Industri AS", t:"op"},
-        {id:"Veidekke Geomaterialer", t:"s", l:"(Avdeling)"},
-
-        // ACTIVE SITE
-        {id:"Rambydalen Massemottak", t:"pukk", active:true}, 
-
-        // SISTER SITES (Context)
-        {id:"Veidekke Gardermoen", t:"mottak"},
-        {id:"Elvestad Massemottak", t:"mottak"},
-        {id:"Gran Pukkverk", t:"pukk"},
-
-        // LOCATION CONTEXT
-        {id:"Nannestad Kommune", t:"p", l:"(Vertskommune)"},
+        // KONSERN
+        {id:"Veidekke ASA", type:"p"},
         
-        // OTHER DIVISIONS (For scale context)
-        {id:"Veidekke Entreprenør AS", t:"s"},
-        {id:"Veidekke Sirkulær AS", t:"s"}
+        // DIVISJONER
+        {id:"Veidekke Industri AS", type:"div_ind"},
+        {id:"Veidekke Entreprenør AS", type:"div_ent"},
+        
+        // SØSTERAVDELINGER
+        {id:"Veidekke Geomaterialer", type:"s", l:"(Avdeling)"},
+        {id:"Veidekke Sirkulær AS", type:"s"},
+        {id:"Veidekke Gardermoen", type:"s"},
+        {id:"Elvestad Massemottak", type:"s"},
+        {id:"Gran Pukkverk", type:"s"},
+        
+        // ACTIVE SITE
+        {id:"Rambydalen Massemottak", type:"receiving", active:true}
     ];
     
-    // Links: Child -> Parent
     var LINKS = [
-        // Hierarchy
+        // Main hierarchy
         ["Veidekke Industri AS", "Veidekke ASA"],
-        ["Veidekke Geomaterialer", "Veidekke Industri AS"],
         ["Veidekke Entreprenør AS", "Veidekke ASA"],
+        ["Veidekke Geomaterialer", "Veidekke Industri AS"],
         ["Veidekke Sirkulær AS", "Veidekke Entreprenør AS"],
-
-        // Site connections
-        ["Rambydalen Massemottak", "Veidekke Geomaterialer"], // Active
+        
+        // Sites under Geomaterialer
+        ["Rambydalen Massemottak", "Veidekke Geomaterialer"],
         ["Veidekke Gardermoen", "Veidekke Geomaterialer"],
         ["Elvestad Massemottak", "Veidekke Geomaterialer"],
-        ["Gran Pukkverk", "Veidekke Geomaterialer"],
-
-        // Location
-        ["Rambydalen Massemottak", "Nannestad Kommune"]
+        ["Gran Pukkverk", "Veidekke Geomaterialer"]
     ];
 
-    var COLORS = {
-        p: "#111111", s: "#e0e0e0", op: "#000EFF",      
-        deponi: "#ff003c", pukk: "#ff9900", mottak: "#39ff14", gjenvinning: "#39ff14"
-    };
-
-    var el = document.getElementById("network-container");
-    var W, H, svg, nodes=[], links=[], parentMap={}, childrenMap={};
+    var el = document.getElementById(containerID);
+    var W, H, svg, nodes=[], links=[], parentMap={}, childMap={};
+    var time = 0;
 
     function getStrictLineage(startNode) {
-        let pathNodes = new Set();
+        let pathNodes = new Set([startNode.id]);
         let pathLinks = new Set();
-        pathNodes.add(startNode);
-        
-        let curr = startNode;
-        while(curr) {
-            let parentId = parentMap[curr.id];
-            if(!parentId) break;
-            let parentNode = nodes.find(n => n.id === parentId);
-            if(parentNode) {
-                let link = links.find(l => (l.s === curr && l.t === parentNode) || (l.t === curr && l.s === parentNode));
-                if(link) pathLinks.add(link);
-                pathNodes.add(parentNode);
-                curr = parentNode;
-            } else break;
+        let curr = startNode.id;
+        while(parentMap[curr]) {
+            pathLinks.add(curr + "-" + parentMap[curr]);
+            curr = parentMap[curr];
+            pathNodes.add(curr);
         }
-        function addChildren(pNode) {
-            let kids = childrenMap[pNode.id] || [];
-            kids.forEach(kidId => {
-                let kNode = nodes.find(n => n.id === kidId);
-                if(kNode) {
-                    let link = links.find(l => (l.s === kNode && l.t === pNode) || (l.t === kNode && l.s === pNode));
-                    if(link) pathLinks.add(link);
-                    pathNodes.add(kNode);
-                    addChildren(kNode);
-                }
+        function findChildren(id) {
+            if(childMap[id]) childMap[id].forEach(c => {
+                pathNodes.add(c);
+                pathLinks.add(c + "-" + id);
+                findChildren(c);
             });
         }
-        addChildren(startNode);
+        findChildren(startNode.id);
         return {nodes: pathNodes, links: pathLinks};
     }
 
     function createShape(type, isActive) {
         var ns = "http://www.w3.org/2000/svg";
-        var shape;
+        var g = document.createElementNS(ns, "g");
+        var r = 3.5; 
+        var p = 2;
+        
         if (type === 'p') { 
-            shape = document.createElementNS(ns, "rect");
-            shape.setAttribute("x", -5); shape.setAttribute("y", -5);
-            shape.setAttribute("width", 10); shape.setAttribute("height", 10);
-        } else if (type === 'op') { 
-            shape = document.createElementNS(ns, "rect");
-            shape.setAttribute("x", -4); shape.setAttribute("y", -4);
-            shape.setAttribute("width", 8); shape.setAttribute("height", 8);
-        } else if (type === 'mottak') { 
-            shape = document.createElementNS(ns, "polygon");
-            shape.setAttribute("points", "0,-4 4,0 0,4 -4,0");
-        } else if (type === 'pukk') { 
-            shape = document.createElementNS(ns, "polygon");
-            shape.setAttribute("points", "-4,4 4,4 0,-4");
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "#000");
+            g.appendChild(rect);
+        } else if (type === 'div_ind') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "#666");
+            g.appendChild(poly);
+        } else if (type === 'div_ent') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "none");
+            poly.setAttribute("stroke", "#666"); 
+            poly.setAttribute("stroke-width", "1");
+            g.appendChild(poly);
         } else if (type === 's') { 
-            shape = document.createElementNS(ns, "rect");
-            shape.setAttribute("x", -3); shape.setAttribute("y", -3);
-            shape.setAttribute("width", 6); shape.setAttribute("height", 6);
-            shape.setAttribute("stroke", "#999"); shape.setAttribute("stroke-width", "0.5");
-        } else { 
-            shape = document.createElementNS(ns, "circle");
-            shape.setAttribute("r", 3);
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "none");
+            rect.setAttribute("stroke", "#666"); 
+            rect.setAttribute("stroke-width", "1");
+            g.appendChild(rect);
+        } else if (type === 'receiving') { 
+            var bg = document.createElementNS(ns, "circle");
+            bg.setAttribute("r", r+p); bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var c = document.createElementNS(ns, "circle");
+            c.setAttribute("r", r); c.setAttribute("fill", "none");
+            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1");
+            var pa = document.createElementNS(ns, "path");
+            pa.setAttribute("fill", "#000");
+            pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
+            g.appendChild(c); g.appendChild(pa);
         }
-        if(isActive) shape.setAttribute("transform", "scale(1.5)");
-        return shape;
+
+        if(isActive) {
+            g.setAttribute("transform", "scale(1.2)");
+        }
+        return g;
     }
 
     function init() {
-        if(!el) return;
-        LINKS.forEach(pair => {
-            let child = pair[0];
-            let parent = pair[1];
-            parentMap[child] = parent;
-            if(!childrenMap[parent]) childrenMap[parent] = [];
-            childrenMap[parent].push(child);
-        });
-
-        W = el.offsetWidth; H = el.offsetHeight;
+        W = el.offsetWidth || window.innerWidth;
+        H = el.offsetHeight || 500;
         el.innerHTML = "";
         var ns = "http://www.w3.org/2000/svg";
         svg = document.createElementNS(ns, "svg");
-        svg.setAttribute("width", "100%");
-        svg.setAttribute("height", "100%");
-        svg.setAttribute("viewBox", "0 0 " + W + " " + H);
-        svg.style.display = "block";
-        svg.style.position = "absolute";
-        svg.style.top = "0"; svg.style.left = "0"; svg.style.zIndex = "1";
-        el.insertBefore(svg, el.firstChild);
+        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+        el.appendChild(svg);
 
-        window.addEventListener('resize', function() {
-            W = el.offsetWidth; H = el.offsetHeight;
-            svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+        LINKS.forEach(l => {
+            parentMap[l[0]] = l[1];
+            if(!childMap[l[1]]) childMap[l[1]] = [];
+            childMap[l[1]].push(l[0]);
         });
 
         nodes = NODES.map(d => ({
-            id: d.id, type: d.t, label: d.l, active: d.active,
-            x: W/2 + (Math.random()-0.5)*100,
-            y: H/2 + (Math.random()-0.5)*100,
-            vx: 0, vy: 0
+            ...d, x: W/2 + (Math.random()-0.5)*200, y: H/2 + (Math.random()-0.5)*200,
+            vx: 0, vy: 0, noiseOffset: Math.random() * 100
         }));
 
-        links = [];
-        LINKS.forEach(pair => {
-            var s = nodes.find(n=>n.id===pair[0]);
-            var t = nodes.find(n=>n.id===pair[1]);
-            if(s && t) links.push({s:s, t:t});
-        });
-
-        var linkG = document.createElementNS(ns, "g");
-        svg.appendChild(linkG);
-        links.forEach(l => {
+        var linkG = document.createElementNS(ns, "g"); svg.appendChild(linkG);
+        links = LINKS.map(l => {
+            var sNode = nodes.find(n => n.id === l[0]), tNode = nodes.find(n => n.id === l[1]);
             var line = document.createElementNS(ns, "line");
-            line.setAttribute("stroke", "#e5e5e5");
-            line.setAttribute("stroke-width", "1");
+            line.setAttribute("class", "link-line");
+            line.setAttribute("stroke", "#f2f2f2"); line.setAttribute("stroke-width", "1");
             linkG.appendChild(line);
-            l.el = line;
+            return { s: sNode, t: tNode, el: line, id: l[0] + "-" + l[1] };
         });
 
-        var nodeG = document.createElementNS(ns, "g");
-        svg.appendChild(nodeG);
-
+        var nodeG = document.createElementNS(ns, "g"); svg.appendChild(nodeG);
         nodes.forEach(n => {
             var g = document.createElementNS(ns, "g");
-            g.style.cursor = "pointer";
-            
-            if (n.active) {
-                var ring = document.createElementNS(ns, "circle");
-                ring.setAttribute("r", 18);
-                ring.setAttribute("fill", "transparent");
-                ring.setAttribute("stroke", "#ff9900"); // Orange for Pukk/Mass
-                ring.setAttribute("stroke-width", "1");
-                ring.setAttribute("stroke-dasharray", "2,2");
-                var anim = document.createElementNS(ns, "animateTransform");
-                anim.setAttribute("attributeName", "transform");
-                anim.setAttribute("type", "rotate");
-                anim.setAttribute("from", "0 0 0");
-                anim.setAttribute("to", "360 0 0");
-                anim.setAttribute("dur", "10s");
-                anim.setAttribute("repeatCount", "indefinite");
-                ring.appendChild(anim);
-                g.appendChild(ring);
-            }
+            g.setAttribute("class", "node-group");
+            g.style.cursor = "grab";
 
             var hit = document.createElementNS(ns, "circle");
             hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
             g.appendChild(hit);
-
+            
             var shape = createShape(n.type, n.active);
-            shape.setAttribute("fill", COLORS[n.type] || "#999");
-            if (n.active) { shape.setAttribute("stroke", "#000"); shape.setAttribute("stroke-width", "1.5"); }
-            g.appendChild(shape);
-            n.shapeEl = shape;
-
+            shape.style.pointerEvents = "none";
+            g.appendChild(shape); n.shapeEl = shape;
+            
             var txt = document.createElementNS(ns, "text");
-            var textContent = n.id;
-            if(n.label) textContent += " " + n.label;
-            txt.textContent = textContent;
+            txt.textContent = n.id + (n.l ? " " + n.l : "");
             txt.setAttribute("x", 12); txt.setAttribute("y", 3);
-            txt.setAttribute("fill", n.active ? "#000" : "#bbb");
-            txt.style.font = n.active ? "bold 10px Helvetica, Arial, sans-serif" : "9px Helvetica, Arial, sans-serif"; 
+            txt.setAttribute("fill", n.active ? "#000" : "#bbb"); 
+            txt.style.font = n.active ? "600 10px 'IBM Plex Mono'" : "400 9px 'IBM Plex Mono'"; 
             txt.style.pointerEvents = "none";
-            g.appendChild(txt);
-            n.tEl = txt;
+            g.appendChild(txt); n.tEl = txt;
 
-            g.onmouseenter = function() {
+            g.onmouseenter = () => {
                 var lineage = getStrictLineage(n);
-                nodes.forEach(node => {
-                    node.shapeEl.setAttribute("opacity", "0.1");
-                    node.tEl.setAttribute("opacity", "0.1");
+                nodes.forEach(node => { 
+                    node.el.classList.toggle("dimmed", !lineage.nodes.has(node.id));
+                    if(lineage.nodes.has(node.id)) {
+                        node.tEl.style.fontWeight = "bold";
+                        node.tEl.setAttribute("fill", "#000");
+                    }
                 });
                 links.forEach(link => {
-                    link.el.setAttribute("opacity", "0.1");
-                });
-                lineage.nodes.forEach(node => {
-                    node.shapeEl.setAttribute("opacity", "1");
-                    node.tEl.setAttribute("opacity", "1");
-                    node.tEl.setAttribute("fill", "#000");
-                });
-                lineage.links.forEach(link => {
-                    link.el.setAttribute("stroke", "#000"); 
-                    link.el.setAttribute("opacity", "1");
+                    var isH = lineage.links.has(link.id);
+                    link.el.classList.toggle("dimmed", !isH);
+                    link.el.classList.toggle("highlight-link", isH);
                 });
             };
 
-            g.onmouseleave = function() {
+            g.onmouseleave = () => {
                 nodes.forEach(node => {
-                    node.shapeEl.setAttribute("opacity", "1");
-                    node.tEl.setAttribute("opacity", "1");
+                    node.el.classList.remove("dimmed");
+                    node.tEl.style.fontWeight = node.active ? "bold" : "normal";
                     node.tEl.setAttribute("fill", node.active ? "#000" : "#bbb");
                 });
-                links.forEach(link => {
-                    link.el.setAttribute("stroke", "#e5e5e5");
-                    link.el.setAttribute("opacity", "1");
-                });
+                links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
             };
 
-            g.onmousedown = function(e){ e.preventDefault(); n.dragging = true; };
-            nodeG.appendChild(g);
-            n.el = g;
+            g.onmousedown = (e) => { e.preventDefault(); n.dragging = true; g.style.cursor = "grabbing"; };
+            nodeG.appendChild(g); n.el = g;
         });
-
-        window.addEventListener("mousemove", function(e){
-            nodes.forEach(n => {
-                if(n.dragging) {
-                    var rect = svg.getBoundingClientRect();
-                    n.x = (e.clientX - rect.left) * (W/rect.width);
-                    n.y = (e.clientY - rect.top) * (H/rect.height);
-                    n.vx = 0; n.vy = 0;
-                }
-            });
-        });
-        window.addEventListener("mouseup", function(){ nodes.forEach(n => n.dragging = false); });
 
         requestAnimationFrame(tick);
     }
 
     function tick() {
+        time += 0.005;
+        const restLen = 95, centerG = 0.01;
         links.forEach(l => {
-            var dx = l.t.x - l.s.x; var dy = l.t.y - l.s.y;
-            var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-            var restLen = 60;
-            if(l.s.active || l.t.active) restLen = 90;
-            var force = (dist - restLen) * 0.05;
-            var fx = (dx/dist)*force; var fy = (dy/dist)*force;
-            l.s.vx += fx; l.s.vy += fy; l.t.vx -= fx; l.t.vy -= fy;
+            var dx = l.t.x - l.s.x, dy = l.t.y - l.s.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
+            var force = (dist - restLen) * 0.02;
+            l.s.vx += (dx/dist)*force; l.s.vy += (dy/dist)*force;
+            l.t.vx -= (dx/dist)*force; l.t.vy -= (dy/dist)*force;
         });
-
         nodes.forEach(n => {
-            nodes.forEach(n2 => {
-                if(n===n2) return;
-                var dx = n.x - n2.x; var dy = n.y - n2.y;
-                var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                if(dist < 100) { 
-                    var f = (100-dist) * 0.05; 
-                    n.vx += (dx/dist)*f; n.vy += (dy/dist)*f; 
-                }
-            });
-            n.vx += (W/2 - n.x) * 0.02; 
-            n.vy += (H/2 - n.y) * 0.02;
-            
-            if(!n.dragging) { n.x += n.vx; n.y += n.vy; n.vx *= 0.85; n.vy *= 0.85; }
-            n.x = Math.max(20, Math.min(W - 40, n.x));
-            n.y = Math.max(20, Math.min(H - 20, n.y));
-            if(n.el) n.el.setAttribute("transform", "translate("+n.x+","+n.y+")");
+            if (!n.dragging) {
+                n.vx += Math.sin(time + n.noiseOffset) * 0.04;
+                n.vy += Math.cos(time + n.noiseOffset) * 0.04;
+                n.vx += (W/2 - n.x) * centerG;
+                n.vy += (H/2 - n.y) * centerG;
+                nodes.forEach(n2 => {
+                    if(n === n2) return;
+                    var dx = n.x - n2.x, dy = n.y - n2.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                    if(dist < 100) { var f = (100 - dist) * 0.04; n.vx += (dx/dist) * f; n.vy += (dy/dist) * f; }
+                });
+                n.x += n.vx; n.y += n.vy; n.vx *= 0.88; n.vy *= 0.88;
+            }
+            n.x = Math.max(100, Math.min(W - 150, n.x)); n.y = Math.max(50, Math.min(H - 50, n.y));
+            if(n.el) n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
         });
-
-        if(document.contains(el)) requestAnimationFrame(tick);
+        links.forEach(l => {
+            l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
+            l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
+        });
+        requestAnimationFrame(tick);
     }
-    setTimeout(init, 100);
+
+    window.addEventListener("mousemove", (e) => {
+        var rect = el.getBoundingClientRect();
+        nodes.forEach(n => { if(n.dragging) { n.x = e.clientX - rect.left; n.y = e.clientY - rect.top; n.vx = 0; n.vy = 0; }});
+    });
+    window.addEventListener("mouseup", () => nodes.forEach(n => n.dragging = false));
+    
+    setTimeout(init, 500);
 })();
 </script>
 </body>
