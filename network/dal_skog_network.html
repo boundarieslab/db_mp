@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Dal Skog ØRAS - Stable & Living</title>
+    <title>Dal Skog ØRAS - Master Network</title>
     
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
@@ -12,25 +12,28 @@
             overflow: hidden; background: #fff; 
             font-family: 'IBM Plex Mono', monospace; 
         }
-        #network-container { 
-            width: 100%; height: calc(100vh - 45px); 
-            display: block; position: relative; margin-top: 45px; 
-        }
+
+        #network-container svg { width: 100%; height: 100%; display: block; }
+        #network-container { width: 100%; height: calc(100vh - 40px); display: block; position: relative; }
         
         #single-line-legend {
-            position: fixed; top: 0; left: 0; width: 100%; height: 45px;
-            background: #fff; z-index: 10;
+            position: relative; width: 100%; height: 40px;
+            background: #fff; z-index: 100;
             display: flex; align-items: center; justify-content: center;
-            font-size: 9px; color: #000; padding: 0 5px; 
-            border-bottom: 1px solid #f0f0f0; box-sizing: border-box;
-            gap: 15px;
+            font-size: 10px; color: #000; border-bottom: 1px solid #f0f0f0; 
+            box-sizing: border-box; gap: 20px;
         }
         
         .legend-section { display: flex; align-items: center; gap: 8px; }
         .legend-divider { width: 1px; height: 15px; background: #eee; }
-        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-item svg { width: 12px !important; height: 12px !important; flex-shrink: 0; }
 
-        /* Disable text selection while dragging */
+        /* Myke overganger for utheving */
+        .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
+        .dimmed { opacity: 0.15 !important; }
+        .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
+
         svg { user-select: none; -webkit-user-select: none; }
     </style>
 </head>
@@ -38,14 +41,13 @@
 
 <div id="single-line-legend">
     <div class="legend-section">
-        <div class="legend-item"><svg width="10" height="10"><rect width="10" height="10" fill="#000"/></svg> Konsern</div>
-        <div class="legend-item"><svg width="10" height="10"><polygon points="0,10 5,0 10,10" fill="#666"/></svg> Divisjon</div>
-        <div class="legend-item"><svg width="10" height="10"><rect x="1" y="1" width="8" height="8" fill="none" stroke="#666" stroke-width="1"/></svg> Søsteravd.</div>
+        <div class="legend-item"><svg viewBox="0 0 10 10"><rect width="10" height="10" fill="#000"/></svg> Eierkommune</div>
+        <div class="legend-item"><svg viewBox="0 0 10 10"><polygon points="0,10 5,0 10,10" fill="#666"/></svg> Selskap (ØRAS)</div>
     </div>
     <div class="legend-divider"></div>
     <div class="legend-section">
         <div class="legend-item">
-            <svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="none" stroke="#39ff14" stroke-width="1.2"/><path d="M6,6 L1,6 A5,5 0 0,1 6,1 Z M6,6 L11,6 A5,5 0 0,1 6,11 Z" fill="#000"/></svg> Mixed Facility
+            <svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="none" stroke="#39ff14" stroke-width="1.5"/><path d="M6,6 L1,6 A5,5 0 0,1 6,1 Z M6,6 L11,6 A5,5 0 0,1 6,11 Z" fill="#000"/></svg> Miljøstasjon (Aktiv)
         </div>
     </div>
 </div>
@@ -55,11 +57,16 @@
 <script>
 (function(){
     var NODES = [
+        // EIERE (Sorte firkanter)
         {id:"Eidsvoll Kommune", cargo_type:"parent", cargo_sub:"parent"},
         {id:"Hurdal Kommune", cargo_type:"parent", cargo_sub:"parent"},
         {id:"Nannestad Kommune", cargo_type:"parent", cargo_sub:"parent"},
         {id:"Ullensaker Kommune", cargo_type:"parent", cargo_sub:"parent"},
+
+        // IKS (Grå trekant)
         {id:"Øvre Romerike Avfallsselskap IKS", l:"(ØRAS)", cargo_type:"parent", cargo_sub:"division_industri"},
+        
+        // ANLEGG (Grønn sirkel - Mixed)
         {id:"Miljøstasjon Dal Skog", cargo_type:"facility", cargo_sub:"mixed", active:true}
     ];
     
@@ -72,200 +79,178 @@
     ];
 
     var el = document.getElementById("network-container");
-    var W, H, svg, nodes=[], links=[];
+    var W, H, svg, nodes=[], links=[], parentMap={}, childMap={};
+    var time = 0;
+
+    function getStrictLineage(startNode) {
+        let pathNodes = new Set([startNode.id]);
+        let pathLinks = new Set();
+        let curr = startNode.id;
+        
+        // Finn alle foreldre (oppover)
+        while(parentMap[curr]) {
+            pathLinks.add(curr + "-" + parentMap[curr]);
+            curr = parentMap[curr];
+            pathNodes.add(curr);
+        }
+        
+        // Finn alle barn (nedover) - rekursivt
+        function findChildren(id) {
+            if(childMap[id]) childMap[id].forEach(c => {
+                pathNodes.add(c);
+                pathLinks.add(c + "-" + id);
+                findChildren(c);
+            });
+        }
+        findChildren(startNode.id);
+        
+        return {nodes: pathNodes, links: pathLinks};
+    }
 
     function createIcon(node) {
         var ns = "http://www.w3.org/2000/svg";
         var g = document.createElementNS(ns, "g");
         var s = 4.5; 
-
         if (node.cargo_type === 'parent') {
             if (node.cargo_sub === 'parent') {
                 var r = document.createElementNS(ns, "rect");
                 r.setAttribute("x", -s); r.setAttribute("y", -s);
                 r.setAttribute("width", s*2); r.setAttribute("height", s*2);
-                r.setAttribute("fill", "#000");
-                g.appendChild(r);
-            } else if (node.cargo_sub === 'division_industri') {
+                r.setAttribute("fill", "#000"); g.appendChild(r);
+            } else {
                 var p = document.createElementNS(ns, "polygon");
                 p.setAttribute("points", `0,-${s+1} ${s+1},${s+1} -${s+1},${s+1}`);
-                p.setAttribute("fill", "#666");
-                g.appendChild(p);
+                p.setAttribute("fill", "#666"); g.appendChild(p);
             }
-        } else if (node.cargo_type === 'facility') {
+        } else {
             var c = document.createElementNS(ns, "circle");
-            c.setAttribute("r", s+1);
-            c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.2");
-            g.appendChild(c);
-
-            var path = document.createElementNS(ns, "path");
-            path.setAttribute("fill", "#000");
-            path.setAttribute("d", `M0,0 L-${s+1},0 A${s+1},${s+1} 0 0,1 0,-${s+1} Z M0,0 L${s+1},0 A${s+1},${s+1} 0 0,1 0,${s+1} Z`);
-            g.appendChild(path);
+            c.setAttribute("r", s+1); c.setAttribute("fill", "none");
+            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.3");
+            var p = document.createElementNS(ns, "path");
+            p.setAttribute("fill", "#000");
+            p.setAttribute("d", `M0,0 L-${s+1},0 A${s+1},${s+1} 0 0,1 0,-${s+1} Z M0,0 L${s+1},0 A${s+1},${s+1} 0 0,1 0,${s+1} Z`);
+            g.appendChild(c); g.appendChild(p);
         }
         return g;
     }
 
     function init() {
-        if(!el) return;
-        W = el.offsetWidth; H = el.offsetHeight;
-        el.innerHTML = "";
+        W = el.offsetWidth || window.innerWidth;
+        H = el.offsetHeight || 600;
         var ns = "http://www.w3.org/2000/svg";
         svg = document.createElementNS(ns, "svg");
-        svg.setAttribute("width", "100%"); svg.setAttribute("height", "100%");
+        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
         el.appendChild(svg);
 
+        // Bygg kart over relasjoner
+        LINKS.forEach(l => {
+            parentMap[l[0]] = l[1];
+            if(!childMap[l[1]]) childMap[l[1]] = [];
+            childMap[l[1]].push(l[0]);
+        });
+
         nodes = NODES.map(d => ({
-            id: d.id, active: d.active, cargo_type: d.cargo_type, cargo_sub: d.cargo_sub,
-            x: W/2 + (Math.random()-0.5)*100,
-            y: H/2 + (Math.random()-0.5)*100,
-            vx: 0, vy: 0
+            ...d, x: W/2 + (Math.random()-0.5)*150, y: H/2 + (Math.random()-0.5)*150,
+            vx: 0, vy: 0, noiseOffset: Math.random() * 100
         }));
 
-        LINKS.forEach(pair => {
-            var s = nodes.find(n=>n.id===pair[0]);
-            var t = nodes.find(n=>n.id===pair[1]);
-            if(s && t) links.push({s:s, t:t});
-        });
-
-        var linkG = document.createElementNS(ns, "g");
-        svg.appendChild(linkG);
-        links.forEach(l => {
+        var linkG = document.createElementNS(ns, "g"); svg.appendChild(linkG);
+        links = LINKS.map(l => {
+            var sNode = nodes.find(n => n.id === l[0]), tNode = nodes.find(n => n.id === l[1]);
             var line = document.createElementNS(ns, "line");
-            line.setAttribute("stroke", "#f2f2f2");
-            line.setAttribute("stroke-width", "1");
+            line.setAttribute("class", "link-line");
+            line.setAttribute("stroke", "#f2f2f2"); line.setAttribute("stroke-width", "1");
             linkG.appendChild(line);
-            l.el = line;
+            return { s: sNode, t: tNode, el: line };
         });
 
-        var nodeG = document.createElementNS(ns, "g");
-        svg.appendChild(nodeG);
-
+        var nodeG = document.createElementNS(ns, "g"); svg.appendChild(nodeG);
         nodes.forEach(n => {
             var g = document.createElementNS(ns, "g");
+            g.setAttribute("class", "node-group");
             g.style.cursor = "grab";
-            
-            // 1. Invisible Hit Area (makes it easier to click)
+
             var hit = document.createElementNS(ns, "circle");
-            hit.setAttribute("r", 20);
-            hit.setAttribute("fill", "transparent");
+            hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
             g.appendChild(hit);
 
-            // 2. Rotating Active Ring
             if (n.active) {
                 var ring = document.createElementNS(ns, "circle");
-                ring.setAttribute("r", 14);
-                ring.setAttribute("fill", "none");
-                ring.setAttribute("stroke", "#000");
-                ring.setAttribute("stroke-width", "0.5");
+                ring.setAttribute("r", 15); ring.setAttribute("fill", "none");
+                ring.setAttribute("stroke", "#000"); ring.setAttribute("stroke-width", "0.5");
                 ring.setAttribute("stroke-dasharray", "2,3");
-                
                 var anim = document.createElementNS(ns, "animateTransform");
-                anim.setAttribute("attributeName", "transform");
-                anim.setAttribute("type", "rotate");
-                anim.setAttribute("from", "0 0 0");
-                anim.setAttribute("to", "360 0 0");
-                anim.setAttribute("dur", "12s");
-                anim.setAttribute("repeatCount", "indefinite");
-                ring.appendChild(anim);
-                g.appendChild(ring);
+                anim.setAttribute("attributeName", "transform"); anim.setAttribute("type", "rotate");
+                anim.setAttribute("from", "0 0 0"); anim.setAttribute("to", "360 0 0");
+                anim.setAttribute("dur", "20s"); anim.setAttribute("repeatCount", "indefinite");
+                ring.appendChild(anim); g.appendChild(ring);
             }
-
-            g.appendChild(createIcon(n));
-
+            
+            var icon = createIcon(n); icon.style.pointerEvents = "none";
+            g.appendChild(icon); n.shapeEl = icon;
             var txt = document.createElementNS(ns, "text");
-            txt.textContent = n.id;
-            txt.setAttribute("x", 10); txt.setAttribute("y", 3);
+            txt.textContent = n.id; txt.setAttribute("x", 10); txt.setAttribute("y", 3);
             txt.setAttribute("fill", n.active ? "#000" : "#bbb"); 
-            txt.style.font = n.active ? "600 9px 'IBM Plex Mono', monospace" : "400 8.5px 'IBM Plex Mono', monospace"; 
+            txt.style.font = n.active ? "600 10px 'IBM Plex Mono'" : "400 9px 'IBM Plex Mono'"; 
             txt.style.pointerEvents = "none";
-            g.appendChild(txt);
+            g.appendChild(txt); n.tEl = txt;
 
-            // Drag Start
-            g.onmousedown = function(e){ 
-                e.preventDefault(); 
-                n.dragging = true; 
-                g.style.cursor = "grabbing";
+            g.onmouseenter = () => {
+                var lineage = getStrictLineage(n);
+                nodes.forEach(node => { node.el.classList.toggle("dimmed", !lineage.nodes.has(node.id)); });
+                links.forEach(link => {
+                    var isH = lineage.links.has(link.s.id + "-" + link.t.id) || lineage.links.has(link.t.id + "-" + link.s.id);
+                    link.el.classList.toggle("dimmed", !isH);
+                    link.el.classList.toggle("highlight-link", isH);
+                });
             };
-
-            nodeG.appendChild(g);
-            n.el = g;
-        });
-
-        // Global Mouse Move (Drag Update)
-        window.addEventListener("mousemove", function(e){
-            var rect = svg.getBoundingClientRect();
-            nodes.forEach(n => {
-                if(n.dragging) {
-                    n.x = e.clientX - rect.left;
-                    n.y = e.clientY - rect.top;
-                    n.vx = 0; n.vy = 0;
-                }
-            });
-        });
-
-        // Global Mouse Up (Drag End)
-        window.addEventListener("mouseup", function(){ 
-            nodes.forEach(n => { 
-                if(n.dragging) {
-                    n.dragging = false; 
-                    n.el.style.cursor = "grab";
-                }
-            }); 
+            g.onmouseleave = () => {
+                nodes.forEach(node => node.el.classList.remove("dimmed"));
+                links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
+            };
+            g.onmousedown = (e) => { e.preventDefault(); n.dragging = true; g.style.cursor = "grabbing"; };
+            nodeG.appendChild(g); n.el = g;
         });
 
         requestAnimationFrame(tick);
     }
 
     function tick() {
+        time += 0.005;
+        const restLen = 90, centerG = 0.008;
         links.forEach(l => {
-            var dx = l.t.x - l.s.x; var dy = l.t.y - l.s.y;
-            var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-            var restLen = 65;
-            var force = (dist - restLen) * 0.025;
+            var dx = l.t.x - l.s.x, dy = l.t.y - l.s.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
+            var force = (dist - restLen) * 0.02;
             l.s.vx += (dx/dist)*force; l.s.vy += (dy/dist)*force;
             l.t.vx -= (dx/dist)*force; l.t.vy -= (dy/dist)*force;
         });
-
         nodes.forEach(n => {
-            nodes.forEach(n2 => {
-                if(n===n2) return;
-                var dx = n.x - n2.x, dy = n.y - n2.y;
-                var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                if(dist < 80) {
-                    var f = (80-dist) * 0.04; 
-                    n.vx += (dx/dist)*f; n.vy += (dy/dist)*f; 
-                }
-            });
-            
-            // Subtle "Alive" Jitter
-            n.vx += (Math.random() - 0.5) * 0.12;
-            n.vy += (Math.random() - 0.5) * 0.12;
-
-            n.vx += (W/2 - n.x) * 0.008;
-            n.vy += (H/2 - n.y) * 0.008;
-            
-            if(!n.dragging) { n.x += n.vx; n.y += n.vy; }
-            n.vx *= 0.91; n.vy *= 0.91; 
-            
-            // Boundaries
-            n.x = Math.max(30, Math.min(W - 130, n.x));
-            n.y = Math.max(30, Math.min(H - 30, n.y));
-            
-            if(n.el) n.el.setAttribute("transform", "translate("+n.x+","+n.y+")");
-        });
-
-        links.forEach(l => {
-            if(l.el) {
-                l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
-                l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
+            if (!n.dragging) {
+                n.vx += Math.sin(time + n.noiseOffset) * 0.04;
+                n.vy += Math.cos(time + n.noiseOffset) * 0.04;
+                n.vx += (W/2 - n.x) * centerG;
+                n.vy += (H/2 - n.y) * centerG;
+                nodes.forEach(n2 => {
+                    if(n === n2) return;
+                    var dx = n.x - n2.x, dy = n.y - n2.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                    if(dist < 110) { var f = (110 - dist) * 0.04; n.vx += (dx/dist) * f; n.vy += (dy/dist) * f; }
+                });
+                n.x += n.vx; n.y += n.vy; n.vx *= 0.88; n.vy *= 0.88;
             }
+            n.x = Math.max(80, Math.min(W - 130, n.x)); n.y = Math.max(50, Math.min(H - 50, n.y));
+            n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
         });
+        links.forEach(l => { l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y); l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y); });
         requestAnimationFrame(tick);
     }
+
+    window.addEventListener("mousemove", (e) => {
+        var rect = el.getBoundingClientRect();
+        nodes.forEach(n => { if(n.dragging) { n.x = e.clientX - rect.left; n.y = e.clientY - rect.top; n.vx = 0; n.vy = 0; }});
+    });
+    window.addEventListener("mouseup", () => nodes.forEach(n => { if(n.dragging) { n.dragging = false; n.el.style.cursor = "grab"; }}));
     
-    setTimeout(init, 100);
+    setTimeout(init, 400);
 })();
 </script>
 </body>
