@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Asak Massemottak Network</title>
+    <title>Asak Massemottak - Living Network</title>
     
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
@@ -13,33 +13,35 @@
             font-family: 'IBM Plex Mono', monospace; 
         }
         #network-container { 
-            width: 100%; height: calc(100vh - 40px); 
-            display: block; position: relative; 
-            margin-top: 40px; 
+            width: 100%; height: calc(100vh - 45px); 
+            display: block; position: relative; margin-top: 45px; 
         }
         
+        /* --- SINGLE LINE LEGEND --- */
         #single-line-legend {
-            position: fixed; top: 0; left: 0; width: 100%; height: 40px;
-            background: rgba(255,255,255,0.95); z-index: 10;
+            position: fixed; top: 0; left: 0; width: 100%; height: 45px;
+            background: #fff; z-index: 10;
             display: flex; align-items: center; justify-content: center;
-            font-size: 10px; color: #000; padding: 0 10px; 
-            border-bottom: 1px solid #eee; box-sizing: border-box;
-            gap: 20px; flex-wrap: nowrap; overflow-x: auto; white-space: nowrap;
+            font-size: 9px; color: #000; padding: 0 5px; 
+            border-bottom: 1px solid #f0f0f0; box-sizing: border-box;
+            gap: 15px;
         }
         
-        .legend-section { display: flex; align-items: center; gap: 10px; }
-        .legend-divider { width: 1px; height: 20px; background: #ccc; }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .legend-title { font-weight: 600; text-transform: uppercase; margin-right: 5px; }
+        .legend-section { display: flex; align-items: center; gap: 8px; }
+        .legend-divider { width: 1px; height: 15px; background: #eee; }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-title { font-weight: 600; text-transform: uppercase; font-size: 8px; color: #999; }
+
+        svg { user-select: none; -webkit-user-select: none; }
     </style>
 </head>
 <body>
 
 <div id="single-line-legend">
     <div class="legend-section">
-        <div class="legend-item"><svg width="12" height="12"><rect width="12" height="12" fill="#000"/></svg> Konsern</div>
-        <div class="legend-item"><svg width="12" height="12"><polygon points="0,12 6,0 12,12" fill="#666"/></svg> Divisjon</div>
-        <div class="legend-item"><svg width="12" height="12"><rect x="1" y="1" width="10" height="10" fill="none" stroke="#666" stroke-width="1.5"/></svg> Søsteravd.</div>
+        <div class="legend-item"><svg width="10" height="10"><rect width="10" height="10" fill="#000"/></svg> Konsern</div>
+        <div class="legend-item"><svg width="10" height="10"><polygon points="0,10 5,0 10,10" fill="#666"/></svg> Divisjon</div>
+        <div class="legend-item"><svg width="10" height="10"><rect x="1" y="1" width="8" height="8" fill="none" stroke="#666" stroke-width="1"/></svg> Søsteravd.</div>
     </div>
     
     <div class="legend-divider"></div>
@@ -47,13 +49,13 @@
     <div class="legend-section">
         <span class="legend-title">Facility:</span>
         <div class="legend-item">
-            <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="none" stroke="#39ff14" stroke-width="1.5"/><path d="M1,7 A6,6 0 0,1 13,7 Z" fill="#000"/></svg> Producing
+            <svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="none" stroke="#39ff14" stroke-width="1.2"/><path d="M1,6 A5,5 0 0,1 11,6 Z" fill="#000"/></svg> Producing
         </div>
         <div class="legend-item">
-            <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="none" stroke="#39ff14" stroke-width="1.5"/><path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/></svg> Receiving
+            <svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="none" stroke="#39ff14" stroke-width="1.2"/><path d="M1,6 A5,5 0 0,0 11,6 Z" fill="#000"/></svg> Receiving
         </div>
         <div class="legend-item">
-            <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="none" stroke="#39ff14" stroke-width="1.5"/><path d="M7,7 L1,7 A6,6 0 0,1 7,1 Z M7,7 L13,7 A6,6 0 0,1 7,13 Z" fill="#000"/></svg> Mixed
+            <svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="none" stroke="#39ff14" stroke-width="1.2"/><path d="M6,6 L1,6 A5,5 0 0,1 6,1 Z M6,6 L11,6 A5,5 0 0,1 6,11 Z" fill="#000"/></svg> Mixed
         </div>
     </div>
 </div>
@@ -109,49 +111,47 @@
     function createIcon(node) {
         var ns = "http://www.w3.org/2000/svg";
         var g = document.createElementNS(ns, "g");
-        var size = 7; 
+        var s = 4.5; 
 
         if (node.cargo_type === 'parent') {
             if (node.cargo_sub === 'parent') {
                 var r = document.createElementNS(ns, "rect");
-                r.setAttribute("x", -size); r.setAttribute("y", -size);
-                r.setAttribute("width", size*2); r.setAttribute("height", size*2);
+                r.setAttribute("x", -s); r.setAttribute("y", -s);
+                r.setAttribute("width", s*2); r.setAttribute("height", s*2);
                 r.setAttribute("fill", "#000");
                 g.appendChild(r);
             } else if (node.cargo_sub === 'division_industri') {
                 var p = document.createElementNS(ns, "polygon");
-                p.setAttribute("points", `0,-${size} ${size},${size} -${size},${size}`);
+                p.setAttribute("points", `0,-${s+1} ${s+1},${s+1} -${s+1},${s+1}`);
                 p.setAttribute("fill", "#666");
                 g.appendChild(p);
             } else { 
                 var r = document.createElementNS(ns, "rect");
-                r.setAttribute("x", -size+1); r.setAttribute("y", -size+1);
-                r.setAttribute("width", (size*2)-2); r.setAttribute("height", (size*2)-2);
+                r.setAttribute("x", -s+1); r.setAttribute("y", -s+1);
+                r.setAttribute("width", (s*2)-2); r.setAttribute("height", (s*2)-2);
                 r.setAttribute("fill", "none");
-                r.setAttribute("stroke", "#666"); r.setAttribute("stroke-width", "1.2");
+                r.setAttribute("stroke", "#666"); r.setAttribute("stroke-width", "1");
                 g.appendChild(r);
             }
         } 
         else if (node.cargo_type === 'facility') {
             var c = document.createElementNS(ns, "circle");
-            c.setAttribute("r", size);
+            c.setAttribute("r", s+1);
             c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.5");
+            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.2");
             g.appendChild(c);
 
             var path = document.createElementNS(ns, "path");
             path.setAttribute("fill", "#000");
             if (node.cargo_sub === 'producing') {
-                path.setAttribute("d", `M-${size},0 A${size},${size} 0 0,1 ${size},0 Z`);
+                path.setAttribute("d", `M-${s+1},0 A${s+1},${s+1} 0 0,1 ${s+1},0 Z`);
             } else if (node.cargo_sub === 'receiving') {
-                path.setAttribute("d", `M-${size},0 A${size},${size} 0 0,0 ${size},0 Z`);
+                path.setAttribute("d", `M-${s+1},0 A${s+1},${s+1} 0 0,0 ${s+1},0 Z`);
             } else if (node.cargo_sub === 'mixed') {
-                path.setAttribute("d", `M0,0 L-${size},0 A${size},${size} 0 0,1 0,-${size} Z M0,0 L${size},0 A${size},${size} 0 0,1 0,${size} Z`);
+                path.setAttribute("d", `M0,0 L-${s+1},0 A${s+1},${s+1} 0 0,1 0,-${s+1} Z M0,0 L${s+1},0 A${s+1},${s+1} 0 0,1 0,${s+1} Z`);
             }
             g.appendChild(path);
         }
-
-        if(node.active) g.setAttribute("transform", "scale(1.3)");
         return g;
     }
 
@@ -167,15 +167,12 @@
         nodes = NODES.map(d => ({
             id: d.id, l: d.l, active: d.active, 
             cargo_type: d.cargo_type, cargo_sub: d.cargo_sub,
-            x: W/2 + (Math.random()-0.5)*150,
-            y: H/2 + (Math.random()-0.5)*150,
+            x: W/2 + (Math.random()-0.5)*150, y: H/2 + (Math.random()-0.5)*150,
             vx: 0, vy: 0
         }));
 
-        links = [];
         LINKS.forEach(pair => {
-            var s = nodes.find(n=>n.id===pair[0]);
-            var t = nodes.find(n=>n.id===pair[1]);
+            var s = nodes.find(n=>n.id===pair[0]), t = nodes.find(n=>n.id===pair[1]);
             if(s && t) links.push({s:s, t:t});
         });
 
@@ -183,10 +180,8 @@
         svg.appendChild(linkG);
         links.forEach(l => {
             var line = document.createElementNS(ns, "line");
-            line.setAttribute("stroke", "#eee");
-            line.setAttribute("stroke-width", "0.6");
-            linkG.appendChild(line);
-            l.el = line;
+            line.setAttribute("stroke", "#f2f2f2"); line.setAttribute("stroke-width", "0.8");
+            linkG.appendChild(line); l.el = line;
         });
 
         var nodeG = document.createElementNS(ns, "g");
@@ -194,56 +189,69 @@
 
         nodes.forEach(n => {
             var g = document.createElementNS(ns, "g");
-            g.style.cursor = "pointer";
+            g.style.cursor = "grab";
             
+            // Invisible Hit Area
+            var hit = document.createElementNS(ns, "circle");
+            hit.setAttribute("r", 20); hit.setAttribute("fill", "transparent");
+            g.appendChild(hit);
+
             if (n.active) {
                 var ring = document.createElementNS(ns, "circle");
-                ring.setAttribute("r", 16);
-                ring.setAttribute("fill", "none");
-                ring.setAttribute("stroke", "#000");
-                ring.setAttribute("stroke-dasharray", "2,2");
+                ring.setAttribute("r", 15); ring.setAttribute("fill", "none");
+                ring.setAttribute("stroke", "#000"); ring.setAttribute("stroke-width", "0.5");
+                ring.setAttribute("stroke-dasharray", "2,3");
+                
+                var anim = document.createElementNS(ns, "animateTransform");
+                anim.setAttribute("attributeName", "transform");
+                anim.setAttribute("type", "rotate");
+                anim.setAttribute("from", "0 0 0");
+                anim.setAttribute("to", "360 0 0");
+                anim.setAttribute("dur", "12s");
+                anim.setAttribute("repeatCount", "indefinite");
+                ring.appendChild(anim);
                 g.appendChild(ring);
             }
 
-            var shape = createIcon(n);
-            g.appendChild(shape);
-            n.shapeEl = shape;
+            g.appendChild(createIcon(n));
 
             var txt = document.createElementNS(ns, "text");
-            txt.textContent = n.id + (n.l ? " " + n.l : "");
-            txt.setAttribute("x", 10); txt.setAttribute("y", 3);
-            txt.setAttribute("fill", n.active ? "#000" : "#888"); 
-            txt.style.font = n.active ? "600 10px 'IBM Plex Mono', monospace" : "400 9px 'IBM Plex Mono', monospace"; 
+            txt.textContent = n.id; txt.setAttribute("x", 10); txt.setAttribute("y", 3);
+            txt.setAttribute("fill", n.active ? "#000" : "#bbb"); 
+            txt.style.font = n.active ? "600 9px 'IBM Plex Mono'" : "400 8.5px 'IBM Plex Mono'"; 
             txt.style.pointerEvents = "none";
             g.appendChild(txt);
-            n.tEl = txt;
 
-            g.onmousedown = function(e){ e.preventDefault(); n.dragging = true; };
-            nodeG.appendChild(g);
-            n.el = g;
+            g.onmousedown = function(e){ 
+                e.preventDefault(); n.dragging = true; g.style.cursor = "grabbing"; 
+            };
+            nodeG.appendChild(g); n.el = g;
         });
 
         window.addEventListener("mousemove", function(e){
+            var rect = svg.getBoundingClientRect();
             nodes.forEach(n => {
                 if(n.dragging) {
-                    var rect = svg.getBoundingClientRect();
                     n.x = e.clientX - rect.left;
                     n.y = e.clientY - rect.top;
                     n.vx = 0; n.vy = 0;
                 }
             });
         });
-        window.addEventListener("mouseup", function(){ nodes.forEach(n => n.dragging = false); });
+        window.addEventListener("mouseup", function(){ 
+            nodes.forEach(n => { 
+                if(n.dragging) { n.dragging = false; n.el.style.cursor = "grab"; }
+            }); 
+        });
 
         requestAnimationFrame(tick);
     }
 
     function tick() {
         links.forEach(l => {
-            var dx = l.t.x - l.s.x; var dy = l.t.y - l.s.y;
+            var dx = l.t.x - l.s.x, dy = l.t.y - l.s.y;
             var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-            var restLen = 60;
-            var force = (dist - restLen) * 0.04;
+            var force = (dist - 70) * 0.025;
             l.s.vx += (dx/dist)*force; l.s.vy += (dy/dist)*force;
             l.t.vx -= (dx/dist)*force; l.t.vy -= (dy/dist)*force;
         });
@@ -251,33 +259,29 @@
         nodes.forEach(n => {
             nodes.forEach(n2 => {
                 if(n===n2) return;
-                var dx = n.x - n2.x, dy = n.y - n2.y;
-                var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                if(dist < 80) {
-                    var f = (80-dist) * 0.04; 
-                    n.vx += (dx/dist)*f; n.vy += (dy/dist)*f; 
-                }
+                var dx = n.x - n2.x, dy = n.y - n2.y, dist = Math.sqrt(dx*dx+dy*dy)||1;
+                if(dist < 90) { var f = (90-dist)*0.04; n.vx += (dx/dist)*f; n.vy += (dy/dist)*f; }
             });
-            n.vx += (W/2 - n.x) * 0.01;
-            n.vy += (H/2 - n.y) * 0.01;
             
+            // Jitter / Shake (Feels alive)
+            n.vx += (Math.random() - 0.5) * 0.12;
+            n.vy += (Math.random() - 0.5) * 0.12;
+
+            n.vx += (W/2 - n.x) * 0.008; n.vy += (H/2 - n.y) * 0.008;
             if(!n.dragging) { n.x += n.vx; n.y += n.vy; }
-            n.vx *= 0.8; n.vy *= 0.8;
+            n.vx *= 0.91; n.vy *= 0.91; 
             
-            n.x = Math.max(20, Math.min(W - 140, n.x));
-            n.y = Math.max(20, Math.min(H - 20, n.y));
-            if(n.el) n.el.setAttribute("transform", "translate("+n.x+","+n.y+")");
+            n.x = Math.max(30, Math.min(W - 130, n.x));
+            n.y = Math.max(30, Math.min(H - 30, n.y));
+            n.el.setAttribute("transform", "translate("+n.x+","+n.y+")");
         });
 
         links.forEach(l => {
-            if(l.el) {
-                l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
-                l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
-            }
+            l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
+            l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
         });
         requestAnimationFrame(tick);
     }
-    
     setTimeout(init, 100);
 })();
 </script>
