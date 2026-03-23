@@ -25,11 +25,11 @@
         }
         
         .legend-section { display: flex; align-items: center; gap: 12px; }
+        .legend-divider { width: 1px; height: 15px; background: #eee; }
         .legend-item { display: flex; align-items: center; gap: 6px; }
-        .legend-item svg { width: 12px !important; height: 12px !important; flex-shrink: 0; overflow: visible; }
+        .legend-item svg { width: 14px !important; height: 14px !important; flex-shrink: 0; overflow: visible; }
 
-        /* Overganger for utheving */
-        .node-group, .link-line { transition: opacity 0.3s ease, stroke 0.3s ease; }
+        .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
         .dimmed { opacity: 0.15 !important; }
         .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
 
@@ -40,10 +40,20 @@
 
 <div id="single-line-legend">
     <div class="legend-section">
-        <div class="legend-item"><svg viewBox="0 0 10 10"><rect width="10" height="10" fill="#000"/></svg> Eier (Kommune)</div>
-        <div class="legend-item"><svg viewBox="0 0 10 10"><rect width="10" height="10" fill="#3b82f6"/></svg> Operator (Lindum)</div>
-        <div class="legend-item"><svg viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" fill="#e0e0e0" stroke="#000" stroke-width="0.5"/></svg> Kom. Foretak</div>
-        <div class="legend-item"><svg viewBox="0 0 12 12"><polygon points="6,0 12,6 6,12 0,6" fill="#39ff14"/></svg> Mottak/Deponi</div>
+        <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="#000"/></svg> Konsern</div>
+        <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="#666"/></svg> Divisjon (Ind)</div>
+        <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="none" stroke="#666" stroke-width="1.5"/></svg> Divisjon (Ent)</div>
+        <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#666" stroke-width="1.5"/></svg> Søsteravd.</div>
+    </div>
+    <div class="legend-divider"></div>
+    <div class="legend-section">
+        <div class="legend-item">
+            <svg viewBox="0 0 14 14">
+                <circle cx="7" cy="7" r="6" fill="none" stroke="#39ff14" stroke-width="1.5"/>
+                <path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/>
+            </svg> 
+            Receiving (Aktiv)
+        </div>
     </div>
 </div>
 
@@ -54,32 +64,51 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Drammen Kommune", t:"p"},
-        {id:"Lindum AS", t:"op"},
-        {id:"Lindum Oredalen AS", t:"mottak", active:true},
-        {id:"Lindum Sør AS", t:"mottak"},
-        {id:"Lindum Egge AS", t:"mottak"},
-        {id:"Drammen Havn AS", t:"s"},
-        {id:"Dpark AS", t:"s"}, 
-        {id:"Drammen Scener AS", t:"s"},
-        {id:"Enter Kompetanse AS", t:"s"}
+        // KONSERN (kommune)
+        {id:"Drammen Kommune", type:"p"},
+        
+        // DIVISJON — Lindum as main operator branch
+        {id:"Lindum AS", type:"div_ind"},
+        
+        // LINDUM DATTERSELSKAPER (mottak/deponi sites)
+        {id:"Lindum Oredalen AS", type:"receiving", active:true},
+        {id:"Lindum Sør AS", type:"s", l:"(Lillesand)"},
+        {id:"Lindum Egge AS", type:"s", l:"(Lier)"},
+        {id:"Lindum Kommunalservice", type:"s"},
+        {id:"Grønt Skifte AS", type:"s", l:"(FoU)"},
+        {id:"Den Magiske Fabrikken AS", type:"s", l:"(34%, Biogass)"},
+        
+        // KOMMUNE SØSTERSELSKAPER
+        {id:"Drammen Havn AS", type:"s"},
+        {id:"Dpark AS", type:"s"},
+        {id:"Drammen Scener AS", type:"s"},
+        {id:"Enter Kompetanse AS", type:"s"},
+        {id:"Eidra AS", type:"s", l:"(Eiendom)"},
+        {id:"Vardar AS", type:"s", l:"(Energi)"},
+        {id:"Drammen Eiendom KF", type:"s", l:"(KF)"},
+        {id:"Drammensbadet KF", type:"s", l:"(KF)"}
     ];
     
     var LINKS = [
+        // Lindum branch
         ["Lindum AS", "Drammen Kommune"],
+        ["Lindum Oredalen AS", "Lindum AS"],
+        ["Lindum Sør AS", "Lindum AS"],
+        ["Lindum Egge AS", "Lindum AS"],
+        ["Lindum Kommunalservice", "Lindum AS"],
+        ["Grønt Skifte AS", "Lindum AS"],
+        ["Den Magiske Fabrikken AS", "Lindum AS"],
+        
+        // Kommune siblings
         ["Drammen Havn AS", "Drammen Kommune"],
         ["Dpark AS", "Drammen Kommune"],
         ["Drammen Scener AS", "Drammen Kommune"],
         ["Enter Kompetanse AS", "Drammen Kommune"],
-        ["Lindum Oredalen AS", "Lindum AS"],
-        ["Lindum Sør AS", "Lindum AS"],
-        ["Lindum Egge AS", "Lindum AS"]
+        ["Eidra AS", "Drammen Kommune"],
+        ["Vardar AS", "Drammen Kommune"],
+        ["Drammen Eiendom KF", "Drammen Kommune"],
+        ["Drammensbadet KF", "Drammen Kommune"]
     ];
-
-    var COLORS = {
-        p: "#000000", s: "#e0e0e0", op: "#3b82f6",      
-        mottak: "#39ff14"
-    };
 
     var el = document.getElementById(containerID);
     var W, H, svg, nodes=[], links=[], parentMap={}, childMap={};
@@ -88,79 +117,106 @@
     function getStrictLineage(startNode) {
         let pathNodes = new Set([startNode.id]);
         let pathLinks = new Set();
-        
-        let queue = [startNode];
-        let visited = new Set([startNode.id]);
-        while(queue.length > 0) {
-            let curr = queue.shift();
-            links.forEach(l => {
-                if (l.s.id === curr.id) {
-                    pathLinks.add(l.id);
-                    pathNodes.add(l.t.id);
-                    if (!visited.has(l.t.id)) {
-                        visited.add(l.t.id);
-                        queue.push(l.t);
-                    }
-                }
+        let curr = startNode.id;
+        while(parentMap[curr]) {
+            pathLinks.add(curr + "-" + parentMap[curr]);
+            curr = parentMap[curr];
+            pathNodes.add(curr);
+        }
+        function findChildren(id) {
+            if(childMap[id]) childMap[id].forEach(c => {
+                pathNodes.add(c);
+                pathLinks.add(c + "-" + id);
+                findChildren(c);
             });
         }
-
-        function findChildren(node) {
-            links.forEach(l => {
-                if (l.t.id === node.id) {
-                    pathNodes.add(l.s.id);
-                    pathLinks.add(l.id);
-                    if (!visited.has(l.s.id)) {
-                        visited.add(l.s.id);
-                        findChildren(l.s);
-                    }
-                }
-            });
-        }
-        visited = new Set([startNode.id]);
-        findChildren(startNode);
-
+        findChildren(startNode.id);
         return {nodes: pathNodes, links: pathLinks};
     }
 
     function createShape(type, isActive) {
         var ns = "http://www.w3.org/2000/svg";
-        var shape;
-        if (type === 'p') { 
-            shape = document.createElementNS(ns, "rect");
-            shape.setAttribute("x", -6); shape.setAttribute("y", -6);
-            shape.setAttribute("width", 12); shape.setAttribute("height", 12);
-        } else if (type === 's') { 
-            shape = document.createElementNS(ns, "rect");
-            shape.setAttribute("x", -4); shape.setAttribute("y", -4);
-            shape.setAttribute("width", 8); shape.setAttribute("height", 8);
-            shape.setAttribute("stroke", "#000"); shape.setAttribute("stroke-width", "0.5");
-        } else if (type === 'op') { 
-            shape = document.createElementNS(ns, "rect");
-            shape.setAttribute("x", -5); shape.setAttribute("y", -5);
-            shape.setAttribute("width", 10); shape.setAttribute("height", 10);
-        } else if (type === 'mottak' || type === 'deponi') { 
-            shape = document.createElementNS(ns, "polygon");
-            shape.setAttribute("points", "0,-6 6,0 0,6 -6,0");
-        } else { 
-            shape = document.createElementNS(ns, "circle");
-            shape.setAttribute("r", 4);
-        }
+        var g = document.createElementNS(ns, "g");
+        var r = 5; 
+        var p = 3;
         
-        if(isActive && type !== 'p' && type !== 's') {
-            shape.setAttribute("transform", "scale(1.5)");
+        if (type === 'p') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "#000");
+            g.appendChild(rect);
+        } else if (type === 'div_ind') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "#666");
+            g.appendChild(poly);
+        } else if (type === 'div_ent') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "none");
+            poly.setAttribute("stroke", "#666"); 
+            poly.setAttribute("stroke-width", "1.5");
+            g.appendChild(poly);
+        } else if (type === 's') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "none");
+            rect.setAttribute("stroke", "#666"); 
+            rect.setAttribute("stroke-width", "1.5");
+            g.appendChild(rect);
+        } else if (type === 'receiving') { 
+            var bg = document.createElementNS(ns, "circle");
+            bg.setAttribute("r", r+p); bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var c = document.createElementNS(ns, "circle");
+            c.setAttribute("r", r); c.setAttribute("fill", "none");
+            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.5");
+            var pa = document.createElementNS(ns, "path");
+            pa.setAttribute("fill", "#000");
+            pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
+            g.appendChild(c); g.appendChild(pa);
         }
-        return shape;
+
+        if(isActive) {
+            g.setAttribute("transform", "scale(1.4)");
+        }
+        return g;
     }
 
     function init() {
         W = el.offsetWidth || window.innerWidth;
-        H = el.offsetHeight || 600;
+        H = el.offsetHeight || 500;
         el.innerHTML = "";
         var ns = "http://www.w3.org/2000/svg";
         svg = document.createElementNS(ns, "svg");
         svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
         el.appendChild(svg);
+
+        LINKS.forEach(l => {
+            parentMap[l[0]] = l[1];
+            if(!childMap[l[1]]) childMap[l[1]] = [];
+            childMap[l[1]].push(l[0]);
+        });
 
         nodes = NODES.map(d => ({
             ...d, x: W/2 + (Math.random()-0.5)*200, y: H/2 + (Math.random()-0.5)*200,
@@ -172,7 +228,7 @@
             var sNode = nodes.find(n => n.id === l[0]), tNode = nodes.find(n => n.id === l[1]);
             var line = document.createElementNS(ns, "line");
             line.setAttribute("class", "link-line");
-            line.setAttribute("stroke", "#ddd"); line.setAttribute("stroke-width", "1");
+            line.setAttribute("stroke", "#f2f2f2"); line.setAttribute("stroke-width", "1");
             linkG.appendChild(line);
             return { s: sNode, t: tNode, el: line, id: l[0] + "-" + l[1] };
         });
@@ -186,31 +242,16 @@
             var hit = document.createElementNS(ns, "circle");
             hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
             g.appendChild(hit);
-
-            if (n.active) {
-                var ring = document.createElementNS(ns, "circle");
-                ring.setAttribute("r", 18); ring.setAttribute("fill", "none");
-                ring.setAttribute("stroke", "#000"); ring.setAttribute("stroke-width", "1");
-                ring.setAttribute("stroke-dasharray", "2,3");
-                var anim = document.createElementNS(ns, "animateTransform");
-                anim.setAttribute("attributeName", "transform"); anim.setAttribute("type", "rotate");
-                anim.setAttribute("from", "0 0 0"); anim.setAttribute("to", "360 0 0");
-                anim.setAttribute("dur", "20s"); anim.setAttribute("repeatCount", "indefinite");
-                ring.appendChild(anim); g.appendChild(ring);
-            }
             
-            var shape = createShape(n.t, n.active);
-            shape.setAttribute("fill", COLORS[n.t] || "#999");
-            if (n.active) { shape.setAttribute("stroke", "#000"); shape.setAttribute("stroke-width", "1.5"); }
-            else if (n.t !== 's') { shape.setAttribute("stroke", "#fff"); shape.setAttribute("stroke-width", "1"); }
-            
+            var shape = createShape(n.type, n.active);
+            shape.style.pointerEvents = "none";
             g.appendChild(shape); n.shapeEl = shape;
             
             var txt = document.createElementNS(ns, "text");
             txt.textContent = n.id + (n.l ? " " + n.l : "");
             txt.setAttribute("x", 12); txt.setAttribute("y", 3);
-            txt.setAttribute("fill", n.active ? "#000" : "#999"); 
-            txt.style.font = n.active ? "bold 10px 'IBM Plex Mono'" : "400 9px 'IBM Plex Mono'"; 
+            txt.setAttribute("fill", n.active ? "#000" : "#bbb"); 
+            txt.style.font = n.active ? "600 10px 'IBM Plex Mono'" : "400 9px 'IBM Plex Mono'"; 
             txt.style.pointerEvents = "none";
             g.appendChild(txt); n.tEl = txt;
 
@@ -234,7 +275,7 @@
                 nodes.forEach(node => {
                     node.el.classList.remove("dimmed");
                     node.tEl.style.fontWeight = node.active ? "bold" : "normal";
-                    node.tEl.setAttribute("fill", node.active ? "#000" : "#999");
+                    node.tEl.setAttribute("fill", node.active ? "#000" : "#bbb");
                 });
                 links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
             };
