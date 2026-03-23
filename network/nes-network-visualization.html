@@ -1,397 +1,338 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nes Miljøpark Network Visualization</title>
+    <meta charset="utf-8">
+    <title>Nes Miljøpark - Master Network</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            font-family: Helvetica, Arial, sans-serif;
-            margin: 20px;
-            background: #f9f9f9;
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: #fff; 
+            font-family: 'IBM Plex Mono', monospace; 
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        #network-container svg { width: 100%; height: 100%; display: block; }
+        #network-container { width: 100%; height: calc(100vh - 40px); display: block; position: relative; margin-top: 5px;}
+        
+        #single-line-legend {
+            position: relative; width: 100%; height: 40px;
+            background: #fff; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; color: #000; border-bottom: 1px solid #f0f0f0; 
+            box-sizing: border-box; gap: 20px; text-transform: uppercase; letter-spacing: 0.5px;
         }
-        h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        .company-list {
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-            color: #666;
-        }
+        
+        .legend-section { display: flex; align-items: center; gap: 12px; }
+        .legend-divider { width: 1px; height: 15px; background: #eee; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-item svg { width: 14px !important; height: 14px !important; flex-shrink: 0; overflow: visible; }
+
+        .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
+        .dimmed { opacity: 0.15 !important; }
+        .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
+
+        svg { user-select: none; -webkit-user-select: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>AF Gruppen Network</h1>
+
+<div id="single-line-legend">
+    <div class="legend-section">
+        <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="#000"/></svg> Konsern</div>
+        <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="#666"/></svg> Divisjon (Ind)</div>
+        <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="none" stroke="#666" stroke-width="1.5"/></svg> Divisjon (Ent)</div>
+        <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#666" stroke-width="1.5"/></svg> Søsteravd.</div>
+    </div>
+    <div class="legend-divider"></div>
+    <div class="legend-section">
+        <div class="legend-item">
+            <svg viewBox="0 0 14 14">
+                <circle cx="7" cy="7" r="6" fill="none" stroke="#39ff14" stroke-width="1.5"/>
+                <path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/>
+            </svg> 
+            Receiving (Aktiv)
+        </div>
+    </div>
+</div>
+
+<div id="network-container"></div>
+
+<script>
+(function(){
+    var containerID = "network-container"; 
+
+    var NODES = [
+        // KONSERN
+        {id:"AF Gruppen ASA", type:"p"},
         
-        <div class="company-list">
-            AF Gruppen ASA → AF Gruppen Norge AS → AF Energi og Miljø AS (Division) → AF Offshore AS (Division) → 
-            AF Decom AS → Nes Miljøpark AS → Jølsen Miljøpark AS → Mepex AS (Consulting) → AF Energi AS → 
-            AF Offshore Decom AS → AF Miljøbase Vats AS → Betonmast AS (Construction) → Strøm Gundersen AS → 
-            JR Anlegg AS → Lab Entreprenør AS → Haga & Berg Entreprenør AS
-        </div>
+        // DIVISJONER
+        {id:"AF Gruppen Norge AS", type:"div_ind"},
+        {id:"AF Energi og Miljø AS", type:"div_ent"},
+        {id:"AF Offshore AS", type:"div_ent"},
+        
+        // SØSTERAVDELINGER
+        {id:"AF Decom AS", type:"s"},
+        {id:"Jølsen Miljøpark AS", type:"s"},
+        {id:"Mepex AS", type:"s", l:"(Consulting)"},
+        {id:"AF Energi AS", type:"s"},
+        {id:"Betonmast AS", type:"s", l:"(Construction)"},
+        {id:"Strøm Gundersen AS", type:"s"},
+        {id:"JR Anlegg AS", type:"s"},
+        {id:"Lab Entreprenør AS", type:"s"},
+        {id:"Haga & Berg Entreprenør AS", type:"s"},
+        {id:"AF Offshore Decom AS", type:"s"},
+        {id:"AF Miljøbase Vats AS", type:"s"},
+        
+        // ACTIVE SITE
+        {id:"Nes Miljøpark AS", type:"receiving", active:true}
+    ];
+    
+    var LINKS = [
+        // Chain to Nes
+        ["AF Gruppen Norge AS", "AF Gruppen ASA"],
+        ["AF Energi og Miljø AS", "AF Gruppen Norge AS"],
+        ["AF Decom AS", "AF Energi og Miljø AS"],
+        ["Nes Miljøpark AS", "AF Decom AS"],
+        
+        // Decom siblings
+        ["Jølsen Miljøpark AS", "AF Decom AS"],
+        
+        // Energi og Miljø siblings
+        ["Mepex AS", "AF Energi og Miljø AS"],
+        ["AF Energi AS", "AF Energi og Miljø AS"],
+        
+        // Offshore branch
+        ["AF Offshore AS", "AF Gruppen Norge AS"],
+        ["AF Offshore Decom AS", "AF Offshore AS"],
+        ["AF Miljøbase Vats AS", "AF Offshore Decom AS"],
+        
+        // Other branches under Norge
+        ["Betonmast AS", "AF Gruppen Norge AS"],
+        ["Strøm Gundersen AS", "AF Gruppen Norge AS"],
+        ["JR Anlegg AS", "AF Gruppen Norge AS"],
+        ["Lab Entreprenør AS", "AF Gruppen Norge AS"],
+        ["Haga & Berg Entreprenør AS", "AF Gruppen Norge AS"]
+    ];
 
-        <div id="nes-network" style="width:100%; height:550px; background:#fff; position: relative; overflow: hidden; border: 1px solid #eee; margin: 0 auto;"></div>
+    var el = document.getElementById(containerID);
+    var W, H, svg, nodes=[], links=[], parentMap={}, childMap={};
+    var time = 0;
 
-        <div style="display:flex; flex-wrap:wrap; gap:12px; font:9px Helvetica,Arial,sans-serif; color:#000; padding:10px 0; justify-content: center; text-transform: uppercase; letter-spacing: 0.5px;">
-            <div style="display:flex; align-items:center; gap:4px;">
-                <b><svg width="10" style="overflow:visible" height="10"><rect y="-3" x="-3" width="6" transform="translate(5,5)" height="6" fill="#000"></rect></svg></b>&nbsp;Parent &nbsp; &nbsp;
-            </div>
-            <div style="display:flex; align-items:center; gap:4px;">
-                <b><svg width="10" style="overflow:visible" height="10"><rect y="-3" x="-3" width="6" transform="translate(5,5)" stroke-width="0.5" stroke="#000" height="6" fill="#e0e0e0"></rect></svg></b>&nbsp;Major Sub &nbsp; &nbsp;
-            </div>
-            <div style="display:flex; align-items:center; gap:4px;">
-                <b><svg width="10" style="overflow:visible" height="10"><rect y="-3" x="-3" width="6" transform="translate(5,5)" height="6" fill="#3b82f6"></rect></svg></b>&nbsp;Operator &nbsp; &nbsp;
-            </div>
-            <div style="display:flex; align-items:center; gap:4px;">
-                <b><svg width="10" style="overflow:visible" height="10"><polygon transform="translate(5,5)" points="0,-5 5,0 0,5 -5,0" fill="#39ff14"></polygon></svg></b>&nbsp;Mottak &nbsp; &nbsp;
-            </div>
-            <div style="display:flex; align-items:center; gap:4px;">
-                <b><svg width="10" style="overflow:visible" height="10"><polygon transform="translate(5,5)" points="-4,-3 4,-3 0,5" fill="#ff003c"></polygon></svg></b>&nbsp;Deponi/Base &nbsp; &nbsp;
-            </div>
-        </div>
+    function getStrictLineage(startNode) {
+        let pathNodes = new Set([startNode.id]);
+        let pathLinks = new Set();
+        let curr = startNode.id;
+        while(parentMap[curr]) {
+            pathLinks.add(curr + "-" + parentMap[curr]);
+            curr = parentMap[curr];
+            pathNodes.add(curr);
+        }
+        function findChildren(id) {
+            if(childMap[id]) childMap[id].forEach(c => {
+                pathNodes.add(c);
+                pathLinks.add(c + "-" + id);
+                findChildren(c);
+            });
+        }
+        findChildren(startNode.id);
+        return {nodes: pathNodes, links: pathLinks};
+    }
 
-        <script>
-        (function(){
-            // --- 1. CONFIG ---
-            var containerID = "nes-network"; 
+    function createShape(type, isActive) {
+        var ns = "http://www.w3.org/2000/svg";
+        var g = document.createElementNS(ns, "g");
+        var r = 5; 
+        var p = 3;
+        
+        if (type === 'p') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "#000");
+            g.appendChild(rect);
+        } else if (type === 'div_ind') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "#666");
+            g.appendChild(poly);
+        } else if (type === 'div_ent') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "none");
+            poly.setAttribute("stroke", "#666"); 
+            poly.setAttribute("stroke-width", "1.5");
+            g.appendChild(poly);
+        } else if (type === 's') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "none");
+            rect.setAttribute("stroke", "#666"); 
+            rect.setAttribute("stroke-width", "1.5");
+            g.appendChild(rect);
+        } else if (type === 'receiving') { 
+            var bg = document.createElementNS(ns, "circle");
+            bg.setAttribute("r", r+p); bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var c = document.createElementNS(ns, "circle");
+            c.setAttribute("r", r); c.setAttribute("fill", "none");
+            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.5");
+            var pa = document.createElementNS(ns, "path");
+            pa.setAttribute("fill", "#000");
+            pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
+            g.appendChild(c); g.appendChild(pa);
+        }
 
-            var NODES = [
-                // TOP LEVEL
-                {id:"AF Gruppen ASA", t:"p"},
-                {id:"AF Gruppen Norge AS", t:"p"},
+        if(isActive) {
+            g.setAttribute("transform", "scale(1.4)");
+        }
+        return g;
+    }
 
-                // DIVISIONS
-                {id:"AF Energi og Miljø AS", t:"s", l:"(Division)"},
-                {id:"AF Offshore AS", t:"s", l:"(Division)"},
+    function init() {
+        W = el.offsetWidth || window.innerWidth;
+        H = el.offsetHeight || 500;
+        el.innerHTML = "";
+        var ns = "http://www.w3.org/2000/svg";
+        svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+        el.appendChild(svg);
 
-                // OPERATOR
-                {id:"AF Decom AS", t:"op"},
+        LINKS.forEach(l => {
+            parentMap[l[0]] = l[1];
+            if(!childMap[l[1]]) childMap[l[1]] = [];
+            childMap[l[1]].push(l[0]);
+        });
 
-                // ACTIVE SITE
-                {id:"Nes Miljøpark AS", t:"mottak", active:true},
+        nodes = NODES.map(d => ({
+            ...d, x: W/2 + (Math.random()-0.5)*200, y: H/2 + (Math.random()-0.5)*200,
+            vx: 0, vy: 0, noiseOffset: Math.random() * 100
+        }));
 
-                // SIBLINGS (Under AF Decom/Energi)
-                {id:"Jølsen Miljøpark AS", t:"mottak"},
-                {id:"Mepex AS", t:"s", l:"(Consulting)"},
-                {id:"AF Energi AS", t:"s"},
+        var linkG = document.createElementNS(ns, "g"); svg.appendChild(linkG);
+        links = LINKS.map(l => {
+            var sNode = nodes.find(n => n.id === l[0]), tNode = nodes.find(n => n.id === l[1]);
+            var line = document.createElementNS(ns, "line");
+            line.setAttribute("class", "link-line");
+            line.setAttribute("stroke", "#f2f2f2"); line.setAttribute("stroke-width", "1");
+            linkG.appendChild(line);
+            return { s: sNode, t: tNode, el: line, id: l[0] + "-" + l[1] };
+        });
 
-                // OFFSHORE BRANCH (Context)
-                {id:"AF Offshore Decom AS", t:"s"},
-                {id:"AF Miljøbase Vats AS", t:"deponi"},
+        var nodeG = document.createElementNS(ns, "g"); svg.appendChild(nodeG);
+        nodes.forEach(n => {
+            var g = document.createElementNS(ns, "g");
+            g.setAttribute("class", "node-group");
+            g.style.cursor = "grab";
 
-                // OTHER MAJOR SUBSIDIARIES (Context)
-                {id:"Betonmast AS", t:"s", l:"(Construction)"},
-                {id:"Strøm Gundersen AS", t:"s"},
-                {id:"JR Anlegg AS", t:"s"},
-                {id:"Lab Entreprenør AS", t:"s"},
-                {id:"Haga & Berg Entreprenør AS", t:"s"}
-            ];
+            var hit = document.createElementNS(ns, "circle");
+            hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
+            g.appendChild(hit);
             
-            var LINKS = [
-                // Chain to Nes
-                ["AF Gruppen Norge AS", "AF Gruppen ASA"],
-                ["AF Energi og Miljø AS", "AF Gruppen Norge AS"],
-                ["AF Decom AS", "AF Energi og Miljø AS"],
-                ["Nes Miljøpark AS", "AF Decom AS"],
+            var shape = createShape(n.type, n.active);
+            shape.style.pointerEvents = "none";
+            g.appendChild(shape); n.shapeEl = shape;
+            
+            var txt = document.createElementNS(ns, "text");
+            txt.textContent = n.id + (n.l ? " " + n.l : "");
+            txt.setAttribute("x", 12); txt.setAttribute("y", 3);
+            txt.setAttribute("fill", n.active ? "#000" : "#bbb"); 
+            txt.style.font = n.active ? "600 10px 'IBM Plex Mono'" : "400 9px 'IBM Plex Mono'"; 
+            txt.style.pointerEvents = "none";
+            g.appendChild(txt); n.tEl = txt;
 
-                // Decom Siblings
-                ["Jølsen Miljøpark AS", "AF Decom AS"],
-                ["Mepex AS", "AF Energi og Miljø AS"],
-                ["AF Energi AS", "AF Energi og Miljø AS"],
-
-                // Offshore Branch
-                ["AF Offshore AS", "AF Gruppen Norge AS"],
-                ["AF Offshore Decom AS", "AF Offshore AS"],
-                ["AF Miljøbase Vats AS", "AF Offshore Decom AS"],
-
-                // Other Major Branches (Directly under Norge)
-                ["Betonmast AS", "AF Gruppen Norge AS"],
-                ["Strøm Gundersen AS", "AF Gruppen Norge AS"],
-                ["JR Anlegg AS", "AF Gruppen Norge AS"],
-                ["Lab Entreprenør AS", "AF Gruppen Norge AS"],
-                ["Haga & Berg Entreprenør AS", "AF Gruppen Norge AS"]
-            ];
-
-            var COLORS = {
-                p: "#000000", s: "#e0e0e0", op: "#3b82f6",      
-                deponi: "#ff003c", pukk: "#ff9500", mottak: "#39ff14", gjenvinning: "#39ff14"
+            g.onmouseenter = () => {
+                var lineage = getStrictLineage(n);
+                nodes.forEach(node => { 
+                    node.el.classList.toggle("dimmed", !lineage.nodes.has(node.id));
+                    if(lineage.nodes.has(node.id)) {
+                        node.tEl.style.fontWeight = "bold";
+                        node.tEl.setAttribute("fill", "#000");
+                    }
+                });
+                links.forEach(link => {
+                    var isH = lineage.links.has(link.id);
+                    link.el.classList.toggle("dimmed", !isH);
+                    link.el.classList.toggle("highlight-link", isH);
+                });
             };
 
-            var el = document.getElementById(containerID);
-            var W, H, svg, nodes=[], links=[], parentMap={}, childrenMap={};
+            g.onmouseleave = () => {
+                nodes.forEach(node => {
+                    node.el.classList.remove("dimmed");
+                    node.tEl.style.fontWeight = node.active ? "bold" : "normal";
+                    node.tEl.setAttribute("fill", node.active ? "#000" : "#bbb");
+                });
+                links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
+            };
 
-            function getStrictLineage(startNode) {
-                let pathNodes = new Set();
-                let pathLinks = new Set();
-                pathNodes.add(startNode);
-                
-                // Upwards
-                let curr = startNode;
-                while(curr) {
-                    let parentId = parentMap[curr.id];
-                    if(!parentId) break;
-                    let parentNode = nodes.find(n => n.id === parentId);
-                    if(parentNode) {
-                        let link = links.find(l => (l.s === curr && l.t === parentNode) || (l.t === curr && l.s === parentNode));
-                        if(link) pathLinks.add(link);
-                        pathNodes.add(parentNode);
-                        curr = parentNode;
-                    } else break;
-                }
+            g.onmousedown = (e) => { e.preventDefault(); n.dragging = true; g.style.cursor = "grabbing"; };
+            nodeG.appendChild(g); n.el = g;
+        });
 
-                // Downwards
-                function addChildren(pNode) {
-                    let kids = childrenMap[pNode.id] || [];
-                    kids.forEach(kidId => {
-                        let kNode = nodes.find(n => n.id === kidId);
-                        if(kNode) {
-                            let link = links.find(l => (l.s === kNode && l.t === pNode) || (l.t === kNode && l.s === pNode));
-                            if(link) pathLinks.add(link);
-                            pathNodes.add(kNode);
-                            addChildren(kNode);
-                        }
-                    });
-                }
-                addChildren(startNode);
-                return {nodes: pathNodes, links: pathLinks};
+        requestAnimationFrame(tick);
+    }
+
+    function tick() {
+        time += 0.005;
+        const restLen = 95, centerG = 0.01;
+        links.forEach(l => {
+            var dx = l.t.x - l.s.x, dy = l.t.y - l.s.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
+            var force = (dist - restLen) * 0.02;
+            l.s.vx += (dx/dist)*force; l.s.vy += (dy/dist)*force;
+            l.t.vx -= (dx/dist)*force; l.t.vy -= (dy/dist)*force;
+        });
+        nodes.forEach(n => {
+            if (!n.dragging) {
+                n.vx += Math.sin(time + n.noiseOffset) * 0.04;
+                n.vy += Math.cos(time + n.noiseOffset) * 0.04;
+                n.vx += (W/2 - n.x) * centerG;
+                n.vy += (H/2 - n.y) * centerG;
+                nodes.forEach(n2 => {
+                    if(n === n2) return;
+                    var dx = n.x - n2.x, dy = n.y - n2.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                    if(dist < 100) { var f = (100 - dist) * 0.04; n.vx += (dx/dist) * f; n.vy += (dy/dist) * f; }
+                });
+                n.x += n.vx; n.y += n.vy; n.vx *= 0.88; n.vy *= 0.88;
             }
+            n.x = Math.max(100, Math.min(W - 150, n.x)); n.y = Math.max(50, Math.min(H - 50, n.y));
+            if(n.el) n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
+        });
+        links.forEach(l => {
+            l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
+            l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
+        });
+        requestAnimationFrame(tick);
+    }
 
-            function createShape(type, isActive) {
-                var ns = "http://www.w3.org/2000/svg";
-                var shape;
-                if (type === 'p') { 
-                    shape = document.createElementNS(ns, "rect");
-                    shape.setAttribute("x", -6); shape.setAttribute("y", -6);
-                    shape.setAttribute("width", 12); shape.setAttribute("height", 12);
-                } else if (type === 's') { 
-                    shape = document.createElementNS(ns, "rect");
-                    shape.setAttribute("x", -4); shape.setAttribute("y", -4);
-                    shape.setAttribute("width", 8); shape.setAttribute("height", 8);
-                    shape.setAttribute("stroke", "#000"); shape.setAttribute("stroke-width", "0.5");
-                } else if (type === 'op') { 
-                    shape = document.createElementNS(ns, "rect");
-                    shape.setAttribute("x", -5); shape.setAttribute("y", -5);
-                    shape.setAttribute("width", 10); shape.setAttribute("height", 10);
-                } else if (type === 'mottak') { 
-                    shape = document.createElementNS(ns, "polygon");
-                    shape.setAttribute("points", "0,-6 6,0 0,6 -6,0");
-                } else if (type === 'deponi') { 
-                    shape = document.createElementNS(ns, "polygon");
-                    shape.setAttribute("points", "-5,-4 5,-4 0,5");
-                } else { 
-                    shape = document.createElementNS(ns, "circle");
-                    shape.setAttribute("r", 4);
-                }
-                if(isActive && type !== 'p' && type !== 's') shape.setAttribute("transform", "scale(1.5)");
-                return shape;
-            }
-
-            function init() {
-                if(!el) return;
-                
-                LINKS.forEach(pair => {
-                    let child = pair[0];
-                    let parent = pair[1];
-                    parentMap[child] = parent;
-                    if(!childrenMap[parent]) childrenMap[parent] = [];
-                    childrenMap[parent].push(child);
-                });
-
-                const resizeObserver = new ResizeObserver(entries => {
-                    for (let entry of entries) {
-                        W = entry.contentRect.width; H = entry.contentRect.height;
-                        if(svg) svg.setAttribute("viewBox", "0 0 " + W + " " + H);
-                    }
-                });
-                resizeObserver.observe(el);
-                W = el.offsetWidth; H = el.offsetHeight;
-                
-                el.innerHTML = "";
-                var ns = "http://www.w3.org/2000/svg";
-                svg = document.createElementNS(ns, "svg");
-                svg.setAttribute("viewBox", "0 0 " + W + " " + H);
-                svg.style.display = "block";
-                svg.style.width = "100%";
-                svg.style.height = "100%";
-                el.appendChild(svg);
-
-                nodes = NODES.map(d => ({
-                    id: d.id, type: d.t, label: d.l, active: d.active,
-                    x: W/2 + (Math.random()-0.5)*150,
-                    y: H/2 + (Math.random()-0.5)*150,
-                    vx: 0, vy: 0
-                }));
-
-                links = [];
-                LINKS.forEach(pair => {
-                    var s = nodes.find(n=>n.id===pair[0]);
-                    var t = nodes.find(n=>n.id===pair[1]);
-                    if(s && t) links.push({s:s, t:t});
-                });
-
-                var linkG = document.createElementNS(ns, "g");
-                svg.appendChild(linkG);
-                links.forEach(l => {
-                    var line = document.createElementNS(ns, "line");
-                    line.setAttribute("stroke", "#ddd");
-                    line.setAttribute("stroke-width", "1");
-                    linkG.appendChild(line);
-                    l.el = line;
-                });
-
-                var nodeG = document.createElementNS(ns, "g");
-                svg.appendChild(nodeG);
-
-                nodes.forEach(n => {
-                    var g = document.createElementNS(ns, "g");
-                    g.style.cursor = "pointer";
-                    
-                    if (n.active) {
-                        var ring = document.createElementNS(ns, "circle");
-                        ring.setAttribute("r", 18);
-                        ring.setAttribute("fill", "transparent");
-                        ring.setAttribute("stroke", "#000");
-                        ring.setAttribute("stroke-width", "1");
-                        ring.setAttribute("stroke-dasharray", "2,2");
-                        var anim = document.createElementNS(ns, "animateTransform");
-                        anim.setAttribute("attributeName", "transform");
-                        anim.setAttribute("type", "rotate");
-                        anim.setAttribute("from", "0 0 0");
-                        anim.setAttribute("to", "360 0 0");
-                        anim.setAttribute("dur", "10s");
-                        anim.setAttribute("repeatCount", "indefinite");
-                        ring.appendChild(anim);
-                        g.appendChild(ring);
-                    }
-
-                    var hit = document.createElementNS(ns, "circle");
-                    hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
-                    g.appendChild(hit);
-
-                    var shape = createShape(n.type, n.active);
-                    shape.setAttribute("fill", COLORS[n.type] || "#999");
-                    if (n.active) { shape.setAttribute("stroke", "#000"); shape.setAttribute("stroke-width", "1.5"); }
-                    else if (n.type !== 's') { shape.setAttribute("stroke", "#fff"); shape.setAttribute("stroke-width", "1"); }
-                    g.appendChild(shape);
-                    n.shapeEl = shape;
-
-                    var txt = document.createElementNS(ns, "text");
-                    var textContent = n.id;
-                    if(n.label) textContent += " " + n.label;
-                    txt.textContent = textContent;
-                    txt.setAttribute("x", 12); txt.setAttribute("y", 3);
-                    txt.setAttribute("fill", n.active ? "#000" : "#999"); 
-                    txt.style.font = n.active ? "bold 10px Helvetica, Arial, sans-serif" : "9px Helvetica, Arial, sans-serif"; 
-                    txt.style.pointerEvents = "none";
-                    g.appendChild(txt);
-                    n.tEl = txt;
-
-                    g.onmouseenter = function() {
-                        var lineage = getStrictLineage(n);
-                        nodes.forEach(node => {
-                            node.shapeEl.setAttribute("opacity", "0.1");
-                            node.tEl.setAttribute("opacity", "0.1");
-                        });
-                        links.forEach(link => {
-                            link.el.setAttribute("stroke", "#eee");
-                            link.el.setAttribute("opacity", "0.1");
-                        });
-                        lineage.nodes.forEach(node => {
-                            node.shapeEl.setAttribute("opacity", "1");
-                            node.tEl.setAttribute("opacity", "1");
-                            node.tEl.setAttribute("fill", "#000");
-                        });
-                        lineage.links.forEach(link => {
-                            link.el.setAttribute("stroke", "#000"); 
-                            link.el.setAttribute("opacity", "1");
-                        });
-                        n.shapeEl.setAttribute("transform", "scale(1.3)");
-                    };
-
-                    g.onmouseleave = function() {
-                        nodes.forEach(node => {
-                            node.shapeEl.setAttribute("opacity", "1");
-                            node.tEl.setAttribute("opacity", "1");
-                            node.tEl.setAttribute("fill", node.active ? "#000" : "#999");
-                            if(!node.active) node.shapeEl.setAttribute("transform", "scale(1)");
-                        });
-                        links.forEach(link => {
-                            link.el.setAttribute("stroke", "#ddd");
-                            link.el.setAttribute("opacity", "1");
-                        });
-                    };
-
-                    g.onmousedown = function(e){ e.preventDefault(); n.dragging = true; };
-                    nodeG.appendChild(g);
-                    n.el = g;
-                });
-
-                window.addEventListener("mousemove", function(e){
-                    nodes.forEach(n => {
-                        if(n.dragging) {
-                            var rect = svg.getBoundingClientRect();
-                            n.x = (e.clientX - rect.left) * (W/rect.width);
-                            n.y = (e.clientY - rect.top) * (H/rect.height);
-                            n.vx = 0; n.vy = 0;
-                        }
-                    });
-                });
-                window.addEventListener("mouseup", function(){ nodes.forEach(n => n.dragging = false); });
-
-                requestAnimationFrame(tick);
-            }
-
-            function tick() {
-                links.forEach(l => {
-                    var dx = l.t.x - l.s.x; var dy = l.t.y - l.s.y;
-                    var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                    var restLen = 60;
-                    if(l.s.active || l.t.active) restLen = 90;
-                    var force = (dist - restLen) * 0.05;
-                    var fx = (dx/dist)*force; var fy = (dy/dist)*force;
-                    l.s.vx += fx; l.s.vy += fy; l.t.vx -= fx; l.t.vy -= fy;
-                });
-
-                nodes.forEach(n => {
-                    nodes.forEach(n2 => {
-                        if(n===n2) return;
-                        var dx = n.x - n2.x; var dy = n.y - n2.y;
-                        var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                        if(dist < 100) { 
-                            var f = (100-dist) * 0.05; 
-                            n.vx += (dx/dist)*f; n.vy += (dy/dist)*f; 
-                        }
-                    });
-                    n.vx += (W/2 - n.x) * 0.02; 
-                    n.vy += (H/2 - n.y) * 0.02;
-                    
-                    if(!n.dragging) { n.x += n.vx; n.y += n.vy; n.vx *= 0.85; n.vy *= 0.85; }
-                    n.x = Math.max(20, Math.min(W - 40, n.x));
-                    n.y = Math.max(20, Math.min(H - 20, n.y));
-                    if(n.el) n.el.setAttribute("transform", "translate("+n.x+","+n.y+")");
-                });
-
-                links.forEach(l => {
-                    if(l.el) {
-                        l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
-                        l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
-                    }
-                });
-                if(document.contains(el)) requestAnimationFrame(tick);
-            }
-            setTimeout(init, 500);
-        })();
-        </script>
-    </div>
+    window.addEventListener("mousemove", (e) => {
+        var rect = el.getBoundingClientRect();
+        nodes.forEach(n => { if(n.dragging) { n.x = e.clientX - rect.left; n.y = e.clientY - rect.top; n.vx = 0; n.vy = 0; }});
+    });
+    window.addEventListener("mouseup", () => nodes.forEach(n => n.dragging = false));
+    
+    setTimeout(init, 500);
+})();
+</script>
 </body>
 </html>
