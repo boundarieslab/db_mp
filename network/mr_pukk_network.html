@@ -135,8 +135,8 @@
     function createShape(type, isActive) {
         var ns = "http://www.w3.org/2000/svg";
         var g = document.createElementNS(ns, "g");
-        var r = 5; 
-        var p = 3;
+        var r = 3.5; 
+        var p = 2;
         
         if (type === 'p') { 
             var bg = document.createElementNS(ns, "rect");
@@ -167,7 +167,7 @@
             poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
             poly.setAttribute("fill", "none");
             poly.setAttribute("stroke", "#666"); 
-            poly.setAttribute("stroke-width", "1.5");
+            poly.setAttribute("stroke-width", "1");
             g.appendChild(poly);
         } else if (type === 's') { 
             var bg = document.createElementNS(ns, "rect");
@@ -180,7 +180,7 @@
             rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
             rect.setAttribute("fill", "none");
             rect.setAttribute("stroke", "#666"); 
-            rect.setAttribute("stroke-width", "1.5");
+            rect.setAttribute("stroke-width", "1");
             g.appendChild(rect);
         } else if (type === 'receiving') { 
             var bg = document.createElementNS(ns, "circle");
@@ -188,7 +188,7 @@
             g.appendChild(bg);
             var c = document.createElementNS(ns, "circle");
             c.setAttribute("r", r); c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.5");
+            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1");
             var pa = document.createElementNS(ns, "path");
             pa.setAttribute("fill", "#000");
             pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
@@ -196,7 +196,7 @@
         }
 
         if(isActive) {
-            g.setAttribute("transform", "scale(1.4)");
+            g.setAttribute("transform", "scale(1.2)");
         }
         return g;
     }
