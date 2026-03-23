@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Nes Miljøpark - Master Network</title>
+    <title>NOAH Engadalen - Master Network</title>
     
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     
@@ -65,55 +65,41 @@
 
     var NODES = [
         // KONSERN
-        {id:"AF Gruppen ASA", type:"p"},
+        {id:"Gjelsten Holding AS", type:"p"},
         
         // DIVISJONER
-        {id:"AF Gruppen Norge AS", type:"div_ind"},
-        {id:"AF Energi og Miljø AS", type:"div_ent"},
-        {id:"AF Offshore AS", type:"div_ent"},
+        {id:"NOAH AS", type:"div_ind"},
+        {id:"NOAH Solutions", type:"div_ent", l:"(Langøya)"},
+        {id:"NOAH Environment", type:"div_ent"},
         
         // SØSTERAVDELINGER
-        {id:"AF Decom AS", type:"s"},
-        {id:"Jølsen Miljøpark AS", type:"s"},
-        {id:"Mepex AS", type:"s", l:"(Consulting)"},
-        {id:"AF Energi AS", type:"s"},
-        {id:"Betonmast AS", type:"s", l:"(Construction)"},
-        {id:"Strøm Gundersen AS", type:"s"},
-        {id:"JR Anlegg AS", type:"s"},
-        {id:"Lab Entreprenør AS", type:"s"},
-        {id:"Haga & Berg Entreprenør AS", type:"s"},
-        {id:"AF Offshore Decom AS", type:"s"},
-        {id:"AF Miljøbase Vats AS", type:"s"},
+        {id:"FRANO", type:"s", l:"(50%, m/Franzefoss)"},
+        {id:"Rekefjord Stone AS", type:"s", l:"(Steinbrudd)"},
+        {id:"Aas Gård", type:"s", l:"(50% medeier Engadalen)"},
+        {id:"Fabritius Gruppen", type:"s", l:"(Eiendom)"},
+        {id:"Profier AS", type:"s", l:"(Eiendom)"},
         
         // ACTIVE SITE
-        {id:"Nes Miljøpark AS", type:"receiving", active:true}
+        {id:"NOAH Engadalen AS", type:"receiving", active:true}
     ];
     
     var LINKS = [
-        // Chain to Nes
-        ["AF Gruppen Norge AS", "AF Gruppen ASA"],
-        ["AF Energi og Miljø AS", "AF Gruppen Norge AS"],
-        ["AF Decom AS", "AF Energi og Miljø AS"],
-        ["Nes Miljøpark AS", "AF Decom AS"],
+        // Main chain to Engadalen
+        ["NOAH AS", "Gjelsten Holding AS"],
+        ["NOAH Solutions", "NOAH AS"],
+        ["NOAH Environment", "NOAH AS"],
+        ["NOAH Engadalen AS", "NOAH Environment"],
         
-        // Decom siblings
-        ["Jølsen Miljøpark AS", "AF Decom AS"],
+        // Environment siblings
+        ["FRANO", "NOAH Environment"],
+        ["Rekefjord Stone AS", "NOAH Environment"],
         
-        // Energi og Miljø siblings
-        ["Mepex AS", "AF Energi og Miljø AS"],
-        ["AF Energi AS", "AF Energi og Miljø AS"],
+        // Co-owner of Engadalen
+        ["Aas Gård", "NOAH Engadalen AS"],
         
-        // Offshore branch
-        ["AF Offshore AS", "AF Gruppen Norge AS"],
-        ["AF Offshore Decom AS", "AF Offshore AS"],
-        ["AF Miljøbase Vats AS", "AF Offshore Decom AS"],
-        
-        // Other branches under Norge
-        ["Betonmast AS", "AF Gruppen Norge AS"],
-        ["Strøm Gundersen AS", "AF Gruppen Norge AS"],
-        ["JR Anlegg AS", "AF Gruppen Norge AS"],
-        ["Lab Entreprenør AS", "AF Gruppen Norge AS"],
-        ["Haga & Berg Entreprenør AS", "AF Gruppen Norge AS"]
+        // Gjelsten siblings (context)
+        ["Fabritius Gruppen", "Gjelsten Holding AS"],
+        ["Profier AS", "Gjelsten Holding AS"]
     ];
 
     var el = document.getElementById(containerID);
@@ -143,8 +129,8 @@
     function createShape(type, isActive) {
         var ns = "http://www.w3.org/2000/svg";
         var g = document.createElementNS(ns, "g");
-        var r = 5; 
-        var p = 3;
+        var r = 3.5; 
+        var p = 2;
         
         if (type === 'p') { 
             var bg = document.createElementNS(ns, "rect");
@@ -175,7 +161,7 @@
             poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
             poly.setAttribute("fill", "none");
             poly.setAttribute("stroke", "#666"); 
-            poly.setAttribute("stroke-width", "1.5");
+            poly.setAttribute("stroke-width", "1");
             g.appendChild(poly);
         } else if (type === 's') { 
             var bg = document.createElementNS(ns, "rect");
@@ -188,7 +174,7 @@
             rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
             rect.setAttribute("fill", "none");
             rect.setAttribute("stroke", "#666"); 
-            rect.setAttribute("stroke-width", "1.5");
+            rect.setAttribute("stroke-width", "1");
             g.appendChild(rect);
         } else if (type === 'receiving') { 
             var bg = document.createElementNS(ns, "circle");
@@ -196,7 +182,7 @@
             g.appendChild(bg);
             var c = document.createElementNS(ns, "circle");
             c.setAttribute("r", r); c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.5");
+            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1");
             var pa = document.createElementNS(ns, "path");
             pa.setAttribute("fill", "#000");
             pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
@@ -204,7 +190,7 @@
         }
 
         if(isActive) {
-            g.setAttribute("transform", "scale(1.4)");
+            g.setAttribute("transform", "scale(1.2)");
         }
         return g;
     }
