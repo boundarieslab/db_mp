@@ -4,57 +4,57 @@
     <meta charset="utf-8">
     <title>Mr. Pukk Høland - Master Network</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
     <style>
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; background: #fff; 
-            font-family: 'IBM Plex Mono', monospace; 
+        /* Same typeface as dirtybusiness.no and the map, served from the same
+           place, so the graphs are typographically part of the site. */
+        @font-face {
+            font-family: 'Diatype Mono';
+            src: url('https://freight.cargo.site/t/original/i/34e062220d932607590d93991273932252277d33d93566736279930922253303/DiatypeMono-Regular.woff2') format('woff2');
+            font-weight: normal; font-display: swap;
         }
-
-        #network-container svg { width: 100%; height: 100%; display: block; }
-        #network-container { width: 100%; height: calc(100vh - 40px); display: block; position: relative; }
-        
-        #single-line-legend {
-            position: relative; width: 100%; height: 40px;
-            background: #fff; z-index: 100;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 10px; color: #000; border-bottom: 1px solid #f0f0f0; 
-            box-sizing: border-box; gap: 20px;
+        @font-face {
+            font-family: 'Diatype Mono';
+            src: url('https://freight.cargo.site/t/original/i/2274439092002939333902999233829283733003002928833773300022200299/DiatypeMono-Bold.woff2') format('woff2');
+            font-weight: bold; font-display: swap;
         }
-        
-        .legend-section { display: flex; align-items: center; gap: 8px; }
-        .legend-divider { width: 1px; height: 15px; background: #eee; }
-        .legend-item { display: flex; align-items: center; gap: 6px; }
-        .legend-item svg { width: 14px !important; height: 14px !important; flex-shrink: 0; }
-
+    </style>
+    <style>
+        /* Identical frame for every graph: legend on top, graph fills the rest. */
         /* Overganger for utheving */
         .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
         .dimmed { opacity: 0.15 !important; }
         .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
 
         svg { user-select: none; -webkit-user-select: none; }
-    </style>
+    
+        /* ── Canonical frame: identical in every graph in this repo ───────── */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+                     background: #fff; display: flex; flex-direction: column;
+                     font-family: 'Diatype Mono', 'JetBrains Mono', 'Courier New', monospace; }
+        #single-line-legend {
+            flex: 0 0 auto; position: relative; width: 100%; height: auto;
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+            gap: 5px 14px; padding: 7px 10px; box-sizing: border-box;
+            background: #fff; z-index: 100; border-bottom: 1px solid #f0f0f0;
+            font-size: 8px; color: #000; text-transform: uppercase; letter-spacing: 0.4px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .legend-item svg { width: 11px !important; height: 11px !important; flex-shrink: 0; overflow: visible; }
+        .legend-section, .legend-divider { display: none; }
+        #network-container { flex: 1 1 auto; width: 100%; min-height: 180px; height: auto;
+                             position: relative; margin: 0; }
+        #network-container svg { width: 100%; height: 100%; display: block; }
+</style>
 </head>
 <body>
 
 <div id="single-line-legend">
-    <div class="legend-section">
-        <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="#000"/></svg> Konsern</div>
-        <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="#3b82f6"/></svg> Operatør</div>
-        <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#666" stroke-width="1.5"/></svg> Søsteravd.</div>
-    </div>
-    <div class="legend-divider"></div>
-    <div class="legend-section">
-        <div class="legend-item">
-            <svg viewBox="0 0 14 14">
-                <circle cx="7" cy="7" r="6" fill="none" stroke="#39ff14" stroke-width="1.5"/>
-                <path d="M1,7 A6,6 0 0,1 7,1 L7,7 Z M7,7 L13,7 A6,6 0 0,1 7,13 Z" fill="#000"/>
-            </svg> 
-            Facility Mixed (Aktiv)
-        </div>
-    </div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="#000"/></svg> Parent group</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="#666"/></svg> Division</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="none" stroke="#666" stroke-width="1.5"/></svg> Subsidiary</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#666" stroke-width="1.5"/></svg> Affiliated site</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#FF0066" stroke-width="1.5"/><line x1="1" y1="1" x2="13" y2="13" stroke="#FF0066" stroke-width="1.5"/></svg> Construction project</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="#39FF14" stroke-width="1.5"/><path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/></svg> Facility</div>
 </div>
 
 <div id="network-container"></div>
@@ -95,7 +95,7 @@
 
     var el = document.getElementById(containerID);
     var W, H, svg, nodes=[], links=[], parentMap={}, childMap={};
-    var time = 0;
+    var time = 0, frame = 0;
 
     function getStrictLineage(startNode) {
         let pathNodes = new Set([startNode.id]);
@@ -117,6 +117,83 @@
         return {nodes: pathNodes, links: pathLinks};
     }
 
+
+    // ── Shared node vocabulary ────────────────────────────────────────────
+    // One shape set for every graph in this repo. Colours are the site's:
+    // black, grey, --col-facility #39FF14, --col-project #FF0066.
+    var DB_BLACK = "#000", DB_GREY = "#666", DB_GREEN = "#39FF14", DB_PINK = "#FF0066";
+
+    function dbShape(node) {
+        var ns = "http://www.w3.org/2000/svg";
+        var type = (node && node.type) || "s";
+        var g = document.createElementNS(ns, "g");
+        var r = 3.5, p = 2;
+
+        function halo(kind) {
+            var e;
+            if (kind === "tri") {
+                e = document.createElementNS(ns, "polygon");
+                e.setAttribute("points", "0,-" + (r+1+p) + " " + (r+1+p) + "," + (r+1+p) + " -" + (r+1+p) + "," + (r+1+p));
+            } else if (kind === "circle") {
+                e = document.createElementNS(ns, "circle");
+                e.setAttribute("r", r + p);
+            } else {
+                e = document.createElementNS(ns, "rect");
+                e.setAttribute("x", -(r+p)); e.setAttribute("y", -(r+p));
+                e.setAttribute("width", (r+p)*2); e.setAttribute("height", (r+p)*2);
+            }
+            e.setAttribute("fill", "#fff");
+            g.appendChild(e);
+            return e;
+        }
+        function sq(fill, stroke) {
+            var e = document.createElementNS(ns, "rect");
+            e.setAttribute("x", -r); e.setAttribute("y", -r);
+            e.setAttribute("width", r*2); e.setAttribute("height", r*2);
+            e.setAttribute("fill", fill);
+            if (stroke) { e.setAttribute("stroke", stroke); e.setAttribute("stroke-width", "1"); }
+            g.appendChild(e);
+        }
+        function tri(fill, stroke) {
+            var e = document.createElementNS(ns, "polygon");
+            e.setAttribute("points", "0,-" + (r+1) + " " + (r+1) + "," + (r+1) + " -" + (r+1) + "," + (r+1));
+            e.setAttribute("fill", fill);
+            if (stroke) { e.setAttribute("stroke", stroke); e.setAttribute("stroke-width", "1"); }
+            g.appendChild(e);
+        }
+        function halfCircle(ring) {
+            var c = document.createElementNS(ns, "circle");
+            c.setAttribute("r", r); c.setAttribute("fill", "none");
+            c.setAttribute("stroke", ring); c.setAttribute("stroke-width", "1");
+            var pa = document.createElementNS(ns, "path");
+            pa.setAttribute("fill", DB_BLACK);
+            pa.setAttribute("d", "M -" + r + " 0 A " + r + " " + r + " 0 0 0 " + r + " 0 Z");
+            g.appendChild(c); g.appendChild(pa);
+        }
+
+        if (type === "p" || type === "parent") {            // PARENT GROUP
+            halo("sq"); sq(DB_BLACK, null);
+        } else if (type === "div_ind" || type === "div" || type === "division") {  // DIVISION
+            halo("tri"); tri(DB_GREY, null);
+        } else if (type === "div_ent" || type === "subsidiary") {  // SUBSIDIARY
+            halo("tri"); tri("none", DB_GREY);
+        } else if (type === "construction" || type === "cp") {     // CONSTRUCTION PROJECT
+            halo("sq"); sq("none", DB_PINK);
+            var d = document.createElementNS(ns, "line");
+            d.setAttribute("x1", -r); d.setAttribute("y1", -r);
+            d.setAttribute("x2", r);  d.setAttribute("y2", r);
+            d.setAttribute("stroke", DB_PINK); d.setAttribute("stroke-width", "1");
+            g.appendChild(d);
+        } else if (type === "receiving" || type === "f" || type === "facility") {  // FACILITY
+            halo("circle"); halfCircle(DB_GREEN);
+        } else {                                            // AFFILIATED SITE
+            halo("sq"); sq("none", DB_GREY);
+        }
+
+        if (node && node.active) g.setAttribute("transform", "scale(1.25)");
+        return g;
+    }
+
     function createIcon(node) {
         var ns = "http://www.w3.org/2000/svg";
         var g = document.createElementNS(ns, "g");
@@ -126,7 +203,7 @@
             var rect = document.createElementNS(ns, "rect");
             rect.setAttribute("x", -r); rect.setAttribute("y", -r);
             rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
-            rect.setAttribute("fill", node.sub === 'operator' ? "#3b82f6" : (node.sub === 'parent' ? "#000" : "none"));
+            rect.setAttribute("fill", node.sub === 'operator' ? "#666" : (node.sub === 'parent' ? "#000" : "none"));
             if (node.sub === 'dept') {
                 rect.setAttribute("stroke", "#666"); 
                 rect.setAttribute("stroke-width", "1.5");
@@ -137,7 +214,7 @@
             rect.setAttribute("x", -r); rect.setAttribute("y", -r);
             rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
             rect.setAttribute("fill", "none"); 
-            rect.setAttribute("stroke", "#ff003c"); 
+            rect.setAttribute("stroke", "#FF0066"); 
             rect.setAttribute("stroke-width", "1.5");
             var p = document.createElementNS(ns, "path");
             p.setAttribute("fill", "#000");
@@ -152,7 +229,7 @@
         } else { // Facility
             var c = document.createElementNS(ns, "circle");
             c.setAttribute("r", r); c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#39ff14"); c.setAttribute("stroke-width", "1.5");
+            c.setAttribute("stroke", "#39FF14"); c.setAttribute("stroke-width", "1.5");
             var p = document.createElementNS(ns, "path");
             p.setAttribute("fill", "#000");
             if (node.sub === 'producing') {
@@ -219,14 +296,19 @@
                 ring.appendChild(anim); g.appendChild(ring);
             }
             
-            var icon = createIcon(n); icon.style.pointerEvents = "none";
+            var icon = dbShape(n); icon.style.pointerEvents = "none";
             g.appendChild(icon); n.shapeEl = icon;
             
             var txt = document.createElementNS(ns, "text");
-            txt.textContent = n.id + (n.l ? " " + n.l : "");
+            var _full = n.id + (n.l ? " " + n.l : "");
+            var _maxCh = Math.max(8, Math.floor(Math.max(70, Math.min(180, W * 0.22)) / 5.4) - 1);
+            txt.textContent = _full.length > _maxCh ? _full.slice(0, _maxCh - 1) + "\u2026" : _full;
+            var _tip = document.createElementNS(ns, "title");
+            _tip.textContent = _full;
+            txt.appendChild(_tip);
             txt.setAttribute("x", 12); txt.setAttribute("y", 3);
             txt.setAttribute("fill", n.active ? "#000" : "#bbb"); 
-            txt.style.font = n.active ? "600 10px 'IBM Plex Mono'" : "400 9px 'IBM Plex Mono'"; 
+            txt.style.font = n.active ? "600 10px 'Diatype Mono', 'Courier New', monospace" : "400 9px 'Diatype Mono', 'Courier New', monospace"; 
             txt.style.pointerEvents = "none";
             g.appendChild(txt); n.tEl = txt;
 
@@ -263,8 +345,20 @@
     }
 
     function tick() {
-        time += 0.005;
-        const restLen = 95, centerG = 0.01;
+        time += 0.005; frame++;
+        // Geometry derived from the container, not fixed pixels, so the graph is
+        // legible in a small sidebar iframe as well as a full window.
+        var _n = nodes.length || 1;
+        var _pad = 30;
+        // Reserve a margin on each side for the labels, and keep the nodes in
+        // the band between, so a label always has somewhere to go.
+        var _labelRoom = Math.max(70, Math.min(180, W * 0.22));
+        var _uw = Math.max(W - _labelRoom * 2, 110), _uh = Math.max(H - _pad * 2, 120);
+        var _cell = Math.sqrt((_uw * _uh) / _n);
+        const restLen = Math.max(26, Math.min(110, _cell * 0.95));
+        const repel = restLen * 1.05;
+        const centerG = 0.01;
+        const cool = Math.max(0, 1 - frame / 900);
         links.forEach(l => {
             var dx = l.t.x - l.s.x, dy = l.t.y - l.s.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
             var force = (dist - restLen) * 0.02;
@@ -273,20 +367,46 @@
         });
         nodes.forEach(n => {
             if (!n.dragging) {
-                n.vx += Math.sin(time + n.noiseOffset) * 0.04;
-                n.vy += Math.cos(time + n.noiseOffset) * 0.04;
+                n.vx += Math.sin(time + n.noiseOffset) * 0.04 * cool;
+                n.vy += Math.cos(time + n.noiseOffset) * 0.04 * cool;
                 n.vx += (W/2 - n.x) * centerG;
                 n.vy += (H/2 - n.y) * centerG;
                 nodes.forEach(n2 => {
                     if(n === n2) return;
                     var dx = n.x - n2.x, dy = n.y - n2.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
-                    if(dist < 100) { var f = (100 - dist) * 0.04; n.vx += (dx/dist) * f; n.vy += (dy/dist) * f; }
+                    if(dist < repel) { var f = (repel - dist) * 0.04; n.vx += (dx/dist) * f; n.vy += (dy/dist) * f; }
                 });
                 n.x += n.vx; n.y += n.vy; n.vx *= 0.88; n.vy *= 0.88;
             }
-            n.x = Math.max(100, Math.min(W - 150, n.x)); n.y = Math.max(50, Math.min(H - 50, n.y));
+            n.x = Math.max(_labelRoom, Math.min(W - _labelRoom, n.x)); n.y = Math.max(_pad, Math.min(H - _pad, n.y));
             if(n.el) n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
+            if(n.tEl) {
+                // point the label outward, into the reserved margin
+                var _right = n.x >= W / 2;
+                n.tEl.setAttribute("text-anchor", _right ? "start" : "end");
+                n.tEl.setAttribute("x", _right ? 10 : -10);
+            }
         });
+
+        // Keep labels on the same side off the same line. Labels sit at the
+        // node's own y, so nudging the nodes apart vertically is enough.
+        (function(){
+            var minGap = 16;
+            [nodes.filter(function(n){ return n.x < W / 2; }),
+             nodes.filter(function(n){ return n.x >= W / 2; })].forEach(function(side){
+                side.sort(function(a, b){ return a.y - b.y; });
+                for (var i = 1; i < side.length; i++) {
+                    var prev = side[i-1], cur = side[i], gap = cur.y - prev.y;
+                    if (gap < minGap) {
+                        var push = (minGap - gap) / 2;
+                        if (!prev.dragging) prev.y -= push;
+                        if (!cur.dragging)  cur.y  += push;
+                    }
+                }
+            });
+            nodes.forEach(function(n){ n.y = Math.max(_pad, Math.min(H - _pad, n.y)); });
+        })();
+
         links.forEach(l => {
             l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
             l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
@@ -301,6 +421,11 @@
     window.addEventListener("mouseup", () => nodes.forEach(n => n.dragging = false));
     
     setTimeout(init, 500);
+    var _rt;
+    window.addEventListener("resize", function(){
+        clearTimeout(_rt);
+        _rt = setTimeout(function(){ frame = 0; init(); }, 250);
+    });
 })();
 </script>
 </body>
