@@ -665,6 +665,64 @@ document.addEventListener('DOMContentLoaded', function() {
     const FACILITIES_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?output=csv';
     const PROJECTS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR8NceaLhnLslv2TKIReqCnB1q0UON_yEef-vs7zfKxnQc8LaxiNfSKTTp8528mKG882T3XlxF59437/pub?output=csv';
     
+    // ─────────────────────────────────────────────────────────────────────
+    // Ownership-graph links.
+    //
+    // The GraphURL column in the spreadsheet has accumulated three different
+    // URL shapes, two of which do not work in an iframe:
+    //
+    //   dirtybusiness.github.io/network-maps/x.html   404 (repo never existed)
+    //   github.com/boundarieslab/db_mp/blob/.../x.html   source page, and
+    //                                    GitHub sends X-Frame-Options: DENY
+    //   boundarieslab.github.io/db_mp/network/x.html  correct
+    //
+    // Rather than depend on every future row being typed correctly, the map
+    // resolves a GraphURL down to its filename and serves it from this repo
+    // whenever that file is one we actually ship. Anything else is passed
+    // through untouched, so a genuinely external graph still works.
+    // ─────────────────────────────────────────────────────────────────────
+    const GRAPH_BASE = 'https://boundarieslab.github.io/db_mp/network/';
+
+    const KNOWN_GRAPHS = new Set([
+        'asak_network.html',
+        'dal_skog_network.html',
+        'elvestad_network.html',
+        'esval-network-visualization.html',
+        'feiring_bruK_enebakk_network.html',
+        'feiring_eidsvoll.html',
+        'helgerud_network.html',
+        'holand_betong_network.html',
+        'jolsen_network.html',
+        'lindum_oredalen_network.html',
+        'mr_pukk_network.html',
+        'nes-network-visualization.html',
+        'noah_network.html',
+        'ragn_sells_network.html',
+        'rambydalen_network.html',
+        'roaf_skedsmo_network.html',
+        'royken_network.html',
+        'skedsmo_massesenter_network.html',
+        'veidekke_gardermoen_network.html'
+    ]);
+
+    // Filenames the sheet points at that never matched a file in this repo.
+    const GRAPH_ALIASES = {
+        'jolsen_netwrok.html': 'jolsen_network.html',            // typo, file renamed
+        'esval.html': 'nes-network-visualization.html',           // Esval Miljøpark, Nes
+        'feiring_dal.html': 'feiring_eidsvoll.html',              // Feiring Bruk, Dal
+        'veidekke_gardermoen.html': 'veidekke_gardermoen_network.html',
+        'noah_engadalen.html': 'noah_network.html'
+    };
+
+    function resolveGraphURL(raw) {
+        if (!raw) return '';
+        const url = String(raw).trim();
+        if (!url.includes('.html')) return '';
+        let file = url.split('/').pop().split('?')[0].split('#')[0];
+        file = GRAPH_ALIASES[file] || file;
+        return KNOWN_GRAPHS.has(file) ? GRAPH_BASE + file : url;
+    }
+
     const WAYBACK_YEARS = [
         { year: 2014, release: 10 },
         { year: 2016, release: 2168 },
@@ -927,7 +985,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let graphHtml = `<div id="graph-container" style="display:flex;align-items:center;justify-content:center;color:#999;font-size:8px;">NO GRAPH AVAILABLE</div>`;
-        if (site.GraphURL && site.GraphURL.includes('.html')) graphHtml = `<div id="graph-container"><iframe src="${site.GraphURL}"></iframe></div>`;
+        const graphSrc = resolveGraphURL(site.GraphURL);
+        if (graphSrc) graphHtml = `<div id="graph-container"><iframe src="${graphSrc}"></iframe></div>`;
 
         let linksHtml = '';
         if (site.Website) linksHtml += `<div class="link-row"><a href="${site.Website}" target="_blank">↗ WEBSITE</a></div>`;
