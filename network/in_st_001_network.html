@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Mr. Pukk Furuset - Master Network</title>
+    <title>Brynsåsen steinbrudd / massemottak - Ownership Network</title>
     
     <style>
         /* Same typeface as dirtybusiness.no and the map, served from the same
@@ -63,48 +63,16 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        // PARENT GROUP
-        {id:"Heffalompen Holding AS", type:"p"},
-        
-        // DIVISIONS
-        {id:"Mr. Pukk AS", type:"div_ind"},
-        {id:"Mr. Pukk Eiendom AS", type:"div_ent"},
-        {id:"Mr. Pukk Gjenvinning AS", type:"div_ent"},
-        
-        // SØSTERAVDELINGER
-        {id:"Mysen Asfalt AS", type:"s"},
-        {id:"Maur Tipp og Slep AS", type:"s", l:"(Transport)"},
-        {id:"Bokerøya AS", type:"s"},
-        {id:"Mr. Pukk Eiendom 10 AS", type:"s"},
-        {id:"Ramnes Næringseiendom AS", type:"s"},
-        {id:"Mr. Pukk Høland AS", type:"s"},
-        {id:"Mr. Pukk Øst AS", type:"s"},
-        {id:"Torperåsen AS", type:"s"},
-        
-        // ACTIVE SITE
-        {id:"Mr. Pukk Furuset AS", type:"receiving", active:true}
+        {id:"Gunnar Holth Grusforretning (GHG) group", type:"p"},
+        {id:"Hamar Pukk og Grus AS", type:"div_ind", l:"(operator)"},
+        {id:"Brynsåsen steinbrudd / massemottak", type:"receiving", l:"(Brynsvegen 489)", active:true},
+        {id:"Vang grustak", type:"s", l:"(Bjørgedalen ved Narmo)"}
     ];
     
     var LINKS = [
-        // Main hierarchy under Heffalompen
-        ["Mr. Pukk AS", "Heffalompen Holding AS"],
-        ["Mr. Pukk Eiendom AS", "Heffalompen Holding AS"],
-        ["Mr. Pukk Gjenvinning AS", "Heffalompen Holding AS"],
-        ["Maur Tipp og Slep AS", "Heffalompen Holding AS"],
-        ["Mysen Asfalt AS", "Heffalompen Holding AS"],
-        
-        // Active chain (Furuset owned by Gjenvinning)
-        ["Mr. Pukk Furuset AS", "Mr. Pukk Gjenvinning AS"],
-        
-        // Property branch
-        ["Bokerøya AS", "Mr. Pukk Eiendom AS"],
-        ["Mr. Pukk Eiendom 10 AS", "Mr. Pukk Eiendom AS"],
-        ["Ramnes Næringseiendom AS", "Mr. Pukk Eiendom AS"],
-        
-        // Other sites under Mr. Pukk AS
-        ["Mr. Pukk Høland AS", "Mr. Pukk AS"],
-        ["Mr. Pukk Øst AS", "Mr. Pukk AS"],
-        ["Torperåsen AS", "Mr. Pukk AS"]
+        ["Hamar Pukk og Grus AS", "Gunnar Holth Grusforretning (GHG) group"],
+        ["Brynsåsen steinbrudd / massemottak", "Hamar Pukk og Grus AS"],
+        ["Vang grustak", "Hamar Pukk og Grus AS"]
     ];
 
     var el = document.getElementById(containerID);

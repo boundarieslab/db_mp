@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Mr. Pukk Furuset - Master Network</title>
+    <title>Gatedalen miljøanlegg - deponi - Ownership Network</title>
     
     <style>
         /* Same typeface as dirtybusiness.no and the map, served from the same
@@ -63,48 +63,12 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        // PARENT GROUP
-        {id:"Heffalompen Holding AS", type:"p"},
-        
-        // DIVISIONS
-        {id:"Mr. Pukk AS", type:"div_ind"},
-        {id:"Mr. Pukk Eiendom AS", type:"div_ent"},
-        {id:"Mr. Pukk Gjenvinning AS", type:"div_ent"},
-        
-        // SØSTERAVDELINGER
-        {id:"Mysen Asfalt AS", type:"s"},
-        {id:"Maur Tipp og Slep AS", type:"s", l:"(Transport)"},
-        {id:"Bokerøya AS", type:"s"},
-        {id:"Mr. Pukk Eiendom 10 AS", type:"s"},
-        {id:"Ramnes Næringseiendom AS", type:"s"},
-        {id:"Mr. Pukk Høland AS", type:"s"},
-        {id:"Mr. Pukk Øst AS", type:"s"},
-        {id:"Torperåsen AS", type:"s"},
-        
-        // ACTIVE SITE
-        {id:"Mr. Pukk Furuset AS", type:"receiving", active:true}
+        {id:"Sarpsborg kommune", type:"p", l:"(operator)"},
+        {id:"Gatedalen miljøanlegg - deponi", type:"receiving", l:"(Borgenhaugen)", active:true}
     ];
     
     var LINKS = [
-        // Main hierarchy under Heffalompen
-        ["Mr. Pukk AS", "Heffalompen Holding AS"],
-        ["Mr. Pukk Eiendom AS", "Heffalompen Holding AS"],
-        ["Mr. Pukk Gjenvinning AS", "Heffalompen Holding AS"],
-        ["Maur Tipp og Slep AS", "Heffalompen Holding AS"],
-        ["Mysen Asfalt AS", "Heffalompen Holding AS"],
-        
-        // Active chain (Furuset owned by Gjenvinning)
-        ["Mr. Pukk Furuset AS", "Mr. Pukk Gjenvinning AS"],
-        
-        // Property branch
-        ["Bokerøya AS", "Mr. Pukk Eiendom AS"],
-        ["Mr. Pukk Eiendom 10 AS", "Mr. Pukk Eiendom AS"],
-        ["Ramnes Næringseiendom AS", "Mr. Pukk Eiendom AS"],
-        
-        // Other sites under Mr. Pukk AS
-        ["Mr. Pukk Høland AS", "Mr. Pukk AS"],
-        ["Mr. Pukk Øst AS", "Mr. Pukk AS"],
-        ["Torperåsen AS", "Mr. Pukk AS"]
+        ["Gatedalen miljøanlegg - deponi", "Sarpsborg kommune"]
     ];
 
     var el = document.getElementById(containerID);
