@@ -33,6 +33,9 @@ application. Only Leaflet 1.9.4 and PapaParse 5.4.1 are loaded from a CDN.
 | `index.html` | The entire application. |
 | `network/*.html` | One standalone ownership-network graph per facility, opened in an iframe in the sidebar. Most are hand-built D3-style graphs in IBM Plex Mono. |
 | `picto_grammar/*.png` | The marker pictogram set. Naming: `f_*` facility, `cp_*` construction project; `_r_` receiving, `_s_` source; then the type (`f_d_inert`, `cp_r_bolig`, and so on). |
+| `data/dod/<slug>/{z}/{x}/{y}.png` | Pre-rendered DoD tiles, z11-16. Only tiles containing change exist, so a 404 inside the layer bounds is the normal case. |
+| `data/dod_<slug>.geojson` | The same change as polygons, loaded invisibly as click targets for the area / volume / mean-dh popup. |
+| `tools/make_dod_tiles.py` | Builds both of the above from one pipeline run. |
 
 ## Data sources
 
@@ -44,6 +47,30 @@ application. Only Leaflet 1.9.4 and PapaParse 5.4.1 are loaded from a CDN.
 | Esri World Imagery | satellite basemap |
 | Esri Wayback WMTS | historical imagery, one release pinned per year 2014-2025 in `WAYBACK_YEARS` |
 | Geonorge `wms.hoyde-dom1_33`, layer `DOM1_33_Terrengskygge` | terrain hillshade overlay |
+| `unigis_tesis` DoD run (Kartverket DTM1) | the DoD layer, pre-rendered into `data/dod/` |
+
+## The DoD layer
+
+The map's own measurement, not a third-party service. It is drawn the same way the
+thesis figures are drawn, so the two can be read side by side: dh in matplotlib
+`turbo`, `Normalize(-rng, +rng, clip=True)`, multiplied by a hillshade of the newer
+DTM (`LightSource(315, 45)`, `vert_exag=2`, `shade = 0.40 + 0.60 * hs`), with
+`rng = min(max(|p2|, |p98|), 25)`. That shading is per pixel, so the layer has to be
+a raster; a polygon fill cannot show the terraces inside a deposit.
+
+The raster is clipped to the vectorised change polygons. `DoD_final.tif` still holds
+thin registration threads along streams and roads - about 20 % of its valid pixels in
+Gjerdrum - which the pipeline's own vectorisation discards. Left in, they make a whole
+municipality read as green.
+
+To add a municipality, from a finished run holding `DoD_final.tif`,
+`new_aligned.tif` and `poligonos.gpkg`:
+
+    python tools/make_dod_tiles.py <run_dir> <slug>
+
+Then add the layer in `index.html`: it prints the `L.latLngBounds` and the legend
+range to use. Currently only `gjerdrum_2007_2020` exists, because it is the only
+completed run outside the `G:` drive.
 
 ## The Facilities columns the map actually reads
 
@@ -98,6 +125,11 @@ file, add its name to `KNOWN_GRAPHS`.**
 - **Two graphs have no facility**: `mr_pukk_network.html` (Mr. Pukk Furuset) and
   `feiring_bruK_enebakk_network.html` (Feiring Bruk, Enebakk), both sites that exist
   in reality but not yet in the database.
-- The DoD change polygons produced by the detection pipeline are not on this map.
-  Connecting detected terrain change to the facility that received the masses is the
-  obvious next step.
+- **The DoD layer covers Gjerdrum only.** Every other municipality needs a pipeline
+  run, which needs the `G:` source drive.
+- **Nothing joins detected change to the facility that received the masses.** Both are
+  on the map now, but only visually. That join needs facility footprints, which is
+  what the empty `FacilityPolygons` tab is for.
+- **Every Gjerdrum polygon is flagged `sin_plan`.** That is a missing reguleringsplan
+  layer in the pipeline config, not a finding, and the popup wording stays neutral
+  about it.
