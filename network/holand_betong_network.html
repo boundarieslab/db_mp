@@ -95,7 +95,7 @@
 
     var el = document.getElementById(containerID);
     var W, H, svg, nodes=[], links=[], parentMap={}, childMap={};
-    var time = 0, frame = 0;
+    var time = 0, frame = 0, _raf = null, _settled = false;
 
     function getStrictLineage(startNode) {
         let pathNodes = new Set([startNode.id]);
@@ -245,6 +245,11 @@
     }
 
     function init() {
+        // Without this a window resize started a second loop on top of the
+        // first, and the maps below accumulated a duplicate set of children
+        // on every rebuild, making hover highlighting exponentially slower.
+        if (_raf) { cancelAnimationFrame(_raf); _raf = null; }
+        parentMap = {}; childMap = {}; _settled = false;
         W = el.offsetWidth || window.innerWidth;
         H = el.offsetHeight || 500;
         el.innerHTML = "";
@@ -337,15 +342,18 @@
                 links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
             };
 
-            g.onmousedown = (e) => { e.preventDefault(); n.dragging = true; g.style.cursor = "grabbing"; };
+            g.onmousedown = (e) => { e.preventDefault(); n.dragging = true; g.style.cursor = "grabbing";
+                if (_settled && !_raf) { _settled = false; _raf = requestAnimationFrame(tick); } };
             nodeG.appendChild(g); n.el = g;
         });
 
-        requestAnimationFrame(tick);
+        _raf = requestAnimationFrame(tick);
     }
 
     function tick() {
         time += 0.005; frame++;
+        var _moved = 0;
+        nodes.forEach(function(n){ n._px = n.x; n._py = n.y; });
         // Geometry derived from the container, not fixed pixels, so the graph is
         // legible in a small sidebar iframe as well as a full window.
         var _n = nodes.length || 1;
@@ -378,7 +386,7 @@
                 });
                 n.x += n.vx; n.y += n.vy; n.vx *= 0.88; n.vy *= 0.88;
             }
-            n.x = Math.max(_labelRoom, Math.min(W - _labelRoom, n.x)); n.y = Math.max(_pad, Math.min(H - _pad, n.y));
+            var _ox = n.x; n.x = Math.max(_labelRoom, Math.min(W - _labelRoom, n.x)); if (n.x !== _ox) n.vx = 0; var _oy = n.y; n.y = Math.max(_pad, Math.min(H - _pad, n.y)); if (n.y !== _oy) n.vy = 0;
             if(n.el) n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
             if(n.tEl) {
                 // point the label outward, into the reserved margin
@@ -392,6 +400,20 @@
         // node's own y, so nudging the nodes apart vertically is enough.
         (function(){
             var minGap = 16;
+            // Same-side lanes, plus one pass over nodes that are close together
+            // horizontally regardless of side: labels flip outward at the
+            // midpoint, so two nodes either side of centre can still collide.
+            var near = nodes.slice().sort(function(a, b){ return a.y - b.y; });
+            for (var j = 1; j < near.length; j++) {
+                var pv = near[j-1], cu = near[j];
+                if (Math.abs(cu.x - pv.x) > 130) continue;
+                var g2 = cu.y - pv.y;
+                if (g2 < 15) {
+                    var p2 = (15 - g2) / 2;
+                    if (!pv.dragging) pv.y -= p2;
+                    if (!cu.dragging) cu.y += p2;
+                }
+            }
             [nodes.filter(function(n){ return n.x < W / 2; }),
              nodes.filter(function(n){ return n.x >= W / 2; })].forEach(function(side){
                 side.sort(function(a, b){ return a.y - b.y; });
@@ -411,10 +433,22 @@
             l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
             l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
         });
-        requestAnimationFrame(tick);
+        // The picture reaches a fixed point after 20-40s but the loop used to
+
+        // run forever, including behind a closed sidebar.
+
+        nodes.forEach(function(n){ _moved = Math.max(_moved, Math.abs(n.x - n._px), Math.abs(n.y - n._py)); });
+        if (_moved < 0.05 && frame > 400 && !nodes.some(function(n){ return n.dragging; })) {
+
+            _raf = null; _settled = true; return;
+
+        }
+
+        _raf = requestAnimationFrame(tick);
     }
 
     window.addEventListener("mousemove", (e) => {
+        if (!nodes.some(function(n){ return n.dragging; })) return;
         var rect = el.getBoundingClientRect();
         nodes.forEach(n => { if(n.dragging) { n.x = e.clientX - rect.left; n.y = e.clientY - rect.top; n.vx = 0; n.vy = 0; }});
     });

@@ -45,7 +45,9 @@
         }
 
         /* SEARCH */
-        .search-box { top: 10px; }
+        /* Every .ui-box shares z-index 2000, so the boxes below the search box
+           painted over its results dropdown and swallowed the clicks. */
+        .search-box { top: 10px; z-index: 2500; }
         .search-input {
             border: none;
             outline: none;
@@ -185,7 +187,7 @@
             justify-content: space-between;
             margin-top: 4px;
             font-size: 7px;
-            color: #999;
+            color: #595959;
         }
         .timeline-year {
             text-align: center;
@@ -312,9 +314,50 @@
 
         /* MARKERS - SMALL */
         .custom-marker { background: transparent !important; border: none !important; }
-        .marker-icon { display: flex; align-items: center; justify-content: center; }
+        /* The mark stays 14px; the hit area is 26px. 14px is well under the
+           24px minimum target size and the Oslo cluster is dense. */
+        .marker-icon { display: flex; align-items: center; justify-content: center;
+                       width: 26px; height: 26px; }
         .marker-icon svg { transition: transform 0.2s ease; }
-        .leaflet-marker-icon:hover .marker-icon svg { transform: scale(1.8); }
+        .leaflet-marker-icon:hover .marker-icon svg,
+        .leaflet-marker-icon:focus-visible .marker-icon svg { transform: scale(1.8); }
+
+        /* Keyboard focus was invisible everywhere. */
+        :focus-visible { outline: 2px solid #000; outline-offset: 1px; }
+        .lang-btn, .filter-toggle, .filter-close, .close-btn {
+            font-family: inherit; border-radius: 0; cursor: pointer;
+        }
+        .lang-btn { background: #fff; border: none; }
+        .filter-toggle { text-align: left; }
+        .close-btn, .filter-close {
+            background: #fff; border: none;
+            width: 44px; height: 44px; display: flex;
+            align-items: center; justify-content: center;
+        }
+
+        /* Closed sidebar stayed in the tab order and was read out by screen
+           readers while off-screen. */
+        #sidebar:not(.active) { visibility: hidden; }
+        #sidebar.active { visibility: visible; }
+
+        .status-strip {
+            position: absolute; left: 10px; bottom: 10px; z-index: 2000;
+            background: #fff; border: 1px solid #000; padding: 7px 10px;
+            font-size: 9px; font-weight: bold; letter-spacing: 0.5px;
+            text-transform: uppercase; max-width: 260px;
+        }
+
+        .no-data { color: #595959; font-style: normal; }
+        .search-item-name { font-weight: bold; }
+        .search-item-meta { color: #595959; font-size: 8px; margin-top: 2px; }
+        .search-more { padding: 6px 10px; color: #595959; font-size: 8px;
+                       border-top: 1px solid #eee; text-transform: uppercase; }
+        .status-badge.unknown { background: #fff; color: #000; border: 1px solid #000; }
+
+        @media (prefers-reduced-motion: reduce) {
+            #sidebar { transition: none; }
+            .slideshow-slide, .marker-icon svg { transition: none; }
+        }
 
         /* POPUP */
         .leaflet-popup-content-wrapper {
@@ -431,7 +474,7 @@
             align-items: center;
             justify-content: center;
             background: #f5f5f5;
-            color: #999;
+            color: #595959;
             font-size: 9px;
             text-transform: uppercase;
         }
@@ -453,7 +496,7 @@
         .sb-desc { font-size: 11px; line-height: 1.5; margin-bottom: 20px; }
         .sb-content b { font-size: 9px; text-transform: uppercase; display: block; margin-top: 20px; margin-bottom: 8px; }
         .column-set { display: flex; justify-content: space-between; font-size: 9px; padding: 2px 0; }
-        .col-0 { color: #888; width: 40%; }
+        .col-0 { color: #595959; width: 40%; }
         .col-1 { color: #000; width: 60%; text-align: right; }
         .link-row { text-align: right; margin-bottom: 4px; }
         .link-row a { font-size: 9px; color: #000; text-decoration: underline; text-transform: uppercase; }
@@ -468,7 +511,7 @@
             background: #000; color: #fff; font-size: 8px; letter-spacing: 0.5px;
             padding: 3px 6px; text-transform: uppercase;
         }
-        .minimap-note.no-coords { background: #f5f5f5; color: #999; }
+        .minimap-note.no-coords { background: #f5f5f5; color: #595959; }
         iframe { width: 100%; height: 100%; border: none; }
 
         .leaflet-control-attribution { font-family: var(--font-stack) !important; font-size: 8px !important; }
@@ -478,6 +521,10 @@
             :root { --sidebar-width: 100vw; --ui-width: 160px; }
             .leaflet-control-zoom { left: 175px !important; }
             .slideshow-container { height: 180px; min-height: 140px; }
+            /* A touch-drag inside the iframe is captured by the iframe, so the
+               sidebar cannot be scrolled past it. Link out on small screens. */
+            #graph-container { height: 200px; }
+            .status-strip { font-size: 8px; max-width: 160px; }
             h1 { font-size: 18px; }
         }
 
@@ -499,11 +546,12 @@
 </head>
 <body>
 
-<div id="map"></div>
+<div id="map" role="application" aria-label="Map of mass reception facilities and construction projects in Norway"></div>
 
 <!-- SEARCH -->
 <div class="ui-box search-box">
-    <input type="text" class="search-input" id="search-input" placeholder="SEARCH...">
+    <input type="text" class="search-input" id="search-input" placeholder="SEARCH..."
+           aria-label="Search sites" role="combobox" aria-expanded="false" aria-autocomplete="list">
     <div class="search-results" id="search-results"></div>
 </div>
 
@@ -513,26 +561,26 @@
         <div class="layers-title" data-en="Base" data-no="Bakgrunn">Base</div>
         <div class="layer-option">
             <input type="radio" name="basemap" id="base-gray" value="graytone" checked>
-            <label for="base-gray">Graytone</label>
+            <label for="base-gray" data-en="Graytone" data-no="Gråtone">Graytone</label>
         </div>
         <div class="layer-option">
             <input type="radio" name="basemap" id="base-sat" value="satellite">
-            <label for="base-sat">Satellite</label>
+            <label for="base-sat" data-en="Satellite" data-no="Satellitt">Satellite</label>
         </div>
     </div>
     <div class="layers-section">
         <div class="layers-title" data-en="Overlay" data-no="Overlegg">Overlay</div>
         <div class="layer-option">
             <input type="checkbox" id="overlay-dtm">
-            <label for="overlay-dtm">Terrain (DTM)</label>
+            <label for="overlay-dtm" data-en="Terrain (DTM)" data-no="Terreng (DTM)">Terrain (DTM)</label>
         </div>
     </div>
 </div>
 
 <!-- LANGUAGE -->
 <div class="ui-box lang-box">
-    <div class="lang-btn active" id="btn-en">EN</div>
-    <div class="lang-btn" id="btn-no">NO</div>
+    <button type="button" class="lang-btn active" id="btn-en" aria-pressed="true">EN</button>
+    <button type="button" class="lang-btn" id="btn-no" aria-pressed="false">NO</button>
 </div>
 
 <!-- TIMELINE -->
@@ -550,13 +598,13 @@
 </div>
 
 <!-- FILTER TOGGLE -->
-<div class="ui-box filter-toggle" onclick="toggleFilter()">
+<button type="button" class="ui-box filter-toggle" onclick="toggleFilter()" aria-expanded="false" aria-controls="filter-panel">
     <span data-en="FILTER & LEGEND ▼" data-no="FILTER & TEGNFORKLARING ▼">FILTER & LEGEND ▼</span>
-</div>
+</button>
 
 <!-- FILTER PANEL -->
 <div class="filter-panel" id="filter-panel">
-    <span class="filter-close" onclick="toggleFilter()">✕</span>
+    <button type="button" class="filter-close" onclick="toggleFilter()" aria-label="Close">✕</button>
     
     <div class="panel-section">
         <div class="panel-title" data-en="FILTER" data-no="FILTER">FILTER</div>
@@ -658,12 +706,14 @@
 
 <!-- SIDEBAR -->
 <div id="sidebar">
-    <div class="close-btn" onclick="closeSidebar()">✕</div>
+    <button type="button" class="close-btn" onclick="closeSidebar()" aria-label="Close panel">✕</button>
     <button class="share-btn" onclick="shareLink()">SHARE</button>
     <div class="sb-scroll-area">
         <div id="sb-dynamic-content"></div>
     </div>
 </div>
+
+<div class="ui-box status-strip" id="status-strip" role="status" aria-live="polite">LOADING DATA…</div>
 
 <div class="share-notification" id="share-notification">LINK COPIED!</div>
 
@@ -673,6 +723,26 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
+    // ─────────────────────────────────────────────────────────────────────
+    // Three helpers used everywhere a sheet value reaches the page.
+    //
+    // num()     Google Sheets in a Norwegian locale writes 59,9105 rather than
+    //           59.9105. parseFloat("59,9105") is 59 - finite, so it passes an
+    //           isFinite check and silently puts the site 100 km away.
+    // esc()     Every field is typed by hand in a shared sheet. An apostrophe
+    //           in an image URL used to break out of a style attribute, and a
+    //           stray "<" swallowed the rest of the sidebar.
+    // safeUrl() Website / PermitDocuments / GraphURL become live hrefs and
+    //           iframe sources; only http(s) and relative URLs are allowed.
+    // ─────────────────────────────────────────────────────────────────────
+    const num = v => parseFloat(String(v == null ? '' : v).replace(',', '.'));
+    const ESC = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
+    const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ESC[c]);
+    const safeUrl = v => {
+        const u = String(v == null ? '' : v).trim();
+        return /^(https?:\/\/|\/|\.\/|#)/i.test(u) ? u : '';
+    };
+
     const FACILITIES_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?output=csv';
     const PROJECTS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR8NceaLhnLslv2TKIReqCnB1q0UON_yEef-vs7zfKxnQc8LaxiNfSKTTp8528mKG882T3XlxF59437/pub?output=csv';
     
@@ -805,7 +875,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!url.includes('.html')) return '';
         let file = url.split('/').pop().split('?')[0].split('#')[0];
         file = GRAPH_ALIASES[file] || file;
-        return KNOWN_GRAPHS.has(file) ? GRAPH_BASE + file : url;
+        if (KNOWN_GRAPHS.has(file)) return GRAPH_BASE + file;
+        // Unknown file: pass a real external URL through, drop anything else
+        // (a javascript: URL containing ".html" used to reach the iframe).
+        return safeUrl(url);
     }
 
     const WAYBACK_YEARS = [
@@ -828,6 +901,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentImages = [];
     let historicalLayer = null;
     let miniMap = null;
+    let suppressHash = false;
+    const statusStrip = document.getElementById('status-strip');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const map = L.map('map', { zoomControl: false, center: [59.91, 10.75], zoom: 10 });
 
@@ -837,6 +913,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: '© <a href="https://www.esri.com">Esri</a>', maxZoom: 19
     });
+    // Its own pane, above the basemap: re-adding a basemap used to paint over
+    // the historical imagery while the timeline still said it was enabled.
+    map.createPane('historical');
+    map.getPane('historical').style.zIndex = 250;
+
     const dtmLayer = L.tileLayer.wms('https://wms.geonorge.no/skwms1/wms.hoyde-dom1_33?', {
         layers: 'DOM1_33_Terrengskygge', format: 'image/png', transparent: true,
         attribution: '© <a href="https://geonorge.no">Geonorge</a>', opacity: 0.5
@@ -866,14 +947,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const timelineYear = document.getElementById('timeline-year');
 
     function updateHistoricalLayer(index) {
-        if (historicalLayer) map.removeLayer(historicalLayer);
         const wb = WAYBACK_YEARS[index];
-        historicalLayer = L.tileLayer(
-            `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${wb.release}/{z}/{y}/{x}`,
-            { attribution: `© Esri Wayback ${wb.year}`, maxZoom: 19 }
-        );
-        historicalLayer.addTo(map);
-        timelineYear.textContent = wb.year;
+        const url = `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${wb.release}/{z}/{y}/{x}`;
+        // setUrl on one layer, rather than destroy-and-rebuild: dragging the
+        // slider used to instantiate all nine layers and request a full screen
+        // of tiles for every year scrubbed past.
+        if (historicalLayer) historicalLayer.setUrl(url);
+        else historicalLayer = L.tileLayer(url, { maxZoom: 19, pane: 'historical' }).addTo(map);
+        document.getElementById('timeline-year').textContent = wb.year;
+        timelineSlider.setAttribute('aria-valuetext', wb.year);
     }
 
     timelineEnabled.addEventListener('change', e => {
@@ -888,7 +970,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (timelineEnabled.checked) updateHistoricalLayer(parseInt(e.target.value));
     });
 
-    window.toggleFilter = () => document.getElementById('filter-panel').classList.toggle('open');
+    window.toggleFilter = () => {
+        const open = document.getElementById('filter-panel').classList.toggle('open');
+        document.querySelector('.filter-toggle').setAttribute('aria-expanded', String(open));
+    };
 
     // Slideshow
     window.slideshowPrev = () => { if (currentImages.length > 1) { currentSlideIndex = (currentSlideIndex - 1 + currentImages.length) % currentImages.length; updateSlideshow(); } };
@@ -945,13 +1030,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function getMarkerInfo(site) {
         const sr = (site["source /reception"] || site["source/reception"] || "").toLowerCase().trim();
         const type = (site.Type || "").toLowerCase();
-        let category = 'facility', direction = 'receiving';
-        
-        if (sr) {
-            category = 'project';
+        // Category comes from which sheet the row was loaded from, not from
+        // whether one optional cell happens to be filled in. A construction
+        // project with a blank source/reception cell used to be drawn as a
+        // green receiving facility.
+        let category = site.__cat || 'facility', direction = 'receiving';
+
+        if (category === 'project') {
             if (sr.includes('source') && sr.includes('reception')) direction = 'mixed';
             else if (sr.includes('source')) direction = 'producing';
-            else direction = 'receiving';
+            else if (sr.includes('reception')) direction = 'receiving';
+            else direction = 'mixed';   // project with no stated direction
         } else {
             if (type.includes('pukkverk')) direction = 'producing';
             else if (type.includes('deponi') || type.includes('massemottak')) direction = 'receiving';
@@ -965,9 +1054,8 @@ document.addEventListener('DOMContentLoaded', function() {
         allMarkers = [];
         
         data.forEach(site => {
-            const lat = parseFloat((site.Latitude || "").toString().replace(",", "."));
-            const lon = parseFloat((site.Longitude || "").toString().replace(",", "."));
-            if (isNaN(lat) || isNaN(lon)) return;
+            const lat = num(site.Latitude), lon = num(site.Longitude);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
 
             const info = getMarkerInfo(site);
             const svg = info.category === 'project' ? createProjectMarker(info.direction) : createFacilityMarker(info.direction);
@@ -987,36 +1075,36 @@ document.addEventListener('DOMContentLoaded', function() {
             m.addTo(map);
             allMarkers.push(m);
             
-            m.bindPopup(`
-                <span class="popup-title">${site.Name}</span>
-                <span class="popup-type">${site.Type || ''}</span>
-                <span class="popup-loc">${site.Municipality || ''}</span>
-                <a class="popup-link" id="btn-${site.UID || site.fid}">VIS DETALJER →</a>
-            `, { minWidth: 160 });
-
-            m.on('popupopen', () => {
-                const btn = document.getElementById(`btn-${site.UID || site.fid}`);
-                if (btn) btn.onclick = e => {
-                    e.preventDefault();
-                    currentSite = site;
-                    openSidebar(site);
-                    map.closePopup();
-                    smartZoom(lat, lon);
-                };
+            // Built as a node, not an id string: UIDs come from the sheet and
+            // are neither guaranteed unique nor guaranteed free of quotes.
+            const pop = document.createElement('div');
+            pop.innerHTML = `
+                <span class="popup-title">${esc(site.Name || t('untitled'))}</span>
+                <span class="popup-type">${esc(site.Type || '')}</span>
+                <span class="popup-loc">${esc(site.Municipality || '')}</span>
+                <a class="popup-link" href="#site=${encodeURIComponent(site.UID || site.fid || '')}">${t('details')}</a>`;
+            pop.querySelector('.popup-link').addEventListener('click', e => {
+                e.preventDefault();
+                currentSite = site;
+                openSidebar(site);
+                map.closePopup();
+                smartZoom(lat, lon);
             });
+            m.bindPopup(pop, { minWidth: 160 });
         });
         applyFilters();
     }
 
     function smartZoom(lat, lon) {
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
         const sb = document.getElementById('sidebar');
         if (sb.classList.contains('active') && window.innerWidth > 768) {
             const offset = window.innerWidth * 0.15;
             const pt = map.project([lat, lon], 17);
             pt.x -= offset;
-            map.flyTo(map.unproject(pt, 17), 17, { duration: 1 });
+            if (reduceMotion) map.setView(map.unproject(pt, 17), 17); else map.flyTo(map.unproject(pt, 17), 17, { duration: 1 });
         } else {
-            map.flyTo([lat, lon], 17, { duration: 1 });
+            if (reduceMotion) map.setView([lat, lon], 17); else map.flyTo([lat, lon], 17, { duration: 1 });
         }
     }
 
@@ -1045,7 +1133,27 @@ document.addEventListener('DOMContentLoaded', function() {
         start: { en: "Start", no: "Start" },
         ref: { en: "Reference", no: "Referanse" },
         auth: { en: "Authority", no: "Myndighet" },
-        link: { en: "LINKS", no: "LENKER" }
+        link: { en: "LINKS", no: "LENKER" },
+        details: { en: "VIEW DETAILS →", no: "VIS DETALJER →" },
+        website: { en: "WEBSITE", no: "NETTSTED" },
+        permitdoc: { en: "PERMIT DOC", no: "TILLATELSE" },
+        source: { en: "SOURCE", no: "KILDE" },
+        untitled: { en: "(unnamed site)", no: "(uten navn)" },
+        nodata: { en: "no data on file", no: "ingen data registrert" },
+        nograph: { en: "NO GRAPH AVAILABLE", no: "INGEN GRAF TILGJENGELIG" },
+        noimg: { en: "No images or coordinates on file", no: "Ingen bilder eller koordinater registrert" },
+        aerial: { en: "Aerial view — no photograph on file", no: "Flyfoto — ingen bilder på arkiv" },
+        st_active: { en: "ACTIVE", no: "AKTIV" },
+        st_closed: { en: "CLOSED", no: "LUKKET" },
+        st_unknown: { en: "STATUS UNKNOWN", no: "UKJENT STATUS" },
+        loading: { en: "LOADING DATA…", no: "LASTER DATA…" },
+        sites: { en: "SITES", no: "STEDER" },
+        shown: { en: "SHOWN", no: "VIST" },
+        of: { en: "OF", no: "AV" },
+        loadfail: { en: "COULD NOT LOAD DATA — TRY RELOADING", no: "KUNNE IKKE LASTE DATA — LAST INN PÅ NYTT" },
+        notfound: { en: "SITE NOT FOUND — IT MAY HAVE BEEN RENAMED", no: "STEDET BLE IKKE FUNNET — DET KAN VÆRE OMDØPT" },
+        matches: { en: "MATCHES", no: "TREFF" },
+        hidden: { en: "hidden by filter", no: "skjult av filter" }
     };
     const t = k => i18n[k] ? i18n[k][currentLang] : k;
 
@@ -1053,19 +1161,27 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('sidebar').classList.add('active');
         const container = document.getElementById('sb-dynamic-content');
         
-        const status = (site.Status || "").toLowerCase().includes("active") || (site.Status || "").toLowerCase().includes("aktiv");
-        const statusText = status ? (currentLang === 'en' ? "ACTIVE" : "AKTIV") : (currentLang === 'en' ? "CLOSED" : "LUKKET");
-        const desc = currentLang === 'no' ? (site.Description_NO || site.Description) : site.Description;
+        // Three states, not two. "inactive" contains "active" and "inaktiv"
+        // contains "aktiv", so a substring test used to badge closed sites as
+        // ACTIVE; and a blank cell used to assert CLOSED, which on a map about
+        // which landfills are still receiving masses is a published claim.
+        const rawStatus = (site.Status || "").toLowerCase().trim();
+        let statusKey = 'unknown';
+        if (/\b(inactive|inaktiv|closed|lukket|nedlagt|historical|historisk|avsluttet)/.test(rawStatus)) statusKey = 'closed';
+        else if (/\b(active|aktiv|operating|drift)/.test(rawStatus)) statusKey = 'active';
+        else if (rawStatus) statusKey = 'closed';
+        const statusText = t('st_' + statusKey);
+        const desc = currentLang === 'no' ? (site.Description_NO || site.Description) : (site.Description || site.Description_NO);
 
         currentImages = site.Images ? site.Images.split(',').map(u => u.trim()).filter(u => u) : [];
         currentSlideIndex = 0;
 
-        const lat = parseFloat(site.Latitude), lon = parseFloat(site.Longitude);
-        const hasCoords = isFinite(lat) && isFinite(lon);
+        const lat = num(site.Latitude), lon = num(site.Longitude);
+        const hasCoords = Number.isFinite(lat) && Number.isFinite(lon);
         
         let slideshowHtml = '';
         if (currentImages.length > 0) {
-            const slides = currentImages.map((u, i) => `<div class="slideshow-slide ${i===0?'active':''}" style="background-image:url('${u}')"></div>`).join('');
+            const slides = currentImages.map((u, i) => `<div class="slideshow-slide ${i===0?'active':''}" style="background-image:url('${esc(safeUrl(u))}')"></div>`).join('');
             slideshowHtml = `<div class="slideshow-container">${slides}${currentImages.length > 1 ? `
                 <div class="slideshow-nav slideshow-prev" onclick="slideshowPrev()">←</div>
                 <div class="slideshow-nav slideshow-next" onclick="slideshowNext()">→</div>
@@ -1075,32 +1191,41 @@ document.addEventListener('DOMContentLoaded', function() {
             // Same Esri imagery the map already uses, no extra dependency.
             slideshowHtml = `<div class="slideshow-container" id="sb-minimap"></div>`;
         } else {
-            slideshowHtml = '<div class="no-images">No images and no coordinates on file</div>';
+            slideshowHtml = `<div class="no-images">${t('noimg')}</div>`;
         }
 
-        let graphHtml = `<div id="graph-container" style="display:flex;align-items:center;justify-content:center;color:#999;font-size:8px;">NO GRAPH AVAILABLE</div>`;
+        let graphHtml = `<div id="graph-container" style="display:flex;align-items:center;justify-content:center;color:#595959;font-size:9px;">${t('nograph')}</div>`;
         const graphSrc = resolveGraphURL(site.GraphURL);
-        if (graphSrc) graphHtml = `<div id="graph-container"><iframe src="${graphSrc}"></iframe></div>`;
+        if (graphSrc) graphHtml = `<div id="graph-container"><iframe src="${esc(graphSrc)}" title="${esc(site.Name || '')} ownership network" sandbox="allow-scripts" referrerpolicy="no-referrer" loading="lazy"></iframe></div>`;
 
         let linksHtml = '';
-        if (site.Website) linksHtml += `<div class="link-row"><a href="${site.Website}" target="_blank">↗ WEBSITE</a></div>`;
-        if (site.PermitDocuments) linksHtml += `<div class="link-row"><a href="${site.PermitDocuments}" target="_blank">↗ PERMIT DOC</a></div>`;
+        if (safeUrl(site.Website)) linksHtml += `<div class="link-row"><a href="${esc(safeUrl(site.Website))}" target="_blank" rel="noopener noreferrer">↗ ${t('website')}</a></div>`;
+        if (safeUrl(site.PermitDocuments)) linksHtml += `<div class="link-row"><a href="${esc(safeUrl(site.PermitDocuments))}" target="_blank" rel="noopener noreferrer">↗ ${t('permitdoc')}</a></div>`;
+        if (safeUrl(site.Sources)) linksHtml += `<div class="link-row"><a href="${esc(safeUrl(site.Sources))}" target="_blank" rel="noopener noreferrer">↗ ${t('source')}</a></div>`;
 
-        const row = (k, v) => v ? `<div class="column-set"><div class="col-0">${t(k)}</div><div class="col-1">${v}</div></div>` : '';
+        const row = (k, v) => {
+            const val = String(v == null ? '' : v).trim();
+            return val ? `<div class="column-set"><div class="col-0">${t(k)}</div><div class="col-1">${esc(val)}</div></div>` : '';
+        };
+        // A heading with nothing under it reads as "nothing to report" when it
+        // actually means "we have no data" - an important difference here.
+        const section = (k, body) => `<b>${t(k)}</b>` + (body || `<div class="column-set no-data">${t('nodata')}</div>`);
+        const coords = hasCoords ? lat.toFixed(5) + ', ' + lon.toFixed(5) : '';
+        const place = [site.Municipality, site.County].map(x => String(x || '').trim()).filter(Boolean).join(', ');
 
         container.innerHTML = `${slideshowHtml}<div class="sb-content">
-            <span class="status-badge">${statusText}</span>
-            <h1>${site.Name}</h1>
-            <span class="sb-uid">${site.UID || site.fid || ''}</span>
-            <div class="sb-location">${site.Municipality || ''}, ${site.County || ''}<br>${site.Type || ''}</div>
-            <div class="sb-desc">${desc || ''}</div>
-            <b>${t('prop')}</b>${row('comp', site.Company)}${row('op', site.Operator)}${row('org', site.OrgNr)}${row('par', site.ParentCompany)}
-            <div class="graph-head"><b>${t('net')}</b>${graphSrc ? `<a class="graph-open" href="${graphSrc}" target="_blank" rel="noopener">${t('openGraph')}</a>` : ''}</div>${graphHtml}
-            <b>${t('loc')}</b>${row('coord', site.Latitude + ', ' + site.Longitude)}${row('mun', site.Municipality)}${row('wat', site.WaterRecipient)}
-            <b>${t('cap')}</b>${row('capyr', site.AnnualCapacity)}${row('tot', site.TotalCapacity)}${row('mat', site.MassesAccepted)}${row('prod', site.MassesProduced)}
-            <b>${t('env')}</b>${row('code', site.WasteCodes)}${row('cont', site.Contaminants || site.Contamination)}${row('risk', site.EnvironmentalRisk)}
-            <b>${t('perm')}</b>${row('ref', site.PermitRef)}${row('start', site.StartYear)}${row('auth', site.PermitAuthority || site.Authority)}
-            <b>${t('link')}</b>${linksHtml}
+            <span class="status-badge${statusKey === 'unknown' ? ' unknown' : ''}">${statusText}</span>
+            <h1 id="sb-title">${esc(site.Name || t('untitled'))}</h1>
+            <span class="sb-uid">${esc(site.UID || site.fid || '')}</span>
+            <div class="sb-location">${esc(place)}${place && site.Type ? '<br>' : ''}${esc(site.Type || '')}</div>
+            <div class="sb-desc">${esc(desc || '')}</div>
+            ${section('prop', row('comp', site.Company) + row('op', site.Operator) + row('org', site.OrgNr) + row('par', site.ParentCompany))}
+            <div class="graph-head"><b>${t('net')}</b>${graphSrc ? `<a class="graph-open" href="${esc(graphSrc)}" target="_blank" rel="noopener noreferrer">${t('openGraph')}</a>` : ''}</div>${graphHtml}
+            ${section('loc', row('coord', coords) + row('mun', site.Municipality) + row('wat', site.WaterRecipient))}
+            ${section('cap', row('capyr', site.AnnualCapacity) + row('tot', site.TotalCapacity) + row('mat', site.MassesAccepted) + row('prod', site.MassesProduced))}
+            ${section('env', row('code', site.WasteCodes) + row('cont', site.Contaminants || site.Contamination) + row('risk', site.EnvironmentalRisk))}
+            ${section('perm', row('ref', site.PermitRef) + row('start', site.StartYear) + row('auth', site.PermitAuthority || site.Authority))}
+            ${section('link', linksHtml)}
         </div>`;
         
         if (miniMap) { miniMap.remove(); miniMap = null; }
@@ -1116,28 +1241,55 @@ document.addEventListener('DOMContentLoaded', function() {
             }).addTo(miniMap);
             const note = document.createElement('div');
             note.className = 'minimap-note';
-            note.textContent = currentLang === 'no' ? 'Flyfoto \u2014 ingen bilder p\u00e5 arkiv' : 'Aerial view \u2014 no photograph on file';
+            note.textContent = t('aerial');
             document.getElementById('sb-minimap').appendChild(note);
             setTimeout(() => miniMap && miniMap.invalidateSize(), 60);
         }
 
-        if (site.UID || site.fid) window.location.hash = 'site=' + (site.UID || site.fid);
+        document.title = (site.Name ? site.Name + ' — ' : '') + 'Dirty Business Map';
+        // Writing the hash fires hashchange, which used to re-enter openSidebar
+        // and rebuild the whole panel - including tearing down and reloading
+        // the graph iframe, which is why the network panel looked slow.
+        const uid = site.UID || site.fid;
+        if (uid) { suppressHash = true; window.location.hash = 'site=' + encodeURIComponent(uid); }
     };
 
     window.closeSidebar = function() {
         if (miniMap) { miniMap.remove(); miniMap = null; }
         document.getElementById('sidebar').classList.remove('active');
+        // Emptying the panel detaches the graph iframe. Left attached it keeps
+        // running its animation loop behind the closed sidebar.
+        document.getElementById('sb-dynamic-content').innerHTML = '';
         currentSite = null;
+        document.title = 'Dirty Business Map';
+        suppressHash = true;
         window.location.hash = '';
         map.invalidateSize();
     };
 
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        const panel = document.getElementById('filter-panel');
+        if (panel && panel.classList.contains('open')) { toggleFilter(); return; }
+        if (document.getElementById('sidebar').classList.contains('active')) closeSidebar();
+    });
+
     window.shareLink = function() {
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            const n = document.getElementById('share-notification');
+        const n = document.getElementById('share-notification');
+        const show = txt => {
+            n.textContent = txt;
             n.classList.add('show');
-            setTimeout(() => n.classList.remove('show'), 2000);
-        });
+            setTimeout(() => n.classList.remove('show'), 3000);
+        };
+        // In a cross-origin iframe (the map is embedded in dirtybusiness.no)
+        // writeText rejects unless the parent allows clipboard-write, and this
+        // used to fail silently.
+        const url = window.location.href;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(() => show('LINK COPIED!'), () => show(url));
+        } else {
+            show(url);
+        }
     };
 
     // FILTERS with subcategories
@@ -1154,8 +1306,38 @@ document.addEventListener('DOMContentLoaded', function() {
             if (m.markerCategory === 'facility' && showFacilities && facilitySubs.includes(m.markerDirection)) show = true;
             
             m.setOpacity(show ? 1 : 0);
-            if (m.getElement()) m.getElement().style.pointerEvents = show ? 'auto' : 'none';
+            m.__visible = show;
+            const el = m.getElement();
+            if (el) {
+                el.style.pointerEvents = show ? 'auto' : 'none';
+                el.tabIndex = show ? 0 : -1;              // hidden markers left
+                el.setAttribute('aria-hidden', String(!show));  // in the tab order
+            }
+            if (!show && m.isPopupOpen && m.isPopupOpen()) m.closePopup();
         });
+
+        // Keep the parent checkbox honest about its children.
+        const syncParent = (parentId, sel) => {
+            const subs = Array.from(document.querySelectorAll(sel));
+            const on = subs.filter(c => c.checked).length;
+            const box = document.getElementById(parentId);
+            box.checked = on > 0;
+            box.indeterminate = on > 0 && on < subs.length;
+        };
+        syncParent('filter-projects', '.filter-project-sub');
+        syncParent('filter-facilities', '.filter-facility-sub');
+        updateStatus();
+    }
+
+    // One strip carries loading, failure, the total, and how much a filter hides.
+    function updateStatus(message) {
+        if (!statusStrip) return;
+        if (message) { statusStrip.textContent = message; return; }
+        const total = allMarkers.length;
+        const shown = allMarkers.filter(m => m.__visible !== false).length;
+        statusStrip.textContent = shown === total
+            ? `${total} ${t('sites')}`
+            : `${shown} ${t('of')} ${total} ${t('shown')}`;
     }
 
     // Main category toggles all subcategories
@@ -1174,10 +1356,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnNo = document.getElementById('btn-no');
     function setLanguage(lang) {
         currentLang = lang;
+        document.documentElement.lang = lang;
         btnEn.classList.toggle('active', lang === 'en');
         btnNo.classList.toggle('active', lang === 'no');
+        btnEn.setAttribute('aria-pressed', String(lang === 'en'));
+        btnNo.setAttribute('aria-pressed', String(lang === 'no'));
+        try { localStorage.setItem('db_lang', lang); } catch (err) {}
         document.querySelectorAll('[data-en]').forEach(el => el.innerText = el.getAttribute(`data-${lang}`));
         if (currentSite) openSidebar(currentSite);
+        renderMarkers(allSites);   // popups carry translated text
+        updateStatus();
     }
     btnEn.onclick = () => setLanguage('en');
     btnNo.onclick = () => setLanguage('no');
@@ -1185,50 +1373,138 @@ document.addEventListener('DOMContentLoaded', function() {
     // Search
     const sInput = document.getElementById('search-input');
     const sResults = document.getElementById('search-results');
+    const searchFields = ['Name', 'Municipality', 'County', 'Company', 'Operator', 'Type', 'UID'];
+    // Fold accents so a non-Norwegian keyboard finds Åsak by typing "Asak".
+    const fold = v => String(v == null ? '' : v).toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/å/g, 'a');
+
     sInput.addEventListener('input', () => {
-        const val = sInput.value.toLowerCase();
+        const val = fold(sInput.value);
         sResults.innerHTML = '';
-        if (val.length < 2) { sResults.style.display = 'none'; return; }
-        const matches = allSites.filter(s => (s.Name || "").toLowerCase().includes(val));
-        if (matches.length) {
-            sResults.style.display = 'block';
-            matches.slice(0, 8).forEach(site => {
-                const div = document.createElement('div');
-                div.className = 'search-item';
-                div.innerText = site.Name;
-                div.onclick = () => {
-                    currentSite = site;
-                    smartZoom(parseFloat((site.Latitude||"").toString().replace(",",".")), parseFloat((site.Longitude||"").toString().replace(",",".")));
-                    openSidebar(site);
-                    sResults.style.display = 'none';
-                    sInput.value = '';
-                };
-                sResults.appendChild(div);
-            });
-        } else sResults.style.display = 'none';
+        if (val.length < 2) { sResults.style.display = 'none'; sInput.setAttribute('aria-expanded', 'false'); return; }
+        const matches = allSites.filter(site => searchFields.some(f => fold(site[f]).includes(val)));
+        if (!matches.length) { sResults.style.display = 'none'; sInput.setAttribute('aria-expanded', 'false'); return; }
+
+        sResults.style.display = 'block';
+        sInput.setAttribute('aria-expanded', 'true');
+        matches.slice(0, 8).forEach(site => {
+            const marker = allMarkers.find(m => m.siteData === site);
+            const hiddenNow = marker && marker.__visible === false;
+            const div = document.createElement('div');
+            div.className = 'search-item';
+            div.setAttribute('role', 'option');
+            div.tabIndex = 0;
+            const name = document.createElement('div');
+            name.className = 'search-item-name';
+            name.textContent = site.Name || t('untitled');
+            const meta = document.createElement('div');
+            meta.className = 'search-item-meta';
+            meta.textContent = [site.Municipality, site.County].filter(Boolean).join(' · ')
+                + (hiddenNow ? '  — ' + t('hidden') : '');
+            div.appendChild(name); div.appendChild(meta);
+            const choose = () => {
+                currentSite = site;
+                openSidebar(site);                    // open first: a site with
+                smartZoom(num(site.Latitude), num(site.Longitude));  // no coords
+                sResults.style.display = 'none';      // used to abort the whole
+                sInput.setAttribute('aria-expanded', 'false');
+                sInput.value = '';                    // handler here
+            };
+            div.addEventListener('click', choose);
+            div.addEventListener('keydown', e => { if (e.key === 'Enter') choose(); });
+            sResults.appendChild(div);
+        });
+        if (matches.length > 8) {
+            const more = document.createElement('div');
+            more.className = 'search-more';
+            more.textContent = `8 ${t('of')} ${matches.length} ${t('matches')}`;
+            sResults.appendChild(more);
+        }
+    });
+
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.search-box')) {
+            sResults.style.display = 'none';
+            sInput.setAttribute('aria-expanded', 'false');
+        }
     });
 
     // Load data
-    Promise.all([
-        new Promise((res, rej) => Papa.parse(FACILITIES_CSV, { download: true, header: true, skipEmptyLines: true, complete: r => res(r.data), error: rej })),
-        new Promise((res, rej) => Papa.parse(PROJECTS_CSV, { download: true, header: true, skipEmptyLines: true, complete: r => res(r.data), error: rej }))
-    ]).then(([facilities, projects]) => {
+    const parseCsv = url => new Promise((res, rej) => Papa.parse(url, {
+        download: true, header: true, skipEmptyLines: true,
+        transformHeader: h => h.trim(),   // a stray space in a header used to
+        complete: r => res(r),            // orphan a whole column
+        error: rej
+    }));
+
+    updateStatus(t('loading'));
+
+    Promise.all([parseCsv(FACILITIES_CSV), parseCsv(PROJECTS_CSV)])
+      .then(([fRes, pRes]) => {
+        [fRes, pRes].forEach(r => {
+            if (r.errors && r.errors.length) console.warn('CSV parse issues:', r.errors.slice(0, 5));
+        });
+        // Tag each row with the sheet it came from, so category never depends
+        // on whether one optional cell happens to be filled in.
+        const facilities = fRes.data.map(r => Object.assign(r, { __cat: 'facility' }));
+        const projects   = pRes.data.map(r => Object.assign(r, { __cat: 'project' }));
         allSites = [...facilities, ...projects];
+
+        // A revoked "publish to web" returns an HTML error page with status
+        // 200, which parses into rows that have no coordinates at all.
+        if (!allSites.some(sIt => Number.isFinite(num(sIt.Latitude)))) {
+            updateStatus(t('loadfail'));
+            return;
+        }
+
+        const seen = new Set();
+        allSites.forEach(sIt => {
+            const id = sIt.UID || sIt.fid;
+            if (id && seen.has(id)) console.warn('Duplicate UID in sheet:', id);
+            if (id) seen.add(id);
+        });
+
         renderMarkers(allSites);
+
         const hash = window.location.hash;
         if (hash.startsWith('#site=')) {
-            const site = allSites.find(s => (s.UID || s.fid) === hash.replace('#site=', ''));
-            if (site) setTimeout(() => { openSidebar(site); smartZoom(parseFloat(site.Latitude), parseFloat(site.Longitude)); }, 500);
+            openFromHash(hash);
+        } else if (allMarkers.length) {
+            // Fit to the data. At zoom 10 over Oslo a reader in Telemark or
+            // Innlandet had no way to know there was anything near them.
+            map.fitBounds(L.featureGroup(allMarkers).getBounds(), { padding: [50, 50], maxZoom: 11 });
         }
-    });
-    
+      })
+      .catch(err => {
+        console.error('Data load failed:', err);
+        updateStatus(t('loadfail'));
+      });
+
+    function openFromHash(hash) {
+        let id;
+        try { id = decodeURIComponent(hash.replace('#site=', '')); }
+        catch (err) { id = hash.replace('#site=', ''); }
+        if (!id) return;
+        const site = allSites.find(sIt => (sIt.UID || sIt.fid) === id);
+        if (!site) { updateStatus(t('notfound')); return; }
+        currentSite = site;               // was never set here, so a language
+        openSidebar(site);                // switch left the panel in English
+        smartZoom(num(site.Latitude), num(site.Longitude));
+    }
+
     window.addEventListener('hashchange', () => {
+        if (suppressHash) { suppressHash = false; return; }
         const hash = window.location.hash;
-        if (hash.startsWith('#site=')) {
-            const site = allSites.find(s => (s.UID || s.fid) === hash.replace('#site=', ''));
-            if (site) { openSidebar(site); smartZoom(parseFloat(site.Latitude), parseFloat(site.Longitude)); }
-        }
+        if (hash.startsWith('#site=')) openFromHash(hash);
+        else if (document.getElementById('sidebar').classList.contains('active')) closeSidebar();
     });
+
+    try {
+        const savedLang = localStorage.getItem('db_lang');
+        if (savedLang === 'no' || savedLang === 'en') setLanguage(savedLang);
+    } catch (err) {}
+    
 });
 </script>
 </body>
