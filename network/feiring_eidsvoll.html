@@ -19,8 +19,6 @@
     </style>
     <style>
         /* Identical frame for every graph: legend on top, graph fills the rest. */
-        #feiring-dal-network { width: 100%; height: calc(100vh - 45px); display: block; position: relative; margin-top: 5px; }
-        
         .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
         .dimmed { opacity: 0.1 !important; }
         .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
@@ -57,27 +55,27 @@
     <div class="legend-item"><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="#39FF14" stroke-width="1.5"/><path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/></svg> Facility</div>
 </div>
 
-<div id="feiring-dal-network"></div>
+<div id="network-container"></div>
 
 <script>
 (function(){
-    var containerID = "feiring-dal-network"; 
+    var containerID = "network-container"; 
     var NODES = [
-        {id:"Ollendorff Holding AS", t:"p"},
-        {id:"Feiring AS", t:"p", l:"(Group)"},
-        {id:"Feiring Bruk AS", t:"op"},
-        {id:"Feiring Bruk AS avd Dal Pukkverk", t:"pukk", active:true},
-        {id:"Grefsrud AS", t:"inactive", l:"(INACTIVE)"},
-        {id:"Bjønndalen Bruk AS", t:"inactive", l:"(INACTIVE)"},
-        {id:"Hjera Pukkverk AS", t:"inactive", l:"(INACTIVE)"},
-        {id:"Hadeland Pukkverk AS", t:"inactive", l:"(INACTIVE)"},
-        {id:"Feiring Vestfold AS", t:"pukk"},
-        {id:"Feiring Asfalt AS", t:"s"},
-        {id:"Lierfoss Transportsentral AS", t:"s"},
-        {id:"Feiring Miljø AS", t:"mottak"},
-        {id:"Tentex AS", t:"s"},
-        {id:"Feiring Eiendomsinvest AS", t:"s"},
-        {id:"Lundhs X Feiring Aggregates AS", t:"s"}
+        {id:"Ollendorff Holding AS", type:"p"},
+        {id:"Feiring AS", type:"p", l:"(Group)"},
+        {id:"Feiring Bruk AS", type:"div_ind"},
+        {id:"Feiring Bruk AS avd Dal Pukkverk", type:"facility", active:true},
+        {id:"Grefsrud AS", type:"s", l:"(INACTIVE)"},
+        {id:"Bjønndalen Bruk AS", type:"s", l:"(INACTIVE)"},
+        {id:"Hjera Pukkverk AS", type:"s", l:"(INACTIVE)"},
+        {id:"Hadeland Pukkverk AS", type:"s", l:"(INACTIVE)"},
+        {id:"Feiring Vestfold AS", type:"facility"},
+        {id:"Feiring Asfalt AS", type:"s"},
+        {id:"Lierfoss Transportsentral AS", type:"s"},
+        {id:"Feiring Miljø AS", type:"facility"},
+        {id:"Tentex AS", type:"s"},
+        {id:"Feiring Eiendomsinvest AS", type:"s"},
+        {id:"Lundhs X Feiring Aggregates AS", type:"s"}
     ];
     
     var LINKS = [
@@ -131,7 +129,10 @@
 
     function dbShape(node) {
         var ns = "http://www.w3.org/2000/svg";
-        var type = (node && node.type) || "s";
+        // Read whichever key the data uses. Files written at different times
+        // stored the type under cargo_type: or t:, and reading only .type made
+        // every node in them fall through to the default shape.
+        var type = (node && (node.type || node.cargo_type || node.t)) || "s";
         var g = document.createElementNS(ns, "g");
         var r = 3.5, p = 2;
 

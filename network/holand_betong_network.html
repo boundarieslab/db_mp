@@ -65,18 +65,18 @@
 
     // Hele Mr. Pukk nettverket
     var NODES = [
-        {id:"Heffalompen Holding AS", type:"parent", sub:"parent"},
-        {id:"Mr. Pukk AS", type:"parent", sub:"operator"},
-        {id:"Mr. Pukk Høland AS", type:"facility", sub:"mixed", active:true}, // Nå riktig satt til Mixed
-        {id:"Mr. Pukk Øst AS", type:"facility", sub:"producing"},
-        {id:"Torperåsen AS", type:"facility", sub:"producing"},
-        {id:"Mr. Pukk Furuset AS", type:"facility", sub:"receiving"},
-        {id:"Mr. Pukk Gjenvinning AS", type:"parent", sub:"dept"},
-        {id:"Mr. Pukk Eiendom AS", type:"parent", sub:"dept"},
-        {id:"Bokerøya AS", type:"parent", sub:"dept"},
-        {id:"Ramnes Næringseiendom AS", type:"parent", sub:"dept"},
-        {id:"Mysen Asfalt AS", type:"parent", sub:"dept"},
-        {id:"Maur Tipp og Slep AS", type:"parent", sub:"dept", l:"(Transport)"}
+        {id:"Heffalompen Holding AS", type:"p"},
+        {id:"Mr. Pukk AS", type:"p"},
+        {id:"Mr. Pukk Høland AS", type:"facility", active:true}, // Nå riktig satt til Mixed
+        {id:"Mr. Pukk Øst AS", type:"facility"},
+        {id:"Torperåsen AS", type:"facility"},
+        {id:"Mr. Pukk Furuset AS", type:"receiving"},
+        {id:"Mr. Pukk Gjenvinning AS", type:"s"},
+        {id:"Mr. Pukk Eiendom AS", type:"s"},
+        {id:"Bokerøya AS", type:"s"},
+        {id:"Ramnes Næringseiendom AS", type:"s"},
+        {id:"Mysen Asfalt AS", type:"s"},
+        {id:"Maur Tipp og Slep AS", type:"s", l:"(Transport)"}
     ];
     
     var LINKS = [
@@ -125,7 +125,10 @@
 
     function dbShape(node) {
         var ns = "http://www.w3.org/2000/svg";
-        var type = (node && node.type) || "s";
+        // Read whichever key the data uses. Files written at different times
+        // stored the type under cargo_type: or t:, and reading only .type made
+        // every node in them fall through to the default shape.
+        var type = (node && (node.type || node.cargo_type || node.t)) || "s";
         var g = document.createElementNS(ns, "g");
         var r = 3.5, p = 2;
 

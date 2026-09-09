@@ -123,7 +123,10 @@
 
     function dbShape(node) {
         var ns = "http://www.w3.org/2000/svg";
-        var type = (node && node.type) || "s";
+        // Read whichever key the data uses. Files written at different times
+        // stored the type under cargo_type: or t:, and reading only .type made
+        // every node in them fall through to the default shape.
+        var type = (node && (node.type || node.cargo_type || node.t)) || "s";
         var g = document.createElementNS(ns, "g");
         var r = 3.5, p = 2;
 
