@@ -36,6 +36,8 @@ application. Only Leaflet 1.9.4 and PapaParse 5.4.1 are loaded from a CDN.
 | `data/dod/<slug>/{z}/{x}/{y}.png` | Pre-rendered DoD tiles, z11-16. Only tiles containing change exist, so a 404 inside the layer bounds is the normal case. |
 | `data/dod_<slug>.geojson` | The same change as polygons, loaded invisibly as click targets for the area / volume / mean-dh popup. |
 | `tools/make_dod_tiles.py` | Builds both of the above from one pipeline run. |
+| `tools/smoke_test.js` | Headless checks: zoom limits, the sidebar, the iframe embed. |
+| `tools/fixtures/` | Stub CSVs and an embed page, so the test runs offline. |
 
 ## Data sources
 
@@ -107,6 +109,17 @@ file, add its name to `KNOWN_GRAPHS`.**
    to `KNOWN_GRAPHS` in `index.html`, and put the full
    `boundarieslab.github.io/db_mp/network/...` URL in `GraphURL`.
 5. Reload the map. No deploy step for data-only changes.
+
+## Testing
+
+    python3 -m http.server 8901 --bind 127.0.0.1     # from the repo root
+    node tools/smoke_test.js
+
+Sheet CSVs and every tile server are stubbed, so the result never depends on
+Kartverket or Esri being up. It checks the things that have actually broken:
+the map's zoom limits, the sidebar's aerial view and button layout, and whether
+the basemap fills the frame when the page is embedded in an iframe the way
+dirtybusiness.no embeds it.
 
 ## Known gaps
 

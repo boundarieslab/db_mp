@@ -935,7 +935,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSlideIndex = 0;
     let currentImages = [];
     let historicalLayer = null;
-    let miniMap = null;
+    let miniMap = null, miniObserver = null;
     let suppressHash = false;
     let dodTiles = null, dodShapes = null, dodLoading = false;
     const statusStrip = document.getElementById('status-strip');
@@ -943,11 +943,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const map = L.map('map', { zoomControl: false, center: [59.91, 10.75], zoom: 10 });
 
+    // Leaflet takes the map's max zoom from its layers, so a layer that reaches
+    // further used to drag the map past what the others could serve and they
+    // simply stopped drawing - the basemap went blank grey. Every layer now
+    // shares MAX_ZOOM and declares how far it really goes with maxNativeZoom,
+    // so past that point Leaflet stretches the last real tile instead.
+    const MAX_ZOOM = 20;
+
     const graytoneLayer = L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png', {
-        attribution: '© <a href="https://kartverket.no">Kartverket</a>', maxZoom: 18
+        attribution: '© <a href="https://kartverket.no">Kartverket</a>',
+        maxNativeZoom: 18, maxZoom: MAX_ZOOM        // Kartverket 400s above 18
     });
     const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© <a href="https://www.esri.com">Esri</a>', maxZoom: 19
+        attribution: '© <a href="https://www.esri.com">Esri</a>',
+        maxNativeZoom: 19, maxZoom: MAX_ZOOM
     });
     // Its own pane, above the basemap: re-adding a basemap used to paint over
     // the historical imagery while the timeline still said it was enabled.
@@ -961,11 +970,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const dtmLayer = L.tileLayer.wms('https://wms.geonorge.no/skwms1/wms.hoyde-dom1_33?', {
         layers: 'DOM1_33_Terrengskygge', format: 'image/png', transparent: true,
-        attribution: '© <a href="https://geonorge.no">Geonorge</a>', opacity: 0.5
+        attribution: '© <a href="https://geonorge.no">Geonorge</a>', opacity: 0.5,
+        maxZoom: MAX_ZOOM
     });
 
     graytoneLayer.addTo(map);
     L.control.zoom({ position: 'topleft' }).addTo(map);
+
+    // The map runs in an iframe on dirtybusiness.no, where the container can get
+    // its final size after Leaflet has already measured it. Leaflet only
+    // remeasures on a window resize, which that case does not always produce,
+    // and a map holding a stale size loads tiles for the size it thinks it has -
+    // a small square of basemap in the middle of an empty grey page.
+    if (window.ResizeObserver) {
+        let sizeTimer = null;
+        new ResizeObserver(() => {
+            clearTimeout(sizeTimer);
+            sizeTimer = setTimeout(() => map.invalidateSize({ debounceMoveend: true }), 120);
+        }).observe(document.getElementById('map'));
+    }
     L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(map);
 
     // Basemap switching
@@ -994,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // slider used to instantiate all nine layers and request a full screen
         // of tiles for every year scrubbed past.
         if (historicalLayer) historicalLayer.setUrl(url);
-        else historicalLayer = L.tileLayer(url, { maxZoom: 19, pane: 'historical' }).addTo(map);
+        else historicalLayer = L.tileLayer(url, { maxNativeZoom: 19, maxZoom: MAX_ZOOM, pane: 'historical' }).addTo(map);
         document.getElementById('timeline-year').textContent = wb.year;
         timelineSlider.setAttribute('aria-valuetext', wb.year);
     }
@@ -1288,6 +1311,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ${section('link', linksHtml)}
         </div>`;
         
+        if (miniObserver) { miniObserver.disconnect(); miniObserver = null; }
         if (miniMap) { miniMap.remove(); miniMap = null; }
         if (currentImages.length === 0 && hasCoords) {
             miniMap = L.map('sb-minimap', {
@@ -1303,7 +1327,15 @@ document.addEventListener('DOMContentLoaded', function() {
             note.className = 'minimap-note';
             note.textContent = t('aerial');
             document.getElementById('sb-minimap').appendChild(note);
-            setTimeout(() => miniMap && miniMap.invalidateSize(), 60);
+            // A fixed timeout was a guess at when the panel had finished its
+            // slide; inside the iframe it fired early and the aerial came up
+            // blank. Watch the box instead and remeasure whenever it changes.
+            if (window.ResizeObserver) {
+                miniObserver = new ResizeObserver(() => miniMap && miniMap.invalidateSize());
+                miniObserver.observe(document.getElementById('sb-minimap'));
+            } else {
+                setTimeout(() => miniMap && miniMap.invalidateSize(), 60);
+            }
         }
 
         document.title = (site.Name ? site.Name + ' — ' : '') + 'Dirty Business Map';
@@ -1315,6 +1347,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.closeSidebar = function() {
+        if (miniObserver) { miniObserver.disconnect(); miniObserver = null; }
         if (miniMap) { miniMap.remove(); miniMap = null; }
         document.getElementById('sidebar').classList.remove('active');
         // Emptying the panel detaches the graph iframe. Left attached it keeps
@@ -1398,7 +1431,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateStatus(t('loading'));
 
         dodTiles = L.tileLayer(DOD_TILES, {
-            minZoom: 11, maxNativeZoom: 16, maxZoom: 19,
+            minZoom: 11, maxNativeZoom: 16, maxZoom: MAX_ZOOM,
             bounds: DOD_BOUNDS, tms: false, pane: 'dodPane',
             opacity: document.getElementById('dod-opacity').value / 100,
             // Tiles with no change in them are not generated, so a 404 inside the

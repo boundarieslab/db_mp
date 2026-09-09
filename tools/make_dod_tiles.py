@@ -16,17 +16,19 @@ the map and the thesis figures show the same thing: dh in matplotlib "turbo",
 symmetric around zero, multiplied by a hillshade of the newer DTM. That shading
 is per pixel, which is why this is a raster and not a polygon fill.
 
-Requires: rasterio, fiona, shapely, pyproj, matplotlib, pillow, numpy.
+Requires: rasterio, shapely, pyproj, matplotlib, pillow, numpy.
+(The GeoPackage is read with sqlite3 from the standard library, so no fiona.)
 """
-import json, math, os, sys
+import json, math, os, sqlite3, sys
 import numpy as np
-import rasterio, fiona
+import rasterio
 import matplotlib as mpl, matplotlib.colors as mcolors
 from rasterio.features import rasterize
 from rasterio.enums import Resampling
 from rasterio.warp import reproject, transform_bounds
 from rasterio.transform import from_origin
-from shapely.geometry import shape, mapping
+from shapely.geometry import mapping
+from shapely import wkb as shp_wkb
 from shapely.ops import transform as shp_transform
 from pyproj import Transformer
 from PIL import Image
@@ -35,6 +37,31 @@ ZMIN, ZMAX = 11, 16
 R = 20037508.342789244
 SIMPLIFY_DEG = 0.00003      # click targets only; not drawn
 COORD_DECIMALS = 5          # ~1 m, and it halves the file
+
+
+# A GeoPackage geometry blob is 'GP', version, flags, srs_id, an optional
+# envelope, then plain WKB. Reading it here instead of through fiona keeps this
+# script to packages the unigis_tesis venv already has.
+_ENV_BYTES = {0: 0, 1: 32, 2: 48, 3: 48, 4: 64}
+
+
+def read_gpkg(path, layer='poligonos_cambio', fields=()):
+    con = sqlite3.connect(f'file:{path}?mode=ro', uri=True)
+    try:
+        gcol = con.execute('SELECT column_name FROM gpkg_geometry_columns '
+                           'WHERE table_name = ?', (layer,)).fetchone()[0]
+        cols = ', '.join([f'"{gcol}"'] + [f'"{f}"' for f in fields])
+        for row in con.execute(f'SELECT {cols} FROM "{layer}"'):
+            blob = row[0]
+            if blob is None:
+                continue
+            flags = blob[3]
+            if flags & 0x10:                       # empty geometry
+                continue
+            off = 8 + _ENV_BYTES[(flags >> 1) & 0x07]
+            yield shp_wkb.loads(bytes(blob[off:])), dict(zip(fields, row[1:]))
+    finally:
+        con.close()
 
 
 def change_mask(dod_path, gpkg_path):
@@ -47,8 +74,7 @@ def change_mask(dod_path, gpkg_path):
     with rasterio.open(dod_path) as s:
         d = s.read(1)
         valid = np.isfinite(d) & (d != s.nodata)
-        with fiona.open(gpkg_path, layer='poligonos_cambio') as src:
-            geoms = [shape(f['geometry']) for f in src]
+        geoms = [g for g, _ in read_gpkg(gpkg_path)]
         poly = rasterize(((g, 1) for g in geoms), out_shape=(s.height, s.width),
                          transform=s.transform, fill=0, dtype='uint8').astype(bool)
     return d, valid & poly, len(geoms)
@@ -155,20 +181,17 @@ def hit_targets(gpkg, out_json):
     tf = Transformer.from_crs('EPSG:25832', 'EPSG:4326', always_xy=True).transform
     rnd = lambda o: [rnd(i) for i in o] if isinstance(o, (list, tuple)) else round(o, COORD_DECIMALS)
     feats = []
-    with fiona.open(gpkg, layer='poligonos_cambio') as src:
-        for f in src:
-            p = f['properties']
-            g = shp_transform(tf, shape(f['geometry'])).simplify(
-                SIMPLIFY_DEG, preserve_topology=True)
-            if g.is_empty:
-                continue
-            feats.append({'type': 'Feature',
-                          'geometry': {'type': g.geom_type,
-                                       'coordinates': rnd(mapping(g)['coordinates'])},
-                          'properties': {'a': int(round(p['area_m2'])),
-                                         'v': int(round(p['volume_m3'])),
-                                         'dh': round(p['mean_dh_m'], 2),
-                                         'np': 1 if p['sin_plan'] else 0}})
+    for geom, p in read_gpkg(gpkg, fields=('area_m2', 'volume_m3', 'mean_dh_m', 'sin_plan')):
+        g = shp_transform(tf, geom).simplify(SIMPLIFY_DEG, preserve_topology=True)
+        if g.is_empty:
+            continue
+        feats.append({'type': 'Feature',
+                      'geometry': {'type': g.geom_type,
+                                   'coordinates': rnd(mapping(g)['coordinates'])},
+                      'properties': {'a': int(round(p['area_m2'])),
+                                     'v': int(round(p['volume_m3'])),
+                                     'dh': round(p['mean_dh_m'], 2),
+                                     'np': 1 if p['sin_plan'] else 0}})
     txt = json.dumps({'type': 'FeatureCollection', 'features': feats}, separators=(',', ':'))
     open(out_json, 'w').write(txt)
     print(f'  {len(feats)} click targets, {len(txt)/1024:.0f} KB')

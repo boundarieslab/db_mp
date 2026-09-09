@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%}
+/* Cargo-ish: a header, then an iframe that gets its final height from CSS
+   that resolves after the document has already started loading. */
+header{height:26px;border-bottom:1px solid #000;font:12px monospace}
+#wrap{height:calc(100% - 27px)}
+iframe{width:100%;height:100%;border:0}
+</style></head><body>
+<header>Dirty Business</header>
+<div id="wrap"><iframe src="../../index.html" allow="fullscreen"></iframe></div>
+<script>
+// Cargo lays out after webfonts/scripts: emulate the container settling late.
+// The case a resize event never covers: the frame is laid out while hidden,
+// so Leaflet measures 0x0 and nothing ever tells it otherwise.
+const f=document.querySelector('iframe');
+f.style.display='none';
+addEventListener('load',()=>setTimeout(()=>{ f.style.display='block'; },400));
+</script>
+</body></html>
