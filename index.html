@@ -324,14 +324,12 @@
 
         /* Keyboard focus was invisible everywhere. */
         :focus-visible { outline: 2px solid #000; outline-offset: 1px; }
-        .lang-btn, .filter-toggle, .filter-close, .close-btn {
-            font-family: inherit; border-radius: 0; cursor: pointer;
-        }
+        .lang-btn, .filter-toggle, .filter-close,
         .lang-btn { background: #fff; border: none; }
         .filter-toggle { text-align: left; }
         .close-btn, .filter-close {
-            background: #fff; border: none;
-            width: 44px; height: 44px; display: flex;
+            background: #fff; border: none; position: static;
+            width: 34px; height: 34px; display: flex; font-size: 18px; line-height: 1;
             align-items: center; justify-content: center;
         }
 
@@ -407,19 +405,18 @@
             z-index: 2001;
         }
         .close-btn:hover { opacity: 0.5; }
+        .sb-header {
+            flex: 0 0 auto; display: flex; align-items: center; justify-content: flex-end;
+            gap: 8px; padding: 6px 8px; background: #fff;
+            border-bottom: 1px solid #eee; position: relative; z-index: 2;
+        }
         .share-btn {
-            position: absolute;
-            top: 10px;
-            right: 40px;
-            padding: 5px 10px;
+            padding: 6px 12px;
             font-size: 8px;
             background: #000;
             color: #fff;
             border: none;
             cursor: pointer;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
         .sb-scroll-area { flex: 1; overflow-y: auto; padding-bottom: 40px; }
 
         /* SLIDESHOW */
@@ -706,8 +703,10 @@
 
 <!-- SIDEBAR -->
 <div id="sidebar">
-    <button type="button" class="close-btn" onclick="closeSidebar()" aria-label="Close panel">✕</button>
-    <button class="share-btn" onclick="shareLink()">SHARE</button>
+    <div class="sb-header">
+        <button class="share-btn" onclick="shareLink()">SHARE</button>
+        <button type="button" class="close-btn" onclick="closeSidebar()" aria-label="Close panel">✕</button>
+    </div>
     <div class="sb-scroll-area">
         <div id="sb-dynamic-content"></div>
     </div>
@@ -1088,23 +1087,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentSite = site;
                 openSidebar(site);
                 map.closePopup();
-                smartZoom(lat, lon);
+                smartZoom(lat, lon, site.Area_m2);
             });
             m.bindPopup(pop, { minWidth: 160 });
         });
         applyFilters();
     }
 
-    function smartZoom(lat, lon) {
+    // Frame the whole site, not a point. Area_m2 is in the sheet for most
+    // facilities, so derive a zoom that fits roughly 2.5x the site's width
+    // into the visible half of the map; fall back to 17 when it is missing.
+    function zoomForArea(area, lat) {
+        const a = num(area);
+        if (!Number.isFinite(a) || a <= 0) return 17;
+        const side = Math.sqrt(a) * 2.5;                       // metres to show
+        const sb = document.getElementById('sidebar');
+        const vis = Math.max(320, window.innerWidth -
+            (sb.classList.contains('active') && window.innerWidth > 768 ? window.innerWidth * 0.30 : 0));
+        const mpp = side / vis;                                // metres per pixel wanted
+        const z = Math.log2(156543.03392 * Math.cos(lat * Math.PI / 180) / mpp);
+        return Math.max(13, Math.min(18, Math.round(z * 2) / 2));
+    }
+
+    function smartZoom(lat, lon, area) {
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+        const z = zoomForArea(area, lat);
         const sb = document.getElementById('sidebar');
         if (sb.classList.contains('active') && window.innerWidth > 768) {
             const offset = window.innerWidth * 0.15;
-            const pt = map.project([lat, lon], 17);
+            const pt = map.project([lat, lon], z);
             pt.x -= offset;
-            if (reduceMotion) map.setView(map.unproject(pt, 17), 17); else map.flyTo(map.unproject(pt, 17), 17, { duration: 1 });
+            const target = map.unproject(pt, z);
+            if (reduceMotion) map.setView(target, z); else map.flyTo(target, z, { duration: 1 });
         } else {
-            if (reduceMotion) map.setView([lat, lon], 17); else map.flyTo([lat, lon], 17, { duration: 1 });
+            if (reduceMotion) map.setView([lat, lon], z); else map.flyTo([lat, lon], z, { duration: 1 });
         }
     }
 
@@ -1406,7 +1422,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const choose = () => {
                 currentSite = site;
                 openSidebar(site);                    // open first: a site with
-                smartZoom(num(site.Latitude), num(site.Longitude));  // no coords
+                smartZoom(num(site.Latitude), num(site.Longitude), site.Area_m2);  // no coords
                 sResults.style.display = 'none';      // used to abort the whole
                 sInput.setAttribute('aria-expanded', 'false');
                 sInput.value = '';                    // handler here
@@ -1490,7 +1506,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!site) { updateStatus(t('notfound')); return; }
         currentSite = site;               // was never set here, so a language
         openSidebar(site);                // switch left the panel in English
-        smartZoom(num(site.Latitude), num(site.Longitude));
+        smartZoom(num(site.Latitude), num(site.Longitude), site.Area_m2);
     }
 
     window.addEventListener('hashchange', () => {
