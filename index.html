@@ -771,6 +771,17 @@ document.addEventListener('DOMContentLoaded', function() {
     //           iframe sources; only http(s) and relative URLs are allowed.
     // ─────────────────────────────────────────────────────────────────────
     const num = v => parseFloat(String(v == null ? '' : v).replace(',', '.'));
+    // qty() is num()'s counterpart for quantities rather than coordinates. The
+    // sheet writes areas and capacities three ways - 455000, 455 000, 455,000 -
+    // and num() read "19,000" as 19, so four sites had their area understated a
+    // thousandfold and the map framed them as if they were the size of a room.
+    // Kept separate from num() on purpose: in a coordinate a comma is a decimal
+    // point, so "10,858" must stay 10.858 and never become 10858.
+    const qty = v => {
+        const t = String(v == null ? '' : v).trim().replace(/[\s\u00a0\u202f]/g, '');
+        if (!t) return NaN;
+        return parseFloat(/^-?\d{1,3}(,\d{3})+$/.test(t) ? t.replace(/,/g, '') : t.replace(',', '.'));
+    };
     const ESC = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
     const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ESC[c]);
     const safeUrl = v => {
@@ -1178,7 +1189,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function siteBounds(lat, lon, area) {
-        const a = num(area);
+        const a = qty(area);
         // The site plus a margin of its own size again, so a small reception
         // yard does not sit edge to edge in the frame.
         const side = Number.isFinite(a) && a > 0 ? Math.sqrt(a) * 2 : 200;   // metres
