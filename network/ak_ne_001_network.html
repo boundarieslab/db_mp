@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Kopstad Massemottak AS - Ownership Network</title>
+    <title>Esval Miljopark - Ownership Network</title>
     
     <style>
         /* Same typeface as dirtybusiness.no and the map, served from the same
@@ -63,12 +63,14 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Norsk Gjenvinning m3 AS (998 901 227)", type:"p"},
-        {id:"Kopstad Massemottak AS", type:"receiving", l:"(Kopstad, by E18)", active:true}
+        {id:"Nes Kommune", type:"p"},
+        {id:"Esval Miljopark KF", type:"div_ind", l:"(operator)"},
+        {id:"Esval Miljopark", type:"receiving", l:"(Vormsund)", active:true}
     ];
     
     var LINKS = [
-        ["Kopstad Massemottak AS", "Norsk Gjenvinning m3 AS (998 901 227)"]
+        ["Esval Miljopark KF", "Nes Kommune"],
+        ["Esval Miljopark", "Esval Miljopark KF"]
     ];
 
     var el = document.getElementById(containerID);

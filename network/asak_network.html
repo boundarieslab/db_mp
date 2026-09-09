@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Elvestad Massemottak - Master Network</title>
+    <title>Asak Massemottak (Nedlagt) - Ownership Network</title>
     
     <style>
         /* Same typeface as dirtybusiness.no and the map, served from the same
@@ -20,7 +20,6 @@
     </style>
     <style>
         /* Identical frame for every graph: legend on top, graph fills the rest. */
-        /* Myke overganger for utheving */
         .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
         .dimmed { opacity: 0.15 !important; }
         .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
@@ -61,40 +60,20 @@
 
 <script>
 (function(){
+    var containerID = "network-container"; 
+
     var NODES = [
-        {id:"Veidekke ASA", type:"parent", sub:"parent"},
-        {id:"Veidekke Industri AS", type:"parent", sub:"division_industri"},
-        {id:"Veidekke Entreprenør AS", type:"parent", sub:"division_entreprenør"},
-        {id:"Geomaterialer", type:"parent", sub:"dept"}, 
-        {id:"Asfalt", type:"parent", sub:"dept"},
-        {id:"Pukk og Grus", type:"parent", sub:"dept"},
-        {id:"Elvestad Massemottak", type:"facility", sub:"mixed", active:true},
-        {id:"Veidekke Gardermoen", type:"facility", sub:"receiving"},
-        {id:"Alnabru Massemottak", type:"facility", sub:"receiving"},
-        {id:"Gran Pukkverk", type:"facility", sub:"producing"},
-        {id:"Rambydalen Pukkverk", type:"facility", sub:"producing"},
-        {id:"Veidekke Sirkulær AS", type:"facility", sub:"mixed"},
-        {id:"Amrock AS", type:"construction", sub:"producing"},
-        {id:"Kystmiljø AS", type:"construction", sub:"mixed"}
+        {id:"Norsk Gjenvinning M3 AS", type:"p"},
+        {id:"Asak Massemottak AS", type:"div_ind", l:"(operator)"},
+        {id:"Asak Massemottak (Nedlagt)", type:"receiving", l:"(Asak)", active:true}
     ];
     
     var LINKS = [
-        ["Geomaterialer", "Veidekke Industri AS"],
-        ["Asfalt", "Veidekke Industri AS"],
-        ["Pukk og Grus", "Veidekke Industri AS"],
-        ["Veidekke Industri AS", "Veidekke ASA"],
-        ["Veidekke Entreprenør AS", "Veidekke ASA"],
-        ["Elvestad Massemottak", "Geomaterialer"], 
-        ["Veidekke Gardermoen", "Geomaterialer"],
-        ["Alnabru Massemottak", "Geomaterialer"],
-        ["Gran Pukkverk", "Geomaterialer"],
-        ["Rambydalen Pukkverk", "Geomaterialer"],
-        ["Veidekke Sirkulær AS", "Veidekke Entreprenør AS"],
-        ["Amrock AS", "Veidekke ASA"], 
-        ["Kystmiljø AS", "Veidekke ASA"] 
+        ["Asak Massemottak AS", "Norsk Gjenvinning M3 AS"],
+        ["Asak Massemottak (Nedlagt)", "Asak Massemottak AS"]
     ];
 
-    var el = document.getElementById("network-container");
+    var el = document.getElementById(containerID);
     var W, H, svg, nodes=[], links=[], parentMap={}, childMap={};
     var time = 0, frame = 0, _raf = null, _settled = false;
 
@@ -195,51 +174,71 @@
         return g;
     }
 
-    function createIcon(node) {
+    function createShape(type, isActive) {
         var ns = "http://www.w3.org/2000/svg";
         var g = document.createElementNS(ns, "g");
-        var r = 5; 
+        var r = 3.5; 
+        var p = 2;
         
-        if (node.type === 'parent') {
-            if (node.sub === 'parent') {
-                var shape = document.createElementNS(ns, "rect");
-                shape.setAttribute("x", -r); shape.setAttribute("y", -r);
-                shape.setAttribute("width", r*2); shape.setAttribute("height", r*2);
-                shape.setAttribute("fill", "#000"); g.appendChild(shape);
-            } else if (node.sub.includes('division')) {
-                var shape = document.createElementNS(ns, "polygon");
-                shape.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
-                shape.setAttribute("fill", node.sub.includes('industri') ? "#666" : "none");
-                if (!node.sub.includes('industri')) { shape.setAttribute("stroke", "#666"); shape.setAttribute("stroke-width", "1"); }
-                g.appendChild(shape);
-            } else {
-                var shape = document.createElementNS(ns, "rect");
-                shape.setAttribute("x", -r); shape.setAttribute("y", -r);
-                shape.setAttribute("width", r*2); shape.setAttribute("height", r*2);
-                shape.setAttribute("fill", "none"); shape.setAttribute("stroke", "#666"); shape.setAttribute("stroke-width", "1");
-                g.appendChild(shape);
-            }
-        } else if (node.type === 'construction') {
+        if (type === 'p') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var rect = document.createElementNS(ns, "rect");
             rect.setAttribute("x", -r); rect.setAttribute("y", -r);
             rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
-            rect.setAttribute("fill", "none"); rect.setAttribute("stroke", "#FF0066"); rect.setAttribute("stroke-width", "1.2");
+            rect.setAttribute("fill", "#000");
             g.appendChild(rect);
-            var p = document.createElementNS(ns, "path"); p.setAttribute("fill", "#000");
-            if (node.sub === 'producing') p.setAttribute("d", `M -${r} -${r} L ${r} -${r} L -${r} ${r} Z`);
-            else if (node.sub === 'receiving') p.setAttribute("d", `M ${r} ${r} L -${r} ${r} L ${r} -${r} Z`);
-            else p.setAttribute("d", `M -${r} -${r} L ${r} -${r} L 0 0 Z M -${r} ${r} L ${r} ${r} L 0 0 Z`);
-            g.appendChild(p);
-        } else {
+        } else if (type === 'div_ind') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "#666");
+            g.appendChild(poly);
+        } else if (type === 'div_ent') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "none");
+            poly.setAttribute("stroke", "#666"); 
+            poly.setAttribute("stroke-width", "1");
+            g.appendChild(poly);
+        } else if (type === 's') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "none");
+            rect.setAttribute("stroke", "#666"); 
+            rect.setAttribute("stroke-width", "1");
+            g.appendChild(rect);
+        } else if (type === 'receiving') { 
+            var bg = document.createElementNS(ns, "circle");
+            bg.setAttribute("r", r+p); bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var c = document.createElementNS(ns, "circle");
             c.setAttribute("r", r); c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#39FF14"); c.setAttribute("stroke-width", "1.5");
-            g.appendChild(c);
-            var p = document.createElementNS(ns, "path"); p.setAttribute("fill", "#000");
-            if (node.sub === 'producing') p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 1 ${r} 0 Z`);
-            else if (node.sub === 'receiving') p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
-            else p.setAttribute("d", `M 0 0 L -${r} 0 A ${r} ${r} 0 0 1 0 -${r} Z M 0 0 L ${r} 0 A ${r} ${r} 0 0 1 0 ${r} Z`);
-            g.appendChild(p);
+            c.setAttribute("stroke", "#39FF14"); c.setAttribute("stroke-width", "1");
+            var pa = document.createElementNS(ns, "path");
+            pa.setAttribute("fill", "#000");
+            pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
+            g.appendChild(c); g.appendChild(pa);
+        }
+
+        if(isActive) {
+            g.setAttribute("transform", "scale(1.2)");
         }
         return g;
     }
@@ -251,7 +250,8 @@
         if (_raf) { cancelAnimationFrame(_raf); _raf = null; }
         parentMap = {}; childMap = {}; _settled = false;
         W = el.offsetWidth || window.innerWidth;
-        H = el.offsetHeight || 600;
+        H = el.offsetHeight || 500;
+        el.innerHTML = "";
         var ns = "http://www.w3.org/2000/svg";
         svg = document.createElementNS(ns, "svg");
         svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -275,7 +275,7 @@
             line.setAttribute("class", "link-line");
             line.setAttribute("stroke", "#f2f2f2"); line.setAttribute("stroke-width", "1");
             linkG.appendChild(line);
-            return { s: sNode, t: tNode, el: line };
+            return { s: sNode, t: tNode, el: line, id: l[0] + "-" + l[1] };
         });
 
         var nodeG = document.createElementNS(ns, "g"); svg.appendChild(nodeG);
@@ -287,47 +287,49 @@
             var hit = document.createElementNS(ns, "circle");
             hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
             g.appendChild(hit);
-
-            if (n.active) {
-                var ring = document.createElementNS(ns, "circle");
-                ring.setAttribute("r", 15); ring.setAttribute("fill", "none");
-                ring.setAttribute("stroke", "#000"); ring.setAttribute("stroke-width", "0.5");
-                ring.setAttribute("stroke-dasharray", "2,3");
-                var anim = document.createElementNS(ns, "animateTransform");
-                anim.setAttribute("attributeName", "transform"); anim.setAttribute("type", "rotate");
-                anim.setAttribute("from", "0 0 0"); anim.setAttribute("to", "360 0 0");
-                anim.setAttribute("dur", "20s"); anim.setAttribute("repeatCount", "indefinite");
-                ring.appendChild(anim); g.appendChild(ring);
-            }
             
-            var icon = dbShape(n); icon.style.pointerEvents = "none";
-            g.appendChild(icon); n.shapeEl = icon;
+            var shape = dbShape(n);
+            shape.style.pointerEvents = "none";
+            g.appendChild(shape); n.shapeEl = shape;
+            
             var txt = document.createElementNS(ns, "text");
-            var _full = n.id;
+            var _full = n.id + (n.l ? " " + n.l : "");
             var _maxCh = Math.max(8, Math.floor(Math.max(70, Math.min(180, W * 0.22)) / 5.4) - 1);
             txt.textContent = _full.length > _maxCh ? _full.slice(0, _maxCh - 1) + "\u2026" : _full;
             var _tip = document.createElementNS(ns, "title");
             _tip.textContent = _full;
             txt.appendChild(_tip);
-             txt.setAttribute("x", 10); txt.setAttribute("y", 3);
+            txt.setAttribute("x", 12); txt.setAttribute("y", 3);
             txt.setAttribute("fill", n.active ? "#000" : "#bbb"); 
-            txt.style.font = n.active ? "600 9px 'Diatype Mono', 'Courier New', monospace" : "400 9px 'Diatype Mono', 'Courier New', monospace"; 
+            txt.style.font = n.active ? "600 10px 'Diatype Mono', 'Courier New', monospace" : "400 9px 'Diatype Mono', 'Courier New', monospace"; 
             txt.style.pointerEvents = "none";
             g.appendChild(txt); n.tEl = txt;
 
             g.onmouseenter = () => {
                 var lineage = getStrictLineage(n);
-                nodes.forEach(node => { node.el.classList.toggle("dimmed", !lineage.nodes.has(node.id)); });
+                nodes.forEach(node => { 
+                    node.el.classList.toggle("dimmed", !lineage.nodes.has(node.id));
+                    if(lineage.nodes.has(node.id)) {
+                        node.tEl.style.fontWeight = "bold";
+                        node.tEl.setAttribute("fill", "#000");
+                    }
+                });
                 links.forEach(link => {
-                    var isH = lineage.links.has(link.s.id + "-" + link.t.id) || lineage.links.has(link.t.id + "-" + link.s.id);
+                    var isH = lineage.links.has(link.id);
                     link.el.classList.toggle("dimmed", !isH);
                     link.el.classList.toggle("highlight-link", isH);
                 });
             };
+
             g.onmouseleave = () => {
-                nodes.forEach(node => node.el.classList.remove("dimmed"));
+                nodes.forEach(node => {
+                    node.el.classList.remove("dimmed");
+                    node.tEl.style.fontWeight = node.active ? "bold" : "normal";
+                    node.tEl.setAttribute("fill", node.active ? "#000" : "#bbb");
+                });
                 links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
             };
+
             g.onmousedown = (e) => { e.preventDefault(); n.dragging = true; g.style.cursor = "grabbing";
                 if (_settled && !_raf) { _settled = false; _raf = requestAnimationFrame(tick); } };
             nodeG.appendChild(g); n.el = g;
@@ -373,7 +375,7 @@
                 n.x += n.vx; n.y += n.vy; n.vx *= 0.88; n.vy *= 0.88;
             }
             var _ox = n.x; n.x = Math.max(_labelRoom, Math.min(W - _labelRoom, n.x)); if (n.x !== _ox) n.vx = 0; var _oy = n.y; n.y = Math.max(_pad, Math.min(H - _pad, n.y)); if (n.y !== _oy) n.vy = 0;
-            n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
+            if(n.el) n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
             if(n.tEl) {
                 // point the label outward, into the reserved margin
                 var _right = n.x >= W / 2;
@@ -415,7 +417,10 @@
             nodes.forEach(function(n){ n.y = Math.max(_pad, Math.min(H - _pad, n.y)); });
         })();
 
-        links.forEach(l => { l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y); l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y); });
+        links.forEach(l => {
+            l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
+            l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
+        });
         // The picture reaches a fixed point after 20-40s but the loop used to
 
         // run forever, including behind a closed sidebar.
@@ -435,9 +440,14 @@
         var rect = el.getBoundingClientRect();
         nodes.forEach(n => { if(n.dragging) { n.x = e.clientX - rect.left; n.y = e.clientY - rect.top; n.vx = 0; n.vy = 0; }});
     });
-    window.addEventListener("mouseup", () => nodes.forEach(n => { if(n.dragging) { n.dragging = false; n.el.style.cursor = "grab"; }}));
+    window.addEventListener("mouseup", () => nodes.forEach(n => n.dragging = false));
     
-    setTimeout(init, 400);
+    setTimeout(init, 500);
+    var _rt;
+    window.addEventListener("resize", function(){
+        clearTimeout(_rt);
+        _rt = setTimeout(function(){ frame = 0; init(); }, 250);
+    });
 })();
 </script>
 </body>
