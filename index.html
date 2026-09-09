@@ -339,7 +339,18 @@
         #sidebar.active { visibility: visible; }
 
         .dod-note { font-size: 8px; color: #595959; margin: 4px 0 0 18px; line-height: 1.4; }
+        .dod-opacity-label { font-size: 8px; color: #595959; margin-bottom: 3px; }
+        #dod-opacity { margin-bottom: 2px; }
         .legend-dod { border-top: 1px solid #eee; padding-top: 8px; margin-top: 10px; }
+        /* matplotlib "turbo", the ramp the thesis figures use for Δh */
+        .dod-bar { height: 10px; border: 1px solid #000;
+                   background: linear-gradient(to right, #30123b 0%, #434eba 8%, #4584f9 17%, #28bbeb 25%, #1ae4b6 33%, #55fa76 42%, #a4fc3b 50%, #d8e335 58%, #f9ba38 67%, #fa7d20 75%, #e3440a 83%, #b91e01 92%, #7a0402 100%); }
+        .dod-bar-scale, .dod-bar-ends {
+            display: flex; justify-content: space-between;
+            font-size: 8px; color: #595959; margin-top: 2px;
+        }
+        .dod-bar-scale span:nth-child(2) { color: #8a8a8a; }
+        .dod-bar-ends { text-transform: uppercase; letter-spacing: 0.04em; }
 
         .status-strip {
             position: absolute; left: 10px; bottom: 10px; z-index: 2000;
@@ -636,12 +647,13 @@
                 <input type="checkbox" id="filter-dod">
                 <span data-en="Gjerdrum 2007–2020" data-no="Gjerdrum 2007–2020">Gjerdrum 2007–2020</span>
             </label>
-            <div class="filter-sub">
-                <label><input type="checkbox" class="filter-dod-sub" value="deposito" checked> <span data-en="Deposit" data-no="Deponert">Deposit</span></label>
-                <label><input type="checkbox" class="filter-dod-sub" value="excavacion" checked> <span data-en="Excavation" data-no="Utgravd">Excavation</span></label>
+            <div class="filter-sub" id="dod-opacity-wrap" hidden>
+                <div class="dod-opacity-label" data-en="Layer opacity" data-no="Lagets dekkevne">Layer opacity</div>
+                <input type="range" class="timeline-slider" id="dod-opacity" min="15" max="100" value="90"
+                       aria-label="DoD layer opacity">
             </div>
-            <div class="dod-note" id="dod-note" data-en="351 changes over 400 m², measured from DTM1 LiDAR"
-                 data-no="351 endringer over 400 m², målt fra DTM1 LiDAR">351 changes over 400 m², measured from DTM1 LiDAR</div>
+            <div class="dod-note" id="dod-note" data-en="1,320 changes over 127.6 ha, from DTM1 LiDAR"
+                 data-no="1 320 endringer over 127,6 ha, fra DTM1 LiDAR">1,320 changes over 127.6 ha, from DTM1 LiDAR</div>
         </div>
     </div>
 
@@ -715,13 +727,11 @@
 
         <div class="legend-dod">
             <div class="legend-column-title" data-en="DoD — terrain change" data-no="DoD — terrengendring">DoD — terrain change</div>
-            <div class="legend-row">
-                <div class="legend-symbol"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="#000" fill-opacity="0.45" stroke="#000" stroke-width="1"/></svg></div>
-                <span class="legend-label" data-en="deposit (mass added)" data-no="deponert (masse tilført)">deposit (mass added)</span>
-            </div>
-            <div class="legend-row">
-                <div class="legend-symbol"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="none" stroke="#000" stroke-width="1.5" stroke-dasharray="3,2"/></svg></div>
-                <span class="legend-label" data-en="excavation (mass removed)" data-no="utgravd (masse fjernet)">excavation (mass removed)</span>
+            <div class="dod-bar"></div>
+            <div class="dod-bar-scale"><span>−12.1 m</span><span>0</span><span>+12.1 m</span></div>
+            <div class="dod-bar-ends">
+                <span data-en="excavated" data-no="utgravd">excavated</span>
+                <span data-en="deposited" data-no="deponert">deposited</span>
             </div>
         </div>
     </div>
@@ -927,7 +937,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let historicalLayer = null;
     let miniMap = null;
     let suppressHash = false;
-    let dodLayer = null, dodLoading = false;
+    let dodTiles = null, dodShapes = null, dodLoading = false;
     const statusStrip = document.getElementById('status-strip');
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -942,7 +952,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Its own pane, above the basemap: re-adding a basemap used to paint over
     // the historical imagery while the timeline still said it was enabled.
     map.createPane('dodPane');
-    map.getPane('dodPane').style.zIndex = 380;   // above tiles, below markers
+    map.getPane('dodPane').style.zIndex = 380;   // above the basemap, below markers
+    map.createPane('dodHitPane');                // invisible click targets
+    map.getPane('dodHitPane').style.zIndex = 385;
 
     map.createPane('historical');
     map.getPane('historical').style.zIndex = 250;
@@ -1201,8 +1213,7 @@ document.addEventListener('DOMContentLoaded', function() {
         matches: { en: "MATCHES", no: "TREFF" },
         hidden: { en: "hidden by filter", no: "skjult av filter" },
         dh: { en: "Mean change", no: "Snittendring" },
-        noplan: { en: "no plan on record", no: "ingen plan registrert" },
-        dodfail: { en: "COULD NOT LOAD THE DoD LAYER", no: "KUNNE IKKE LASTE DoD-LAGET" }
+        noplan: { en: "no plan on record", no: "ingen plan registrert" }
     };
     const t = k => i18n[k] ? i18n[k][currentLang] : k;
 
@@ -1342,21 +1353,23 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // ── DoD layer ─────────────────────────────────────────────────────────
-    // The project's own measurement: DTM1 LiDAR differenced between two epochs,
-    // vectorised. Loaded on demand - it is 541 KB and most readers never open it.
-    const DOD_URL = 'data/dod_gjerdrum_2007_2020.geojson';
-
-    function dodStyle(f) {
-        const deposit = (f.properties.k || '').indexOf('dep') === 0;
-        return deposit
-            ? { color: '#000', weight: 1, opacity: 0.9, fillColor: '#000', fillOpacity: 0.45 }
-            : { color: '#000', weight: 1.5, opacity: 0.9, dashArray: '3,2', fill: false };
-    }
+    // The project's own measurement, drawn the way the thesis figures draw it:
+    // Δh in matplotlib "turbo", multiplied by a hillshade of the 2020 DTM, so the
+    // microrelief of a fill terrace is visible inside the colour. That shading is
+    // per-pixel, so it has to be a raster - the tiles are pre-rendered from
+    // DoD_final.tif and clipped to the 1,320 change polygons.
+    //
+    // The polygons are still loaded, but only as click targets: they carry the
+    // area / volume / mean-Δh figures the raster cannot.
+    const DOD_TILES = 'data/dod/gjerdrum_2007_2020/{z}/{x}/{y}.png';
+    const DOD_GEOJSON = 'data/dod_gjerdrum_2007_2020.geojson';
+    const DOD_BOUNDS = L.latLngBounds([60.02233, 10.95226], [60.13268, 11.13133]);
 
     function dodPopup(f, layer) {
         const p = f.properties;
-        const deposit = (p.k || '').indexOf('dep') === 0;
-        const kind = currentLang === 'no' ? (deposit ? 'Deponert' : 'Utgravd') : (deposit ? 'Deposit' : 'Excavation');
+        const deposit = p.v > 0;
+        const kind = currentLang === 'no' ? (deposit ? 'Deponert' : 'Utgravd')
+                                          : (deposit ? 'Deposit' : 'Excavation');
         const n = v => Number.isFinite(+v) ? Math.round(Math.abs(+v)).toLocaleString('en-US') : '?';
         layer.bindPopup(
             `<span class="popup-title">${kind}</span>` +
@@ -1365,40 +1378,57 @@ document.addEventListener('DOMContentLoaded', function() {
             { minWidth: 150 });
     }
 
-    function applyDodFilter() {
-        if (!dodLayer) return;
-        const on = Array.from(document.querySelectorAll('.filter-dod-sub:checked')).map(c => c.value);
-        dodLayer.eachLayer(l => {
-            const deposit = (l.feature.properties.k || '').indexOf('dep') === 0;
-            const show = on.indexOf(deposit ? 'deposito' : 'excavacion') !== -1;
-            l.setStyle(show ? dodStyle(l.feature) : { opacity: 0, fillOpacity: 0 });
-        });
-    }
-
     function toggleDod(on) {
-        if (!on) { if (dodLayer) map.removeLayer(dodLayer); return; }
-        if (dodLayer) { dodLayer.addTo(map); applyDodFilter(); return; }
+        const wrap = document.getElementById('dod-opacity-wrap');
+        if (!on) {
+            if (dodTiles) map.removeLayer(dodTiles);
+            if (dodShapes) map.removeLayer(dodShapes);
+            wrap.hidden = true;
+            return;
+        }
+        wrap.hidden = false;
+        if (dodTiles) {
+            dodTiles.addTo(map);
+            if (dodShapes) dodShapes.addTo(map);
+            map.fitBounds(DOD_BOUNDS, { padding: [30, 30] });
+            return;
+        }
         if (dodLoading) return;
         dodLoading = true;
         updateStatus(t('loading'));
-        fetch(DOD_URL).then(r => r.json()).then(gj => {
-            dodLayer = L.geoJSON(gj, { style: dodStyle, onEachFeature: dodPopup, pane: 'dodPane' }).addTo(map);
-            applyDodFilter();
+
+        dodTiles = L.tileLayer(DOD_TILES, {
+            minZoom: 11, maxNativeZoom: 16, maxZoom: 19,
+            bounds: DOD_BOUNDS, tms: false, pane: 'dodPane',
+            opacity: document.getElementById('dod-opacity').value / 100,
+            // Tiles with no change in them are not generated, so a 404 inside the
+            // bounds is the normal case, not a failure.
+            errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+            attribution: 'DoD: Kartverket DTM1 2007/2020 · LUB'
+        }).addTo(map);
+        map.fitBounds(DOD_BOUNDS, { padding: [30, 30] });
+
+        // Hit targets only: fillOpacity 0.01 keeps them clickable while leaving
+        // the raster's colour untouched.
+        fetch(DOD_GEOJSON).then(r => r.json()).then(gj => {
+            dodShapes = L.geoJSON(gj, {
+                pane: 'dodHitPane',
+                style: { stroke: false, fill: true, fillOpacity: 0.01, fillColor: '#fff' },
+                onEachFeature: dodPopup
+            }).addTo(map);
             dodLoading = false;
             updateStatus();
-            if (document.getElementById('filter-dod').checked) {
-                map.fitBounds(dodLayer.getBounds(), { padding: [40, 40] });
-            }
         }).catch(err => {
-            console.error('DoD load failed:', err);
+            console.error('DoD polygons failed:', err);   // tiles still show
             dodLoading = false;
-            updateStatus(t('dodfail'));
-            document.getElementById('filter-dod').checked = false;
+            updateStatus();
         });
     }
 
     document.getElementById('filter-dod').addEventListener('change', e => toggleDod(e.target.checked));
-    document.querySelectorAll('.filter-dod-sub').forEach(c => c.addEventListener('change', applyDodFilter));
+    document.getElementById('dod-opacity').addEventListener('input', e => {
+        if (dodTiles) dodTiles.setOpacity(e.target.value / 100);
+    });
 
     // FILTERS with subcategories
     function applyFilters() {
@@ -1473,7 +1503,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('[data-en]').forEach(el => el.innerText = el.getAttribute(`data-${lang}`));
         if (currentSite) openSidebar(currentSite);
         renderMarkers(allSites);   // popups carry translated text
-        if (dodLayer) dodLayer.eachLayer(l => dodPopup(l.feature, l));
+        if (dodShapes) dodShapes.eachLayer(l => dodPopup(l.feature, l));
         updateStatus();
     }
     btnEn.onclick = () => setLanguage('en');
