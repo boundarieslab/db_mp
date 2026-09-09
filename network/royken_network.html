@@ -99,7 +99,7 @@
 
     var el = document.getElementById(containerID);
     var W, H, svg, nodes=[], links=[], parentMap={}, childMap={};
-    var time = 0, frame = 0, _raf = null, _settled = false;
+    var time = 0, frame = 0, _raf = null, _settled = false, _labelRoom = 100;
 
     function getStrictLineage(startNode) {
         let pathNodes = new Set([startNode.id]);
@@ -197,7 +197,17 @@
             halo("sq"); sq("none", DB_GREY);
         }
 
-        if (node && node.active) g.setAttribute("transform", "scale(1.25)");
+        if (node && node.active) {
+            // "this facility" - the same mark in every graph
+            var ring = document.createElementNS(ns, "circle");
+            ring.setAttribute("r", r + 6);
+            ring.setAttribute("fill", "none");
+            ring.setAttribute("stroke", "#000");
+            ring.setAttribute("stroke-width", "0.6");
+            ring.setAttribute("stroke-dasharray", "2,3");
+            g.appendChild(ring);
+            g.setAttribute("transform", "scale(1.25)");
+        }
         return g;
     }
 
@@ -277,6 +287,7 @@
         if (_raf) { cancelAnimationFrame(_raf); _raf = null; }
         parentMap = {}; childMap = {}; _settled = false;
         W = el.offsetWidth || window.innerWidth;
+        _labelRoom = Math.max(78, Math.min(200, (W || 520) * 0.26));
         H = el.offsetHeight || 500;
         el.innerHTML = "";
         var ns = "http://www.w3.org/2000/svg";
@@ -300,7 +311,7 @@
             var sNode = nodes.find(n => n.id === l[0]), tNode = nodes.find(n => n.id === l[1]);
             var line = document.createElementNS(ns, "line");
             line.setAttribute("class", "link-line");
-            line.setAttribute("stroke", "#f2f2f2"); line.setAttribute("stroke-width", "1");
+            line.setAttribute("stroke", "#dddddd"); line.setAttribute("stroke-width", "1");
             linkG.appendChild(line);
             return { s: sNode, t: tNode, el: line, id: l[0] + "-" + l[1] };
         });
@@ -320,14 +331,33 @@
             g.appendChild(shape); n.shapeEl = shape;
             
             var txt = document.createElementNS(ns, "text");
+            // Full name, wrapped onto a second line if it does not fit. Cutting
+            // it with an ellipsis hid which facility a node actually was.
             var _full = n.id + (n.l ? " " + n.l : "");
-            var _maxCh = Math.max(8, Math.floor(Math.max(70, Math.min(180, W * 0.22)) / 5.4) - 1);
-            txt.textContent = _full.length > _maxCh ? _full.slice(0, _maxCh - 1) + "\u2026" : _full;
+            var _maxCh = Math.max(10, Math.floor(_labelRoom / 5.4));
+            var _lines = [];
+            if (_full.length <= _maxCh) {
+                _lines = [_full];
+            } else {
+                var _cut = _full.lastIndexOf(" ", _maxCh);
+                if (_cut <= 0) _cut = _maxCh;
+                _lines.push(_full.slice(0, _cut));
+                var _rest = _full.slice(_cut + 1);
+                _lines.push(_rest.length > _maxCh ? _rest.slice(0, _maxCh - 1) + "\u2026" : _rest);
+            }
+            n.tLines = _lines.length;
+            _lines.forEach(function (ln, li) {
+                var ts = document.createElementNS(ns, "tspan");
+                ts.textContent = ln;
+                ts.setAttribute("x", 10);
+                ts.setAttribute("dy", li === 0 ? 0 : 10);
+                txt.appendChild(ts);
+            });
             var _tip = document.createElementNS(ns, "title");
             _tip.textContent = _full;
             txt.appendChild(_tip);
-            txt.setAttribute("x", 12); txt.setAttribute("y", 3);
-            txt.setAttribute("fill", n.active ? "#000" : "#bbb"); 
+            txt.setAttribute("x", 12); txt.setAttribute("y", (_lines.length > 1 ? -2 : 3));  // _yTop
+            txt.setAttribute("fill", n.active ? "#000" : "#666"); 
             txt.style.font = n.active ? "600 10px 'Diatype Mono', 'Courier New', monospace" : "400 9px 'Diatype Mono', 'Courier New', monospace"; 
             txt.style.pointerEvents = "none";
             g.appendChild(txt); n.tEl = txt;
@@ -352,7 +382,7 @@
                 nodes.forEach(node => {
                     node.el.classList.remove("dimmed");
                     node.tEl.style.fontWeight = node.active ? "bold" : "normal";
-                    node.tEl.setAttribute("fill", node.active ? "#000" : "#bbb");
+                    node.tEl.setAttribute("fill", node.active ? "#000" : "#666");
                 });
                 links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
             };
@@ -375,7 +405,7 @@
         var _pad = 30;
         // Reserve a margin on each side for the labels, and keep the nodes in
         // the band between, so a label always has somewhere to go.
-        var _labelRoom = Math.max(70, Math.min(180, W * 0.22));
+        _labelRoom = Math.max(78, Math.min(200, W * 0.26));
         var _uw = Math.max(W - _labelRoom * 2, 110), _uh = Math.max(H - _pad * 2, 120);
         var _cell = Math.sqrt((_uw * _uh) / _n);
         const restLen = Math.max(26, Math.min(110, _cell * 0.95));
@@ -406,8 +436,11 @@
             if(n.tEl) {
                 // point the label outward, into the reserved margin
                 var _right = n.x >= W / 2;
+                var _lx = _right ? 10 : -10;
                 n.tEl.setAttribute("text-anchor", _right ? "start" : "end");
-                n.tEl.setAttribute("x", _right ? 10 : -10);
+                n.tEl.setAttribute("x", _lx);
+                var _ts = n.tEl.getElementsByTagName("tspan");
+                for (var _k = 0; _k < _ts.length; _k++) _ts[_k].setAttribute("x", _lx);
             }
         });
 
@@ -423,8 +456,9 @@
                 var pv = near[j-1], cu = near[j];
                 if (Math.abs(cu.x - pv.x) > 130) continue;
                 var g2 = cu.y - pv.y;
-                if (g2 < 15) {
-                    var p2 = (15 - g2) / 2;
+                var _need2 = 8 + 6 * ((pv.tLines || 1) + (cu.tLines || 1));
+                if (g2 < _need2) {
+                    var p2 = (_need2 - g2) / 2;
                     if (!pv.dragging) pv.y -= p2;
                     if (!cu.dragging) cu.y += p2;
                 }
@@ -434,8 +468,9 @@
                 side.sort(function(a, b){ return a.y - b.y; });
                 for (var i = 1; i < side.length; i++) {
                     var prev = side[i-1], cur = side[i], gap = cur.y - prev.y;
-                    if (gap < minGap) {
-                        var push = (minGap - gap) / 2;
+                    var need = 8 + 6 * ((prev.tLines || 1) + (cur.tLines || 1));
+                    if (gap < need) {
+                        var push = (need - gap) / 2;
                         if (!prev.dragging) prev.y -= push;
                         if (!cur.dragging)  cur.y  += push;
                     }
