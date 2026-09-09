@@ -63,14 +63,14 @@
 (function(){
     const DATA = {
         nodes: [
-            {id:"Ollendorff Holding AS", type:"p", sub:"parent"},
-            {id:"Feiring AS", type:"p", sub:"parent"},
-            {id:"Feiring Bruk AS", type:"p", sub:"div"},
-            {id:"Feiring Bruk Enebakk", type:"f", sub:"prod", active:true},
-            {id:"Bjønndalen Pukkverk", type:"f", sub:"prod"},
-            {id:"Lørenskog Pukkverk", type:"f", sub:"prod"},
-            {id:"Feiring Miljø AS", type:"p", sub:"dept"},
-            {id:"Feiring Asfalt AS", type:"p", sub:"dept"}
+            {id:"Ollendorff Holding AS", type:"p"},
+            {id:"Feiring AS", type:"p"},
+            {id:"Feiring Bruk AS", type:"p"},
+            {id:"Feiring Bruk Enebakk", type:"facility", active:true},
+            {id:"Bjønndalen Pukkverk", type:"facility"},
+            {id:"Lørenskog Pukkverk", type:"facility"},
+            {id:"Feiring Miljø AS", type:"p"},
+            {id:"Feiring Asfalt AS", type:"p"}
         ],
         links: [
             {s:"Feiring AS", t:"Ollendorff Holding AS"},
@@ -95,7 +95,10 @@
 
     function dbShape(node) {
         var ns = "http://www.w3.org/2000/svg";
-        var type = (node && node.type) || "s";
+        // Read whichever key the data uses. Files written at different times
+        // stored the type under cargo_type: or t:, and reading only .type made
+        // every node in them fall through to the default shape.
+        var type = (node && (node.type || node.cargo_type || node.t)) || "s";
         var g = document.createElementNS(ns, "g");
         var r = 3.5, p = 2;
 
