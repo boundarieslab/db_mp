@@ -75,6 +75,27 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(sb.miniTiles>0, 'aerial view loaded tiles ('+sb.miniTiles+')');
   ok(!sb.overlap, 'SHARE and the close button do not overlap');
 
+  console.log('framing');
+  const fr0 = await p.evaluate(() => {
+    const m = window.__M;
+    const site = [59.81372, 11.52031];
+    const pt = m.latLngToContainerPoint(site);
+    const search = document.querySelector('.search-box').getBoundingClientRect();
+    const sbw = document.getElementById('sidebar').getBoundingClientRect().width;
+    const left = search.right, right = innerWidth - sbw;
+    return { x: Math.round(pt.x), y: Math.round(pt.y),
+             band: [Math.round(left), Math.round(right)],
+             mid: Math.round((left + right) / 2), h: innerHeight, zoom: m.getZoom() };
+  });
+  // the site should sit near the middle of the strip you can actually see,
+  // not under the panel and not behind the controls
+  ok(fr0.x > fr0.band[0] && fr0.x < fr0.band[1],
+     'site is inside the visible strip (x=' + fr0.x + ' in ' + fr0.band + ')');
+  ok(Math.abs(fr0.x - fr0.mid) < 60,
+     'site is centred in it (off by ' + Math.abs(fr0.x - fr0.mid) + 'px)');
+  ok(Math.abs(fr0.y - fr0.h / 2) < 60,
+     'site is vertically centred (off by ' + Math.round(Math.abs(fr0.y - fr0.h/2)) + 'px)');
+
   console.log('iframe embed (dirtybusiness.no)');
   const p2 = await ctx.newPage();
   await p2.setViewportSize({width:1600,height:900});

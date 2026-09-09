@@ -194,17 +194,10 @@
             halo("sq"); sq("none", DB_GREY);
         }
 
-        if (node && node.active) {
-            // "this facility" - the same mark in every graph
-            var ring = document.createElementNS(ns, "circle");
-            ring.setAttribute("r", r + 6);
-            ring.setAttribute("fill", "none");
-            ring.setAttribute("stroke", "#000");
-            ring.setAttribute("stroke-width", "0.6");
-            ring.setAttribute("stroke-dasharray", "2,3");
-            g.appendChild(ring);
-            g.setAttribute("transform", "scale(1.25)");
-        }
+        // "this facility": bigger than the rest, with the bold black label the
+        // renderer already gives it. The dashed ring it used to wear read as a
+        // sixth symbol in a legend that only has five.
+        if (node && node.active) g.setAttribute("transform", "scale(1.25)");
         return g;
     }
 
@@ -408,36 +401,38 @@
 
         // Keep labels on the same side off the same line. Labels sit at the
         // node's own y, so nudging the nodes apart vertically is enough.
+        //
+        // Two things kept this from ever coming to rest. It asked for a fixed
+        // gap per pair, which in a crowded graph adds up to more height than
+        // the box has, an impossible demand it went on making every frame. And
+        // it applied the whole correction each time, so a pair the springs
+        // pulled back together was shoved apart just as hard, forever. Now the
+        // demand is scaled to what fits, and half of each correction is applied
+        // per frame, which is what lets it converge.
         (function(){
-            var minGap = 16;
-            // Same-side lanes, plus one pass over nodes that are close together
-            // horizontally regardless of side: labels flip outward at the
-            // midpoint, so two nodes either side of centre can still collide.
-            var near = nodes.slice().sort(function(a, b){ return a.y - b.y; });
-            for (var j = 1; j < near.length; j++) {
-                var pv = near[j-1], cu = near[j];
-                if (Math.abs(cu.x - pv.x) > 130) continue;
-                var g2 = cu.y - pv.y;
-                var _need2 = 8 + 6 * ((pv.tLines || 1) + (cu.tLines || 1));
-                if (g2 < _need2) {
-                    var p2 = (_need2 - g2) / 2;
-                    if (!pv.dragging) pv.y -= p2;
-                    if (!cu.dragging) cu.y += p2;
+            var RELAX = 0.5;
+            var usable = Math.max(H - _pad * 2, 1);
+            function need(a, b){ return 8 + 6 * ((a.tLines || 1) + (b.tLines || 1)); }
+            function lane(list){
+                list.sort(function(a, b){ return a.y - b.y; });
+                var wanted = 0, i;
+                for (i = 1; i < list.length; i++) wanted += need(list[i-1], list[i]);
+                var k = wanted > usable ? usable / wanted : 1;   // ask for what fits
+                for (i = 1; i < list.length; i++) {
+                    var prev = list[i-1], cur = list[i];
+                    var gap = cur.y - prev.y, want = need(prev, cur) * k;
+                    if (gap >= want) continue;
+                    var push = (want - gap) / 2 * RELAX;
+                    if (!prev.dragging) prev.y -= push;
+                    if (!cur.dragging)  cur.y  += push;
                 }
             }
-            [nodes.filter(function(n){ return n.x < W / 2; }),
-             nodes.filter(function(n){ return n.x >= W / 2; })].forEach(function(side){
-                side.sort(function(a, b){ return a.y - b.y; });
-                for (var i = 1; i < side.length; i++) {
-                    var prev = side[i-1], cur = side[i], gap = cur.y - prev.y;
-                    var need = 8 + 6 * ((prev.tLines || 1) + (cur.tLines || 1));
-                    if (gap < need) {
-                        var push = (need - gap) / 2;
-                        if (!prev.dragging) prev.y -= push;
-                        if (!cur.dragging)  cur.y  += push;
-                    }
-                }
-            });
+            // Labels flip outward at the midpoint, so a pair either side of
+            // centre can still collide: one pass over the middle band, then
+            // one per side.
+            lane(nodes.filter(function(n){ return Math.abs(n.x - W / 2) < 65; }));
+            lane(nodes.filter(function(n){ return n.x < W / 2; }));
+            lane(nodes.filter(function(n){ return n.x >= W / 2; }));
             nodes.forEach(function(n){ n.y = Math.max(_pad, Math.min(H - _pad, n.y)); });
         })();
 
@@ -447,7 +442,12 @@
         // run forever, including behind a closed sidebar.
 
         nodes.forEach(function(n){ _moved = Math.max(_moved, Math.abs(n.x - n._px), Math.abs(n.y - n._py)); });
-        if (_moved < 0.05 && frame > 400 && !nodes.some(function(n){ return n.dragging; })) {
+        // Stop when the picture stops changing, and stop regardless once the
+        // cooling schedule has run out. A graph that has not converged by then
+        // is not going to, and a loop that never yields is worse than a layout
+        // that is slightly tight.
+        var _dragging = nodes.some(function(n){ return n.dragging; });
+        if (!_dragging && ((_moved < 0.05 && frame > 400) || frame >= 900)) {
 
             _raf = null; _settled = true; return;
 

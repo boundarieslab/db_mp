@@ -1162,31 +1162,38 @@ document.addEventListener('DOMContentLoaded', function() {
     // Frame the whole site, not a point. Area_m2 is in the sheet for most
     // facilities, so derive a zoom that fits roughly 2.5x the site's width
     // into the visible half of the map; fall back to 17 when it is missing.
-    function zoomForArea(area, lat) {
-        const a = num(area);
-        if (!Number.isFinite(a) || a <= 0) return 17;
-        const side = Math.sqrt(a) * 2.5;                       // metres to show
+    // Frame the whole site inside the part of the map you can actually see.
+    // The controls on the left and the panel on the right sit on top of the map
+    // rather than shrinking it, so centring on the container put the site under
+    // the panel. fitBounds' padding reserves those two strips, and the site
+    // lands in the middle of what is left.
+    function visiblePadding() {
+        if (window.innerWidth <= 768) return { tl: [20, 20], br: [20, 20] };
+        const search = document.querySelector('.search-box');
+        const left = search ? Math.round(search.getBoundingClientRect().right) : 220;
         const sb = document.getElementById('sidebar');
-        const vis = Math.max(320, window.innerWidth -
-            (sb.classList.contains('active') && window.innerWidth > 768 ? window.innerWidth * 0.30 : 0));
-        const mpp = side / vis;                                // metres per pixel wanted
-        const z = Math.log2(156543.03392 * Math.cos(lat * Math.PI / 180) / mpp);
-        return Math.max(13, Math.min(18, Math.round(z * 2) / 2));
+        const right = sb.classList.contains('active')
+            ? Math.round(sb.getBoundingClientRect().width) : 0;
+        return { tl: [left + 20, 20], br: [right + 20, 50] };   // 50: status strip
+    }
+
+    function siteBounds(lat, lon, area) {
+        const a = num(area);
+        // The site plus a margin of its own size again, so a small reception
+        // yard does not sit edge to edge in the frame.
+        const side = Number.isFinite(a) && a > 0 ? Math.sqrt(a) * 2 : 200;   // metres
+        const dLat = side / 111320 / 2;
+        const dLon = side / (111320 * Math.cos(lat * Math.PI / 180)) / 2;
+        return L.latLngBounds([lat - dLat, lon - dLon], [lat + dLat, lon + dLon]);
     }
 
     function smartZoom(lat, lon, area) {
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-        const z = zoomForArea(area, lat);
-        const sb = document.getElementById('sidebar');
-        if (sb.classList.contains('active') && window.innerWidth > 768) {
-            const offset = window.innerWidth * 0.15;
-            const pt = map.project([lat, lon], z);
-            pt.x -= offset;
-            const target = map.unproject(pt, z);
-            if (reduceMotion) map.setView(target, z); else map.flyTo(target, z, { duration: 1 });
-        } else {
-            if (reduceMotion) map.setView([lat, lon], z); else map.flyTo([lat, lon], z, { duration: 1 });
-        }
+        const pad = visiblePadding();
+        const opts = { paddingTopLeft: pad.tl, paddingBottomRight: pad.br, maxZoom: 19 };
+        const b = siteBounds(lat, lon, area);
+        if (reduceMotion) map.fitBounds(b, opts);
+        else map.flyToBounds(b, Object.assign({ duration: 1 }, opts));
     }
 
     const i18n = {
