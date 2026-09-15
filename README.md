@@ -14,7 +14,7 @@ db_database (Google Sheet, hello@lub.global)
         |
         |  File > Share > Publish to web > CSV, one published URL per tab
         v
-  two published CSVs ---> index.html ---> Leaflet map + sidebar
+  two published CSVs ---> index.html ---> MapLibre map + sidebar
         |                     |
         |                     |-- picto_grammar/*.png   marker icons, by type
         |                     `-- network/*.html        ownership graphs, in an iframe
@@ -24,7 +24,22 @@ db_database (Google Sheet, hello@lub.global)
 ```
 
 Everything is one file. `index.html` carries the markup, the CSS and the whole
-application. Only Leaflet 1.9.4 and PapaParse 5.4.1 are loaded from a CDN.
+application. Only MapLibre GL JS 4.7.1 and PapaParse 5.4.1 are loaded from a CDN.
+
+The map was Leaflet 1.9.4 until September 2026 and was ported to MapLibre GL so
+that terrain can be tilted; the 3D layer itself is not built yet. Two things about
+MapLibre are worth knowing before editing the file:
+
+* **Zoom is counted against 512px tiles.** Every service used here serves 256px
+  tiles, so a source declared `tileSize: 256` is fetched one level deeper than the
+  map's own zoom. Leaflet zoom 10 is MapLibre zoom 9, and every zoom number in
+  `index.html` is MapLibre's. A source's `minzoom` / `maxzoom` stay in tile terms.
+* **A source's `maxzoom` replaces Leaflet's `maxNativeZoom`.** Past it the deepest
+  real tile is stretched rather than requested and 404'd, which is what keeps
+  Kartverket's basemap (nothing above tile zoom 18) on screen at full zoom.
+
+Markers are still plain DOM elements, so the pictogram set is unchanged. The map
+now needs WebGL; a browser without it gets a message rather than a grey rectangle.
 
 ## Repository layout
 

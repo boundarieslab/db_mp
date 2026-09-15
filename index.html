@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dirty Business Map</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
     
     <style>
         :root {
@@ -102,27 +102,24 @@
         .layer-option label { cursor: pointer; text-transform: uppercase; }
 
         /* ZOOM */
-        .leaflet-control-zoom {
-            position: absolute !important;
-            top: 52px !important;
-            left: 220px !important;
-            margin: 0 !important;
-            border: 1px solid #000 !important;
-            border-radius: 0 !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        .maplibregl-ctrl-top-left { top: 52px; left: 220px; }
+        .maplibregl-ctrl-top-left .maplibregl-ctrl-group {
+            margin: 0;
+            background: #fff;
+            border: 1px solid #000;
+            border-radius: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .leaflet-control-zoom a {
-            background: #fff !important;
-            color: #000 !important;
-            border-bottom: 1px solid #ccc !important;
-            font-family: var(--font-stack) !important;
-            font-weight: bold;
-            width: 24px !important;
-            height: 24px !important;
-            line-height: 24px !important;
-            font-size: 14px !important;
+        .maplibregl-ctrl-group button {
+            width: 24px;
+            height: 24px;
+            background: #fff;
+            border-radius: 0;
+            border-bottom: 1px solid #ccc;
         }
-        .leaflet-control-zoom a:last-child { border-bottom: none !important; }
+        .maplibregl-ctrl-group button + button { border-top: none; }
+        .maplibregl-ctrl-group button:last-child { border-bottom: none; }
+        .maplibregl-ctrl-group button:hover { background: #f5f5f5; }
 
         /* LANGUAGE */
         .lang-box { top: 178px; display: flex; }
@@ -302,14 +299,20 @@
         .legend-label { text-transform: lowercase; }
 
         /* SCALE */
-        .leaflet-control-scale { bottom: 10px !important; left: 10px !important; }
-        .leaflet-control-scale-line {
-            border: 1px solid #000 !important;
-            border-top: none !important;
-            background: rgba(255,255,255,0.8) !important;
-            font-family: var(--font-stack) !important;
-            font-size: 8px !important;
-            padding: 2px 4px !important;
+        /* The status strip sits at bottom-left with a z-index above the map's
+           own controls, so a scale bar in that same corner is covered by it.
+           Leaflet's was, for as long as the two have both existed; this one is
+           lifted clear of the strip. */
+        .maplibregl-ctrl-bottom-left { bottom: 34px; left: 10px; }
+        .maplibregl-ctrl-bottom-left .maplibregl-ctrl-scale {
+            margin: 0;
+            border: 1px solid #000;
+            border-top: none;
+            border-radius: 0;
+            background: rgba(255,255,255,0.8);
+            font-family: var(--font-stack);
+            font-size: 8px;
+            padding: 2px 4px;
         }
 
         /* MARKERS - SMALL */
@@ -319,8 +322,12 @@
         .marker-icon { display: flex; align-items: center; justify-content: center;
                        width: 26px; height: 26px; }
         .marker-icon svg { transition: transform 0.2s ease; }
-        .leaflet-marker-icon:hover .marker-icon svg,
-        .leaflet-marker-icon:focus-visible .marker-icon svg { transform: scale(1.8); }
+        .custom-marker { cursor: pointer; }
+        .custom-marker:hover .marker-icon svg,
+        .custom-marker:focus-visible .marker-icon svg { transform: scale(1.8); }
+        /* The dot on the sidebar's aerial view, formerly an L.circleMarker. */
+        .minimap-dot { width: 14px; height: 14px; border-radius: 50%; box-sizing: border-box;
+                       background: #000; border: 2px solid #39FF14; }
 
         /* Keyboard focus was invisible everywhere. */
         :focus-visible { outline: 2px solid #000; outline-offset: 1px; }
@@ -372,15 +379,21 @@
         }
 
         /* POPUP */
-        .leaflet-popup-content-wrapper {
+        .maplibregl-popup-content {
             background: #fff;
             border: 1px solid #000;
             border-radius: 0;
             box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
-            padding: 0;
+            padding: 12px;
+            font-family: var(--font-stack);
+            min-width: 160px;
         }
-        .leaflet-popup-tip { background: #fff; border: 1px solid #000; border-top: none; border-left: none; }
-        .leaflet-popup-content { margin: 12px; font-family: var(--font-stack); min-width: 160px; }
+        /* Leaflet's tip was a white square rotated behind a two-sided border.
+           MapLibre's is a CSS triangle, so it is drawn solid instead. */
+        .maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: #000; }
+        .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: #000; }
+        .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: #000; }
+        .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: #000; }
         .popup-title { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block; }
         .popup-type { font-size: 8px; color: #666; text-transform: uppercase; display: block; }
         .popup-loc { font-size: 8px; color: #666; margin-bottom: 8px; display: block; }
@@ -518,12 +531,13 @@
         .minimap-note.no-coords { background: #f5f5f5; color: #595959; }
         iframe { width: 100%; height: 100%; border: none; }
 
-        .leaflet-control-attribution { font-family: var(--font-stack) !important; font-size: 8px !important; }
+        .maplibregl-ctrl-attrib { font-family: var(--font-stack) !important; font-size: 8px !important; }
+        .maplibregl-ctrl-attrib a { color: #000; }
 
         /* MOBILE */
         @media (max-width: 768px) {
             :root { --sidebar-width: 100vw; --ui-width: 160px; }
-            .leaflet-control-zoom { left: 175px !important; }
+            .maplibregl-ctrl-top-left { left: 175px; }
             .slideshow-container { height: 180px; min-height: 140px; }
             /* A touch-drag inside the iframe is captured by the iframe, so the
                sidebar cannot be scrolled past it. Link out on small screens. */
@@ -752,7 +766,7 @@
 
 <div class="share-notification" id="share-notification">LINK COPIED!</div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <script>
@@ -945,75 +959,130 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSite = null;
     let currentSlideIndex = 0;
     let currentImages = [];
-    let historicalLayer = null;
     let miniMap = null, miniObserver = null;
     let suppressHash = false;
-    let dodTiles = null, dodShapes = null, dodLoading = false;
+    // dodTiles / dodShapes: whether those layers have been built yet.
+    let dodTiles = false, dodShapes = false, dodLoading = false;
     const statusStrip = document.getElementById('status-strip');
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const map = L.map('map', { zoomControl: false, center: [59.91, 10.75], zoom: 10 });
+    // ── MapLibre GL ───────────────────────────────────────────────────────
+    // Ported from Leaflet 1.9.4 so the map can be tilted. Two differences
+    // matter, and both bite if they are forgotten.
+    //
+    // Zoom is counted against 512px tiles. Every service used here serves
+    // 256px tiles, so a source declared tileSize 256 is fetched one level
+    // deeper than the map's own zoom: Leaflet 10 is MapLibre 9. Every zoom
+    // number in this file is MapLibre's; a source's minzoom and maxzoom stay
+    // in tile terms, which is what the tile servers count in.
+    //
+    // A source's maxzoom already does what maxNativeZoom did in Leaflet: past
+    // it the deepest real tile is stretched rather than requested and 404'd.
+    // That is what keeps Kartverket's basemap on screen at full zoom.
+    const MAX_ZOOM = 19;                 // == Leaflet 20
+    const T = 256;
 
-    // Leaflet takes the map's max zoom from its layers, so a layer that reaches
-    // further used to drag the map past what the others could serve and they
-    // simply stopped drawing - the basemap went blank grey. Every layer now
-    // shares MAX_ZOOM and declares how far it really goes with maxNativeZoom,
-    // so past that point Leaflet stretches the last real tile instead.
-    const MAX_ZOOM = 20;
+    const WAYBACK_URL = r => `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${r}/{z}/{y}/{x}`;
 
-    const graytoneLayer = L.tileLayer('https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png', {
-        attribution: '© <a href="https://kartverket.no">Kartverket</a>',
-        maxNativeZoom: 18, maxZoom: MAX_ZOOM        // Kartverket 400s above 18
-    });
-    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© <a href="https://www.esri.com">Esri</a>',
-        maxNativeZoom: 19, maxZoom: MAX_ZOOM
-    });
-    // Its own pane, above the basemap: re-adding a basemap used to paint over
-    // the historical imagery while the timeline still said it was enabled.
-    map.createPane('dodPane');
-    map.getPane('dodPane').style.zIndex = 380;   // above the basemap, below markers
-    map.createPane('dodHitPane');                // invisible click targets
-    map.getPane('dodHitPane').style.zIndex = 385;
+    // Layer order below is draw order, bottom first, and reproduces the pane
+    // z-indexes the Leaflet version set by hand: basemap, terrain shading,
+    // historical imagery, then the DoD raster and its click targets, which are
+    // added on demand further down. Markers are DOM elements and always sit
+    // above all of it.
+    const style = {
+        version: 8,
+        sources: {
+            graytone: {
+                type: 'raster', tileSize: T, maxzoom: 18,   // Kartverket 400s above 18
+                tiles: ['https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png'],
+                attribution: '© <a href="https://kartverket.no">Kartverket</a>'
+            },
+            satellite: {
+                type: 'raster', tileSize: T, maxzoom: 19,
+                tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+                attribution: '© <a href="https://www.esri.com">Esri</a>'
+            },
+            dtm: {
+                type: 'raster', tileSize: T,
+                tiles: ['https://wms.geonorge.no/skwms1/wms.hoyde-dom1_33?service=WMS&version=1.1.1&request=GetMap&layers=DOM1_33_Terrengskygge&styles=&format=image/png&transparent=true&srs=EPSG:3857&width=256&height=256&bbox={bbox-epsg-3857}'],
+                attribution: '© <a href="https://geonorge.no">Geonorge</a>'
+            },
+            historical: {
+                type: 'raster', tileSize: T, maxzoom: 19,
+                tiles: [WAYBACK_URL(WAYBACK_YEARS[0].release)],
+                attribution: '© <a href="https://www.esri.com">Esri</a>'
+            }
+        },
+        layers: [
+            { id: 'graytone',   type: 'raster', source: 'graytone',   layout: { visibility: 'visible' } },
+            { id: 'satellite',  type: 'raster', source: 'satellite',  layout: { visibility: 'none' } },
+            { id: 'dtm',        type: 'raster', source: 'dtm',        layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.5 } },
+            { id: 'historical', type: 'raster', source: 'historical', layout: { visibility: 'none' } }
+        ]
+    };
 
-    map.createPane('historical');
-    map.getPane('historical').style.zIndex = 250;
+    let map;
+    try {
+        map = new maplibregl.Map({
+            container: 'map',
+            style: style,
+            center: [10.75, 59.91],      // lon, lat - the opposite order to Leaflet
+            zoom: 9,                     // == Leaflet 10
+            maxZoom: MAX_ZOOM,
+            attributionControl: false,
+            // Tilt and rotation arrive with the 3D terrain layer. Until then the
+            // map behaves exactly as the Leaflet one did.
+            dragRotate: false,
+            pitchWithRotate: false
+        });
+    } catch (err) {
+        // MapLibre needs WebGL, which Leaflet did not. Say so rather than
+        // leaving a blank grey rectangle.
+        console.error('Map could not start:', err);
+        document.getElementById('map').innerHTML =
+            '<div style="padding:20px;font-size:11px;text-transform:uppercase;line-height:1.6">' +
+            'This map needs WebGL, which this browser does not support or has turned off.</div>';
+        return;
+    }
+    map.touchZoomRotate.disableRotation();
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
+    map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left');
+    map.addControl(new maplibregl.AttributionControl({ compact: false }), 'bottom-right');
 
-    const dtmLayer = L.tileLayer.wms('https://wms.geonorge.no/skwms1/wms.hoyde-dom1_33?', {
-        layers: 'DOM1_33_Terrengskygge', format: 'image/png', transparent: true,
-        attribution: '© <a href="https://geonorge.no">Geonorge</a>', opacity: 0.5,
-        maxZoom: MAX_ZOOM
-    });
-
-    graytoneLayer.addTo(map);
-    L.control.zoom({ position: 'topleft' }).addTo(map);
+    // Nothing may touch a layer or source before the style has loaded, and the
+    // DoD toggle can be clicked before then.
+    let styleReady = false;
+    map.on('load', () => { styleReady = true; });
+    const whenStyle = fn => { styleReady ? fn() : map.once('load', fn); };
+    const setVis = (id, on) => {
+        if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
+    };
 
     // The map runs in an iframe on dirtybusiness.no, where the container can get
-    // its final size after Leaflet has already measured it. Leaflet only
-    // remeasures on a window resize, which that case does not always produce,
-    // and a map holding a stale size loads tiles for the size it thinks it has -
-    // a small square of basemap in the middle of an empty grey page.
+    // its final size after the map has already measured it. A map holding a
+    // stale size loads tiles for the size it thinks it has - a small square of
+    // basemap in the middle of an empty grey page.
     if (window.ResizeObserver) {
         let sizeTimer = null;
         new ResizeObserver(() => {
             clearTimeout(sizeTimer);
-            sizeTimer = setTimeout(() => map.invalidateSize({ debounceMoveend: true }), 120);
+            sizeTimer = setTimeout(() => map.resize(), 120);
         }).observe(document.getElementById('map'));
     }
-    L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(map);
 
-    // Basemap switching
+    // Basemap switching. Both are in the style from the start and only their
+    // visibility changes; swapping the source would tear down and refetch every
+    // tile on each toggle.
     document.querySelectorAll('input[name="basemap"]').forEach(r => {
         r.addEventListener('change', e => {
-            map.removeLayer(graytoneLayer);
-            map.removeLayer(satelliteLayer);
-            (e.target.value === 'graytone' ? graytoneLayer : satelliteLayer).addTo(map);
+            setVis('graytone', e.target.value === 'graytone');
+            setVis('satellite', e.target.value !== 'graytone');
         });
     });
 
     // DTM toggle
     document.getElementById('overlay-dtm').addEventListener('change', e => {
-        e.target.checked ? dtmLayer.addTo(map) : map.removeLayer(dtmLayer);
+        setVis('dtm', e.target.checked);
     });
 
     // Timeline
@@ -1023,21 +1092,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateHistoricalLayer(index) {
         const wb = WAYBACK_YEARS[index];
-        const url = `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${wb.release}/{z}/{y}/{x}`;
-        // setUrl on one layer, rather than destroy-and-rebuild: dragging the
+        const src = map.getSource('historical');
+        if (!src) return;
+        // setTiles on one source, rather than destroy-and-rebuild: dragging the
         // slider used to instantiate all nine layers and request a full screen
         // of tiles for every year scrubbed past.
-        if (historicalLayer) historicalLayer.setUrl(url);
-        else historicalLayer = L.tileLayer(url, { maxNativeZoom: 19, maxZoom: MAX_ZOOM, pane: 'historical' }).addTo(map);
+        src.setTiles([WAYBACK_URL(wb.release)]);
+        setVis('historical', true);
         document.getElementById('timeline-year').textContent = wb.year;
         timelineSlider.setAttribute('aria-valuetext', wb.year);
     }
 
     timelineEnabled.addEventListener('change', e => {
         timelineSlider.disabled = !e.target.checked;
-        if (e.target.checked) updateHistoricalLayer(parseInt(timelineSlider.value));
+        if (e.target.checked) whenStyle(() => updateHistoricalLayer(parseInt(timelineSlider.value)));
         else {
-            if (historicalLayer) { map.removeLayer(historicalLayer); historicalLayer = null; }
+            setVis('historical', false);
             timelineYear.textContent = '—';
         }
     });
@@ -1125,7 +1195,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderMarkers(data) {
-        allMarkers.forEach(m => map.removeLayer(m));
+        allMarkers.forEach(m => m.remove());
         allMarkers = [];
         
         data.forEach(site => {
@@ -1135,21 +1205,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const info = getMarkerInfo(site);
             const svg = info.category === 'project' ? createProjectMarker(info.direction) : createFacilityMarker(info.direction);
             
-            const icon = L.divIcon({
-                className: 'custom-marker',
-                html: `<div class="marker-icon">${svg}</div>`,
-                iconSize: [14, 14],
-                iconAnchor: [7, 7],
-                popupAnchor: [0, -7]
-            });
+            // A plain DOM element, so the pictogram set and its hover
+            // behaviour are unchanged from the Leaflet version.
+            const el = document.createElement('div');
+            el.className = 'custom-marker';
+            el.innerHTML = `<div class="marker-icon">${svg}</div>`;
+            el.tabIndex = 0;
 
-            const m = L.marker([lat, lon], { icon });
+            const m = new maplibregl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([lon, lat])
+                .addTo(map);
             m.siteData = site;
             m.markerCategory = info.category;
             m.markerDirection = info.direction;
-            m.addTo(map);
             allMarkers.push(m);
-            
+
             // Built as a node, not an id string: UIDs come from the sheet and
             // are neither guaranteed unique nor guaranteed free of quotes.
             const pop = document.createElement('div');
@@ -1158,14 +1228,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span class="popup-type">${esc(site.Type || '')}</span>
                 <span class="popup-loc">${esc(site.Municipality || '')}</span>
                 <a class="popup-link" href="#site=${encodeURIComponent(site.UID || site.fid || '')}">${t('details')}</a>`;
+            const popup = new maplibregl.Popup({ closeButton: false, offset: 12, maxWidth: '280px' })
+                .setDOMContent(pop);
             pop.querySelector('.popup-link').addEventListener('click', e => {
                 e.preventDefault();
                 currentSite = site;
                 openSidebar(site);
-                map.closePopup();
+                popup.remove();
                 smartZoom(lat, lon, site.Area_m2);
             });
-            m.bindPopup(pop, { minWidth: 160 });
+            m.setPopup(popup);
         });
         applyFilters();
     }
@@ -1179,13 +1251,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // the panel. fitBounds' padding reserves those two strips, and the site
     // lands in the middle of what is left.
     function visiblePadding() {
-        if (window.innerWidth <= 768) return { tl: [20, 20], br: [20, 20] };
+        if (window.innerWidth <= 768) return { top: 20, bottom: 20, left: 20, right: 20 };
         const search = document.querySelector('.search-box');
         const left = search ? Math.round(search.getBoundingClientRect().right) : 220;
         const sb = document.getElementById('sidebar');
         const right = sb.classList.contains('active')
             ? Math.round(sb.getBoundingClientRect().width) : 0;
-        return { tl: [left + 20, 20], br: [right + 20, 50] };   // 50: status strip
+        // Leaflet quietly coped with padding wider than the map; MapLibre throws.
+        const box = map.getContainer();
+        const fit = (a, b, total) => (a + b < total - 40) ? [a, b] : [20, 20];
+        const lr = fit(left + 20, right + 20, box.clientWidth);
+        const tb = fit(20, 50, box.clientHeight);          // 50: status strip
+        return { left: lr[0], right: lr[1], top: tb[0], bottom: tb[1] };
     }
 
     function siteBounds(lat, lon, area) {
@@ -1195,16 +1272,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const side = Number.isFinite(a) && a > 0 ? Math.sqrt(a) * 2 : 200;   // metres
         const dLat = side / 111320 / 2;
         const dLon = side / (111320 * Math.cos(lat * Math.PI / 180)) / 2;
-        return L.latLngBounds([lat - dLat, lon - dLon], [lat + dLat, lon + dLon]);
+        return new maplibregl.LngLatBounds([lon - dLon, lat - dLat], [lon + dLon, lat + dLat]);
     }
 
     function smartZoom(lat, lon, area) {
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-        const pad = visiblePadding();
-        const opts = { paddingTopLeft: pad.tl, paddingBottomRight: pad.br, maxZoom: 19 };
-        const b = siteBounds(lat, lon, area);
-        if (reduceMotion) map.fitBounds(b, opts);
-        else map.flyToBounds(b, Object.assign({ duration: 1 }, opts));
+        map.fitBounds(siteBounds(lat, lon, area), {
+            padding: visiblePadding(),
+            maxZoom: 18,                                   // == Leaflet 19
+            duration: reduceMotion ? 0 : 1000
+        });
     }
 
     const i18n = {
@@ -1332,15 +1409,24 @@ document.addEventListener('DOMContentLoaded', function() {
         if (miniObserver) { miniObserver.disconnect(); miniObserver = null; }
         if (miniMap) { miniMap.remove(); miniMap = null; }
         if (currentImages.length === 0 && hasCoords) {
-            miniMap = L.map('sb-minimap', {
-                zoomControl: false, attributionControl: false, dragging: false,
-                scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false,
-                keyboard: false, touchZoom: false
-            }).setView([lat, lon], 16);
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(miniMap);
-            L.circleMarker([lat, lon], {
-                radius: 7, color: '#39FF14', weight: 2, fillColor: '#000', fillOpacity: 1
-            }).addTo(miniMap);
+            miniMap = new maplibregl.Map({
+                container: 'sb-minimap',
+                style: {
+                    version: 8,
+                    sources: { sat: {
+                        type: 'raster', tileSize: 256, maxzoom: 19,
+                        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}']
+                    } },
+                    layers: [{ id: 'sat', type: 'raster', source: 'sat' }]
+                },
+                center: [lon, lat],
+                zoom: 15,                    // == Leaflet 16
+                interactive: false,
+                attributionControl: false
+            });
+            const dot = document.createElement('div');
+            dot.className = 'minimap-dot';
+            new maplibregl.Marker({ element: dot, anchor: 'center' }).setLngLat([lon, lat]).addTo(miniMap);
             const note = document.createElement('div');
             note.className = 'minimap-note';
             note.textContent = t('aerial');
@@ -1349,10 +1435,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // slide; inside the iframe it fired early and the aerial came up
             // blank. Watch the box instead and remeasure whenever it changes.
             if (window.ResizeObserver) {
-                miniObserver = new ResizeObserver(() => miniMap && miniMap.invalidateSize());
+                miniObserver = new ResizeObserver(() => miniMap && miniMap.resize());
                 miniObserver.observe(document.getElementById('sb-minimap'));
             } else {
-                setTimeout(() => miniMap && miniMap.invalidateSize(), 60);
+                setTimeout(() => miniMap && miniMap.resize(), 60);
             }
         }
 
@@ -1375,7 +1461,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.title = 'Dirty Business Map';
         suppressHash = true;
         window.location.hash = '';
-        map.invalidateSize();
+        map.resize();
     };
 
     document.addEventListener('keydown', e => {
@@ -1414,71 +1500,88 @@ document.addEventListener('DOMContentLoaded', function() {
     // area / volume / mean-Δh figures the raster cannot.
     const DOD_TILES = 'data/dod/gjerdrum_2007_2020/{z}/{x}/{y}.png';
     const DOD_GEOJSON = 'data/dod_gjerdrum_2007_2020.geojson';
-    const DOD_BOUNDS = L.latLngBounds([60.02233, 10.95226], [60.13268, 11.13133]);
+    const DOD_BOUNDS = [10.95226, 60.02233, 11.13133, 60.13268];   // w, s, e, n
 
-    function dodPopup(f, layer) {
-        const p = f.properties;
+    function dodPopupHTML(p) {
         const deposit = p.v > 0;
         const kind = currentLang === 'no' ? (deposit ? 'Deponert' : 'Utgravd')
                                           : (deposit ? 'Deposit' : 'Excavation');
         const n = v => Number.isFinite(+v) ? Math.round(Math.abs(+v)).toLocaleString('en-US') : '?';
-        layer.bindPopup(
-            `<span class="popup-title">${kind}</span>` +
-            `<span class="popup-type">${n(p.a)} m² · ${n(p.v)} m³</span>` +
-            `<span class="popup-loc">${t('dh')}: ${esc(p.dh)} m${p.np ? ' · ' + t('noplan') : ''}</span>`,
-            { minWidth: 150 });
+        return `<span class="popup-title">${kind}</span>` +
+               `<span class="popup-type">${n(p.a)} m² · ${n(p.v)} m³</span>` +
+               `<span class="popup-loc">${t('dh')}: ${esc(p.dh)} m${p.np ? ' · ' + t('noplan') : ''}</span>`;
     }
 
+    // dodTiles and dodShapes are now flags rather than layer handles: the
+    // layers live in the style once added, and toggling only changes them
+    // between visible and none.
     function toggleDod(on) {
         const wrap = document.getElementById('dod-opacity-wrap');
         if (!on) {
-            if (dodTiles) map.removeLayer(dodTiles);
-            if (dodShapes) map.removeLayer(dodShapes);
+            setVis('dod', false);
+            setVis('dod-hit', false);
             wrap.hidden = true;
             return;
         }
         wrap.hidden = false;
         if (dodTiles) {
-            dodTiles.addTo(map);
-            if (dodShapes) dodShapes.addTo(map);
-            map.fitBounds(DOD_BOUNDS, { padding: [30, 30] });
+            setVis('dod', true);
+            if (dodShapes) setVis('dod-hit', true);
+            map.fitBounds(DOD_BOUNDS, { padding: 30, duration: reduceMotion ? 0 : 1000 });
             return;
         }
         if (dodLoading) return;
         dodLoading = true;
         updateStatus(t('loading'));
 
-        dodTiles = L.tileLayer(DOD_TILES, {
-            minZoom: 11, maxNativeZoom: 16, maxZoom: MAX_ZOOM,
-            bounds: DOD_BOUNDS, tms: false, pane: 'dodPane',
-            opacity: document.getElementById('dod-opacity').value / 100,
-            // Tiles with no change in them are not generated, so a 404 inside the
-            // bounds is the normal case, not a failure.
-            errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
-            attribution: 'DoD: Kartverket DTM1 2007/2020 · LUB'
-        }).addTo(map);
-        map.fitBounds(DOD_BOUNDS, { padding: [30, 30] });
+        whenStyle(() => {
+            // Tiles with no change in them are never generated, so a 404 inside
+            // the bounds is the normal case; MapLibre simply draws nothing,
+            // which is what Leaflet needed a transparent errorTileUrl for.
+            map.addSource('dod', {
+                type: 'raster', tiles: [DOD_TILES], tileSize: 256,
+                minzoom: 11, maxzoom: 16, bounds: DOD_BOUNDS,
+                attribution: 'DoD: Kartverket DTM1 2007/2020 · LUB'
+            });
+            map.addLayer({
+                id: 'dod', type: 'raster', source: 'dod',
+                paint: { 'raster-opacity': document.getElementById('dod-opacity').value / 100 }
+            });
+            dodTiles = true;
+            map.fitBounds(DOD_BOUNDS, { padding: 30, duration: reduceMotion ? 0 : 1000 });
 
-        // Hit targets only: fillOpacity 0.01 keeps them clickable while leaving
-        // the raster's colour untouched.
-        fetch(DOD_GEOJSON).then(r => r.json()).then(gj => {
-            dodShapes = L.geoJSON(gj, {
-                pane: 'dodHitPane',
-                style: { stroke: false, fill: true, fillOpacity: 0.01, fillColor: '#fff' },
-                onEachFeature: dodPopup
-            }).addTo(map);
-            dodLoading = false;
-            updateStatus();
-        }).catch(err => {
-            console.error('DoD polygons failed:', err);   // tiles still show
-            dodLoading = false;
-            updateStatus();
+            // Hit targets only: 0.01 opacity keeps them clickable while leaving
+            // the raster's colour untouched. Fetched here rather than handed to
+            // the source as a URL so a failure can be reported in the strip.
+            fetch(DOD_GEOJSON).then(r => r.json()).then(gj => {
+                map.addSource('dod-hit', { type: 'geojson', data: gj });
+                map.addLayer({
+                    id: 'dod-hit', type: 'fill', source: 'dod-hit',
+                    paint: { 'fill-color': '#fff', 'fill-opacity': 0.01 }
+                });
+                map.on('click', 'dod-hit', e => {
+                    if (!e.features || !e.features.length) return;
+                    new maplibregl.Popup({ closeButton: false, maxWidth: '260px' })
+                        .setLngLat(e.lngLat)
+                        .setHTML(dodPopupHTML(e.features[0].properties))
+                        .addTo(map);
+                });
+                map.on('mouseenter', 'dod-hit', () => { map.getCanvas().style.cursor = 'pointer'; });
+                map.on('mouseleave', 'dod-hit', () => { map.getCanvas().style.cursor = ''; });
+                dodShapes = true;
+                dodLoading = false;
+                updateStatus();
+            }).catch(err => {
+                console.error('DoD polygons failed:', err);   // tiles still show
+                dodLoading = false;
+                updateStatus();
+            });
         });
     }
 
     document.getElementById('filter-dod').addEventListener('change', e => toggleDod(e.target.checked));
     document.getElementById('dod-opacity').addEventListener('input', e => {
-        if (dodTiles) dodTiles.setOpacity(e.target.value / 100);
+        if (dodTiles) map.setPaintProperty('dod', 'raster-opacity', e.target.value / 100);
     });
 
     // FILTERS with subcategories
@@ -1493,16 +1596,17 @@ document.addEventListener('DOMContentLoaded', function() {
             let show = false;
             if (m.markerCategory === 'project' && showProjects && projectSubs.includes(m.markerDirection)) show = true;
             if (m.markerCategory === 'facility' && showFacilities && facilitySubs.includes(m.markerDirection)) show = true;
-            
-            m.setOpacity(show ? 1 : 0);
+
             m.__visible = show;
             const el = m.getElement();
             if (el) {
+                el.style.opacity = show ? '1' : '0';
                 el.style.pointerEvents = show ? 'auto' : 'none';
                 el.tabIndex = show ? 0 : -1;              // hidden markers left
                 el.setAttribute('aria-hidden', String(!show));  // in the tab order
             }
-            if (!show && m.isPopupOpen && m.isPopupOpen()) m.closePopup();
+            const pu = m.getPopup();
+            if (!show && pu && pu.isOpen()) pu.remove();
         });
 
         // Keep the parent checkbox honest about its children.
@@ -1554,7 +1658,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('[data-en]').forEach(el => el.innerText = el.getAttribute(`data-${lang}`));
         if (currentSite) openSidebar(currentSite);
         renderMarkers(allSites);   // popups carry translated text
-        if (dodShapes) dodShapes.eachLayer(l => dodPopup(l.feature, l));
+        // DoD popups are built at click time, so they pick up the language
+        // themselves and nothing has to be rebuilt here.
         updateStatus();
     }
     btnEn.onclick = () => setLanguage('en');
@@ -1663,7 +1768,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (allMarkers.length) {
             // Fit to the data. At zoom 10 over Oslo a reader in Telemark or
             // Innlandet had no way to know there was anything near them.
-            map.fitBounds(L.featureGroup(allMarkers).getBounds(), { padding: [50, 50], maxZoom: 11 });
+            const b = new maplibregl.LngLatBounds();
+            allMarkers.forEach(m => b.extend(m.getLngLat()));
+            map.fitBounds(b, { padding: 50, maxZoom: 10, duration: 0 });   // == Leaflet 11
         }
       })
       .catch(err => {
