@@ -128,6 +128,9 @@ button,input,select{font:inherit;color:inherit}
 .lrow .slider{flex:0 0 150px;width:150px}
 .lrow .val{font-family:PlexMono,monospace;font-size:10px;min-width:34px}
 .legend-row{display:flex;align-items:center;gap:7px;height:17px}
+.legend-row[data-toggle]{cursor:pointer}
+.legend-row[data-toggle]:hover{background:#fafafa}
+.legend-row.off{opacity:.38}
 .legend-symbol{width:14px;height:14px;display:flex;align-items:center;justify-content:center;flex:0 0 14px}
 .legend-label{flex:1 1 auto}
 .legend-count{margin-left:auto;color:var(--sub);font-family:PlexMono,monospace;font-size:10px}
@@ -233,9 +236,13 @@ iframe{border:0}
 .no-data{padding:7px 12px;color:var(--sub)}
 
 /* ---------- deck: the database as a table ---------- */
-#deck{flex:0 0 200px;transition:none;display:flex;flex-direction:column;overflow:hidden;
-  border-bottom:.5px solid var(--frame);background:#fff}
-.deck-head{height:var(--row);flex:0 0 var(--row);display:flex;align-items:center;gap:14px;
+#deck{flex:0 0 25px;display:flex;flex-direction:column;overflow:hidden;
+  border-top:.5px solid var(--frame);background:#fff}
+#deck.half{flex-basis:240px}
+#deck.full{position:absolute;left:0;right:0;top:0;bottom:24px;z-index:60;flex-basis:auto;
+  border-top:0}
+#deck:not(.half):not(.full) .deck-scroll{display:none}
+.deck-head{height:var(--row);flex:0 0 var(--row);display:flex;align-items:center;gap:14px;cursor:pointer;
   padding:0 var(--gut);border-bottom:.5px solid var(--frame);
   letter-spacing:.06em;font-weight:500;font-size:10px}
 .deck-head .count{color:var(--sub);font-weight:400;letter-spacing:0;font-family:PlexMono,monospace}
@@ -243,8 +250,6 @@ iframe{border:0}
 .deck-head .actions button{background:none;border:0;color:var(--sub);cursor:pointer;padding:0}
 .deck-head .actions button:hover{color:#000}
 .deck-scroll{flex:1 1 auto;min-height:0;overflow-y:auto}
-#deck.folded{flex-basis:25px}
-#deck.folded .deck-scroll{display:none}
 #site-table{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed}
 #site-table th{height:var(--row);text-align:left;font-weight:400;color:var(--sub);
   padding:0 var(--gut);line-height:24px;border-bottom:.5px solid var(--frame);
@@ -317,12 +322,12 @@ iframe{border:0}
                 <div class="ds"><label class="ds-row" for="base-gray">
                     <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#f4f4f4"/><g stroke="#b6b6b6" stroke-width=".7" fill="none"><path d="M0 13 q7 -5 11 -2 t15 -3"/><path d="M0 6 q8 -4 14 1 t12 -2"/><line x1="9" y1="0" x2="12" y2="19"/></g></svg></span>
                     <span class="nm"><b data-en="Kartverket graytone" data-no="Kartverket gråtone">Kartverket graytone</b><span class="src">Statens Kartverk, Geovekst</span></span>
-                    <input type="radio" name="basemap" id="base-gray" value="graytone" checked></label></div>
+                    <input type="radio" name="basemap" id="base-gray" value="graytone"></label></div>
 
                 <div class="ds"><label class="ds-row" for="base-sat">
                     <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#3f4a33"/><g fill="#5d6b46"><circle cx="6" cy="6" r="4"/><circle cx="18" cy="12" r="5.5"/><circle cx="23" cy="4" r="3"/></g><path d="M0 15 q8 -3 14 1 t12 -1" stroke="#8a8a72" stroke-width="1.3" fill="none"/></svg></span>
                     <span class="nm"><b data-en="Esri satellite" data-no="Esri satellitt">Esri satellite</b><span class="src">Esri World Imagery</span></span>
-                    <input type="radio" name="basemap" id="base-sat" value="satellite"></label></div>
+                    <input type="radio" name="basemap" id="base-sat" value="satellite" checked></label></div>
 
                 <div class="ds"><label class="ds-row" for="overlay-dtm">
                     <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#eaeaea"/><g stroke="#7d7d7d" stroke-width=".7" fill="none"><ellipse cx="13" cy="9.5" rx="10" ry="6.5"/><ellipse cx="13" cy="9.5" rx="6.5" ry="4.2"/><ellipse cx="13" cy="9.5" rx="3" ry="1.9"/></g></svg></span>
@@ -420,14 +425,18 @@ iframe{border:0}
         <button type="button" class="btn txt" id="btn-en" aria-pressed="true">EN</button>
         <button type="button" class="btn txt" id="btn-no" aria-pressed="false">NO</button>
         <button type="button" class="btn txt filter-toggle" onclick="toggleFilter()" aria-expanded="true"
-                aria-controls="filter-panel" title="Show or hide the legend"
+                aria-controls="filter-panel" aria-expanded="false" title="Show or hide the legend"
                 data-en="LEGEND" data-no="TEGNFORKLARING">LEGEND</button>
+        <button type="button" class="btn txt" id="btn-3d" aria-pressed="false"
+                title="Terrain in three dimensions">3D</button>
+        <button type="button" class="btn txt" id="btn-flat" title="Look straight down again"
+                data-en="RESET" data-no="NULLSTILL">RESET</button>
         <button type="button" class="btn txt" onclick="shareLink()" title="Copy a link to this view"
                 data-en="SHARE" data-no="DEL">SHARE</button>
     </div>
 
     <!-- LEGEND, docked inside the tools window -->
-    <div class="pane open" id="filter-panel">
+    <div class="pane" id="filter-panel">
         <div class="pane-title" data-en="LEGEND" data-no="TEGNFORKLARING">LEGEND</div>
         <div class="legend-cols">
             <div class="legend-left">
@@ -440,9 +449,9 @@ iframe{border:0}
                 </div>
             </div>
             <div class="legend-right">
-                <div class="legend-row"><span class="legend-symbol"><svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#fff" stroke="#39FF14" stroke-width="1.5"/><path d="M1,8 A7,7 0 0,1 15,8 Z" fill="#000"/></svg></span><span class="legend-label" data-en="Reception site" data-no="Mottaksanlegg">Reception site</span><span class="legend-count" id="legend-count-fac"></span></div>
-                <div class="legend-row"><span class="legend-symbol"><svg width="14" height="14" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/><polygon points="1,15 15,15 1,1" fill="#000"/></svg></span><span class="legend-label" data-en="Construction project" data-no="Byggeprosjekt">Construction project</span><span class="legend-count" id="legend-count-proj"></span></div>
-                <div class="legend-row"><span class="sw" style="background:linear-gradient(135deg,#4675ed,#61fc6c,#f3c63a,#d93806);border-color:rgba(0,0,0,.4)"></span><span class="legend-label" data-en="DoD polygon" data-no="DoD-polygon">DoD polygon</span><span class="legend-count">1 318</span></div>
+                <div class="legend-row" data-toggle="filter-facilities"><span class="legend-symbol"><svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#fff" stroke="#39FF14" stroke-width="1.5"/><path d="M1,8 A7,7 0 0,1 15,8 Z" fill="#000"/></svg></span><span class="legend-label" data-en="Reception site" data-no="Mottaksanlegg">Reception site</span><span class="legend-count" id="legend-count-fac"></span></div>
+                <div class="legend-row" data-toggle="filter-projects"><span class="legend-symbol"><svg width="14" height="14" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/><polygon points="1,15 15,15 1,1" fill="#000"/></svg></span><span class="legend-label" data-en="Construction project" data-no="Byggeprosjekt">Construction project</span><span class="legend-count" id="legend-count-proj"></span></div>
+                <div class="legend-row" data-toggle="filter-dod"><span class="sw" style="background:linear-gradient(135deg,#4675ed,#61fc6c,#f3c63a,#d93806);border-color:rgba(0,0,0,.4)"></span><span class="legend-label" data-en="DoD polygon" data-no="DoD-polygon">DoD polygon</span><span class="legend-count">1 318</span></div>
                 <div class="legend-sep"></div>
                 <div class="legend-row"><span class="sw" style="border-color:#d93806;background:#fdece7"></span><span class="legend-label" data-en="No plan on record" data-no="Ingen plan registrert">No plan on record</span><span class="legend-count">1 045</span></div>
                 <div class="legend-row"><span class="sw" style="border-color:var(--rule);background:#f6f6f6"></span><span class="legend-label" data-en="Plan in force 2007–2020" data-no="Plan gjeldende 2007–2020">Plan in force 2007–2020</span><span class="legend-count">198</span></div>
@@ -473,12 +482,13 @@ iframe{border:0}
 <!-- ============================== DECK ============================== -->
 <div id="deck">
     <div class="deck-head">
-        <span data-en="RECEPTION SITES" data-no="MOTTAKSANLEGG">RECEPTION SITES</span>
+        <span id="deck-title" data-en="RECEPTION SITES" data-no="MOTTAKSANLEGG">RECEPTION SITES</span>
         <span class="count" id="deck-count"></span>
         <span class="actions">
-            <button type="button" id="deck-fold" data-en="fold" data-no="skjul">fold</button>
-            <button type="button" id="deck-scope" data-en="all categories" data-no="alle kategorier">all categories</button>
+            <button type="button" id="deck-scope" data-en="reception sites" data-no="mottaksanlegg">reception sites</button>
+            <button type="button" id="deck-status" data-en="all status" data-no="all status">all status</button>
             <button type="button" id="deck-csv">csv</button>
+            <button type="button" id="deck-size" title="Half screen / whole page / closed">▲</button>
         </span>
     </div>
     <div class="deck-scroll">
@@ -1068,7 +1078,17 @@ document.addEventListener('DOMContentLoaded', function() {
         records: { en: "records", no: "poster" },
         aerialshort: { en: "aerial", no: "flyfoto" },
         dtm1: { en: "1 m LiDAR (this run)", no: "1 m LiDAR (denne kjøringen)" },
-        dtm10: { en: "10 m national, Kartverket", no: "10 m nasjonal, Kartverket" }
+        dtm10: { en: "10 m national, Kartverket", no: "10 m nasjonal, Kartverket" },
+        recep: { en: "RECEPTION SITES", no: "MOTTAKSANLEGG" },
+        projects: { en: "CONSTRUCTION PROJECTS", no: "BYGGEPROSJEKTER" },
+        allrec: { en: "ALL RECORDS", no: "ALLE POSTER" },
+        sc_facility: { en: "reception sites", no: "mottaksanlegg" },
+        sc_project: { en: "construction projects", no: "byggeprosjekter" },
+        sc_all: { en: "all categories", no: "alle kategorier" },
+        st2_all: { en: "all status", no: "all status" },
+        st2_active: { en: "active", no: "aktiv" },
+        st2_closed: { en: "closed", no: "lukket" },
+        st2_planned: { en: "planned", no: "planlagt" }
     };
     const t = k => i18n[k] ? i18n[k][currentLang] : k;
 
@@ -1534,8 +1554,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const deckHeadRow= document.querySelector('#site-table thead tr');
     const deckCount  = document.getElementById('deck-count');
     const hoverCard  = document.getElementById('hover-card');
-    let deckScope = 'facility';            // 'facility' | 'all'
-    let deckSort  = { key: 'TotalCapacity', dir: -1 };
+    let deckScope  = 'facility';           // 'facility' | 'project' | 'all'
+    let deckStatus = 'all';                // 'all' | 'active' | 'closed' | 'planned'
+    let deckSize   = 'closed';             // 'closed' | 'half' | 'full'
+    let deckSort   = { key: 'TotalCapacity', dir: -1 };
+
+    // Three words do most of the work in this column, and they are written a
+    // dozen ways between Norwegian and English, so classify rather than match.
+    function statusClass(s) {
+        const v = String(s || '').toLowerCase();
+        if (/\b(planned|planlagt|proposed|foresl|future|framtid|fremtid|under bygging|hearing|søknad|soknad)/.test(v)) return 'planned';
+        if (/\b(inactive|inaktiv|closed|lukket|nedlagt|historical|historisk|avsluttet|ferdig|complete)/.test(v)) return 'closed';
+        if (/\b(active|aktiv|operating|drift|open)/.test(v)) return 'active';
+        return v ? 'closed' : 'unknown';
+    }
 
     const COLS = [
         { key:'UID',          en:'UID',        no:'UID',      w:'112px', cls:'uid',
@@ -1561,7 +1593,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function fmt(v){ return Number.isFinite(v) ? String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,' ') : ''; }
 
     function deckRows(){
-        const rows = allSites.filter(s => deckScope === 'all' || s.__cat === 'facility');
+        const rows = allSites.filter(s =>
+            (deckScope === 'all' || s.__cat === (deckScope === 'project' ? 'project' : 'facility')) &&
+            (deckStatus === 'all' || statusClass(s.Status) === deckStatus));
         const k = deckSort.key, d = deckSort.dir;
         const col = COLS.find(c => c.key === k);
         return rows.sort((a,b) => {
@@ -1629,7 +1663,26 @@ document.addEventListener('DOMContentLoaded', function() {
             deckBody.appendChild(tr);
         });
         deckCount.textContent = rows.length + ' ' + t('records');
+        const title = document.getElementById('deck-title');
+        const key = deckScope === 'project' ? 'projects' : deckScope === 'all' ? 'allrec' : 'recep';
+        title.setAttribute('data-en', t2(key, 'en')); title.setAttribute('data-no', t2(key, 'no'));
+        title.textContent = t2(key, currentLang);
         markDeckSelection();
+    }
+    const t2 = (k, lang) => (i18n[k] ? i18n[k][lang] : k);
+
+    function setDeckSize(next){
+        deckSize = next;
+        const d = document.getElementById('deck');
+        d.classList.toggle('half', next === 'half');
+        d.classList.toggle('full', next === 'full');
+        document.getElementById('deck-size').textContent = next === 'full' ? '▼' : next === 'half' ? '▲' : '▲';
+        if (next !== 'closed' && !deckBody.children.length) renderDeck();
+        setTimeout(() => map.resize(), 30);
+    }
+    function openDeck(scope){
+        if (scope && scope !== deckScope) { deckScope = scope; renderDeck(); }
+        if (deckSize === 'closed') setDeckSize('half');
     }
 
     function markDeckSelection(){
@@ -1682,14 +1735,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function hideHover(){ hoverCard.classList.remove('on'); lightMarker(null); }
 
-    document.getElementById('deck-scope').onclick = () => {
-        deckScope = deckScope === 'facility' ? 'all' : 'facility';
-        const b = document.getElementById('deck-scope');
-        b.setAttribute('data-en', deckScope === 'all' ? 'reception sites only' : 'all categories');
-        b.setAttribute('data-no', deckScope === 'all' ? 'kun mottaksanlegg' : 'alle kategorier');
-        b.textContent = b.getAttribute('data-' + currentLang);
-        renderDeck();
+    const SCOPES = ['facility', 'project', 'all'];
+    const STATUSES = ['all', 'active', 'closed', 'planned'];
+    function cycleButton(id, list, get, set, keyFor){
+        const b = document.getElementById(id);
+        const paint = () => {
+            const k = keyFor(get());
+            b.setAttribute('data-en', t2(k, 'en')); b.setAttribute('data-no', t2(k, 'no'));
+            b.textContent = t2(k, currentLang);
+        };
+        b.onclick = e => {
+            e.stopPropagation();
+            set(list[(list.indexOf(get()) + 1) % list.length]);
+            paint(); renderDeck();
+        };
+        paint();
+    }
+    cycleButton('deck-scope', SCOPES, () => deckScope, v => deckScope = v, v => 'sc_' + v);
+    cycleButton('deck-status', STATUSES, () => deckStatus, v => deckStatus = v, v => 'st2_' + v);
+    document.getElementById('deck-size').onclick = e => {
+        e.stopPropagation();
+        setDeckSize(deckSize === 'closed' ? 'half' : deckSize === 'half' ? 'full' : 'closed');
     };
+    document.querySelector('.deck-head').onclick = () => { if (deckSize === 'closed') setDeckSize('half'); };
+    // The layer rows are the way into the table: touch Reception sites and the
+    // table opens showing exactly those.
+    document.querySelector('label[for="filter-facilities"]').addEventListener('click', () => openDeck('facility'));
+    document.querySelector('label[for="filter-projects"]').addEventListener('click', () => openDeck('project'));
     document.getElementById('deck-csv').onclick = () => {
         const rows = deckRows();
         const head = COLS.map(c => c.en).join(',');
@@ -1704,6 +1776,29 @@ document.addEventListener('DOMContentLoaded', function() {
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     };
+
+    /* A legend that only labels is decoration. These switch their layer, and
+       show the state they are in. */
+    function syncLegendRows(){
+        document.querySelectorAll('.legend-row[data-toggle]').forEach(r => {
+            const box = document.getElementById(r.dataset.toggle);
+            r.classList.toggle('off', !!box && !box.checked);
+        });
+    }
+    document.querySelectorAll('.legend-row[data-toggle]').forEach(r => {
+        r.addEventListener('click', () => {
+            const box = document.getElementById(r.dataset.toggle);
+            if (!box) return;
+            box.checked = !box.checked;
+            box.dispatchEvent(new Event('change', { bubbles: true }));
+            syncLegendRows();
+        });
+    });
+    ['filter-facilities', 'filter-projects', 'filter-dod'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.addEventListener('change', syncLegendRows);
+    });
+    syncLegendRows();
 
     /* Layer groups fold. */
     document.querySelectorAll('.grp-head').forEach(h => {
@@ -1755,19 +1850,11 @@ document.addEventListener('DOMContentLoaded', function() {
     makeDraggable(document.getElementById('tools-win'),  document.querySelector('#tools-win .strip'));
     makeDraggable(document.getElementById('sidebar'),    document.querySelector('#sidebar .sb-header'));
 
+    // Fold to the four group headings and nothing else, then back.
     document.getElementById('btn-menu').onclick = () => {
-        const w = document.getElementById('layers-win');
-        w.classList.toggle('folded');
-        map.resize();
-    };
-    document.getElementById('deck-fold').onclick = () => {
-        const d = document.getElementById('deck'), b = document.getElementById('deck-fold');
-        d.classList.toggle('folded');
-        const folded = d.classList.contains('folded');
-        b.setAttribute('data-en', folded ? 'show' : 'fold');
-        b.setAttribute('data-no', folded ? 'vis'  : 'skjul');
-        b.textContent = b.getAttribute('data-' + currentLang);
-        setTimeout(() => map.resize(), 0);
+        const grps = [...document.querySelectorAll('#layers-win .grp.top')];
+        const anyOpen = grps.some(g => !g.classList.contains('closed'));
+        grps.forEach(g => g.classList.toggle('closed', anyOpen));
     };
 
 
@@ -1791,6 +1878,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const terrainBox = document.getElementById('terrain-3d');
     const exagValue = () => (+exagEl.value) / 10;
 
+    // addSource throws while a style is still loading, and MapLibre then tries
+    // to attach terrain to a source that was never added: "cannot load terrain,
+    // because there exists no source with ID". Switching 3D on within the first
+    // seconds, or right after a basemap change, hit exactly that. Wait for the
+    // style before touching either.
+    function whenStyleReady(fn, tries) {
+        if (map.isStyleLoaded()) { fn(); return; }
+        // 'idle' is not guaranteed to fire again once we have missed it, so poll
+        // rather than wait on an event that may never come.
+        if ((tries || 0) > 100) return;
+        setTimeout(() => whenStyleReady(fn, (tries || 0) + 1), 120);
+    }
     function ensureTerrainSources() {
         if (!map.getSource(TERRAIN_SRC)) {
             map.addSource(TERRAIN_SRC, {
@@ -1827,17 +1926,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     map.on('moveend', () => {
         if (!terrainBox.checked) return;
-        const want = terrainSourceHere();
-        const now = map.getTerrain();
-        if (!now || now.source !== want) map.setTerrain({ source: want, exaggeration: exagValue() });
-        terrainNote();
+        // The style is often mid-load right after a jump, so wait rather than
+        // skip: skipping left the map on the wrong DEM until the next pan.
+        {
+            const want = terrainSourceHere();
+            if (!map.getSource(want)) return;
+            const now = map.getTerrain();
+            if (!now || now.source !== want) map.setTerrain({ source: want, exaggeration: exagValue() });
+            terrainNote();
+        }
     });
 
     function setTerrainOn(on) {
         exagWrap.hidden = !on;
         if (on) {
-            ensureTerrainSources();
-            map.setTerrain({ source: terrainSourceHere(), exaggeration: exagValue() });
+            whenStyleReady(() => {
+                ensureTerrainSources();
+                if (!terrainBox.checked) return;      // switched off again while we waited
+                map.setTerrain({ source: terrainSourceHere(), exaggeration: exagValue() });
+                terrainNote();
+            });
             // Flat and tilted look identical from directly above, so tilt too —
             // otherwise switching 3D on appears to do nothing.
             if (map.getPitch() < 30) {
@@ -1856,9 +1964,19 @@ document.addEventListener('DOMContentLoaded', function() {
         terrainNote();
         updateStatus();
     }
-    terrainBox.addEventListener('change', e => setTerrainOn(e.target.checked));
+    const btn3d = document.getElementById('btn-3d');
+    function syncTerrainButtons(){
+        btn3d.setAttribute('aria-pressed', String(terrainBox.checked));
+        btn3d.classList.toggle('on', terrainBox.checked);
+    }
+    terrainBox.addEventListener('change', e => { setTerrainOn(e.target.checked); syncTerrainButtons(); });
+    btn3d.onclick = () => { terrainBox.checked = !terrainBox.checked;
+                            setTerrainOn(terrainBox.checked); syncTerrainButtons(); };
+    document.getElementById('btn-flat').onclick = () => map.easeTo({ pitch: 0, bearing: 0, duration: 600 });
     exagEl.addEventListener('input', () => {
-        if (terrainBox.checked) map.setTerrain({ source: terrainSourceHere(), exaggeration: exagValue() });
+        if (!terrainBox.checked) return;
+        const src = terrainSourceHere();
+        if (map.getSource(src)) map.setTerrain({ source: src, exaggeration: exagValue() });
     });
 
     map.on('mousemove', e => {
