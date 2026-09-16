@@ -84,10 +84,11 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(await p.evaluate(()=>window.__M.areTilesLoaded()), 'all requested tiles resolved');
   await p.click('#filter-dod'); await p.waitForTimeout(400);
 
-  const lg0 = await p.evaluate(() => document.getElementById('filter-panel').classList.contains('open'));
+  const seenH = () => p.evaluate(() => document.getElementById('filter-panel').offsetHeight);
+  const lg0 = await seenH();
   await p.click('.filter-toggle'); await p.waitForTimeout(300);
-  const lg1 = await p.evaluate(() => document.getElementById('filter-panel').classList.contains('open'));
-  ok(!lg0 && lg1, 'the legend stays shut until the button is pressed');
+  const lg1 = await seenH();
+  ok(lg0 === 0 && lg1 > 0, 'the legend stays shut until the button is pressed (' + lg0 + ' -> ' + lg1 + ')');
   const legTog = await p.evaluate(() => {
     const r = document.querySelector('.legend-row[data-toggle="filter-facilities"]');
     r.click();
@@ -291,6 +292,79 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   await p.click('#terrain-3d'); await p.waitForTimeout(1200);
   const off = await p.evaluate(() => ({ t: !!window.__M.getTerrain(), pitch: Math.round(window.__M.getPitch()) }));
   ok(!off.t && off.pitch < 5, 'switching it off returns the map to flat (' + off.pitch + ' deg)');
+
+  console.log('tools');
+  // One pane at a time: opening LIGHT must put the legend away again.
+  await p.click('#btn-light'); await p.waitForTimeout(600);
+  const panes = await p.evaluate(() => ({
+    legend: document.getElementById('filter-panel').offsetHeight,
+    light: document.getElementById('light-panel').offsetHeight,
+    hs: !!window.__M.getLayer('hillshade'),
+    az: window.__M.getLayer('hillshade')
+        ? window.__M.getPaintProperty('hillshade', 'hillshade-illumination-direction') : null
+  }));
+  ok(panes.light > 0 && panes.legend === 0, 'opening LIGHT closes the legend');
+  ok(panes.hs, 'and puts a hillshade on the DEM');
+  ok(panes.az === 315, 'lit from the northwest to begin with (' + panes.az + ')');
+  await p.evaluate(() => {
+    const a = document.getElementById('light-az');
+    a.value = 90; a.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await p.waitForTimeout(400);
+  const az2 = await p.evaluate(() =>
+    window.__M.getPaintProperty('hillshade', 'hillshade-illumination-direction'));
+  ok(az2 === 90, 'turning the light moves it (' + az2 + ')');
+  await p.click('#btn-light'); await p.waitForTimeout(400);
+  ok(!(await p.evaluate(() => !!window.__M.getLayer('hillshade'))), 'switching it off removes it');
+
+  // Cross section, over the Gjerdrum run where the metre DEM actually exists.
+  await p.click('#btn-profile'); await p.waitForTimeout(400);
+  await p.evaluate(() => window.__M.jumpTo({ center: [11.035, 60.075], zoom: 13 }));
+  await p.waitForTimeout(800);
+  // Real clicks on the canvas: MapLibre's own handlers read originalEvent, so a
+  // fired event is not a substitute for one.
+  const at = async (lng, lat) => p.evaluate(([a, b]) => {
+    const pt = window.__M.project([a, b]);
+    const r = document.getElementById('map').getBoundingClientRect();
+    return [Math.round(r.left + pt.x), Math.round(r.top + pt.y)];
+  }, [lng, lat]);
+  const c1 = await at(11.02, 60.07), c2 = await at(11.05, 60.08);
+  await p.mouse.click(c1[0], c1[1]); await p.waitForTimeout(250);
+  await p.mouse.click(c2[0], c2[1]); await p.waitForTimeout(250);
+  await p.mouse.dblclick(c2[0], c2[1]);
+  await p.waitForTimeout(4500);
+  const prof = await p.evaluate(() => ({
+    read: (document.getElementById('prof-read').textContent || '').replace(/\s+/g, ' ').trim(),
+    path: (document.querySelector('#prof-svg path') || {}).getAttribute
+          ? document.querySelector('#prof-svg path').getAttribute('d').length : 0,
+    line: !!window.__M.getLayer('prof-line')
+  }));
+  ok(prof.line, 'the drawn line is on the map');
+  ok(prof.path > 200, 'the section is plotted (' + prof.path + ' chars of path)');
+  ok(/1 m LiDAR/.test(prof.read), 'and read from the metre LiDAR');
+  const mm = prof.read.match(/([0-9.]+) m/g) || [];
+  ok(mm.length >= 3, 'with length, low, high and delta (' + prof.read.slice(0, 90) + ')');
+  await p.click('#btn-profile'); await p.waitForTimeout(300);
+
+  // Box selection narrows the table without hiding anything on the map.
+  await p.evaluate(() => { location.hash = ''; });
+  await p.evaluate(() => window.__M.jumpTo({ center: [11.52031, 59.81372], zoom: 12 }));
+  await p.waitForTimeout(800);
+  const rows0 = await p.evaluate(() => document.querySelectorAll('#site-table tbody tr').length);
+  await p.click('#btn-select'); await p.waitForTimeout(200);
+  await p.mouse.move(520, 260); await p.mouse.down();
+  await p.mouse.move(1000, 640, { steps: 8 }); await p.mouse.up();
+  await p.waitForTimeout(900);
+  const sel = await p.evaluate(() => ({
+    rows: Array.from(document.querySelectorAll('#site-table tbody tr')).map(r => r.dataset.uid),
+    markers: document.querySelectorAll('.maplibregl-marker').length
+  }));
+  ok(sel.rows.length === 1 && sel.rows[0] === 'AK_AH_00126',
+     'a box selects the records inside it (' + sel.rows.join(',') + ')');
+  ok(sel.markers >= 4, 'and leaves every marker on the map (' + sel.markers + ')');
+  await p.click('#btn-select'); await p.waitForTimeout(500);
+  const rows1 = await p.evaluate(() => document.querySelectorAll('#site-table tbody tr').length);
+  ok(rows1 >= rows0, 'pressing SELECT again clears it (' + rows0 + ' -> ' + rows1 + ')');
 
   console.log('polygons');
   // Footprints are on from the first paint: no click precedes this.
