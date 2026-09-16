@@ -125,7 +125,20 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     const lw  = document.getElementById('layers-win').getBoundingClientRect();
     const sbb = document.getElementById('sidebar').getBoundingClientRect();
     const left = lw.right - box.left, right = sbb.left - box.left;
+    // Where a footprint exists the map frames the footprint, not the sheet's
+    // point, so the centring checks below follow the geometry.
+    const f = (m.getSource('fp') || { _data: { features: [] } })
+      ._data.features.find(x => x.properties.uid === 'AK_AH_00126');
+    let w = 180, so = 90, e = -180, n = -90;
+    if (f) (function walk(c) {
+      if (typeof c[0] === 'number') {
+        w = Math.min(w, c[0]); e = Math.max(e, c[0]);
+        so = Math.min(so, c[1]); n = Math.max(n, c[1]);
+      } else c.forEach(walk);
+    })(f.geometry.coordinates);
+    const ctr = f ? m.project([(w + e) / 2, (so + n) / 2]) : pt;
     return { x: Math.round(pt.x), y: Math.round(pt.y),
+             cx: Math.round(ctr.x), cy: Math.round(ctr.y), fp: !!f,
              band: [Math.round(left), Math.round(right)],
              mid: Math.round((left + right) / 2), h: box.height, zoom: m.getZoom() };
   });
@@ -133,10 +146,12 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   // not under the panel and not behind the controls
   ok(fr0.x > fr0.band[0] && fr0.x < fr0.band[1],
      'site is inside the visible strip (x=' + fr0.x + ' in ' + fr0.band + ')');
-  ok(Math.abs(fr0.x - fr0.mid) < 60,
-     'site is centred in it (off by ' + Math.abs(fr0.x - fr0.mid) + 'px)');
-  ok(Math.abs(fr0.y - fr0.h / 2) < 60,
-     'site is vertically centred (off by ' + Math.round(Math.abs(fr0.y - fr0.h/2)) + 'px)');
+  ok(Math.abs(fr0.cx - fr0.mid) < 60,
+     (fr0.fp ? 'its footprint' : 'it') + ' is centred in it (off by ' +
+     Math.abs(fr0.cx - fr0.mid) + 'px)');
+  ok(Math.abs(fr0.cy - fr0.h / 2) < 60,
+     'and vertically centred (off by ' + Math.round(Math.abs(fr0.cy - fr0.h/2)) + 'px)');
+  ok(fr0.y > 0 && fr0.y < fr0.h, 'the sheet\'s point stays on screen with it');
 
   console.log('deck');
   // It starts closed now, and the layer row is the way in.
@@ -276,6 +291,63 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   await p.click('#terrain-3d'); await p.waitForTimeout(1200);
   const off = await p.evaluate(() => ({ t: !!window.__M.getTerrain(), pitch: Math.round(window.__M.getPitch()) }));
   ok(!off.t && off.pitch < 5, 'switching it off returns the map to flat (' + off.pitch + ' deg)');
+
+  console.log('polygons');
+  // Footprints are on from the first paint: no click precedes this.
+  const fp = await p.evaluate(() => {
+    const m = window.__M;
+    const vis = id => m.getLayer(id) && m.getLayoutProperty(id, 'visibility') !== 'none';
+    const src = m.getSource('fp');
+    return { fill: vis('fp-fill'), line: vis('fp-line'), soft: vis('fp-soft'),
+             n: src ? (src._data.features || []).length : 0 };
+  });
+  ok(fp.fill && fp.line && fp.soft, 'facility footprints draw without being asked');
+  ok(fp.n === 19, 'all 19 footprints are in the source (got ' + fp.n + ')');
+
+  // The regression this guards: a stated Area_m2 the research itself puts up
+  // to 2.3x off the ground, used to frame a site that has a real footprint.
+  await p.evaluate(() => { location.hash = ''; });
+  await p.waitForTimeout(200);
+  await p.evaluate(() => { location.hash = 'site=AK_AH_00126'; });
+  await p.waitForTimeout(3000);
+  const frame = await p.evaluate(() => {
+    const m = window.__M, b = m.getBounds();
+    const f = m.getSource('fp')._data.features.find(x => x.properties.uid === 'AK_AH_00126');
+    let w = 180, so = 90, e = -180, n = -90;
+    (function walk(c) {
+      if (typeof c[0] === 'number') {
+        w = Math.min(w, c[0]); e = Math.max(e, c[0]);
+        so = Math.min(so, c[1]); n = Math.max(n, c[1]);
+      } else c.forEach(walk);
+    })(f.geometry.coordinates);
+    return { inside: b.getWest() <= w && b.getEast() >= e &&
+                     b.getSouth() <= so && b.getNorth() >= n,
+             hit: m.queryRenderedFeatures({ layers: ['fp-fill'] }).length };
+  });
+  ok(frame.inside, 'opening a site frames its whole footprint');
+  ok(frame.hit > 0, 'and the footprint is actually painted (' + frame.hit + ')');
+
+  // The sweep is context, not findings: off until asked, never clickable.
+  const covOff = await p.evaluate(() => !!window.__M.getSource('cov'));
+  ok(!covOff, 'the 879-polygon sweep stays off until a box is ticked');
+  await p.evaluate(() => {
+    document.querySelectorAll('.grp').forEach(g => g.classList.remove('closed'));
+    const b = document.getElementById('filter-plan-inforce');
+    b.checked = true; b.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await p.waitForTimeout(2500);
+  const cov1 = await p.evaluate(() => {
+    const m = window.__M;
+    const vis = id => m.getLayer(id) && m.getLayoutProperty(id, 'visibility') !== 'none';
+    const src = m.getSource('cov');
+    return { n: src ? src._data.features.length : 0,
+             inforce: vis('cov-inforce-line'), closed: vis('cov-closed-line'),
+             below: m.getStyle().layers.findIndex(l => l.id === 'cov-inforce-line') <
+                    m.getStyle().layers.findIndex(l => l.id === 'fp-fill') };
+  });
+  ok(cov1.n === 879, 'all 879 sweep polygons load (got ' + cov1.n + ')');
+  ok(cov1.inforce && !cov1.closed, 'only the class that was ticked is shown');
+  ok(cov1.below, 'and the sweep is drawn under the database footprints');
 
   console.log('iframe embed (dirtybusiness.no)');
   const p2 = await ctx.newPage();

@@ -372,6 +372,14 @@ iframe{border:0}
                         <label><input type="checkbox" class="filter-project-sub" value="mixed" checked><span data-en="mixed" data-no="blandet">mixed</span></label>
                     </div>
                 </div>
+
+                <div class="ds"><label class="ds-row" for="filter-footprints">
+                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><g fill="none" stroke="#000" stroke-width=".9"><path d="M3 14 L4.5 5 L12.5 3 L16 9.5 L10.5 15.5 Z"/><path d="M18 16.5 L19.5 10 L24 11 L23 17 Z"/></g></svg></span>
+                    <span class="nm"><b data-en="Facility footprints" data-no="Anleggsomriss">Facility footprints</b><span class="src" data-en="plan and cadastre, matched by hand" data-no="plan og matrikkel, håndkoblet">plan and cadastre, matched by hand</span></span>
+                    <span class="ct" id="count-footprints">19</span>
+                    <input type="checkbox" id="filter-footprints" checked></label>
+                    <div class="sub-note" id="footprint-note" data-en="17 trace an operating footprint, 2 are NGU resource areas" data-no="17 følger et driftsomriss, 2 er NGU-ressursområder">17 trace an operating footprint, 2 are NGU resource areas</div>
+                </div>
             </div>
         </div>
 
@@ -408,7 +416,27 @@ iframe{border:0}
 
         <div class="grp top closed" id="grp-plan">
             <div class="grp-head"><i class="tri"></i><span data-en="PLAN COVERAGE" data-no="PLANDEKNING">PLAN COVERAGE</span></div>
-            <div class="grp-body"><div class="sub-note" style="padding-left:16px" data-en="not published yet" data-no="ikke publisert ennå">not published yet</div></div>
+            <div class="grp-body">
+                <div class="ds"><label class="ds-row" for="filter-plan-inforce">
+                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><rect x="3.5" y="3.5" width="19" height="12" fill="rgba(0,0,0,.06)" stroke="#111" stroke-width=".9"/></svg></span>
+                    <span class="nm"><b data-en="Plan in force" data-no="Plan gjeldende">Plan in force</b><span class="src" data-en="reguleringsplan, masseuttak and massedeponi" data-no="reguleringsplan, masseuttak og massedeponi">reguleringsplan, masseuttak and massedeponi</span></span>
+                    <span class="ct">318</span>
+                    <input type="checkbox" id="filter-plan-inforce"></label></div>
+
+                <div class="ds"><label class="ds-row" for="filter-plan-proposed">
+                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><rect x="3.5" y="3.5" width="19" height="12" fill="none" stroke="#111" stroke-width=".9" stroke-dasharray="3 2"/></svg></span>
+                    <span class="nm"><b data-en="Plan proposed" data-no="Plan foreslått">Plan proposed</b><span class="src" data-en="on public consultation, not yet adopted" data-no="på høring, ikke vedtatt">on public consultation, not yet adopted</span></span>
+                    <span class="ct">56</span>
+                    <input type="checkbox" id="filter-plan-proposed"></label></div>
+
+                <div class="ds"><label class="ds-row" for="filter-plan-closed">
+                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><rect x="3.5" y="3.5" width="19" height="12" fill="rgba(217,56,6,.09)" stroke="#d93806" stroke-width=".9"/></svg></span>
+                    <span class="nm"><b data-en="Closed landfill" data-no="Nedlagt deponi">Closed landfill</b><span class="src">Miljødirektoratet, Grunnforurensning</span></span>
+                    <span class="ct">505</span>
+                    <input type="checkbox" id="filter-plan-closed"></label></div>
+
+                <div class="sub-note" style="padding-left:16px" data-en="879 polygons, context only — not clickable. The register returns nothing for Oslo or Lillestrøm." data-no="879 polygoner, kun kontekst — ikke klikkbare. Registeret gir ingen treff for Oslo eller Lillestrøm.">879 polygons, context only — not clickable. The register returns nothing for Oslo or Lillestrøm.</div>
+            </div>
         </div>
     </div>
 </div>
@@ -453,9 +481,10 @@ iframe{border:0}
                 <div class="legend-row" data-toggle="filter-projects"><span class="legend-symbol"><svg width="14" height="14" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/><polygon points="1,15 15,15 1,1" fill="#000"/></svg></span><span class="legend-label" data-en="Construction project" data-no="Byggeprosjekt">Construction project</span><span class="legend-count" id="legend-count-proj"></span></div>
                 <div class="legend-row" data-toggle="filter-dod"><span class="sw" style="background:linear-gradient(135deg,#4675ed,#61fc6c,#f3c63a,#d93806);border-color:rgba(0,0,0,.4)"></span><span class="legend-label" data-en="DoD polygon" data-no="DoD-polygon">DoD polygon</span><span class="legend-count">1 318</span></div>
                 <div class="legend-sep"></div>
-                <div class="legend-row"><span class="sw" style="border-color:#d93806;background:#fdece7"></span><span class="legend-label" data-en="No plan on record" data-no="Ingen plan registrert">No plan on record</span><span class="legend-count">1 045</span></div>
-                <div class="legend-row"><span class="sw" style="border-color:var(--rule);background:#f6f6f6"></span><span class="legend-label" data-en="Plan in force 2007–2020" data-no="Plan gjeldende 2007–2020">Plan in force 2007–2020</span><span class="legend-count">198</span></div>
-                <div class="legend-row"><span class="sw" style="border-style:dashed;border-color:#9a9a9a"></span><span class="legend-label" data-en="Plan adopted after 2020" data-no="Plan vedtatt etter 2020">Plan adopted after 2020</span><span class="legend-count">72</span></div>
+                <div class="legend-row" data-toggle="filter-footprints"><span class="sw" style="border-color:#000;background:rgba(0,0,0,.05)"></span><span class="legend-label" data-en="Facility footprint" data-no="Anleggsomriss">Facility footprint</span><span class="legend-count">19</span></div>
+                <div class="legend-row" data-toggle="filter-plan-inforce"><span class="sw" style="border-color:#111;background:rgba(0,0,0,.06)"></span><span class="legend-label" data-en="Plan in force" data-no="Plan gjeldende">Plan in force</span><span class="legend-count">318</span></div>
+                <div class="legend-row" data-toggle="filter-plan-proposed"><span class="sw" style="border-style:dashed;border-color:#111"></span><span class="legend-label" data-en="Plan proposed" data-no="Plan foreslått">Plan proposed</span><span class="legend-count">56</span></div>
+                <div class="legend-row" data-toggle="filter-plan-closed"><span class="sw" style="border-color:#d93806;background:rgba(217,56,6,.09)"></span><span class="legend-label" data-en="Closed landfill" data-no="Nedlagt deponi">Closed landfill</span><span class="legend-count">505</span></div>
             </div>
         </div>
     </div>
@@ -972,7 +1001,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentSite = site;
                 openSidebar(site);
                 popup.remove();
-                smartZoom(lat, lon, site.Area_m2);
+                smartZoom(lat, lon, site.Area_m2, site.UID || site.fid);
             });
             m.setPopup(popup);
         });
@@ -1018,7 +1047,23 @@ document.addEventListener('DOMContentLoaded', function() {
         return new maplibregl.LngLatBounds([lon - dLon, lat - dLat], [lon + dLon, lat + dLat]);
     }
 
-    function smartZoom(lat, lon, area) {
+    // uid -> the footprint's bounds, filled in when the footprint layer loads.
+    // Empty until then, which is why smartZoom falls back rather than waits.
+    const fpBounds = Object.create(null);
+
+    function smartZoom(lat, lon, area, uid) {
+        // A stated area is the operator's figure and the research puts some of
+        // them 2.3x off the ground truth. Where a footprint has been resolved,
+        // frame that instead of a square guessed from the figure.
+        const fb = uid ? fpBounds[uid] : null;
+        if (fb) {
+            map.fitBounds(new maplibregl.LngLatBounds([fb[0], fb[1]], [fb[2], fb[3]]), {
+                padding: visiblePadding(),
+                maxZoom: 18,
+                duration: reduceMotion ? 0 : 1000
+            });
+            return;
+        }
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
         map.fitBounds(siteBounds(lat, lon, area), {
             padding: visiblePadding(),
@@ -1348,6 +1393,163 @@ document.addEventListener('DOMContentLoaded', function() {
         if (dodTiles) map.setPaintProperty('dod', 'raster-opacity', e.target.value / 100);
     });
 
+    // ─────────────────────────────────────────────────────────────────────
+    // POLYGONS
+    //
+    // Two geometry layers sit under the markers. They are separate datasets
+    // and are deliberately not treated alike:
+    //
+    //   facility footprints  19 shapes, one per facility whose extent has been
+    //                        resolved by hand against a reguleringsplan, a
+    //                        cadastral parcel or an NGU delineation. These are
+    //                        part of the database, so they are clickable and
+    //                        open the same panel the marker does.
+    //
+    //   plan coverage        879 shapes from the national sweep. Context, not
+    //                        findings: no popups, no hover, interactive false.
+    //                        The only clickable geometry on the map stays the
+    //                        database's own facilities, so a reader can never
+    //                        mistake a swept plan for a researched site.
+    //
+    // Both load once, on first tick, and after that only their visibility
+    // changes. Draw order matters and MapLibre appends, so every insert names
+    // the first layer that must stay above it.
+    const FOOTPRINTS_GEOJSON = 'data/facility_polygons.geojson';
+    const COVERAGE_GEOJSON = 'data/plan_coverage.geojson';
+
+    const FP_LAYERS = ['fp-fill', 'fp-line', 'fp-soft'];
+    const COV_LAYERS = {
+        'filter-plan-closed':   ['cov-closed-fill', 'cov-closed-line'],
+        'filter-plan-inforce':  ['cov-inforce-fill', 'cov-inforce-line'],
+        'filter-plan-proposed': ['cov-proposed-line']
+    };
+
+    // The first of these that exists is what a new layer goes in front of.
+    const under = ids => ids.find(id => map.getLayer(id));
+
+    let fpState = 0;        // 0 none, 1 loading, 2 drawn
+    let covState = 0;
+
+    function toggleFootprints(on) {
+        if (fpState === 2) { FP_LAYERS.forEach(id => setVis(id, on)); return; }
+        if (!on || fpState === 1) return;
+        fpState = 1;
+        whenStyle(() => {
+            fetch(FOOTPRINTS_GEOJSON).then(r => r.json()).then(gj => {
+                map.addSource('fp', { type: 'geojson', data: gj,
+                    attribution: 'Footprints: Kartverket plan and cadastre \u00b7 NGU \u00b7 LUB' });
+                const before = under(['dod', 'dod-hit']);
+                // Two polygons are NGU resource areas, which the source file
+                // flags as NOT an operating footprint. They are drawn without
+                // a fill and on a dashed line so the map never asserts an
+                // extent the research does not claim.
+                map.addLayer({ id: 'fp-fill', type: 'fill', source: 'fp',
+                    filter: ['==', ['get', 'firm'], 1],
+                    paint: { 'fill-color': '#000', 'fill-opacity': 0.05 } }, before);
+                map.addLayer({ id: 'fp-line', type: 'line', source: 'fp',
+                    filter: ['==', ['get', 'firm'], 1],
+                    paint: { 'line-color': '#000', 'line-width': 1 } }, before);
+                map.addLayer({ id: 'fp-soft', type: 'line', source: 'fp',
+                    filter: ['==', ['get', 'firm'], 0],
+                    paint: { 'line-color': '#000', 'line-width': 0.8,
+                             'line-opacity': 0.55, 'line-dasharray': [3, 2] } }, before);
+                gj.features.forEach(f => {
+                    const uid = f.properties.uid;
+                    let w = 180, so = 90, e = -180, n = -90;
+                    const walk = c => {
+                        if (typeof c[0] === 'number') {
+                            if (c[0] < w) w = c[0];
+                            if (c[0] > e) e = c[0];
+                            if (c[1] < so) so = c[1];
+                            if (c[1] > n) n = c[1];
+                        } else c.forEach(walk);
+                    };
+                    walk(f.geometry.coordinates);
+                    const b = fpBounds[uid];
+                    fpBounds[uid] = b
+                        ? [Math.min(b[0], w), Math.min(b[1], so), Math.max(b[2], e), Math.max(b[3], n)]
+                        : [w, so, e, n];
+                });
+                fpState = 2;
+                const want = document.getElementById('filter-footprints').checked;
+                FP_LAYERS.forEach(id => setVis(id, want));
+
+                const openUid = uid => {
+                    const site = allSites.find(sIt => (sIt.UID || sIt.fid) === uid);
+                    if (!site) { updateStatus(t('notfound')); return; }
+                    currentSite = site;
+                    openSidebar(site);
+                };
+                ['fp-fill', 'fp-line', 'fp-soft'].forEach(id => {
+                    map.on('click', id, e => {
+                        if (e.features && e.features.length) openUid(e.features[0].properties.uid);
+                    });
+                    map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer'; });
+                    map.on('mouseleave', id, () => { map.getCanvas().style.cursor = ''; });
+                });
+            }).catch(err => {
+                console.error('Facility footprints failed:', err);
+                fpState = 0;
+                updateStatus();
+            });
+        });
+    }
+
+    function covVisibility() {
+        Object.keys(COV_LAYERS).forEach(box => {
+            const on = document.getElementById(box).checked;
+            COV_LAYERS[box].forEach(id => setVis(id, on));
+        });
+    }
+
+    function toggleCoverage() {
+        const anyOn = Object.keys(COV_LAYERS).some(b => document.getElementById(b).checked);
+        if (covState === 2) { covVisibility(); return; }
+        if (!anyOn || covState === 1) return;
+        covState = 1;
+        updateStatus(t('loading'));
+        whenStyle(() => {
+            fetch(COVERAGE_GEOJSON).then(r => r.json()).then(gj => {
+                map.addSource('cov', { type: 'geojson', data: gj,
+                    attribution: 'Plan sweep: Kartverket, Milj\u00f8direktoratet \u00b7 LUB' });
+                // Bottom of the stack, and in this order: the two registers
+                // overlap often enough that a closed landfill sitting under a
+                // plan in force has to read as both.
+                const before = under(FP_LAYERS.concat(['dod', 'dod-hit']));
+                const add = (id, type, kind, paint) => map.addLayer({
+                    id: id, type: type, source: 'cov',
+                    filter: ['==', ['get', 'k'], kind], paint: paint
+                }, before);
+                add('cov-closed-fill', 'fill', 'closed',
+                    { 'fill-color': '#d93806', 'fill-opacity': 0.09 });
+                add('cov-closed-line', 'line', 'closed',
+                    { 'line-color': '#d93806', 'line-width': 0.8 });
+                add('cov-inforce-fill', 'fill', 'inforce',
+                    { 'fill-color': '#000', 'fill-opacity': 0.06 });
+                add('cov-inforce-line', 'line', 'inforce',
+                    { 'line-color': '#111', 'line-width': 0.8 });
+                add('cov-proposed-line', 'line', 'proposed',
+                    { 'line-color': '#111', 'line-width': 0.8, 'line-dasharray': [3, 2] });
+                covState = 2;
+                covVisibility();
+                updateStatus();
+            }).catch(err => {
+                console.error('Plan coverage failed:', err);
+                covState = 0;
+                updateStatus();
+            });
+        });
+    }
+
+    document.getElementById('filter-footprints')
+        .addEventListener('change', e => toggleFootprints(e.target.checked));
+    Object.keys(COV_LAYERS).forEach(box => {
+        document.getElementById(box).addEventListener('change', toggleCoverage);
+    });
+    // Footprints are on from the first paint: 19 outlines cost 60 kB and turn
+    // 19 dots into 19 sites. The 879-polygon sweep is 630 kB and stays off.
+    toggleFootprints(document.getElementById('filter-footprints').checked);
+
     // FILTERS with subcategories
     function applyFilters() {
         const showProjects = document.getElementById('filter-projects').checked;
@@ -1466,7 +1668,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const choose = () => {
                 currentSite = site;
                 openSidebar(site);                    // open first: a site with
-                smartZoom(num(site.Latitude), num(site.Longitude), site.Area_m2);  // no coords
+                smartZoom(num(site.Latitude), num(site.Longitude), site.Area_m2, site.UID || site.fid);  // no coords
                 sResults.style.display = 'none';      // used to abort the whole
                 sInput.setAttribute('aria-expanded', 'false');
                 sInput.value = '';                    // handler here
@@ -1655,7 +1857,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentSite = site;
                 openSidebar(site);
                 const la = num(site.Latitude), lo = num(site.Longitude);
-                if (Number.isFinite(la) && Number.isFinite(lo)) smartZoom(la, lo, site.Area_m2);
+                if (Number.isFinite(la) && Number.isFinite(lo)) smartZoom(la, lo, site.Area_m2, site.UID || site.fid);
                 markDeckSelection();
             };
             tr.onmouseenter = e => showHover(site, tr);
@@ -1794,7 +1996,8 @@ document.addEventListener('DOMContentLoaded', function() {
             syncLegendRows();
         });
     });
-    ['filter-facilities', 'filter-projects', 'filter-dod'].forEach(id => {
+    ['filter-facilities', 'filter-projects', 'filter-dod', 'filter-footprints',
+     'filter-plan-inforce', 'filter-plan-proposed', 'filter-plan-closed'].forEach(id => {
         const b = document.getElementById(id);
         if (b) b.addEventListener('change', syncLegendRows);
     });
@@ -1993,7 +2196,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!site) { updateStatus(t('notfound')); return; }
         currentSite = site;               // was never set here, so a language
         openSidebar(site);                // switch left the panel in English
-        smartZoom(num(site.Latitude), num(site.Longitude), site.Area_m2);
+        smartZoom(num(site.Latitude), num(site.Longitude), site.Area_m2, site.UID || site.fid);
     }
 
     window.addEventListener('hashchange', () => {
