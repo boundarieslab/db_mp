@@ -76,6 +76,10 @@ button,input,select{font:inherit;color:inherit}
 
 /* ---------- layer tree ---------- */
 #layers-win{left:10px;top:10px;width:264px}
+/* Folded, the layer window is the button and nothing else. */
+#layers-win.folded{width:auto}
+#layers-win.folded .strip{border-bottom:0;padding:2px}
+#layers-win.folded .strip-label{display:none}
 .tree{padding:3px 4px 5px;max-height:320px;overflow-y:auto}
 .grp{margin-left:12px;border-left:.5px solid var(--rule)}
 .grp.top{margin-left:0;border-left:0}
@@ -89,8 +93,6 @@ button,input,select{font:inherit;color:inherit}
 .ds{margin-left:12px;border-left:.5px solid var(--rule);border-top:.5px solid var(--hair)}
 .ds-row{display:flex;align-items:center;gap:7px;padding:3px 4px;min-height:27px;cursor:pointer}
 .ds-row.sel{background:var(--sel)}
-.ds-row .thumb{width:26px;height:19px;border:.5px solid var(--rule);flex:0 0 26px;overflow:hidden;background:#fff}
-.ds-row .thumb svg{display:block}
 .ds-row .nm{flex:1 1 auto;min-width:0}
 .ds-row .nm b{font-weight:400;display:block}
 .ds-row.sel .nm b{font-weight:500}
@@ -98,7 +100,7 @@ button,input,select{font:inherit;color:inherit}
 .ds-row .ct{margin-left:8px;color:var(--sub);font-family:PlexMono,monospace;font-size:10px}
 .ds-row input[type=checkbox],.ds-row input[type=radio]{margin:0 0 0 8px;width:11px;height:11px;
   accent-color:#000;flex:0 0 11px}
-.ds-sub{padding:0 4px 4px 42px}
+.ds-sub{padding:0 4px 4px 16px}
 .ds-sub label{display:inline-flex;align-items:center;gap:4px;margin-right:9px;font-size:10px;color:var(--sub)}
 .ds-sub input{width:10px;height:10px;margin:0;accent-color:#000}
 .ds-sub input[type=range].slider{width:calc(100% - 10px);height:10px;margin-top:3px}
@@ -108,13 +110,13 @@ button,input,select{font:inherit;color:inherit}
   border:.5px solid var(--frame);margin-top:-1.5px}
 .slider::-moz-range-thumb{width:7px;height:12px;background:#fff;border:.5px solid var(--frame);border-radius:0}
 .slider:disabled{opacity:.35}
-.sub-note{padding:2px 4px 4px 42px;color:var(--sub);font-size:10px}
-.timeline-labels{display:flex;justify-content:space-between;padding:1px 4px 0 42px;
+.sub-note{padding:2px 4px 4px 16px;color:var(--sub);font-size:10px}
+.timeline-labels{display:flex;justify-content:space-between;padding:1px 4px 0 16px;
   color:var(--sub);font-size:9px;font-family:PlexMono,monospace}
-.timeline-year{padding:0 4px 4px 42px;font-family:PlexMono,monospace;font-size:10px}
+.timeline-year{padding:0 4px 4px 16px;font-family:PlexMono,monospace;font-size:10px}
 
 /* ---------- tools window + legend ---------- */
-#tools-win{right:10px;top:10px;width:496px}
+#tools-win{right:10px;top:10px;width:528px}
 .pane{padding:7px 9px 8px}
 /* Only one pane is open at a time, and none of them is open to begin with:
    the toolbar is the interface, the panes are what a button opens. */
@@ -187,9 +189,9 @@ button,input,select{font:inherit;color:inherit}
 .popup-link:hover{background:var(--sel)}
 
 /* ---------- site window (was the sidebar) ---------- */
-#sidebar{position:absolute;right:12px;top:190px;width:372px;background:#fff;
+#sidebar{position:absolute;right:10px;top:52px;width:408px;background:#fff;
   border:.5px solid var(--frame);z-index:24;display:flex;flex-direction:column;
-  max-height:calc(100% - 240px)}
+  max-height:calc(100% - 72px)}
 #sidebar:not(.active){display:none}
 .sb-header{height:21px;flex:0 0 21px;display:flex;align-items:center;gap:6px;padding:0 6px;
   border-bottom:.5px solid var(--frame)}
@@ -236,14 +238,14 @@ button,input,select{font:inherit;color:inherit}
 .graph-open{margin-left:auto;font-size:9px;border-bottom:.5px solid var(--sub);cursor:pointer;
   background:none;border-width:0 0 .5px;padding:0}
 .graph-open:hover{color:#000}
-#graph-container{position:relative;width:100%;height:116px;overflow:hidden;background:#fff;
+#graph-container{position:relative;width:100%;height:260px;overflow:hidden;background:#fff;
   border-bottom:.5px solid var(--hair)}
 #graph-container iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;display:block}
 .sb-content>b{display:block;padding:9px 12px 3px;font-weight:500;font-size:10px;letter-spacing:.08em;
   border-top:.5px solid var(--rule)}
 .sb-content>b:first-child{border-top:0}
 iframe{border:0}
-#sb-minimap{width:100%;height:112px;flex:none;border:0;border-bottom:.5px solid var(--hair);position:relative}
+#sb-minimap{width:100%;height:132px;flex:none;border:0;border-bottom:.5px solid var(--hair);position:relative}
 .minimap-dot{width:9px;height:9px;border:.5px solid #000;background:var(--green);
   transform:translate(-4.5px,-4.5px)}
 .minimap-note{padding:3px 9px;color:var(--sub);font-size:9px}
@@ -332,26 +334,29 @@ iframe{border:0}
     <div class="tree">
 
         <!-- background -->
-        <div class="grp top" id="grp-base">
+        <div class="grp top closed" id="grp-base">
             <div class="grp-head"><i class="tri"></i><span data-en="BACKGROUND" data-no="BAKGRUNN">BACKGROUND</span></div>
             <div class="grp-body">
                 <div class="ds"><label class="ds-row" for="base-gray">
-                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#f4f4f4"/><g stroke="#b6b6b6" stroke-width=".7" fill="none"><path d="M0 13 q7 -5 11 -2 t15 -3"/><path d="M0 6 q8 -4 14 1 t12 -2"/><line x1="9" y1="0" x2="12" y2="19"/></g></svg></span>
                     <span class="nm"><b data-en="Kartverket graytone" data-no="Kartverket gråtone">Kartverket graytone</b><span class="src">Statens Kartverk, Geovekst</span></span>
-                    <input type="radio" name="basemap" id="base-gray" value="graytone"></label></div>
+                    <input type="radio" name="basemap" id="base-gray" value="graytone" checked></label></div>
 
                 <div class="ds"><label class="ds-row" for="base-sat">
-                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#3f4a33"/><g fill="#5d6b46"><circle cx="6" cy="6" r="4"/><circle cx="18" cy="12" r="5.5"/><circle cx="23" cy="4" r="3"/></g><path d="M0 15 q8 -3 14 1 t12 -1" stroke="#8a8a72" stroke-width="1.3" fill="none"/></svg></span>
                     <span class="nm"><b data-en="Esri satellite" data-no="Esri satellitt">Esri satellite</b><span class="src">Esri World Imagery</span></span>
-                    <input type="radio" name="basemap" id="base-sat" value="satellite" checked></label></div>
+                    <input type="radio" name="basemap" id="base-sat" value="satellite"></label></div>
+
+                <div class="ds"><label class="ds-row" for="base-bym">
+                    <span class="nm"><b data-en="Oslo aerial survey" data-no="Oslo flyfoto">Oslo aerial survey</b><span class="src">Bymiljøetaten, Oslo kommune</span></span>
+                    <input type="radio" name="basemap" id="base-bym" value="bym"></label>
+                    <div class="sub-note" data-en="Sharper than Esri, but it stops at the city boundary."
+                         data-no="Skarpere enn Esri, men stopper ved bygrensen.">Sharper than Esri, but it stops at the city boundary.</div>
+                </div>
 
                 <div class="ds"><label class="ds-row" for="overlay-dtm">
-                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#eaeaea"/><g stroke="#7d7d7d" stroke-width=".7" fill="none"><ellipse cx="13" cy="9.5" rx="10" ry="6.5"/><ellipse cx="13" cy="9.5" rx="6.5" ry="4.2"/><ellipse cx="13" cy="9.5" rx="3" ry="1.9"/></g></svg></span>
                     <span class="nm"><b data-en="Terrain (DTM1)" data-no="Terreng (DTM1)">Terrain (DTM1)</b><span class="src">Geonorge, Høydedata</span></span>
                     <input type="checkbox" id="overlay-dtm"></label></div>
 
                 <div class="ds"><label class="ds-row" for="timeline-enabled">
-                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#5b5b57"/><g fill="#7a7a72"><rect x="2" y="3" width="7" height="5"/><rect x="12" y="8" width="9" height="7"/></g></svg></span>
                     <span class="nm"><b data-en="Historical imagery" data-no="Historiske bilder">Historical imagery</b><span class="src">Esri Wayback</span></span>
                     <input type="checkbox" id="timeline-enabled"></label>
                     <input type="range" class="slider" id="timeline-slider" min="0" max="8" value="0" disabled
@@ -363,26 +368,24 @@ iframe{border:0}
         </div>
 
         <!-- database -->
-        <div class="grp top" id="grp-db">
+        <div class="grp top closed" id="grp-db">
             <div class="grp-head"><i class="tri"></i><span data-en="DATABASE" data-no="DATABASE">DATABASE</span></div>
             <div class="grp-body">
                 <div class="ds"><label class="ds-row" for="filter-facilities">
-                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><g><circle cx="8" cy="7" r="4" fill="#fff" stroke="#39FF14" stroke-width="1.2"/><path d="M4,7 A4,4 0 0,1 12,7 Z" fill="#000"/><circle cx="18" cy="13" r="4" fill="#fff" stroke="#39FF14" stroke-width="1.2"/><path d="M14,13 A4,4 0 0,0 22,13 Z" fill="#000"/></g></svg></span>
                     <span class="nm"><b data-en="Reception sites" data-no="Mottaksanlegg">Reception sites</b><span class="src">LUB db_database</span></span>
                     <span class="ct" id="count-facilities"></span>
                     <input type="checkbox" id="filter-facilities" checked></label>
-                    <div class="ds-sub">
+                    <div class="ds-sub" hidden>
                         <label><input type="checkbox" class="filter-facility-sub" value="producing" checked><span data-en="producing" data-no="produserer">producing</span></label>
                         <label><input type="checkbox" class="filter-facility-sub" value="receiving" checked><span data-en="receiving" data-no="mottar">receiving</span></label>
                         <label><input type="checkbox" class="filter-facility-sub" value="mixed" checked><span data-en="mixed" data-no="blandet">mixed</span></label>
                     </div>
                 </div>
                 <div class="ds"><label class="ds-row" for="filter-projects">
-                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><g><rect x="4" y="3" width="8" height="8" fill="#fff" stroke="#ff0066" stroke-width="1.2"/><polygon points="4,11 12,11 4,3" fill="#000"/><rect x="15" y="9" width="8" height="8" fill="#fff" stroke="#ff0066" stroke-width="1.2"/><polygon points="23,9 23,17 15,9" fill="#000"/></g></svg></span>
                     <span class="nm"><b data-en="Construction projects" data-no="Byggeprosjekter">Construction projects</b><span class="src">LUB db_database</span></span>
                     <span class="ct" id="count-projects"></span>
                     <input type="checkbox" id="filter-projects" checked></label>
-                    <div class="ds-sub">
+                    <div class="ds-sub" hidden>
                         <label><input type="checkbox" class="filter-project-sub" value="producing" checked><span data-en="producing" data-no="produserer">producing</span></label>
                         <label><input type="checkbox" class="filter-project-sub" value="receiving" checked><span data-en="receiving" data-no="mottar">receiving</span></label>
                         <label><input type="checkbox" class="filter-project-sub" value="mixed" checked><span data-en="mixed" data-no="blandet">mixed</span></label>
@@ -390,7 +393,6 @@ iframe{border:0}
                 </div>
 
                 <div class="ds"><label class="ds-row" for="filter-footprints">
-                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><g fill="none" stroke="#000" stroke-width=".9"><path d="M3 14 L4.5 5 L12.5 3 L16 9.5 L10.5 15.5 Z"/><path d="M18 16.5 L19.5 10 L24 11 L23 17 Z"/></g></svg></span>
                     <span class="nm"><b data-en="Facility footprints" data-no="Anleggsomriss">Facility footprints</b><span class="src" data-en="plan and cadastre, matched by hand" data-no="plan og matrikkel, håndkoblet">plan and cadastre, matched by hand</span></span>
                     <span class="ct" id="count-footprints">19</span>
                     <input type="checkbox" id="filter-footprints" checked></label>
@@ -400,11 +402,10 @@ iframe{border:0}
         </div>
 
         <!-- terrain change -->
-        <div class="grp top" id="grp-dod">
+        <div class="grp top closed" id="grp-dod">
             <div class="grp-head"><i class="tri"></i><span data-en="TERRAIN CHANGE" data-no="TERRENGENDRING">TERRAIN CHANGE</span></div>
             <div class="grp-body">
                 <div class="ds"><label class="ds-row" for="filter-dod">
-                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><g stroke="rgba(0,0,0,.35)" stroke-width=".4"><polygon points="2,4 9,2 11,8 5,10" fill="#d93806" fill-opacity=".8"/><polygon points="13,10 20,7 23,14 15,16" fill="#4675ed" fill-opacity=".75"/><polygon points="16,2 22,3 21,6 15,5" fill="#61fc6c" fill-opacity=".8"/><polygon points="3,13 8,12 9,17 4,18" fill="#f3c63a" fill-opacity=".8"/></g></svg></span>
                     <span class="nm"><b>Gjerdrum 2007–2020</b><span class="src">DoDetector, DTM1</span></span>
                     <span class="ct">1 318</span>
                     <input type="checkbox" id="filter-dod"></label>
@@ -417,7 +418,6 @@ iframe{border:0}
                          data-no="1 320 endringer over 127,6 ha, fra DTM1 LiDAR">1,320 changes over 127.6 ha, from DTM1 LiDAR</div>
                 </div>
                 <div class="ds"><label class="ds-row" for="terrain-3d">
-                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><g stroke="#000" stroke-width=".8" fill="none"><polygon points="13,3 23,8 13,13 3,8"/><polyline points="3,8 3,12 13,17 23,12 23,8"/><line x1="13" y1="13" x2="13" y2="17"/></g></svg></span>
                     <span class="nm"><b data-en="3D terrain" data-no="3D-terreng">3D terrain</b><span class="src" data-en="DTM1 where a run exists, Kartverket 10 m elsewhere" data-no="DTM1 der en kjøring finnes, Kartverket 10 m ellers">DTM1 where a run exists, Kartverket 10 m elsewhere</span></span>
                     <input type="checkbox" id="terrain-3d"></label>
                     <div class="ds-sub" id="terrain-exag-wrap" hidden>
@@ -433,25 +433,22 @@ iframe{border:0}
         <div class="grp top closed" id="grp-plan">
             <div class="grp-head"><i class="tri"></i><span data-en="PLAN COVERAGE" data-no="PLANDEKNING">PLAN COVERAGE</span></div>
             <div class="grp-body">
-                <div class="ds"><label class="ds-row" for="filter-plan-inforce">
-                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><rect x="3.5" y="3.5" width="19" height="12" fill="rgba(0,0,0,.06)" stroke="#111" stroke-width=".9"/></svg></span>
-                    <span class="nm"><b data-en="Plan in force" data-no="Plan gjeldende">Plan in force</b><span class="src" data-en="reguleringsplan, masseuttak and massedeponi" data-no="reguleringsplan, masseuttak og massedeponi">reguleringsplan, masseuttak and massedeponi</span></span>
-                    <span class="ct">318</span>
-                    <input type="checkbox" id="filter-plan-inforce"></label></div>
+                <div class="ds"><label class="ds-row" for="filter-plan-old">
+                    <span class="nm"><b data-en="Old" data-no="Gamle">Old</b><span class="src" data-en="closed landfills, Grunnforurensning" data-no="nedlagte deponier, Grunnforurensning">closed landfills, Grunnforurensning</span></span>
+                    <span class="ct">1 346</span>
+                    <input type="checkbox" id="filter-plan-old"></label></div>
 
-                <div class="ds"><label class="ds-row" for="filter-plan-proposed">
-                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><rect x="3.5" y="3.5" width="19" height="12" fill="none" stroke="#111" stroke-width=".9" stroke-dasharray="3 2"/></svg></span>
-                    <span class="nm"><b data-en="Plan proposed" data-no="Plan foreslått">Plan proposed</b><span class="src" data-en="on public consultation, not yet adopted" data-no="på høring, ikke vedtatt">on public consultation, not yet adopted</span></span>
-                    <span class="ct">56</span>
-                    <input type="checkbox" id="filter-plan-proposed"></label></div>
+                <div class="ds"><label class="ds-row" for="filter-plan-current">
+                    <span class="nm"><b data-en="Current" data-no="Nåværende">Current</b><span class="src" data-en="reguleringsplan in force" data-no="reguleringsplan gjeldende">reguleringsplan in force</span></span>
+                    <span class="ct">333</span>
+                    <input type="checkbox" id="filter-plan-current"></label></div>
 
-                <div class="ds"><label class="ds-row" for="filter-plan-closed">
-                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><rect x="3.5" y="3.5" width="19" height="12" fill="rgba(217,56,6,.09)" stroke="#d93806" stroke-width=".9"/></svg></span>
-                    <span class="nm"><b data-en="Closed landfill" data-no="Nedlagt deponi">Closed landfill</b><span class="src">Miljødirektoratet, Grunnforurensning</span></span>
-                    <span class="ct">505</span>
-                    <input type="checkbox" id="filter-plan-closed"></label></div>
+                <div class="ds"><label class="ds-row" for="filter-plan-future">
+                    <span class="nm"><b data-en="Future" data-no="Fremtidige">Future</b><span class="src" data-en="on public consultation, not yet adopted" data-no="på høring, ikke vedtatt">on public consultation, not yet adopted</span></span>
+                    <span class="ct">57</span>
+                    <input type="checkbox" id="filter-plan-future"></label></div>
 
-                <div class="sub-note" style="padding-left:16px" data-en="879 polygons, context only — not clickable. The register returns nothing for Oslo or Lillestrøm." data-no="879 polygoner, kun kontekst — ikke klikkbare. Registeret gir ingen treff for Oslo eller Lillestrøm.">879 polygons, context only — not clickable. The register returns nothing for Oslo or Lillestrøm.</div>
+                <div class="sub-note" style="padding-left:16px" data-en="1 736 polygons, context only — not clickable. The plan register returns nothing for Oslo or Lillestrøm." data-no="1 736 polygoner, kun kontekst — ikke klikkbare. Planregisteret gir ingen treff for Oslo eller Lillestrøm.">1 736 polygons, context only — not clickable. The plan register returns nothing for Oslo or Lillestrøm.</div>
             </div>
         </div>
     </div>
@@ -514,9 +511,9 @@ iframe{border:0}
                 <div class="legend-row" data-toggle="filter-dod"><span class="sw" style="background:linear-gradient(135deg,#4675ed,#61fc6c,#f3c63a,#d93806);border-color:rgba(0,0,0,.4)"></span><span class="legend-label" data-en="DoD polygon" data-no="DoD-polygon">DoD polygon</span><span class="legend-count">1 318</span></div>
                 <div class="legend-sep"></div>
                 <div class="legend-row" data-toggle="filter-footprints"><span class="sw" style="border-color:#000;background:rgba(0,0,0,.05)"></span><span class="legend-label" data-en="Facility footprint" data-no="Anleggsomriss">Facility footprint</span><span class="legend-count">19</span></div>
-                <div class="legend-row" data-toggle="filter-plan-inforce"><span class="sw" style="border-color:#111;background:rgba(0,0,0,.06)"></span><span class="legend-label" data-en="Plan in force" data-no="Plan gjeldende">Plan in force</span><span class="legend-count">318</span></div>
-                <div class="legend-row" data-toggle="filter-plan-proposed"><span class="sw" style="border-style:dashed;border-color:#111"></span><span class="legend-label" data-en="Plan proposed" data-no="Plan foreslått">Plan proposed</span><span class="legend-count">56</span></div>
-                <div class="legend-row" data-toggle="filter-plan-closed"><span class="sw" style="border-color:#d93806;background:rgba(217,56,6,.09)"></span><span class="legend-label" data-en="Closed landfill" data-no="Nedlagt deponi">Closed landfill</span><span class="legend-count">505</span></div>
+                <div class="legend-row" data-toggle="filter-plan-old"><span class="sw" style="border-style:dotted;border-color:#39FF14"></span><span class="legend-label" data-en="Plan — old" data-no="Plan — gamle">Plan — old</span><span class="legend-count">1 346</span></div>
+                <div class="legend-row" data-toggle="filter-plan-current"><span class="sw" style="border-color:#39FF14"></span><span class="legend-label" data-en="Plan — current" data-no="Plan — nåværende">Plan — current</span><span class="legend-count">333</span></div>
+                <div class="legend-row" data-toggle="filter-plan-future"><span class="sw" style="border-style:dashed;border-color:#39FF14"></span><span class="legend-label" data-en="Plan — future" data-no="Plan — fremtidige">Plan — future</span><span class="legend-count">57</span></div>
             </div>
         </div>
     </div>
@@ -581,6 +578,7 @@ iframe{border:0}
         <span class="actions">
             <button type="button" id="deck-scope" data-en="reception sites" data-no="mottaksanlegg">reception sites</button>
             <button type="button" id="deck-status" data-en="all status" data-no="all status">all status</button>
+            <button type="button" id="deck-dir" data-en="all flows" data-no="alle strømmer">all flows</button>
             <button type="button" id="deck-csv">csv</button>
             <button type="button" id="deck-size" title="Half screen / whole page / closed">▲</button>
         </span>
@@ -842,12 +840,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 type: 'raster', tileSize: T, maxzoom: 19,
                 tiles: [WAYBACK_URL(WAYBACK_YEARS[0].release)],
                 attribution: '© <a href="https://www.esri.com">Esri</a>'
+            },
+            // Oslo's own aerial survey. The tile cache is in UTM32, which
+            // MapLibre cannot read, so the MapServer is asked to reproject on
+            // export instead - it answers in Web Mercator and sends a CORS
+            // header once an Origin is present. Bounded to the city, because
+            // outside it the service returns nothing.
+            bym: {
+                type: 'raster', tileSize: T, maxzoom: 20,
+                bounds: [10.48009, 59.81408, 10.96212, 60.13055],
+                tiles: ['https://geodata.bymoslo.no/arcgis/rest/services/geodata/Ortofoto/MapServer/export'
+                        + '?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256'
+                        + '&format=jpg&transparent=false&f=image'],
+                attribution: '© <a href="https://www.oslo.kommune.no">Bymiljøetaten, Oslo kommune</a>'
             }
         },
         layers: [
             { id: 'graytone',   type: 'raster', source: 'graytone',   layout: { visibility: 'visible' } },
             { id: 'satellite',  type: 'raster', source: 'satellite',  layout: { visibility: 'none' } },
             { id: 'dtm',        type: 'raster', source: 'dtm',        layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.5 } },
+            { id: 'bym',        type: 'raster', source: 'bym',        layout: { visibility: 'none' } },
             { id: 'historical', type: 'raster', source: 'historical', layout: { visibility: 'none' } }
         ]
     };
@@ -876,9 +888,10 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     map.touchZoomRotate.disableRotation();
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-left');
     map.setMaxPitch(75);
+    // Order is draw order down the corner: zoom first, then the ruler under it.
     map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left');
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-left');
 
     // Nothing may touch a layer or source before the style has loaded, and the
     // DoD toggle can be clicked before then.
@@ -906,8 +919,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // tile on each toggle.
     document.querySelectorAll('input[name="basemap"]').forEach(r => {
         r.addEventListener('change', e => {
-            setVis('graytone', e.target.value === 'graytone');
-            setVis('satellite', e.target.value !== 'graytone');
+            const v = e.target.value;
+            setVis('graytone', v === 'graytone');
+            setVis('satellite', v === 'satellite');
+            setVis('bym', v === 'bym');
         });
     });
 
@@ -1051,6 +1066,13 @@ document.addEventListener('DOMContentLoaded', function() {
             m.markerDirection = info.direction;
             allMarkers.push(m);
 
+            // The same preview the table rows raise. Hovering a dot on the map
+            // and hovering its row should show you the same thing.
+            el.addEventListener('mouseenter', () => showHover(site, el));
+            el.addEventListener('mouseleave', hideHover);
+            el.addEventListener('focus', () => showHover(site, el));
+            el.addEventListener('blur', hideHover);
+
             // Built as a node, not an id string: UIDs come from the sheet and
             // are neither guaranteed unique nor guaranteed free of quotes.
             const pop = document.createElement('div');
@@ -1106,7 +1128,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const a = qty(area);
         // The site plus a margin of its own size again, so a small reception
         // yard does not sit edge to edge in the frame.
-        const side = Number.isFinite(a) && a > 0 ? Math.sqrt(a) * 2 : 200;   // metres
+        const side = Number.isFinite(a) && a > 0 ? Math.sqrt(a) * 3 : 400;   // metres
         const dLat = side / 111320 / 2;
         const dLon = side / (111320 * Math.cos(lat * Math.PI / 180)) / 2;
         return new maplibregl.LngLatBounds([lon - dLon, lat - dLat], [lon + dLon, lat + dLat]);
@@ -1122,9 +1144,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // frame that instead of a square guessed from the figure.
         const fb = uid ? fpBounds[uid] : null;
         if (fb) {
-            map.fitBounds(new maplibregl.LngLatBounds([fb[0], fb[1]], [fb[2], fb[3]]), {
+            // A third of the footprint again on every side: you want to see
+            // what the site sits in, not only the site.
+            const mx = (fb[2] - fb[0]) * 0.35, my = (fb[3] - fb[1]) * 0.35;
+            map.fitBounds(new maplibregl.LngLatBounds([fb[0] - mx, fb[1] - my],
+                                                      [fb[2] + mx, fb[3] + my]), {
                 padding: visiblePadding(),
-                maxZoom: 18,
+                maxZoom: 17,
                 duration: reduceMotion ? 0 : 1000
             });
             return;
@@ -1208,7 +1234,11 @@ document.addEventListener('DOMContentLoaded', function() {
         st2_all: { en: "all status", no: "all status" },
         st2_active: { en: "active", no: "aktiv" },
         st2_closed: { en: "closed", no: "lukket" },
-        st2_planned: { en: "planned", no: "planlagt" }
+        st2_planned: { en: "planned", no: "planlagt" },
+        dir_all: { en: "all flows", no: "alle strømmer" },
+        dir_producing: { en: "producing", no: "produserer" },
+        dir_receiving: { en: "receiving", no: "mottar" },
+        dir_mixed: { en: "mixed", no: "blandet" }
     };
     const t = k => i18n[k] ? i18n[k][currentLang] : k;
 
@@ -1493,10 +1523,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const COVERAGE_GEOJSON = 'data/plan_coverage.geojson';
 
     const FP_LAYERS = ['fp-fill', 'fp-line', 'fp-soft'];
+    // old / current / future, as Paolo asked for them. Pure green perimeter,
+    // no fill; the three are told apart by the line, not by colour, because
+    // colour on this map belongs to the data and green already means facility.
     const COV_LAYERS = {
-        'filter-plan-closed':   ['cov-closed-fill', 'cov-closed-line'],
-        'filter-plan-inforce':  ['cov-inforce-fill', 'cov-inforce-line'],
-        'filter-plan-proposed': ['cov-proposed-line']
+        'filter-plan-old':     ['cov-old-line'],
+        'filter-plan-current': ['cov-current-line'],
+        'filter-plan-future':  ['cov-future-line']
     };
 
     // The first of these that exists is what a new layer goes in front of.
@@ -1587,24 +1620,22 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(COVERAGE_GEOJSON).then(r => r.json()).then(gj => {
                 map.addSource('cov', { type: 'geojson', data: gj,
                     attribution: 'Plan sweep: Kartverket, Milj\u00f8direktoratet \u00b7 LUB' });
-                // Bottom of the stack, and in this order: the two registers
-                // overlap often enough that a closed landfill sitting under a
-                // plan in force has to read as both.
+                // Bottom of the stack, oldest first: the registers overlap
+                // often enough that a closed landfill under a plan in force
+                // has to read as both.
+                const GREEN = '#39FF14';
                 const before = under(FP_LAYERS.concat(['dod', 'dod-hit']));
                 const add = (id, type, kind, paint) => map.addLayer({
                     id: id, type: type, source: 'cov',
                     filter: ['==', ['get', 'k'], kind], paint: paint
                 }, before);
-                add('cov-closed-fill', 'fill', 'closed',
-                    { 'fill-color': '#d93806', 'fill-opacity': 0.09 });
-                add('cov-closed-line', 'line', 'closed',
-                    { 'line-color': '#d93806', 'line-width': 0.8 });
-                add('cov-inforce-fill', 'fill', 'inforce',
-                    { 'fill-color': '#000', 'fill-opacity': 0.06 });
-                add('cov-inforce-line', 'line', 'inforce',
-                    { 'line-color': '#111', 'line-width': 0.8 });
-                add('cov-proposed-line', 'line', 'proposed',
-                    { 'line-color': '#111', 'line-width': 0.8, 'line-dasharray': [3, 2] });
+                add('cov-old-line', 'line', 'old',
+                    { 'line-color': GREEN, 'line-width': 0.9, 'line-opacity': 0.85,
+                      'line-dasharray': [1, 2] });
+                add('cov-current-line', 'line', 'current',
+                    { 'line-color': GREEN, 'line-width': 1.1 });
+                add('cov-future-line', 'line', 'future',
+                    { 'line-color': GREEN, 'line-width': 1.1, 'line-dasharray': [3, 2] });
                 covState = 2;
                 covVisibility();
                 updateStatus();
@@ -1880,7 +1911,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const rows = allSites.filter(s =>
             (deckScope === 'all' || s.__cat === (deckScope === 'project' ? 'project' : 'facility')) &&
             (deckStatus === 'all' || statusClass(s.Status) === deckStatus) &&
-            (!deckSelection || deckSelection.has(s.UID || s.fid)));
+            (!deckSelection || deckSelection.has(s.UID || s.fid)) &&
+            (deckDir === 'all' || getMarkerInfo(s).direction === deckDir));
         const k = deckSort.key, d = deckSort.dir;
         const col = COLS.find(c => c.key === k);
         return rows.sort((a,b) => {
@@ -2022,6 +2054,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const SCOPES = ['facility', 'project', 'all'];
     const STATUSES = ['all', 'active', 'closed', 'planned'];
+    // Producing / receiving / mixed used to be three checkboxes buried in the
+    // layer tree. They are a property of the records, not of a layer, so they
+    // belong next to the table. The checkboxes still exist, hidden, because
+    // applyFilters() and every saved link read them.
+    const DIRS = ['all', 'producing', 'receiving', 'mixed'];
+    let deckDir = 'all';
+    function applyDeckDir() {
+        document.querySelectorAll('.filter-facility-sub,.filter-project-sub').forEach(b => {
+            b.checked = deckDir === 'all' || b.value === deckDir;
+        });
+        applyFilters();
+    }
     function cycleButton(id, list, get, set, keyFor){
         const b = document.getElementById(id);
         const paint = () => {
@@ -2038,6 +2082,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     cycleButton('deck-scope', SCOPES, () => deckScope, v => deckScope = v, v => 'sc_' + v);
     cycleButton('deck-status', STATUSES, () => deckStatus, v => deckStatus = v, v => 'st2_' + v);
+    cycleButton('deck-dir', DIRS, () => deckDir,
+                v => { deckDir = v; applyDeckDir(); }, v => 'dir_' + v);
     document.getElementById('deck-size').onclick = e => {
         e.stopPropagation();
         setDeckSize(deckSize === 'closed' ? 'half' : deckSize === 'half' ? 'full' : 'closed');
@@ -2080,7 +2126,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     ['filter-facilities', 'filter-projects', 'filter-dod', 'filter-footprints',
-     'filter-plan-inforce', 'filter-plan-proposed', 'filter-plan-closed'].forEach(id => {
+     'filter-plan-old', 'filter-plan-current', 'filter-plan-future'].forEach(id => {
         const b = document.getElementById(id);
         if (b) b.addEventListener('change', syncLegendRows);
     });
@@ -2137,10 +2183,15 @@ document.addEventListener('DOMContentLoaded', function() {
     makeDraggable(document.getElementById('sidebar'),    document.querySelector('#sidebar .sb-header'));
 
     // Fold to the four group headings and nothing else, then back.
+    // The button is the window when the window is shut: folded, the layer
+    // panel is the three-line square and nothing else, and it comes back with
+    // every group closed rather than however it was left.
     document.getElementById('btn-menu').onclick = () => {
-        const grps = [...document.querySelectorAll('#layers-win .grp.top')];
-        const anyOpen = grps.some(g => !g.classList.contains('closed'));
-        grps.forEach(g => g.classList.toggle('closed', anyOpen));
+        const w = document.getElementById('layers-win');
+        const folding = !w.classList.contains('folded');
+        w.classList.toggle('folded', folding);
+        if (!folding)
+            w.querySelectorAll('.grp.top').forEach(g => g.classList.add('closed'));
     };
 
 
@@ -2327,7 +2378,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             map.removeLayer('hillshade');                 // a layer's source is fixed,
         }                                                 // so a DEM swap means a rebuild
-        const before = ['cov-closed-fill', 'fp-fill', 'dod', 'dod-hit'].find(id => map.getLayer(id));
+        const before = ['cov-old-line', 'fp-fill', 'dod', 'dod-hit'].find(id => map.getLayer(id));
         map.addLayer({ id: 'hillshade', type: 'hillshade', source: want, paint: hsPaint() }, before);
         hsSource = want;
     }

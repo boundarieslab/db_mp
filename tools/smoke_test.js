@@ -26,6 +26,13 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     hits.push(r.request().url());
     r.fulfill({status:200,contentType:'image/png',body:PX});
   });
+  // The ownership graphs live on Pages. Serve the repo's own copy when it is
+  // there, so the graph box is exercised offline too.
+  await ctx.route(/boundarieslab\.github\.io\/db_mp\/network\//, r => {
+    const f = __dirname + '/../network/' + r.request().url().split('/').pop();
+    if (!fs.existsSync(f)) return r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html>' });
+    r.fulfill({ status: 200, contentType: 'text/html', body: fs.readFileSync(f, 'utf8') });
+  });
   // MapLibre and PapaParse come from a CDN. If a vendor/ copy is present, serve
   // that instead, so the test also runs with no network at all.
   const VENDOR = __dirname + '/../vendor';
@@ -62,6 +69,34 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   });
   await p.click('.maplibregl-ctrl-zoom-in'); await p.waitForTimeout(900);
   ok(await p.evaluate(()=>!!window.__M), 'map instance reachable');
+
+  console.log('layer window');
+  const tree0 = await p.evaluate(() => ({
+    closed: [...document.querySelectorAll('#layers-win .grp.top')].every(g => g.classList.contains('closed')),
+    groups: document.querySelectorAll('#layers-win .grp.top').length,
+    thumbs: document.querySelectorAll('#layers-win .thumb').length,
+    subsShown: [...document.querySelectorAll('#layers-win .ds-sub')]
+                 .filter(d => d.offsetHeight > 0 && d.querySelector('.filter-facility-sub')).length
+  }));
+  ok(tree0.closed && tree0.groups === 4, 'the tree opens as four folded lines (' + tree0.groups + ')');
+  ok(tree0.thumbs === 0, 'with no thumbnails (' + tree0.thumbs + ')');
+  ok(tree0.subsShown === 0, 'and no record filters left in it');
+  const fold = await p.evaluate(() => {
+    const w = document.getElementById('layers-win');
+    const before = w.getBoundingClientRect().width;
+    document.getElementById('btn-menu').click();
+    const after = w.getBoundingClientRect().width;
+    document.getElementById('btn-menu').click();
+    return { before: Math.round(before), after: Math.round(after) };
+  });
+  ok(fold.after < 44, 'and folds to the button alone (' + fold.before + ' -> ' + fold.after + 'px)');
+  // Everything below reaches into the tree, so open it and let it be as tall
+  // as it needs: the real tree scrolls, which a click cannot.
+  await p.evaluate(() => {
+    document.querySelectorAll('.grp').forEach(g => g.classList.remove('closed'));
+    document.querySelector('.tree').style.maxHeight = 'none';
+  });
+  await p.waitForTimeout(200);
 
   console.log('zoom limits');
   const z0 = await p.evaluate(()=>window.__M.getMaxZoom());
@@ -230,6 +265,16 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   }));
   ok(cl.open && cl.sel === 1, 'clicking a row opens that site (' + cl.title + ')');
 
+  // The deck may be covering the page and the tree may have been re-folded.
+  await p.evaluate(() => {
+    const d = document.getElementById('deck');
+    if (d.classList.contains('full')) document.getElementById('deck-size').click();
+    document.getElementById('layers-win').classList.remove('folded');
+    document.querySelectorAll('.grp').forEach(g => g.classList.remove('closed'));
+    document.querySelector('.tree').style.maxHeight = 'none';
+  });
+  await p.waitForTimeout(300);
+
   console.log('3D terrain');
   // The defect this guards: clicking 3D before the style has finished loading
   // used to throw "cannot load terrain, because there exists no source with ID",
@@ -241,6 +286,8 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
       if (this.getContainer() && this.getContainer().id === 'map') window.__M = this;
       return o.apply(this, arguments);
     };
+    document.querySelectorAll('.grp').forEach(g => g.classList.remove('closed'));
+    document.querySelector('.tree').style.maxHeight = 'none';
   });
   await p.click('#terrain-3d', { timeout: 5000 }).catch(() => {});
   await p.waitForTimeout(6000);
@@ -403,10 +450,10 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
 
   // The sweep is context, not findings: off until asked, never clickable.
   const covOff = await p.evaluate(() => !!window.__M.getSource('cov'));
-  ok(!covOff, 'the 879-polygon sweep stays off until a box is ticked');
+  ok(!covOff, 'the 1 736-polygon sweep stays off until a box is ticked');
   await p.evaluate(() => {
     document.querySelectorAll('.grp').forEach(g => g.classList.remove('closed'));
-    const b = document.getElementById('filter-plan-inforce');
+    const b = document.getElementById('filter-plan-current');
     b.checked = true; b.dispatchEvent(new Event('change', { bubbles: true }));
   });
   await p.waitForTimeout(2500);
@@ -415,13 +462,59 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     const vis = id => m.getLayer(id) && m.getLayoutProperty(id, 'visibility') !== 'none';
     const src = m.getSource('cov');
     return { n: src ? src._data.features.length : 0,
-             inforce: vis('cov-inforce-line'), closed: vis('cov-closed-line'),
-             below: m.getStyle().layers.findIndex(l => l.id === 'cov-inforce-line') <
+             inforce: vis('cov-current-line'), closed: vis('cov-old-line'),
+             below: m.getStyle().layers.findIndex(l => l.id === 'cov-current-line') <
                     m.getStyle().layers.findIndex(l => l.id === 'fp-fill') };
   });
-  ok(cov1.n === 879, 'all 879 sweep polygons load (got ' + cov1.n + ')');
+  ok(cov1.n === 1736, 'all 1 736 sweep polygons load (got ' + cov1.n + ')');
   ok(cov1.inforce && !cov1.closed, 'only the class that was ticked is shown');
   ok(cov1.below, 'and the sweep is drawn under the database footprints');
+
+  console.log('table filters and marker hover');
+  await p.evaluate(() => {
+    document.getElementById('deck').className = 'half';
+    document.querySelectorAll('.grp').forEach(g => g.classList.remove('closed'));
+  });
+  await p.waitForTimeout(400);
+  // The producing / receiving / mixed filter now lives in the table header.
+  const dirs = await p.evaluate(async () => {
+    const b = document.getElementById('deck-dir');
+    const seen = [];
+    for (let i = 0; i < 4; i++) {
+      seen.push({ label: b.textContent.trim(),
+                  rows: document.querySelectorAll('#site-table tbody tr').length });
+      b.click();
+      await new Promise(r => setTimeout(r, 150));
+    }
+    return seen;
+  });
+  ok(dirs[0].label === 'all flows', 'the table carries the flow filter (' + dirs[0].label + ')');
+  ok(dirs.some(d => d.rows < dirs[0].rows), 'and it narrows the table (' +
+     dirs.map(d => d.label + ':' + d.rows).join(' ') + ')');
+
+  const hov = await p.evaluate(async () => {
+    const el = document.querySelector('.custom-marker');
+    if (!el) return { no: true };
+    el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
+    await new Promise(r => setTimeout(r, 300));
+    const c = document.getElementById('hover-card');
+    const im = c.querySelector('.im');
+    return { on: c.classList.contains('on'), img: (im.style.backgroundImage || '').length > 6 };
+  });
+  ok(hov.on, 'hovering a marker raises the preview');
+  ok(hov.img, 'and the preview carries a picture');
+
+  // The graph used to be squeezed into 116px and cut in half.
+  await p.evaluate(() => { location.hash = ''; });
+  await p.evaluate(() => { location.hash = 'site=AK_AH_00126'; });
+  await p.waitForTimeout(2500);
+  const g = await p.evaluate(() => {
+    const c = document.getElementById('graph-container');
+    const f = c && c.querySelector('iframe');
+    return { h: c ? c.offsetHeight : 0, frame: !!f };
+  });
+  ok(g.frame, 'the site panel carries its ownership graph');
+  ok(g.h >= 240, 'with room to be read (' + g.h + 'px)');
 
   console.log('iframe embed (dirtybusiness.no)');
   const p2 = await ctx.newPage();
