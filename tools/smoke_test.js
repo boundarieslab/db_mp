@@ -22,7 +22,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   const ctx = await b.newContext({ viewport:{width:1440,height:900} });
   const hits = [];
   await ctx.route('**/docs.google.com/**', r=>r.fulfill({status:200,contentType:'text/csv',body:csv(r.request().url())}));
-  await ctx.route(/kartverket|arcgisonline|geonorge|wayback/, r=>{
+  await ctx.route(/kartverket|arcgisonline|geonorge|wayback|elevation-tiles-prod/, r=>{
     hits.push(r.request().url());
     r.fulfill({status:200,contentType:'image/png',body:PX});
   });
@@ -129,7 +129,9 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   const dk = await p.evaluate(() => {
     const rows = [...document.querySelectorAll('#site-table tbody tr')];
     const head = [...document.querySelectorAll('#site-table thead th')].map(t => t.textContent.trim());
-    const area = rows.map(r => r.children[5].textContent.trim());
+    const ths = [...document.querySelectorAll('#site-table thead th')];
+    const si = ths.findIndex(t => /[↓↑]/.test(t.textContent));
+    const area = rows.map(r => r.children[si].textContent.trim());
     return { n: rows.length, head, area,
              count: document.getElementById('deck-count').textContent.trim(),
              sel: rows.filter(r => r.classList.contains('sel')).length };
@@ -140,7 +142,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   // blanks sort last whichever way the column runs, or an empty cell reads as zero
   const blanksLast = (() => { let seenBlank = false;
     for (const a of dk.area) { if (!a) seenBlank = true; else if (seenBlank) return false; } return true; })();
-  ok(blanksLast, 'rows without an area sort last (' + dk.area.join(',') + ')');
+  ok(blanksLast, 'blank cells sort last in the sorted column (' + dk.area.join(',') + ')');
 
   await p.hover('#site-table tbody tr');
   await p.waitForTimeout(400);
@@ -164,6 +166,47 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     title: (document.getElementById('sb-title') || {}).textContent || ''
   }));
   ok(cl.open && cl.sel === 1, 'clicking a row opens that site (' + cl.title + ')');
+
+  console.log('3D terrain');
+  await p.evaluate(() => { const m = window.__M; m.jumpTo({ center: [11.038, 60.063], zoom: 13 }); });
+  await p.waitForTimeout(800);
+  const demHits = [];
+  await p.route('**/data/terrain/**', r => { demHits.push(r.request().url()); r.continue(); });
+  await p.click('#terrain-3d');
+  await p.waitForTimeout(3500);
+  const t3d = await p.evaluate(() => {
+    const m = window.__M, t = m.getTerrain();
+    return { on: !!t, src: t && t.source, exag: t && t.exaggeration,
+             pitch: Math.round(m.getPitch()),
+             srcOk: !!m.getSource('terrain-dem'),
+             wrap: !document.getElementById('terrain-exag-wrap').hidden };
+  });
+  ok(t3d.on && t3d.srcOk && t3d.src === 'terrain-dem', 'terrain is attached (' + t3d.src + ')');
+  ok(t3d.pitch > 30, 'the map tilts so the terrain is visible (' + t3d.pitch + ' deg)');
+  ok(t3d.wrap, 'the exaggeration slider appears with it');
+  ok(demHits.length > 0, 'DEM tiles are requested (' + demHits.length + ')');
+  ok(demHits.every(u => !/\/1[6-9]\//.test(u.replace(/.*terrain\/[a-z]+/, ''))),
+     'and never past the deepest DEM zoom that exists');
+  await p.evaluate(() => window.__M.jumpTo({ center: [10.75, 59.91], zoom: 12 }));   // Oslo, outside the run
+  await p.waitForTimeout(2500);
+  const nat = await p.evaluate(() => {
+    const t = window.__M.getTerrain();
+    return { src: t && t.source, res: (document.getElementById('terrain-res') || {}).textContent || '' };
+  });
+  ok(nat.src === 'terrain-dem-no', 'outside the run it falls back to the national DEM (' + nat.src + ')');
+  ok(/10 m/.test(nat.res), 'and says which resolution is under you (' + nat.res + ')');
+  await p.evaluate(() => window.__M.jumpTo({ center: [11.038, 60.063], zoom: 13 }));  // back inside
+  await p.waitForTimeout(2500);
+  const fine = await p.evaluate(() => {
+    const t = window.__M.getTerrain();
+    return { src: t && t.source, res: (document.getElementById('terrain-res') || {}).textContent || '' };
+  });
+  ok(fine.src === 'terrain-dem', 'and back to the metre LiDAR inside it (' + fine.src + ')');
+  ok(/1 m/.test(fine.res), 'and says so (' + fine.res + ')');
+
+  await p.click('#terrain-3d'); await p.waitForTimeout(1200);
+  const off = await p.evaluate(() => ({ t: !!window.__M.getTerrain(), pitch: Math.round(window.__M.getPitch()) }));
+  ok(!off.t && off.pitch < 5, 'switching it off returns the map to flat (' + off.pitch + ' deg)');
 
   console.log('iframe embed (dirtybusiness.no)');
   const p2 = await ctx.newPage();
