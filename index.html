@@ -114,7 +114,7 @@ button,input,select{font:inherit;color:inherit}
 .timeline-year{padding:0 4px 4px 42px;font-family:PlexMono,monospace;font-size:10px}
 
 /* ---------- tools window + legend ---------- */
-#tools-win{right:10px;top:10px;width:640px}
+#tools-win{right:10px;top:10px;width:496px}
 .pane{padding:7px 9px 8px}
 /* Only one pane is open at a time, and none of them is open to begin with:
    the toolbar is the interface, the panes are what a button opens. */
@@ -468,23 +468,31 @@ iframe{border:0}
         </div>
         <button type="button" class="btn txt" id="btn-en" aria-pressed="true">EN</button>
         <button type="button" class="btn txt" id="btn-no" aria-pressed="false">NO</button>
-        <button type="button" class="btn txt filter-toggle" onclick="toggleFilter()" aria-expanded="true"
-                aria-controls="filter-panel" aria-expanded="false" title="Show or hide the legend"
-                data-en="LEGEND" data-no="TEGNFORKLARING">LEGEND</button>
-        <button type="button" class="btn txt" id="btn-3d" aria-pressed="false"
-                title="Terrain in three dimensions">3D</button>
-        <button type="button" class="btn txt" id="btn-light" aria-pressed="false"
-                title="Shade the terrain and turn the light" data-en="LIGHT" data-no="LYS">LIGHT</button>
-        <button type="button" class="btn txt" id="btn-profile" aria-pressed="false"
-                title="Draw a line and read the ground under it"
-                data-en="PROFILE" data-no="PROFIL">PROFILE</button>
-        <button type="button" class="btn txt" id="btn-select" aria-pressed="false"
-                title="Drag a box to select the sites inside it"
-                data-en="SELECT" data-no="VELG">SELECT</button>
-        <button type="button" class="btn txt" id="btn-flat" title="Look straight down again"
-                data-en="RESET" data-no="NULLSTILL">RESET</button>
-        <button type="button" class="btn txt" onclick="shareLink()" title="Copy a link to this view"
-                data-en="SHARE" data-no="DEL">SHARE</button>
+        <button type="button" class="btn filter-toggle" onclick="toggleFilter()"
+                aria-controls="filter-panel" aria-expanded="false"
+                data-title-en="Legend" data-title-no="Tegnforklaring"
+                title="Legend" aria-label="Legend"><svg width="14" height="11" aria-hidden="true"><g stroke="#000" stroke-width=".9" fill="none"><rect x=".5" y=".5" width="3.4" height="3.4"/><line x1="6" y1="2.2" x2="13.5" y2="2.2"/><rect x=".5" y="6.6" width="3.4" height="3.4"/><line x1="6" y1="8.3" x2="13.5" y2="8.3"/></g></svg></button>
+        <button type="button" class="btn" id="btn-3d" aria-pressed="false"
+                data-title-en="Terrain in three dimensions" data-title-no="Terreng i tre dimensjoner"
+                title="Terrain in three dimensions" aria-label="Terrain in three dimensions"><svg width="15" height="13" aria-hidden="true"><g stroke="#000" stroke-width=".9" fill="none"><polygon points="7.5,1 14,4.6 7.5,8.2 1,4.6"/><polyline points="1,4.6 1,8.4 7.5,12 14,8.4 14,4.6"/><line x1="7.5" y1="8.2" x2="7.5" y2="12"/></g></svg></button>
+        <button type="button" class="btn" id="btn-light" aria-pressed="false"
+                data-title-en="Shade the terrain and turn the light"
+                data-title-no="Skyggelegg terrenget og drei lyset"
+                title="Shade the terrain and turn the light" aria-label="Light direction"><svg width="15" height="13" aria-hidden="true"><g stroke="#000" stroke-width=".9" fill="none"><path d="M.5 12 L5.2 5.4 L8.6 9.2 L14.5 12"/><line x1="1" y1="1" x2="3.4" y2="3.4"/><line x1="5.6" y1=".8" x2="8" y2="3.2"/><line x1="10.2" y1=".8" x2="12.6" y2="3.2"/></g></svg></button>
+        <button type="button" class="btn" id="btn-profile" aria-pressed="false"
+                data-title-en="Draw a line and read the ground under it"
+                data-title-no="Tegn en linje og les bakken under den"
+                title="Draw a line and read the ground under it" aria-label="Cross section"><svg width="15" height="13" aria-hidden="true"><g stroke="#000" stroke-width=".9" fill="none"><polyline points="1,1 1,11.5 14.5,11.5"/><path d="M2 6.2 L4.4 4.2 L6.8 7.6 L9.2 3.4 L11.6 6.8 L14 5"/></g></svg></button>
+        <button type="button" class="btn" id="btn-select" aria-pressed="false"
+                data-title-en="Drag a box to select the sites inside it"
+                data-title-no="Dra en boks for \u00e5 velge stedene i den"
+                title="Drag a box to select the sites inside it" aria-label="Select an area"><svg width="14" height="12" aria-hidden="true"><g stroke="#000" stroke-width=".9" fill="none"><rect x=".5" y=".5" width="13" height="11" stroke-dasharray="2.6 2"/><line x1="4.6" y1="6" x2="9.4" y2="6"/><line x1="7" y1="3.6" x2="7" y2="8.4"/></g></svg></button>
+        <button type="button" class="btn" id="btn-flat"
+                data-title-en="Look straight down again" data-title-no="Se rett ned igjen"
+                title="Look straight down again" aria-label="Reset the view"><svg width="14" height="13" aria-hidden="true"><g stroke="#000" stroke-width=".9" fill="none"><polygon points="7,7.4 13.2,10.2 7,13 .8,10.2"/><line x1="7" y1="1" x2="7" y2="5.6"/><polyline points="4.8,3.6 7,5.8 9.2,3.6"/></g></svg></button>
+        <button type="button" class="btn" onclick="shareLink()"
+                data-title-en="Copy a link to this view" data-title-no="Kopier en lenke til denne visningen"
+                title="Copy a link to this view" aria-label="Copy a link to this view"><svg width="14" height="13" aria-hidden="true"><g stroke="#000" stroke-width=".9" fill="none"><line x1="4.4" y1="6.5" x2="10.2" y2="2.9"/><line x1="4.4" y1="6.5" x2="10.2" y2="10.1"/><circle cx="2.8" cy="6.5" r="2.1"/><circle cx="11.4" cy="2.5" r="1.8"/><circle cx="11.4" cy="10.5" r="1.8"/></g></svg></button>
     </div>
 
     <!-- LEGEND, docked inside the tools window -->
@@ -1689,6 +1697,12 @@ document.addEventListener('DOMContentLoaded', function() {
         btnNo.setAttribute('aria-pressed', String(lang === 'no'));
         try { localStorage.setItem('db_lang', lang); } catch (err) {}
         document.querySelectorAll('[data-en]').forEach(el => el.innerText = el.getAttribute(`data-${lang}`));
+        // Icon buttons carry no text at all, so their label lives in the
+        // tooltip. Writing into innerText here would erase the drawing.
+        document.querySelectorAll('[data-title-en]').forEach(el => {
+            const v = el.getAttribute('data-title-' + lang);
+            if (v) { el.setAttribute('title', v); el.setAttribute('aria-label', v); }
+        });
         if (currentSite) openSidebar(currentSite);
         renderMarkers(allSites);   // popups carry translated text
         if (allSites.length) renderDeck();   // column headings and the record count
