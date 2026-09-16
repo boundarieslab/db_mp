@@ -7,764 +7,464 @@
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
     
     <style>
-        :root {
-            --bg: #ffffff;
-            --fg: #000000;
-            --col-project: #ff0066;
-            --col-facility: #39FF14;
-            --sidebar-width: 30vw;
-            --ui-width: 200px;
-            --font-stack: 'Diatype Mono', 'JetBrains Mono', 'Courier New', monospace;
-        }
+/* ==========================================================================
+   dirtybusiness.no map — interface
+   White ground, 0.5px hairlines, no rounded corners, no shadows.
+   Colour belongs to the data: the turbo ramp, the markers, the polygons.
+   Type: IBM Plex Sans; IBM Plex Mono for codes, coordinates and quantities.
+   Rhythm: 25px row, 12px gutter.
+   ========================================================================== */
+@font-face{font-family:Plex;src:url(assets/fonts/plex-sans-400.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:Plex;src:url(assets/fonts/plex-sans-500.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:PlexMono;src:url(assets/fonts/plex-mono-400.woff2) format('woff2');font-weight:400;font-display:swap}
 
-        @font-face {
-            font-family: 'Diatype Mono';
-            src: url('https://freight.cargo.site/t/original/i/34e062220d932607590d93991273932252277d33d93566736279930922253303/DiatypeMono-Regular.woff2') format('woff2');
-            font-weight: normal;
-        }
-        @font-face {
-            font-family: 'Diatype Mono';
-            src: url('https://freight.cargo.site/t/original/i/2274439092002939333902999233829283733003002928833773300022200299/DiatypeMono-Bold.woff2') format('woff2');
-            font-weight: bold;
-        }
+:root{
+  --frame:#2b2b2b;      /* window and control outlines            */
+  --rule:#d8d8d8;       /* structural rules inside a window       */
+  --hair:#efefef;       /* row separators                         */
+  --sub:#7d7d7d;        /* secondary text                         */
+  --sel:#f1f1f1;        /* selection                              */
+  --green:#39FF14;      /* facility                               */
+  --pink:#ff0066;       /* construction project                   */
+  --row:25px;
+  --gut:12px;
+}
+*{box-sizing:border-box;border-radius:0}
+html,body{height:100%;margin:0;padding:0}
+body{font:400 11px/1.45 Plex,Helvetica,Arial,sans-serif;color:#000;background:#fff;
+     -webkit-font-smoothing:antialiased;overflow:hidden}
+.m,.mono{font-family:PlexMono,ui-monospace,monospace}
+h1{font:500 13px/1.2 Plex,sans-serif;margin:0 0 3px}
+a{color:#00f;text-decoration:none}
+button,input,select{font:inherit;color:inherit}
+[hidden]{display:none!important}
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; overflow: hidden; font-family: var(--font-stack); background: var(--bg); }
+/* ---------- shell ---------- */
+#shell{display:flex;flex-direction:column;height:100%}
+#stage{position:relative;flex:1 1 auto;min-height:0;border-bottom:.5px solid var(--frame)}
+#map{position:absolute;top:0;left:0;right:0;bottom:0;background:#fff}
 
-        #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #f0f0f0; }
+/* ---------- window ---------- */
+.win{position:absolute;background:#fff;border:.5px solid var(--frame);z-index:20;overflow:hidden}
+.win-bar{height:21px;display:flex;align-items:center;padding:0 6px;border-bottom:.5px solid var(--frame)}
+.win-bar .title{flex:1 1 auto;text-align:right;font-weight:500;letter-spacing:.1em;font-size:9px}
+.strip{border-bottom:.5px solid var(--frame);padding:3px;display:flex;align-items:center;gap:3px}
+.btn{width:26px;height:26px;background:#fff;border:.5px solid var(--frame);cursor:pointer;padding:0;
+     display:flex;align-items:center;justify-content:center;flex:0 0 26px}
+.btn.on,.btn[aria-pressed="true"]{background:#ececec}
+.btn:hover{background:#f6f6f6}
+.strip-label{flex:1 1 auto;text-align:right;font-size:9px;letter-spacing:.1em;font-weight:500;padding-right:4px}
 
-        /* UI BOX BASE */
-        .ui-box {
-            position: absolute;
-            left: 10px;
-            z-index: 2000;
-            background: #fff;
-            border: 1px solid #000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: var(--ui-width);
-        }
+/* ---------- search ---------- */
+.search-box{position:relative;flex:1 1 auto;min-width:0}
+.search-input{width:100%;height:26px;background:#fff;border:.5px solid var(--frame);
+  padding:0 8px;line-height:24px;font-size:11px}
+.search-input::placeholder{color:var(--sub)}
+.search-results{position:absolute;left:0;right:0;top:26px;background:#fff;border:.5px solid var(--frame);
+  border-top:0;max-height:220px;overflow-y:auto;display:none;z-index:40}
+.search-results.open{display:block}
+.search-item{padding:4px 8px;border-bottom:.5px solid var(--hair);cursor:pointer}
+.search-item:hover{background:var(--sel)}
+.search-item-name{display:block}
+.search-item-meta{display:block;color:var(--sub);font-size:10px}
+.search-more{padding:4px 8px;color:var(--sub);font-size:10px}
 
-        /* SEARCH */
-        /* Every .ui-box shares z-index 2000, so the boxes below the search box
-           painted over its results dropdown and swallowed the clicks. */
-        .search-box { top: 10px; z-index: 2500; }
-        .search-input {
-            border: none;
-            outline: none;
-            padding: 10px;
-            font-family: var(--font-stack);
-            font-size: 10px;
-            width: 100%;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-        .search-results {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            background: #fff;
-            border: 1px solid #000;
-            border-top: none;
-            max-height: 200px;
-            overflow-y: auto;
-            display: none;
-            z-index: 3000;
-        }
-        .search-item {
-            padding: 8px 10px;
-            font-size: 9px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-            text-transform: uppercase;
-        }
-        .search-item:hover { background: #f5f5f5; }
+/* ---------- layer tree ---------- */
+#layers-win{left:10px;top:10px;width:264px}
+.tree{padding:3px 4px 5px;max-height:calc(100vh - 340px);overflow-y:auto}
+.grp{margin-left:12px;border-left:.5px solid var(--rule)}
+.grp.top{margin-left:0;border-left:0}
+.grp-head{display:flex;align-items:center;gap:5px;height:21px;font-weight:500;
+  letter-spacing:.08em;font-size:10px;cursor:pointer;user-select:none}
+.tri{width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent;
+  border-top:4.5px solid #000;flex:0 0 auto}
+.grp.closed>.grp-head .tri{border:0;border-top:3px solid transparent;border-bottom:3px solid transparent;
+  border-left:4.5px solid #000}
+.grp.closed>.grp-body{display:none}
+.ds{margin-left:12px;border-left:.5px solid var(--rule);border-top:.5px solid var(--hair)}
+.ds-row{display:flex;align-items:center;gap:7px;padding:3px 4px;min-height:27px;cursor:pointer}
+.ds-row.sel{background:var(--sel)}
+.ds-row .thumb{width:26px;height:19px;border:.5px solid var(--rule);flex:0 0 26px;overflow:hidden;background:#fff}
+.ds-row .thumb svg{display:block}
+.ds-row .nm{flex:1 1 auto;min-width:0}
+.ds-row .nm b{font-weight:400;display:block}
+.ds-row.sel .nm b{font-weight:500}
+.ds-row .src{display:block;color:var(--sub);font-size:10px}
+.ds-row .ct{margin-left:8px;color:var(--sub);font-family:PlexMono,monospace;font-size:10px}
+.ds-row input[type=checkbox],.ds-row input[type=radio]{margin:0 0 0 8px;width:11px;height:11px;
+  accent-color:#000;flex:0 0 11px}
+.ds-sub{padding:0 4px 4px 42px}
+.ds-sub label{display:inline-flex;align-items:center;gap:4px;margin-right:9px;font-size:10px;color:var(--sub)}
+.ds-sub input{width:10px;height:10px;margin:0;accent-color:#000}
+.ds-sub input[type=range].slider{width:calc(100% - 10px);height:10px;margin-top:3px}
+.slider{-webkit-appearance:none;appearance:none;width:100%;height:10px;background:#fff;
+  border:.5px solid var(--frame);margin:0}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:7px;height:12px;background:#fff;
+  border:.5px solid var(--frame);margin-top:-1.5px}
+.slider::-moz-range-thumb{width:7px;height:12px;background:#fff;border:.5px solid var(--frame);border-radius:0}
+.slider:disabled{opacity:.35}
+.sub-note{padding:2px 4px 4px 42px;color:var(--sub);font-size:10px}
+.timeline-labels{display:flex;justify-content:space-between;padding:1px 4px 0 42px;
+  color:var(--sub);font-size:9px;font-family:PlexMono,monospace}
+.timeline-year{padding:0 4px 4px 42px;font-family:PlexMono,monospace;font-size:10px}
 
-        /* LAYERS */
-        .layers-box { top: 52px; padding: 10px; }
-        .layers-section { margin-bottom: 8px; }
-        .layers-section:last-child { margin-bottom: 0; }
-        .layers-title {
-            font-size: 9px;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #666;
-            margin-bottom: 6px;
-        }
-        .layer-option {
-            display: flex;
-            align-items: center;
-            padding: 3px 0;
-            font-size: 10px;
-            cursor: pointer;
-        }
-        .layer-option input { margin-right: 6px; }
-        .layer-option label { cursor: pointer; text-transform: uppercase; }
+/* ---------- tools window + legend ---------- */
+#tools-win{right:10px;top:10px;width:556px}
+.pane{padding:7px 9px 8px}
+.pane-title{font-weight:500;letter-spacing:.08em;font-size:10px;margin-bottom:6px}
+.legend-cols{display:flex;gap:16px}
+.legend-left{flex:1 1 0;min-width:0}
+.legend-right{flex:0 0 212px}
+.dod-bar{height:11px;border:.5px solid var(--frame);background:linear-gradient(to right,
+ #30123b,#4145ab,#4675ed,#39a2fc,#1bcfd4,#24eca6,#61fc6c,#a4fc3b,#d1e935,#f3c63a,#fe9b2d,#f36315,#d93806,#b11901,#7a0403)}
+.dod-bar-scale{display:flex;justify-content:space-between;margin:3px 0 8px;color:var(--sub);
+  font-size:10px;font-family:PlexMono,monospace}
+.lrow{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.lrow .slider{flex:0 0 150px;width:150px}
+.lrow .val{font-family:PlexMono,monospace;font-size:10px;min-width:34px}
+.legend-row{display:flex;align-items:center;gap:7px;height:17px}
+.legend-symbol{width:14px;height:14px;display:flex;align-items:center;justify-content:center;flex:0 0 14px}
+.legend-label{flex:1 1 auto}
+.legend-count{margin-left:auto;color:var(--sub);font-family:PlexMono,monospace;font-size:10px}
+.legend-sep{border-top:.5px solid var(--hair);margin:5px 0}
+.sw{width:10px;height:10px;flex:0 0 10px;border:.5px solid var(--frame)}
 
-        /* ZOOM */
-        .maplibregl-ctrl-top-left { top: 52px; left: 220px; }
-        .maplibregl-ctrl-top-left .maplibregl-ctrl-group {
-            margin: 0;
-            background: #fff;
-            border: 1px solid #000;
-            border-radius: 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .maplibregl-ctrl-group button {
-            width: 24px;
-            height: 24px;
-            background: #fff;
-            border-radius: 0;
-            border-bottom: 1px solid #ccc;
-        }
-        .maplibregl-ctrl-group button + button { border-top: none; }
-        .maplibregl-ctrl-group button:last-child { border-bottom: none; }
-        .maplibregl-ctrl-group button:hover { background: #f5f5f5; }
+/* ---------- compass, scale ---------- */
+#compass{position:absolute;left:12px;bottom:44px;z-index:6;text-align:center;font-size:10px;color:#000}
+.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-bottom-left{z-index:6}
+.maplibregl-ctrl-bottom-left .maplibregl-ctrl-scale{background:none;border:.5px solid var(--frame);
+  border-top:0;color:#000;font:10px PlexMono,monospace;padding:0 4px}
+.maplibregl-ctrl-attrib{background:rgba(255,255,255,.85)!important;font:9px Plex,sans-serif}
+.maplibregl-ctrl-attrib a{color:var(--sub)}
+.maplibregl-ctrl-bottom-right{margin:0 12px 34px 0}
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group{background:#fff;border:.5px solid var(--frame);box-shadow:none}
+.maplibregl-ctrl-group button{width:26px;height:26px;background:#fff}
+.maplibregl-ctrl-group button+button{border-top:.5px solid var(--rule)}
+.maplibregl-ctrl-group button:hover{background:#f6f6f6}
 
-        /* LANGUAGE */
-        .lang-box { top: 178px; display: flex; }
-        .lang-btn {
-            padding: 8px;
-            background: #fff;
-            color: #000;
-            border-right: 1px solid #000;
-            flex: 1;
-            text-align: center;
-            font-size: 10px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .lang-btn:last-child { border-right: none; }
-        .lang-btn.active { background: #000; color: #fff; }
-        .lang-btn:hover { background: #f5f5f5; }
-        .lang-btn.active:hover { background: #000; }
+/* ---------- markers ---------- */
+.custom-marker{cursor:pointer;background:none;border:0;padding:0;line-height:0}
+.marker-icon{width:13px;height:13px}
+.marker-icon svg{display:block;width:13px;height:13px}
+.custom-marker:focus-visible .marker-icon svg{outline:1px solid #000;outline-offset:1px}
+.marker-selected .marker-icon svg{outline:2px solid #fff;outline-offset:0;box-shadow:0 0 0 3px #000}
 
-        /* TIMELINE */
-        .timeline-box { top: 220px; padding: 10px; }
-        .timeline-title {
-            font-size: 9px;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #666;
-            margin-bottom: 6px;
-        }
-        .timeline-toggle {
-            display: flex;
-            align-items: center;
-            font-size: 9px;
-            margin-bottom: 8px;
-        }
-        .timeline-toggle input { margin-right: 6px; }
-        .timeline-toggle label { cursor: pointer; text-transform: uppercase; }
-        .timeline-slider {
-            width: 100%;
-            -webkit-appearance: none;
-            height: 3px;
-            background: #ddd;
-            outline: none;
-            cursor: pointer;
-        }
-        .timeline-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
-            background: #000;
-            cursor: pointer;
-        }
-        .timeline-slider::-moz-range-thumb {
-            width: 12px;
-            height: 12px;
-            background: #000;
-            cursor: pointer;
-            border: none;
-        }
-        .timeline-slider:disabled { opacity: 0.3; cursor: not-allowed; }
-        .timeline-labels {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 4px;
-            font-size: 7px;
-            color: #595959;
-        }
-        .timeline-year {
-            text-align: center;
-            font-size: 11px;
-            font-weight: bold;
-            margin-top: 4px;
-        }
+/* ---------- popups ---------- */
+.maplibregl-popup-content{background:#fff;border:.5px solid var(--frame);border-radius:0;
+  box-shadow:none;padding:6px 9px;font:11px Plex,sans-serif}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip{border-top-color:var(--frame)}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip{border-bottom-color:var(--frame)}
+.maplibregl-popup-anchor-left .maplibregl-popup-tip{border-right-color:var(--frame)}
+.maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:var(--frame)}
+.popup-title{font-weight:500}
+.popup-type,.popup-loc{color:var(--sub);font-size:10px}
+.popup-link{display:inline-block;margin-top:4px;border-bottom:.5px solid #00f}
+.popup-link:hover{background:var(--sel)}
 
-        /* FILTER TOGGLE */
-        .filter-toggle {
-            top: 330px;
-            padding: 10px;
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-            text-align: center;
-        }
-        .filter-toggle:hover { background: #f5f5f5; }
+/* ---------- site window (was the sidebar) ---------- */
+#sidebar{position:absolute;right:12px;top:262px;width:344px;background:#fff;
+  border:.5px solid var(--frame);z-index:24;display:flex;flex-direction:column;
+  max-height:calc(100% - 372px)}
+#sidebar:not(.active){display:none}
+.sb-header{height:21px;flex:0 0 21px;display:flex;align-items:center;gap:6px;padding:0 6px;
+  border-bottom:.5px solid var(--frame)}
+.close-btn{width:9px;height:9px;flex:0 0 9px;padding:0;background:#fff;border:.5px solid var(--frame);
+  cursor:pointer;position:relative;font-size:0;line-height:0}
+.close-btn::before,.close-btn::after{content:"";position:absolute;left:.8px;top:3.7px;width:6.4px;height:.5px;background:#000}
+.close-btn::before{transform:rotate(45deg)}
+.close-btn::after{transform:rotate(-45deg)}
+.close-btn:hover{background:var(--sel)}
+.sb-header .title{flex:1 1 auto;text-align:right;font-weight:500;letter-spacing:.1em;font-size:9px;padding-right:2px}
+.share-btn{background:#fff;border:.5px solid var(--frame);cursor:pointer;
+  font-size:9px;letter-spacing:.1em;padding:1px 5px;font-weight:500}
+.share-btn:hover{background:var(--sel)}
+.sb-scroll-area{flex:1 1 auto;min-height:0;overflow-y:auto}
+.sb-content{padding:0}
+.sb-head{display:flex;gap:10px;padding:9px;border-bottom:.5px solid var(--hair)}
+.slideshow-container{width:84px;height:64px;flex:0 0 84px;border:.5px solid var(--rule);
+  background:#f3f3f3;position:relative;overflow:hidden}
+.slideshow-slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity .2s}
+.slideshow-slide.active{opacity:1}
+.slideshow-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.9);
+  border:.5px solid var(--frame);width:13px;height:16px;cursor:pointer;font-size:9px;line-height:1;padding:0}
+.slideshow-prev{left:2px}.slideshow-next{right:2px}
+.slideshow-counter{position:absolute;right:2px;bottom:2px;background:rgba(255,255,255,.9);
+  font-size:9px;padding:0 2px;font-family:PlexMono,monospace}
+.no-images{display:flex;align-items:center;justify-content:center;height:100%;
+  color:var(--sub);font-size:9px;text-align:center;padding:2px}
+.sb-titleblock{flex:1 1 auto;min-width:0}
+.sb-uid{color:var(--sub);font-size:10px;font-family:PlexMono,monospace;margin-top:4px}
+.sb-location{color:var(--sub);font-size:10px}
+.sb-desc{padding:7px 9px;border-bottom:.5px solid var(--hair)}
+.sb-content b{font-weight:500}
+.status-badge{display:inline-block;border:.5px solid var(--frame);font-size:9px;
+  letter-spacing:.06em;padding:0 4px;margin-bottom:4px}
+.status-badge.unknown{color:var(--sub);border-color:var(--rule)}
+.column-set{display:flex;height:23px;align-items:center;padding:0 9px;border-bottom:.5px solid var(--hair)}
+.col-0{color:var(--sub);width:118px;flex:0 0 118px}
+.col-1{flex:1 1 auto;text-align:right;font-family:PlexMono,monospace;font-size:10px}
+.link-row{padding:3px 9px;border-bottom:.5px solid var(--hair)}
+.link-row a{border-bottom:.5px solid #00f}
+.graph-head{height:20px;line-height:20px;font-size:10px;color:var(--sub);letter-spacing:.08em;
+  font-weight:500;padding:0 9px;display:flex;align-items:center}
+.graph-open{margin-left:auto;font-size:9px;border-bottom:.5px solid var(--sub);cursor:pointer;
+  background:none;border-width:0 0 .5px;padding:0}
+.graph-open:hover{color:#000}
+#graph-container{width:100%;height:112px;border:0;display:block}
+iframe{border:0}
+#sb-minimap{width:100%;height:112px;flex:none;border:0;border-bottom:.5px solid var(--hair);position:relative}
+.minimap-dot{width:9px;height:9px;border:.5px solid #000;background:var(--green);
+  transform:translate(-4.5px,-4.5px)}
+.minimap-note{padding:3px 9px;color:var(--sub);font-size:9px}
+.minimap-note.no-coords{color:var(--pink)}
+.no-data{padding:7px 9px;color:var(--sub)}
 
-        /* FILTER PANEL */
-        .filter-panel {
-            position: absolute;
-            top: 372px;
-            left: 10px;
-            z-index: 3500;
-            background: #fff;
-            border: 1px solid #000;
-            padding: 12px;
-            width: var(--ui-width);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-            max-height: 50vh;
-            overflow-y: auto;
-            display: none;
-        }
-        .filter-panel.open { display: block; }
-        .filter-close {
-            position: absolute;
-            top: 8px;
-            right: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .filter-close:hover { opacity: 0.5; }
+/* ---------- deck: the database as a table ---------- */
+#deck{flex:0 0 200px;display:flex;flex-direction:column;overflow:hidden;
+  border-bottom:.5px solid var(--frame);background:#fff}
+.deck-head{height:var(--row);flex:0 0 var(--row);display:flex;align-items:center;gap:14px;
+  padding:0 var(--gut);border-bottom:.5px solid var(--frame);
+  letter-spacing:.06em;font-weight:500;font-size:10px}
+.deck-head .count{color:var(--sub);font-weight:400;letter-spacing:0;font-family:PlexMono,monospace}
+.deck-head .actions{margin-left:auto;display:flex;gap:18px;color:var(--sub);font-weight:400;letter-spacing:0}
+.deck-head .actions button{background:none;border:0;color:var(--sub);cursor:pointer;padding:0}
+.deck-head .actions button:hover{color:#000}
+.deck-scroll{flex:1 1 auto;min-height:0;overflow-y:auto}
+#site-table{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed}
+#site-table th{height:var(--row);text-align:left;font-weight:400;color:var(--sub);
+  padding:0 var(--gut);line-height:24px;border-bottom:.5px solid var(--frame);
+  letter-spacing:.04em;white-space:nowrap;font-size:10px;cursor:pointer;
+  position:sticky;top:0;background:#fff;z-index:2}
+#site-table th:hover{color:#000}
+#site-table th.num{text-align:right}
+#site-table td{height:var(--row);padding:0 var(--gut);line-height:24px;
+  border-bottom:.5px solid var(--hair);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#site-table td.num{text-align:right;font-family:PlexMono,monospace}
+#site-table td.uid{font-family:PlexMono,monospace}
+#site-table tbody tr{cursor:pointer}
+#site-table tbody tr:hover td{background:#fafafa}
+#site-table tbody tr.sel td{background:var(--sel)}
+#site-table tbody tr.sel td:nth-child(2){font-weight:500}
 
-        .panel-section {
-            margin-bottom: 14px;
-            padding-bottom: 14px;
-            border-bottom: 1px solid #eee;
-        }
-        .panel-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .panel-title {
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
+/* hover preview */
+#hover-card{position:absolute;z-index:40;background:#fff;border:.5px solid var(--frame);padding:4px;
+  pointer-events:none;display:none}
+#hover-card.on{display:block}
+#hover-card .im{width:132px;height:92px;background:#f3f3f3;border:.5px solid var(--rule);
+  object-fit:cover;display:block}
+#hover-card .cp{font-size:10px;padding:4px 1px 1px;max-width:132px}
+#hover-card .cp span{color:var(--sub);display:block;font-size:9px;font-family:PlexMono,monospace}
 
-        .filter-group { margin-bottom: 10px; }
-        .filter-main {
-            display: flex;
-            align-items: center;
-            font-size: 10px;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-        .filter-main input { margin-right: 8px; }
-        .filter-sub {
-            padding-left: 20px;
-        }
-        .filter-sub label {
-            display: flex;
-            align-items: center;
-            font-size: 9px;
-            cursor: pointer;
-            text-transform: uppercase;
-            padding: 2px 0;
-        }
-        .filter-sub input { margin-right: 6px; }
+/* ---------- status line ---------- */
+.status-strip{height:24px;flex:0 0 24px;display:flex;align-items:center;padding:0 var(--gut);
+  gap:18px;font-size:10px;background:#fff}
+.status-strip .sep{color:var(--sub)}
+.status-strip .right{margin-left:auto;color:var(--sub)}
+.share-notification{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  background:#fff;border:.5px solid var(--frame);padding:6px 12px;z-index:60;
+  font-size:10px;letter-spacing:.06em;opacity:0;pointer-events:none}
+.share-notification.show{animation:fadeInOut 1.6s ease}
+@keyframes fadeInOut{0%{opacity:0}15%{opacity:1}80%{opacity:1}100%{opacity:0}}
 
-        /* LEGEND */
-        .legend-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        .legend-column-title {
-            font-size: 9px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            padding-bottom: 4px;
-            border-bottom: 1px solid #ccc;
-        }
-        .legend-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 6px;
-            font-size: 9px;
-        }
-        .legend-symbol {
-            width: 18px;
-            height: 18px;
-            margin-right: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .legend-label { text-transform: lowercase; }
-
-        /* SCALE */
-        /* The status strip sits at bottom-left with a z-index above the map's
-           own controls, so a scale bar in that same corner is covered by it.
-           Leaflet's was, for as long as the two have both existed; this one is
-           lifted clear of the strip. */
-        .maplibregl-ctrl-bottom-left { bottom: 34px; left: 10px; }
-        .maplibregl-ctrl-bottom-left .maplibregl-ctrl-scale {
-            margin: 0;
-            border: 1px solid #000;
-            border-top: none;
-            border-radius: 0;
-            background: rgba(255,255,255,0.8);
-            font-family: var(--font-stack);
-            font-size: 8px;
-            padding: 2px 4px;
-        }
-
-        /* MARKERS - SMALL */
-        .custom-marker { background: transparent !important; border: none !important; }
-        /* The mark stays 14px; the hit area is 26px. 14px is well under the
-           24px minimum target size and the Oslo cluster is dense. */
-        .marker-icon { display: flex; align-items: center; justify-content: center;
-                       width: 26px; height: 26px; }
-        .marker-icon svg { transition: transform 0.2s ease; }
-        .custom-marker { cursor: pointer; }
-        .custom-marker:hover .marker-icon svg,
-        .custom-marker:focus-visible .marker-icon svg { transform: scale(1.8); }
-        /* The dot on the sidebar's aerial view, formerly an L.circleMarker. */
-        .minimap-dot { width: 14px; height: 14px; border-radius: 50%; box-sizing: border-box;
-                       background: #000; border: 2px solid #39FF14; }
-
-        /* Keyboard focus was invisible everywhere. */
-        :focus-visible { outline: 2px solid #000; outline-offset: 1px; }
-        .lang-btn, .filter-toggle, .filter-close,
-        .lang-btn { background: #fff; border: none; }
-        .filter-toggle { text-align: left; }
-        .close-btn, .filter-close {
-            background: #fff; border: none; position: static;
-            width: 34px; height: 34px; display: flex; font-size: 18px; line-height: 1;
-            align-items: center; justify-content: center;
-        }
-
-        /* Closed sidebar stayed in the tab order and was read out by screen
-           readers while off-screen. */
-        #sidebar:not(.active) { visibility: hidden; }
-        #sidebar.active { visibility: visible; }
-
-        .dod-note { font-size: 8px; color: #595959; margin: 4px 0 0 18px; line-height: 1.4; }
-        .dod-opacity-label { font-size: 8px; color: #595959; margin-bottom: 3px; }
-        #dod-opacity { margin-bottom: 2px; }
-        .legend-dod { border-top: 1px solid #eee; padding-top: 8px; margin-top: 10px; }
-        /* matplotlib "turbo", the ramp the thesis figures use for Δh */
-        .dod-bar { height: 10px; border: 1px solid #000;
-                   background: linear-gradient(to right, #30123b 0%, #434eba 8%, #4584f9 17%, #28bbeb 25%, #1ae4b6 33%, #55fa76 42%, #a4fc3b 50%, #d8e335 58%, #f9ba38 67%, #fa7d20 75%, #e3440a 83%, #b91e01 92%, #7a0402 100%); }
-        .dod-bar-scale, .dod-bar-ends {
-            display: flex; justify-content: space-between;
-            font-size: 8px; color: #595959; margin-top: 2px;
-        }
-        .dod-bar-scale span:nth-child(2) { color: #8a8a8a; }
-        .dod-bar-ends { text-transform: uppercase; letter-spacing: 0.04em; }
-
-        .status-strip {
-            position: absolute; left: 10px; bottom: 10px; z-index: 2000;
-            background: #fff; border: 1px solid #000; padding: 7px 10px;
-            font-size: 9px; font-weight: bold; letter-spacing: 0.5px;
-            text-transform: uppercase; max-width: 260px;
-        }
-
-        .no-data { color: #595959; font-style: normal; }
-        .search-item-name { font-weight: bold; }
-        .search-item-meta { color: #595959; font-size: 8px; margin-top: 2px; }
-        .search-more { padding: 6px 10px; color: #595959; font-size: 8px;
-                       border-top: 1px solid #eee; text-transform: uppercase; }
-        .status-badge.unknown { background: #fff; color: #000; border: 1px solid #000; }
-
-        @media (prefers-reduced-motion: reduce) {
-            #sidebar { transition: none; }
-            .slideshow-slide, .marker-icon svg { transition: none; }
-        }
-
-        /* POPUP */
-        .maplibregl-popup-content {
-            background: #fff;
-            border: 1px solid #000;
-            border-radius: 0;
-            box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
-            padding: 12px;
-            font-family: var(--font-stack);
-            min-width: 160px;
-        }
-        /* Leaflet's tip was a white square rotated behind a two-sided border.
-           MapLibre's is a CSS triangle, so it is drawn solid instead. */
-        .maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: #000; }
-        .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: #000; }
-        .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: #000; }
-        .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: #000; }
-        .popup-title { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        .popup-type { font-size: 8px; color: #666; text-transform: uppercase; display: block; }
-        .popup-loc { font-size: 8px; color: #666; margin-bottom: 8px; display: block; }
-        .popup-link {
-            font-size: 9px;
-            font-weight: bold;
-            color: #0066CC;
-            text-transform: uppercase;
-            text-decoration: none;
-            border-bottom: 1px solid #0066CC;
-            cursor: pointer;
-        }
-        .popup-link:hover { color: #000; border-color: #000; }
-
-        /* SIDEBAR */
-        #sidebar {
-            position: absolute;
-            top: 0;
-            right: calc(var(--sidebar-width) * -1);
-            width: var(--sidebar-width);
-            height: 100%;
-            background: #fff;
-            z-index: 4000;
-            border-left: 1px solid #000;
-            transition: right 0.5s ease;
-            display: flex;
-            flex-direction: column;
-        }
-        #sidebar.active { right: 0; }
-        .close-btn:hover { opacity: 0.5; }
-        .sb-header {
-            flex: 0 0 auto; display: flex; align-items: center; justify-content: flex-end;
-            gap: 8px; padding: 6px 8px; background: #fff;
-            border-bottom: 1px solid #eee; position: relative; z-index: 2;
-        }
-        .share-btn {
-            padding: 6px 12px;
-            font-size: 8px;
-            background: #000;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-        }
-        .sb-scroll-area { flex: 1; overflow-y: auto; padding-bottom: 40px; }
-
-        /* SLIDESHOW */
-        .slideshow-container {
-            width: 100%;
-            height: 20vw;
-            min-height: 180px;
-            position: relative;
-            overflow: hidden;
-            background: #f0f0f0;
-        }
-        .slideshow-slide {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-size: cover;
-            background-position: center;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .slideshow-slide.active { opacity: 1; }
-        .slideshow-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 30px;
-            height: 30px;
-            background: rgba(255,255,255,0.9);
-            border: 1px solid #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-        }
-        .slideshow-prev { left: 8px; }
-        .slideshow-next { right: 8px; }
-        .slideshow-counter {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            background: rgba(0,0,0,0.7);
-            color: #fff;
-            padding: 3px 8px;
-            font-size: 8px;
-        }
-        .no-images {
-            width: 100%;
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f5f5f5;
-            color: #595959;
-            font-size: 9px;
-            text-transform: uppercase;
-        }
-
-        .sb-content { padding: 20px; }
-        .status-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            color: #fff;
-            font-size: 8px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 16px;
-            background: #000;
-        }
-        h1 { font-size: 22px; font-weight: bold; text-transform: uppercase; line-height: 1.1; margin-bottom: 4px; }
-        .sb-uid { font-size: 8px; color: #666; margin-bottom: 8px; display: block; }
-        .sb-location { font-size: 10px; text-transform: uppercase; font-weight: bold; margin-bottom: 14px; }
-        .sb-desc { font-size: 11px; line-height: 1.5; margin-bottom: 20px; }
-        .sb-content b { font-size: 9px; text-transform: uppercase; display: block; margin-top: 20px; margin-bottom: 8px; }
-        .column-set { display: flex; justify-content: space-between; font-size: 9px; padding: 2px 0; }
-        .col-0 { color: #595959; width: 40%; }
-        .col-1 { color: #000; width: 60%; text-align: right; }
-        .link-row { text-align: right; margin-bottom: 4px; }
-        .link-row a { font-size: 9px; color: #000; text-decoration: underline; text-transform: uppercase; }
-        #graph-container { width: 100%; height: 340px; background: #fff; border: 1px solid #eee; margin-top: 8px; }
-        .graph-head { display: flex; align-items: baseline; justify-content: space-between; }
-        .graph-open { font-size: 8px; letter-spacing: 0.5px; text-decoration: none; color: #000; border-bottom: 1px solid #000; }
-        .graph-open:hover { color: var(--col-facility); border-color: var(--col-facility); }
-        /* Stand-in when a facility has no photograph on file: an aerial view of
-           the site itself, labelled so it is not mistaken for a photo. */
-        .minimap-note {
-            position: absolute; left: 0; bottom: 0; z-index: 500;
-            background: #000; color: #fff; font-size: 8px; letter-spacing: 0.5px;
-            padding: 3px 6px; text-transform: uppercase;
-        }
-        .minimap-note.no-coords { background: #f5f5f5; color: #595959; }
-        iframe { width: 100%; height: 100%; border: none; }
-
-        .maplibregl-ctrl-attrib { font-family: var(--font-stack) !important; font-size: 8px !important; }
-        .maplibregl-ctrl-attrib a { color: #000; }
-
-        /* MOBILE */
-        @media (max-width: 768px) {
-            :root { --sidebar-width: 100vw; --ui-width: 160px; }
-            .maplibregl-ctrl-top-left { left: 175px; }
-            .slideshow-container { height: 180px; min-height: 140px; }
-            /* A touch-drag inside the iframe is captured by the iframe, so the
-               sidebar cannot be scrolled past it. Link out on small screens. */
-            #graph-container { height: 200px; }
-            .status-strip { font-size: 8px; max-width: 160px; }
-            h1 { font-size: 18px; }
-        }
-
-        .share-notification {
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: #000;
-            color: #fff;
-            padding: 14px 24px;
-            font-size: 11px;
-            text-transform: uppercase;
-            z-index: 5000;
-            display: none;
-        }
-        .share-notification.show { display: block; animation: fadeInOut 2s; }
-        @keyframes fadeInOut { 0% { opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+/* ---------- narrow ---------- */
+@media (max-width:860px){
+  #layers-win{width:calc(100% - 20px)}
+  #tools-win{right:10px;left:10px;width:auto;top:auto;bottom:10px}
+  #sidebar{right:10px;left:10px;width:auto;top:56px;max-height:calc(100% - 200px)}
+  #deck{flex-basis:150px}
+  .legend-cols{flex-direction:column;gap:6px}
+  .legend-right{flex:1 1 auto}
+}
+@media (prefers-reduced-motion:reduce){
+  .slideshow-slide{transition:none}
+  .share-notification.show{animation:none;opacity:1}
+}
     </style>
 </head>
 <body>
+<div id="shell">
+<div id="stage">
 
 <div id="map" role="application" aria-label="Map of mass reception facilities and construction projects in Norway"></div>
 
-<!-- SEARCH -->
-<div class="ui-box search-box">
-    <input type="text" class="search-input" id="search-input" placeholder="SEARCH..."
-           aria-label="Search sites" role="combobox" aria-expanded="false" aria-autocomplete="list">
-    <div class="search-results" id="search-results"></div>
+<!-- ============================== LAYERS ============================== -->
+<div class="win" id="layers-win">
+    <div class="strip">
+        <button type="button" class="btn" id="btn-menu" aria-label="Layers"><svg width="14" height="10" aria-hidden="true"><g stroke="#000" stroke-width="1.3"><line x1="1" y1="1.5" x2="13" y2="1.5"/><line x1="1" y1="5" x2="13" y2="5"/><line x1="1" y1="8.5" x2="13" y2="8.5"/></g></svg></button>
+        <div class="strip-label" data-en="LAYERS" data-no="LAG">LAYERS</div>
+    </div>
+    <div class="tree">
+
+        <!-- background -->
+        <div class="grp top" id="grp-base">
+            <div class="grp-head"><i class="tri"></i><span data-en="BACKGROUND" data-no="BAKGRUNN">BACKGROUND</span></div>
+            <div class="grp-body">
+                <div class="ds"><label class="ds-row" for="base-gray">
+                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#f4f4f4"/><g stroke="#b6b6b6" stroke-width=".7" fill="none"><path d="M0 13 q7 -5 11 -2 t15 -3"/><path d="M0 6 q8 -4 14 1 t12 -2"/><line x1="9" y1="0" x2="12" y2="19"/></g></svg></span>
+                    <span class="nm"><b data-en="Kartverket graytone" data-no="Kartverket gråtone">Kartverket graytone</b><span class="src">Statens Kartverk, Geovekst</span></span>
+                    <input type="radio" name="basemap" id="base-gray" value="graytone" checked></label></div>
+
+                <div class="ds"><label class="ds-row" for="base-sat">
+                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#3f4a33"/><g fill="#5d6b46"><circle cx="6" cy="6" r="4"/><circle cx="18" cy="12" r="5.5"/><circle cx="23" cy="4" r="3"/></g><path d="M0 15 q8 -3 14 1 t12 -1" stroke="#8a8a72" stroke-width="1.3" fill="none"/></svg></span>
+                    <span class="nm"><b data-en="Esri satellite" data-no="Esri satellitt">Esri satellite</b><span class="src">Esri World Imagery</span></span>
+                    <input type="radio" name="basemap" id="base-sat" value="satellite"></label></div>
+
+                <div class="ds"><label class="ds-row" for="overlay-dtm">
+                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#eaeaea"/><g stroke="#7d7d7d" stroke-width=".7" fill="none"><ellipse cx="13" cy="9.5" rx="10" ry="6.5"/><ellipse cx="13" cy="9.5" rx="6.5" ry="4.2"/><ellipse cx="13" cy="9.5" rx="3" ry="1.9"/></g></svg></span>
+                    <span class="nm"><b data-en="Terrain (DTM1)" data-no="Terreng (DTM1)">Terrain (DTM1)</b><span class="src">Geonorge, Høydedata</span></span>
+                    <input type="checkbox" id="overlay-dtm"></label></div>
+
+                <div class="ds"><label class="ds-row" for="timeline-enabled">
+                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#5b5b57"/><g fill="#7a7a72"><rect x="2" y="3" width="7" height="5"/><rect x="12" y="8" width="9" height="7"/></g></svg></span>
+                    <span class="nm"><b data-en="Historical imagery" data-no="Historiske bilder">Historical imagery</b><span class="src">Esri Wayback</span></span>
+                    <input type="checkbox" id="timeline-enabled"></label>
+                    <input type="range" class="slider" id="timeline-slider" min="0" max="8" value="0" disabled
+                           aria-label="Imagery year" style="margin:4px 4px 0 42px;width:calc(100% - 52px)">
+                    <div class="timeline-labels"><span>14</span><span>16</span><span>18</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span></div>
+                    <div class="timeline-year" id="timeline-year">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- database -->
+        <div class="grp top" id="grp-db">
+            <div class="grp-head"><i class="tri"></i><span data-en="DATABASE" data-no="DATABASE">DATABASE</span></div>
+            <div class="grp-body">
+                <div class="ds"><label class="ds-row" for="filter-facilities">
+                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><g><circle cx="8" cy="7" r="4" fill="#fff" stroke="#39FF14" stroke-width="1.2"/><path d="M4,7 A4,4 0 0,1 12,7 Z" fill="#000"/><circle cx="18" cy="13" r="4" fill="#fff" stroke="#39FF14" stroke-width="1.2"/><path d="M14,13 A4,4 0 0,0 22,13 Z" fill="#000"/></g></svg></span>
+                    <span class="nm"><b data-en="Reception sites" data-no="Mottaksanlegg">Reception sites</b><span class="src">LUB db_database</span></span>
+                    <span class="ct" id="count-facilities"></span>
+                    <input type="checkbox" id="filter-facilities" checked></label>
+                    <div class="ds-sub">
+                        <label><input type="checkbox" class="filter-facility-sub" value="producing" checked><span data-en="producing" data-no="produserer">producing</span></label>
+                        <label><input type="checkbox" class="filter-facility-sub" value="receiving" checked><span data-en="receiving" data-no="mottar">receiving</span></label>
+                        <label><input type="checkbox" class="filter-facility-sub" value="mixed" checked><span data-en="mixed" data-no="blandet">mixed</span></label>
+                    </div>
+                </div>
+                <div class="ds"><label class="ds-row" for="filter-projects">
+                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><g><rect x="4" y="3" width="8" height="8" fill="#fff" stroke="#ff0066" stroke-width="1.2"/><polygon points="4,11 12,11 4,3" fill="#000"/><rect x="15" y="9" width="8" height="8" fill="#fff" stroke="#ff0066" stroke-width="1.2"/><polygon points="23,9 23,17 15,9" fill="#000"/></g></svg></span>
+                    <span class="nm"><b data-en="Construction projects" data-no="Byggeprosjekter">Construction projects</b><span class="src">LUB db_database</span></span>
+                    <span class="ct" id="count-projects"></span>
+                    <input type="checkbox" id="filter-projects" checked></label>
+                    <div class="ds-sub">
+                        <label><input type="checkbox" class="filter-project-sub" value="producing" checked><span data-en="producing" data-no="produserer">producing</span></label>
+                        <label><input type="checkbox" class="filter-project-sub" value="receiving" checked><span data-en="receiving" data-no="mottar">receiving</span></label>
+                        <label><input type="checkbox" class="filter-project-sub" value="mixed" checked><span data-en="mixed" data-no="blandet">mixed</span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- terrain change -->
+        <div class="grp top" id="grp-dod">
+            <div class="grp-head"><i class="tri"></i><span data-en="TERRAIN CHANGE" data-no="TERRENGENDRING">TERRAIN CHANGE</span></div>
+            <div class="grp-body">
+                <div class="ds"><label class="ds-row" for="filter-dod">
+                    <span class="thumb"><svg width="26" height="19"><rect width="26" height="19" fill="#fff"/><g stroke="rgba(0,0,0,.35)" stroke-width=".4"><polygon points="2,4 9,2 11,8 5,10" fill="#d93806" fill-opacity=".8"/><polygon points="13,10 20,7 23,14 15,16" fill="#4675ed" fill-opacity=".75"/><polygon points="16,2 22,3 21,6 15,5" fill="#61fc6c" fill-opacity=".8"/><polygon points="3,13 8,12 9,17 4,18" fill="#f3c63a" fill-opacity=".8"/></g></svg></span>
+                    <span class="nm"><b>Gjerdrum 2007–2020</b><span class="src">DoDetector, DTM1</span></span>
+                    <span class="ct">1 318</span>
+                    <input type="checkbox" id="filter-dod"></label>
+                    <div class="ds-sub" id="dod-opacity-wrap" hidden style="display:block">
+                        <span data-en="opacity" data-no="dekkevne">opacity</span>
+                        <input type="range" class="slider" id="dod-opacity" min="15" max="100" value="90"
+                               aria-label="DoD layer opacity" style="margin-top:3px">
+                    </div>
+                    <div class="sub-note" id="dod-note" data-en="1,320 changes over 127.6 ha, from DTM1 LiDAR"
+                         data-no="1 320 endringer over 127,6 ha, fra DTM1 LiDAR">1,320 changes over 127.6 ha, from DTM1 LiDAR</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grp top closed" id="grp-plan">
+            <div class="grp-head"><i class="tri"></i><span data-en="PLAN COVERAGE" data-no="PLANDEKNING">PLAN COVERAGE</span></div>
+            <div class="grp-body"><div class="sub-note" style="padding-left:16px" data-en="not published yet" data-no="ikke publisert ennå">not published yet</div></div>
+        </div>
+    </div>
 </div>
 
-<!-- LAYERS -->
-<div class="ui-box layers-box">
-    <div class="layers-section">
-        <div class="layers-title" data-en="Base" data-no="Bakgrunn">Base</div>
-        <div class="layer-option">
-            <input type="radio" name="basemap" id="base-gray" value="graytone" checked>
-            <label for="base-gray" data-en="Graytone" data-no="Gråtone">Graytone</label>
+<!-- ============================== TOOLS ============================== -->
+<div class="win" id="tools-win">
+    <div class="strip">
+        <div class="search-box">
+            <input type="text" class="search-input" id="search-input"
+                   placeholder="Search site, operator, kommune, coordinates"
+                   aria-label="Search sites" role="combobox" aria-expanded="false" aria-autocomplete="list">
+            <div class="search-results" id="search-results" role="listbox"></div>
         </div>
-        <div class="layer-option">
-            <input type="radio" name="basemap" id="base-sat" value="satellite">
-            <label for="base-sat" data-en="Satellite" data-no="Satellitt">Satellite</label>
-        </div>
-    </div>
-    <div class="layers-section">
-        <div class="layers-title" data-en="Overlay" data-no="Overlegg">Overlay</div>
-        <div class="layer-option">
-            <input type="checkbox" id="overlay-dtm">
-            <label for="overlay-dtm" data-en="Terrain (DTM)" data-no="Terreng (DTM)">Terrain (DTM)</label>
-        </div>
-    </div>
-</div>
-
-<!-- LANGUAGE -->
-<div class="ui-box lang-box">
-    <button type="button" class="lang-btn active" id="btn-en" aria-pressed="true">EN</button>
-    <button type="button" class="lang-btn" id="btn-no" aria-pressed="false">NO</button>
-</div>
-
-<!-- TIMELINE -->
-<div class="ui-box timeline-box">
-    <div class="timeline-title" data-en="Historical Imagery" data-no="Historiske Bilder">Historical Imagery</div>
-    <div class="timeline-toggle">
-        <input type="checkbox" id="timeline-enabled">
-        <label for="timeline-enabled" data-en="Enable" data-no="Aktiver">Enable</label>
-    </div>
-    <input type="range" class="timeline-slider" id="timeline-slider" min="0" max="8" value="0" disabled>
-    <div class="timeline-labels">
-        <span>14</span><span>16</span><span>18</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span>
-    </div>
-    <div class="timeline-year" id="timeline-year">—</div>
-</div>
-
-<!-- FILTER TOGGLE -->
-<button type="button" class="ui-box filter-toggle" onclick="toggleFilter()" aria-expanded="false" aria-controls="filter-panel">
-    <span data-en="FILTER & LEGEND ▼" data-no="FILTER & TEGNFORKLARING ▼">FILTER & LEGEND ▼</span>
-</button>
-
-<!-- FILTER PANEL -->
-<div class="filter-panel" id="filter-panel">
-    <button type="button" class="filter-close" onclick="toggleFilter()" aria-label="Close">✕</button>
-    
-    <div class="panel-section">
-        <div class="panel-title" data-en="DATABASE — SITES" data-no="DATABASE — STEDER">DATABASE — SITES</div>
-
-        <div class="filter-group">
-            <label class="filter-main">
-                <input type="checkbox" id="filter-projects" checked>
-                <span data-en="Construction Projects" data-no="Byggeprosjekter">Construction Projects</span>
-            </label>
-            <div class="filter-sub">
-                <label><input type="checkbox" class="filter-project-sub" value="producing" checked> <span data-en="Producing" data-no="Produserer">Producing</span></label>
-                <label><input type="checkbox" class="filter-project-sub" value="receiving" checked> <span data-en="Receiving" data-no="Mottar">Receiving</span></label>
-                <label><input type="checkbox" class="filter-project-sub" value="mixed" checked> <span data-en="Mixed" data-no="Blandet">Mixed</span></label>
-            </div>
-        </div>
-        
-        <div class="filter-group">
-            <label class="filter-main">
-                <input type="checkbox" id="filter-facilities" checked>
-                <span data-en="Facilities" data-no="Anlegg">Facilities</span>
-            </label>
-            <div class="filter-sub">
-                <label><input type="checkbox" class="filter-facility-sub" value="producing" checked> <span data-en="Producing" data-no="Produserer">Producing</span></label>
-                <label><input type="checkbox" class="filter-facility-sub" value="receiving" checked> <span data-en="Receiving" data-no="Mottar">Receiving</span></label>
-                <label><input type="checkbox" class="filter-facility-sub" value="mixed" checked> <span data-en="Mixed" data-no="Blandet">Mixed</span></label>
-            </div>
-        </div>
+        <button type="button" class="btn" id="btn-en" aria-pressed="true" style="width:auto;padding:0 6px;font-size:10px">EN</button>
+        <button type="button" class="btn" id="btn-no" aria-pressed="false" style="width:auto;padding:0 6px;font-size:10px">NO</button>
+        <button type="button" class="btn filter-toggle" onclick="toggleFilter()" aria-expanded="true" aria-controls="filter-panel" aria-label="Legend">
+            <svg width="15" height="11" aria-hidden="true"><rect x="1" y="1" width="13" height="4.5" fill="none" stroke="#000" stroke-width="1"/><line x1="1" y1="9" x2="14" y2="9" stroke="#000" stroke-width="1"/></svg></button>
+        <button type="button" class="btn" onclick="shareLink()" aria-label="Share link">
+            <svg width="13" height="14" aria-hidden="true"><line x1="6.5" y1="12.5" x2="6.5" y2="2" stroke="#000" stroke-width="1.2"/><polyline points="2.6,5.9 6.5,2 10.4,5.9" fill="none" stroke="#000" stroke-width="1.2"/></svg></button>
     </div>
 
-    <!-- DoD: the project's own terrain-change detection, a separate body of
-         evidence from the site database above. -->
-    <div class="panel-section">
-        <div class="panel-title" data-en="DoD — TERRAIN CHANGE" data-no="DoD — TERRENGENDRING">DoD — TERRAIN CHANGE</div>
-        <div class="filter-group">
-            <label class="filter-main">
-                <input type="checkbox" id="filter-dod">
-                <span data-en="Gjerdrum 2007–2020" data-no="Gjerdrum 2007–2020">Gjerdrum 2007–2020</span>
-            </label>
-            <div class="filter-sub" id="dod-opacity-wrap" hidden>
-                <div class="dod-opacity-label" data-en="Layer opacity" data-no="Lagets dekkevne">Layer opacity</div>
-                <input type="range" class="timeline-slider" id="dod-opacity" min="15" max="100" value="90"
-                       aria-label="DoD layer opacity">
-            </div>
-            <div class="dod-note" id="dod-note" data-en="1,320 changes over 127.6 ha, from DTM1 LiDAR"
-                 data-no="1 320 endringer over 127,6 ha, fra DTM1 LiDAR">1,320 changes over 127.6 ha, from DTM1 LiDAR</div>
-        </div>
-    </div>
-
-    <!-- LEGEND - NO ARROWS -->
-    <div class="panel-section">
-        <div class="panel-title" data-en="LEGEND" data-no="TEGNFORKLARING">LEGEND</div>
-        <div class="legend-grid">
-            <div class="legend-column">
-                <div class="legend-column-title" data-en="Construction project" data-no="Byggeprosjekt">Construction project</div>
-                <div class="legend-row">
-                    <div class="legend-symbol">
-                        <svg width="16" height="16" viewBox="0 0 16 16">
-                            <rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/>
-                            <polygon points="1,15 15,15 1,1" fill="#000"/>
-                        </svg>
-                    </div>
-                    <span class="legend-label" data-en="producing" data-no="produserer">producing</span>
-                </div>
-                <div class="legend-row">
-                    <div class="legend-symbol">
-                        <svg width="16" height="16" viewBox="0 0 16 16">
-                            <rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/>
-                            <polygon points="15,1 15,15 1,1" fill="#000"/>
-                        </svg>
-                    </div>
-                    <span class="legend-label" data-en="receiving" data-no="mottar">receiving</span>
-                </div>
-                <div class="legend-row">
-                    <div class="legend-symbol">
-                        <svg width="16" height="16" viewBox="0 0 16 16">
-                            <rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/>
-                            <polygon points="1,1 8,8 1,15" fill="#000"/>
-                            <polygon points="15,1 8,8 15,15" fill="#000"/>
-                        </svg>
-                    </div>
-                    <span class="legend-label" data-en="mixed" data-no="blandet">mixed</span>
+    <!-- LEGEND, docked inside the tools window -->
+    <div class="pane open" id="filter-panel">
+        <div class="pane-title" data-en="LEGEND" data-no="TEGNFORKLARING">LEGEND</div>
+        <div class="legend-cols">
+            <div class="legend-left">
+                <div style="margin-bottom:4px" data-en="Terrain change 2007 to 2020, in metres" data-no="Terrengendring 2007 til 2020, i meter">Terrain change 2007 to 2020, in metres</div>
+                <div class="dod-bar"></div>
+                <div class="dod-bar-scale"><span>−12.1</span><span>0</span><span>+12.1</span></div>
+                <div class="dod-bar-ends" style="display:flex;justify-content:space-between;color:var(--sub);font-size:10px;margin:-6px 0 8px">
+                    <span data-en="excavated" data-no="utgravd">excavated</span>
+                    <span data-en="deposited" data-no="deponert">deposited</span>
                 </div>
             </div>
-            <div class="legend-column">
-                <div class="legend-column-title" data-en="Facility" data-no="Anlegg">Facility</div>
-                <div class="legend-row">
-                    <div class="legend-symbol">
-                        <svg width="16" height="16" viewBox="0 0 16 16">
-                            <circle cx="8" cy="8" r="7" fill="#fff" stroke="#39FF14" stroke-width="1.5"/>
-                            <path d="M1,8 A7,7 0 0,1 15,8 Z" fill="#000"/>
-                        </svg>
-                    </div>
-                    <span class="legend-label" data-en="producing" data-no="produserer">producing</span>
-                </div>
-                <div class="legend-row">
-                    <div class="legend-symbol">
-                        <svg width="16" height="16" viewBox="0 0 16 16">
-                            <circle cx="8" cy="8" r="7" fill="#fff" stroke="#39FF14" stroke-width="1.5"/>
-                            <path d="M1,8 A7,7 0 0,0 15,8 Z" fill="#000"/>
-                        </svg>
-                    </div>
-                    <span class="legend-label" data-en="receiving" data-no="mottar">receiving</span>
-                </div>
-                <div class="legend-row">
-                    <div class="legend-symbol">
-                        <svg width="16" height="16" viewBox="0 0 16 16">
-                            <circle cx="8" cy="8" r="7" fill="#fff" stroke="#39FF14" stroke-width="1.5"/>
-                            <path d="M8,1 A7,7 0 0,1 15,8 L8,8 Z" fill="#000"/>
-                            <path d="M8,15 A7,7 0 0,1 1,8 L8,8 Z" fill="#000"/>
-                        </svg>
-                    </div>
-                    <span class="legend-label" data-en="mixed" data-no="blandet">mixed</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="legend-dod">
-            <div class="legend-column-title" data-en="DoD — terrain change" data-no="DoD — terrengendring">DoD — terrain change</div>
-            <div class="dod-bar"></div>
-            <div class="dod-bar-scale"><span>−12.1 m</span><span>0</span><span>+12.1 m</span></div>
-            <div class="dod-bar-ends">
-                <span data-en="excavated" data-no="utgravd">excavated</span>
-                <span data-en="deposited" data-no="deponert">deposited</span>
+            <div class="legend-right">
+                <div class="legend-row"><span class="legend-symbol"><svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#fff" stroke="#39FF14" stroke-width="1.5"/><path d="M1,8 A7,7 0 0,1 15,8 Z" fill="#000"/></svg></span><span class="legend-label" data-en="Reception site" data-no="Mottaksanlegg">Reception site</span><span class="legend-count" id="legend-count-fac"></span></div>
+                <div class="legend-row"><span class="legend-symbol"><svg width="14" height="14" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" fill="#fff" stroke="#ff0066" stroke-width="1.5"/><polygon points="1,15 15,15 1,1" fill="#000"/></svg></span><span class="legend-label" data-en="Construction project" data-no="Byggeprosjekt">Construction project</span><span class="legend-count" id="legend-count-proj"></span></div>
+                <div class="legend-row"><span class="sw" style="background:linear-gradient(135deg,#4675ed,#61fc6c,#f3c63a,#d93806);border-color:rgba(0,0,0,.4)"></span><span class="legend-label" data-en="DoD polygon" data-no="DoD-polygon">DoD polygon</span><span class="legend-count">1 318</span></div>
+                <div class="legend-sep"></div>
+                <div class="legend-row"><span class="sw" style="border-color:#d93806;background:#fdece7"></span><span class="legend-label" data-en="No plan on record" data-no="Ingen plan registrert">No plan on record</span><span class="legend-count">1 045</span></div>
+                <div class="legend-row"><span class="sw" style="border-color:var(--rule);background:#f6f6f6"></span><span class="legend-label" data-en="Plan in force 2007–2020" data-no="Plan gjeldende 2007–2020">Plan in force 2007–2020</span><span class="legend-count">198</span></div>
+                <div class="legend-row"><span class="sw" style="border-style:dashed;border-color:#9a9a9a"></span><span class="legend-label" data-en="Plan adopted after 2020" data-no="Plan vedtatt etter 2020">Plan adopted after 2020</span><span class="legend-count">72</span></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- SIDEBAR -->
+<!-- ============================== SITE ============================== -->
 <div id="sidebar">
     <div class="sb-header">
-        <button class="share-btn" onclick="shareLink()">SHARE</button>
-        <button type="button" class="close-btn" onclick="closeSidebar()" aria-label="Close panel">✕</button>
+        <button type="button" class="share-btn" onclick="shareLink()">SHARE</button>
+        <span class="title" data-en="SITE" data-no="STED">SITE</span>
+        <button type="button" class="close-btn" onclick="closeSidebar()" aria-label="Close panel"></button>
     </div>
     <div class="sb-scroll-area">
         <div id="sb-dynamic-content"></div>
     </div>
 </div>
 
-<div class="ui-box status-strip" id="status-strip" role="status" aria-live="polite">LOADING DATA…</div>
+<div id="compass" aria-hidden="true"><svg width="20" height="40"><polygon points="10,1 15,36 10,29 5,36" fill="#fff" stroke="#000" stroke-width=".6"/><polygon points="10,1 15,36 10,29" fill="#000"/></svg><div>N</div></div>
 
-<div class="share-notification" id="share-notification">LINK COPIED!</div>
+<div id="hover-card"><div class="im"></div><div class="cp"></div></div>
+<div class="share-notification" id="share-notification" data-en="LINK COPIED" data-no="LENKE KOPIERT">LINK COPIED</div>
+</div><!-- /stage -->
+
+<!-- ============================== DECK ============================== -->
+<div id="deck">
+    <div class="deck-head">
+        <span data-en="RECEPTION SITES" data-no="MOTTAKSANLEGG">RECEPTION SITES</span>
+        <span class="count" id="deck-count"></span>
+        <span class="actions">
+            <button type="button" id="deck-scope" data-en="all categories" data-no="alle kategorier">all categories</button>
+            <button type="button" id="deck-csv">csv</button>
+        </span>
+    </div>
+    <div class="deck-scroll">
+        <table id="site-table"><thead><tr></tr></thead><tbody></tbody></table>
+    </div>
+</div>
+
+<div class="status-strip">
+    <span id="status-strip" role="status" aria-live="polite">LOADING DATA…</span>
+    <span id="coord-readout" class="mono"></span>
+    <span class="right">dirtybusiness.no / Laboratory for Urban Boundaries</span>
+</div>
+</div><!-- /shell -->
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -1045,7 +745,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     map.touchZoomRotate.disableRotation();
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left');
     map.addControl(new maplibregl.AttributionControl({ compact: false }), 'bottom-right');
 
@@ -1250,18 +950,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // rather than shrinking it, so centring on the container put the site under
     // the panel. fitBounds' padding reserves those two strips, and the site
     // lands in the middle of what is left.
+    // What is left of the map once the floating windows are on top of it.
+    // Measured from the elements themselves, so moving a window cannot leave
+    // this lying: the search box used to stand in for "the left edge of the
+    // chrome", and it now sits on the right.
     function visiblePadding() {
-        if (window.innerWidth <= 768) return { top: 20, bottom: 20, left: 20, right: 20 };
-        const search = document.querySelector('.search-box');
-        const left = search ? Math.round(search.getBoundingClientRect().right) : 220;
-        const sb = document.getElementById('sidebar');
-        const right = sb.classList.contains('active')
-            ? Math.round(sb.getBoundingClientRect().width) : 0;
-        // Leaflet quietly coped with padding wider than the map; MapLibre throws.
         const box = map.getContainer();
+        if (window.innerWidth <= 768) return { top: 20, bottom: 20, left: 20, right: 20 };
+        const br = box.getBoundingClientRect();
+        const seen = el => el && el.getClientRects().length ? el.getBoundingClientRect() : null;
+        const lw = seen(document.getElementById('layers-win'));
+        const sbEl = document.getElementById('sidebar');
+        const sb = sbEl && sbEl.classList.contains('active') ? seen(sbEl) : null;
+        let left  = lw ? Math.round(lw.right - br.left) + 20 : 20;
+        let right = sb ? Math.round(br.right - sb.left) + 20 : 20;
+        // Leaflet quietly coped with padding wider than the map; MapLibre throws.
         const fit = (a, b, total) => (a + b < total - 40) ? [a, b] : [20, 20];
-        const lr = fit(left + 20, right + 20, box.clientWidth);
-        const tb = fit(20, 50, box.clientHeight);          // 50: status strip
+        const lr = fit(left, right, box.clientWidth);
+        const tb = fit(20, 20, box.clientHeight);
         return { left: lr[0], right: lr[1], top: tb[0], bottom: tb[1] };
     }
 
@@ -1331,12 +1037,15 @@ document.addEventListener('DOMContentLoaded', function() {
         matches: { en: "MATCHES", no: "TREFF" },
         hidden: { en: "hidden by filter", no: "skjult av filter" },
         dh: { en: "Mean change", no: "Snittendring" },
-        noplan: { en: "no plan on record", no: "ingen plan registrert" }
+        noplan: { en: "no plan on record", no: "ingen plan registrert" },
+        records: { en: "records", no: "poster" },
+        aerialshort: { en: "aerial", no: "flyfoto" }
     };
     const t = k => i18n[k] ? i18n[k][currentLang] : k;
 
     window.openSidebar = function(site) {
-        document.getElementById('sidebar').classList.add('active');
+        currentSite = site;                       // a marker click used to leave this unset,
+        document.getElementById('sidebar').classList.add('active');   // so the deck never followed
         const container = document.getElementById('sb-dynamic-content');
         
         // Three states, not two. "inactive" contains "active" and "inaktiv"
@@ -1357,19 +1066,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const lat = num(site.Latitude), lon = num(site.Longitude);
         const hasCoords = Number.isFinite(lat) && Number.isFinite(lon);
         
-        let slideshowHtml = '';
+        let slideshowHtml = '', headExtra = '';
         if (currentImages.length > 0) {
             const slides = currentImages.map((u, i) => `<div class="slideshow-slide ${i===0?'active':''}" style="background-image:url('${esc(safeUrl(u))}')"></div>`).join('');
             slideshowHtml = `<div class="slideshow-container">${slides}${currentImages.length > 1 ? `
                 <div class="slideshow-nav slideshow-prev" onclick="slideshowPrev()">←</div>
                 <div class="slideshow-nav slideshow-next" onclick="slideshowNext()">→</div>
                 <div class="slideshow-counter">1 / ${currentImages.length}</div>` : ''}</div>`;
+            headExtra = '';
         } else if (hasCoords) {
-            // No photograph on file, so show where the site actually is.
-            // Same Esri imagery the map already uses, no extra dependency.
-            slideshowHtml = `<div class="slideshow-container" id="sb-minimap"></div>`;
+            // No photograph on file, so show where the site actually is. The
+            // aerial view is evidence rather than illustration, so it gets a
+            // band of its own under the title instead of the small thumbnail.
+            slideshowHtml = '';
+            headExtra = `<div class="slideshow-container" id="sb-minimap"></div>`;
         } else {
             slideshowHtml = `<div class="no-images">${t('noimg')}</div>`;
+            headExtra = '';
         }
 
         let graphHtml = `<div id="graph-container" style="display:flex;align-items:center;justify-content:center;color:#595959;font-size:9px;">${t('nograph')}</div>`;
@@ -1391,11 +1104,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const coords = hasCoords ? lat.toFixed(5) + ', ' + lon.toFixed(5) : '';
         const place = [site.Municipality, site.County].map(x => String(x || '').trim()).filter(Boolean).join(', ');
 
-        container.innerHTML = `${slideshowHtml}<div class="sb-content">
+        container.innerHTML = `<div class="sb-head">${slideshowHtml}<div class="sb-titleblock">
             <span class="status-badge${statusKey === 'unknown' ? ' unknown' : ''}">${statusText}</span>
             <h1 id="sb-title">${esc(site.Name || t('untitled'))}</h1>
             <span class="sb-uid">${esc(site.UID || site.fid || '')}</span>
             <div class="sb-location">${esc(place)}${place && site.Type ? '<br>' : ''}${esc(site.Type || '')}</div>
+            </div></div>${headExtra}<div class="sb-content">
             <div class="sb-desc">${esc(desc || '')}</div>
             ${section('prop', row('comp', site.Company) + row('op', site.Operator) + row('org', site.OrgNr) + row('par', site.ParentCompany))}
             <div class="graph-head"><b>${t('net')}</b>${graphSrc ? `<a class="graph-open" href="${esc(graphSrc)}" target="_blank" rel="noopener noreferrer">${t('openGraph')}</a>` : ''}</div>${graphHtml}
@@ -1406,6 +1120,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ${section('link', linksHtml)}
         </div>`;
         
+        if (typeof markDeckSelection === 'function') markDeckSelection();
         if (miniObserver) { miniObserver.disconnect(); miniObserver = null; }
         if (miniMap) { miniMap.remove(); miniMap = null; }
         if (currentImages.length === 0 && hasCoords) {
@@ -1761,6 +1476,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         renderMarkers(allSites);
+        updateCounts();
+        renderDeck();
 
         const hash = window.location.hash;
         if (hash.startsWith('#site=')) {
@@ -1777,6 +1494,196 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Data load failed:', err);
         updateStatus(t('loadfail'));
       });
+
+
+    /* ====================================================================
+       THE DECK — the database as an attribute table under the map.
+       Reads the same parsed rows as the markers; no second source of truth.
+       ==================================================================== */
+    const deckBody   = document.querySelector('#site-table tbody');
+    const deckHeadRow= document.querySelector('#site-table thead tr');
+    const deckCount  = document.getElementById('deck-count');
+    const hoverCard  = document.getElementById('hover-card');
+    let deckScope = 'facility';            // 'facility' | 'all'
+    let deckSort  = { key: 'Area_m2', dir: -1 };
+
+    const COLS = [
+        { key:'UID',          en:'UID',        no:'UID',      w:'112px', cls:'uid',
+          get: s => s.UID || s.fid || '' },
+        { key:'Name',         en:'FACILITY',   no:'ANLEGG',   w:'',
+          get: s => s.Name || t('untitled') },
+        { key:'Operator',     en:'OPERATOR',   no:'OPERATØR', w:'200px',
+          get: s => s.Operator || s.Company || '' },
+        { key:'Municipality', en:'KOMMUNE',    no:'KOMMUNE',  w:'112px',
+          get: s => s.Municipality || '' },
+        { key:'MassesAccepted', en:'MATERIAL', no:'MASSER',   w:'150px',
+          get: s => s.MassesAccepted || s.Type || '' },
+        { key:'Area_m2',      en:'AREA m²',    no:'AREAL m²', w:'100px', num:true,
+          get: s => fmt(qty(s.Area_m2)) },
+        { key:'TotalCapacity',en:'CAPACITY m³',no:'KAPASITET m³', w:'124px', num:true,
+          get: s => fmt(qty(s.TotalCapacity)) },
+        { key:'PermitRef',    en:'PLAN',       no:'PLAN',     w:'168px',
+          get: s => s.PermitRef || s.PolygonSource || '' },
+        { key:'Status',       en:'STATUS',     no:'STATUS',   w:'104px',
+          get: s => s.Status || '' }
+    ];
+    // A space as the thousands separator, the way the rest of the map writes numbers.
+    function fmt(v){ return Number.isFinite(v) ? String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,' ') : ''; }
+
+    function deckRows(){
+        const rows = allSites.filter(s => deckScope === 'all' || s.__cat === 'facility');
+        const k = deckSort.key, d = deckSort.dir;
+        const col = COLS.find(c => c.key === k);
+        return rows.sort((a,b) => {
+            if (col && col.num) {
+                const av = qty(a[k]), bv = qty(b[k]);
+                const an = Number.isFinite(av), bn = Number.isFinite(bv);
+                if (!an && !bn) return 0;
+                if (!an) return 1;              // blanks always last, either direction
+                if (!bn) return -1;
+                return (av - bv) * d;
+            }
+            return String(a[k]||'').localeCompare(String(b[k]||''), 'nb') * d;
+        });
+    }
+
+    function renderDeckHead(){
+        deckHeadRow.innerHTML = '';
+        const cg = document.createElement('colgroup');
+        COLS.forEach(c => {
+            const col = document.createElement('col');
+            if (c.w) col.style.width = c.w;
+            cg.appendChild(col);
+            const th = document.createElement('th');
+            th.textContent = c[currentLang] || c.en;
+            th.setAttribute('data-en', c.en); th.setAttribute('data-no', c.no);
+            if (c.num) th.className = 'num';
+            if (deckSort.key === c.key) th.textContent += deckSort.dir < 0 ? ' ↓' : ' ↑';
+            th.onclick = () => {
+                deckSort = deckSort.key === c.key ? { key:c.key, dir:-deckSort.dir } : { key:c.key, dir: c.num ? -1 : 1 };
+                renderDeck();
+            };
+            deckHeadRow.appendChild(th);
+        });
+        const table = document.getElementById('site-table');
+        const old = table.querySelector('colgroup');
+        if (old) old.remove();
+        table.insertBefore(cg, table.firstChild);
+    }
+
+    function renderDeck(){
+        renderDeckHead();
+        const rows = deckRows();
+        deckBody.innerHTML = '';
+        rows.forEach(site => {
+            const tr = document.createElement('tr');
+            tr.dataset.uid = site.UID || site.fid || '';
+            if (currentSite === site) tr.className = 'sel';
+            COLS.forEach(c => {
+                const td = document.createElement('td');
+                td.textContent = c.get(site);
+                if (c.num) td.className = 'num';
+                else if (c.cls) td.className = c.cls;
+                td.title = td.textContent;          // the column truncates; the tooltip does not
+                tr.appendChild(td);
+            });
+            tr.onclick = () => {
+                currentSite = site;
+                openSidebar(site);
+                const la = num(site.Latitude), lo = num(site.Longitude);
+                if (Number.isFinite(la) && Number.isFinite(lo)) smartZoom(la, lo, site.Area_m2);
+                markDeckSelection();
+            };
+            tr.onmouseenter = e => showHover(site, tr);
+            tr.onmouseleave = hideHover;
+            deckBody.appendChild(tr);
+        });
+        deckCount.textContent = rows.length + ' ' + t('records');
+        markDeckSelection();
+    }
+
+    function markDeckSelection(){
+        const id = currentSite ? (currentSite.UID || currentSite.fid || '') : null;
+        deckBody.querySelectorAll('tr').forEach(tr => tr.classList.toggle('sel', !!id && tr.dataset.uid === id));
+        const on = deckBody.querySelector('tr.sel');
+        if (on) on.scrollIntoView({ block:'nearest' });
+    }
+
+    /* Hover preview. A site with photographs shows the first one; a site with
+       only coordinates shows the Esri tile it sits in, which is the same
+       imagery the map already serves, so no extra dependency and no API key. */
+    function esriTile(lat, lon, z){
+        const n = Math.pow(2, z);
+        const x = Math.floor((lon + 180) / 360 * n);
+        const r = lat * Math.PI / 180;
+        const y = Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n);
+        return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
+    }
+    function showHover(site, tr){
+        const imgs = site.Images ? site.Images.split(',').map(u=>u.trim()).filter(Boolean) : [];
+        const la = num(site.Latitude), lo = num(site.Longitude);
+        let url = imgs.length ? safeUrl(imgs[0]) : (Number.isFinite(la) && Number.isFinite(lo) ? esriTile(la, lo, 16) : '');
+        const im = hoverCard.querySelector('.im');
+        im.style.backgroundImage = url ? `url("${url}")` : 'none';
+        im.style.backgroundSize = 'cover';
+        im.style.backgroundPosition = 'center';
+        hoverCard.querySelector('.cp').innerHTML =
+            `${esc(site.Name || t('untitled'))}<span>${esc(site.UID || site.fid || '')}` +
+            `${imgs.length ? '' : ' · ' + t('aerialshort')}</span>`;
+        const stage = document.getElementById('stage').getBoundingClientRect();
+        const r = tr.getBoundingClientRect();
+        hoverCard.classList.add('on');
+        const w = hoverCard.offsetWidth || 142, h = hoverCard.offsetHeight || 130;
+        const lw = document.getElementById('layers-win');
+        const floor = lw && lw.getClientRects().length
+            ? Math.round(lw.getBoundingClientRect().right - stage.left) + 8 : 8;
+        let left = r.left - stage.left + 24;
+        left = Math.max(floor, Math.min(left, stage.width - w - 8));
+        hoverCard.style.left = left + 'px';
+        hoverCard.style.top  = (stage.height - h - 8) + 'px';
+    }
+    function hideHover(){ hoverCard.classList.remove('on'); }
+
+    document.getElementById('deck-scope').onclick = () => {
+        deckScope = deckScope === 'facility' ? 'all' : 'facility';
+        const b = document.getElementById('deck-scope');
+        b.setAttribute('data-en', deckScope === 'all' ? 'reception sites only' : 'all categories');
+        b.setAttribute('data-no', deckScope === 'all' ? 'kun mottaksanlegg' : 'alle kategorier');
+        b.textContent = b.getAttribute('data-' + currentLang);
+        renderDeck();
+    };
+    document.getElementById('deck-csv').onclick = () => {
+        const rows = deckRows();
+        const head = COLS.map(c => c.en).join(',');
+        const body = rows.map(s => COLS.map(c => {
+            const v = String(c.get(s)).replace(/"/g, '""');
+            return /[",\n]/.test(v) ? `"${v}"` : v;
+        }).join(',')).join('\n');
+        const blob = new Blob(['﻿' + head + '\n' + body], { type:'text/csv;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'dirtybusiness_' + deckScope + '.csv';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    };
+
+    /* Layer groups fold. */
+    document.querySelectorAll('.grp-head').forEach(h => {
+        h.onclick = () => h.parentElement.classList.toggle('closed');
+    });
+
+    /* Counts, filled once the sheets are in. */
+    function updateCounts(){
+        const f = allSites.filter(s => s.__cat === 'facility').length;
+        const p = allSites.filter(s => s.__cat === 'project').length;
+        ['count-facilities','legend-count-fac'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent = f; });
+        ['count-projects','legend-count-proj'].forEach(id => { const e=document.getElementById(id); if(e) e.textContent = p; });
+    }
+
+    map.on('mousemove', e => {
+        const el = document.getElementById('coord-readout');
+        if (el) el.textContent = e.lngLat.lat.toFixed(4) + ' N  ' + e.lngLat.lng.toFixed(4) + ' E';
+    });
 
     function openFromHash(hash) {
         let id;

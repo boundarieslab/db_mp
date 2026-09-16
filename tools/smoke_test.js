@@ -107,13 +107,14 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   console.log('framing');
   const fr0 = await p.evaluate(() => {
     const m = window.__M;
-    const pt = m.project([11.52031, 59.81372]);
-    const search = document.querySelector('.search-box').getBoundingClientRect();
-    const sbw = document.getElementById('sidebar').getBoundingClientRect().width;
-    const left = search.right, right = innerWidth - sbw;
+    const pt = m.project([11.52031, 59.81372]);              // container coordinates
+    const box = document.getElementById('map').getBoundingClientRect();
+    const lw  = document.getElementById('layers-win').getBoundingClientRect();
+    const sbb = document.getElementById('sidebar').getBoundingClientRect();
+    const left = lw.right - box.left, right = sbb.left - box.left;
     return { x: Math.round(pt.x), y: Math.round(pt.y),
              band: [Math.round(left), Math.round(right)],
-             mid: Math.round((left + right) / 2), h: innerHeight, zoom: m.getZoom() };
+             mid: Math.round((left + right) / 2), h: box.height, zoom: m.getZoom() };
   });
   // the site should sit near the middle of the strip you can actually see,
   // not under the panel and not behind the controls
@@ -123,6 +124,46 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
      'site is centred in it (off by ' + Math.abs(fr0.x - fr0.mid) + 'px)');
   ok(Math.abs(fr0.y - fr0.h / 2) < 60,
      'site is vertically centred (off by ' + Math.round(Math.abs(fr0.y - fr0.h/2)) + 'px)');
+
+  console.log('deck');
+  const dk = await p.evaluate(() => {
+    const rows = [...document.querySelectorAll('#site-table tbody tr')];
+    const head = [...document.querySelectorAll('#site-table thead th')].map(t => t.textContent.trim());
+    const area = rows.map(r => r.children[5].textContent.trim());
+    return { n: rows.length, head, area,
+             count: document.getElementById('deck-count').textContent.trim(),
+             sel: rows.filter(r => r.classList.contains('sel')).length };
+  });
+  ok(dk.n > 0, 'the deck lists records (' + dk.n + ')');
+  ok(/UID/.test(dk.head[0]) && /AREA/.test(dk.head[5]), 'the deck has its columns (' + dk.head.join('|') + ')');
+  ok(dk.sel === 1, 'the open site is the selected row (' + dk.sel + ')');
+  // blanks sort last whichever way the column runs, or an empty cell reads as zero
+  const blanksLast = (() => { let seenBlank = false;
+    for (const a of dk.area) { if (!a) seenBlank = true; else if (seenBlank) return false; } return true; })();
+  ok(blanksLast, 'rows without an area sort last (' + dk.area.join(',') + ')');
+
+  await p.hover('#site-table tbody tr');
+  await p.waitForTimeout(400);
+  const hv = await p.evaluate(() => {
+    const c = document.getElementById('hover-card');
+    const r = c.getBoundingClientRect();
+    const stage = document.getElementById('stage').getBoundingClientRect();
+    return { on: c.classList.contains('on'),
+             img: !!c.querySelector('.im').style.backgroundImage.replace('none',''),
+             inside: r.left >= stage.left - 1 && r.right <= stage.right + 1 };
+  });
+  ok(hv.on, 'hovering a row opens the preview');
+  ok(hv.img, 'the preview has an image');
+  ok(hv.inside, 'the preview stays inside the map');
+
+  await p.click('#site-table tbody tr:nth-child(1)');
+  await p.waitForTimeout(1200);
+  const cl = await p.evaluate(() => ({
+    open: document.getElementById('sidebar').classList.contains('active'),
+    sel: document.querySelectorAll('#site-table tbody tr.sel').length,
+    title: (document.getElementById('sb-title') || {}).textContent || ''
+  }));
+  ok(cl.open && cl.sel === 1, 'clicking a row opens that site (' + cl.title + ')');
 
   console.log('iframe embed (dirtybusiness.no)');
   const p2 = await ctx.newPage();
