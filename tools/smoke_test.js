@@ -66,7 +66,6 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   console.log('zoom limits');
   const z0 = await p.evaluate(()=>window.__M.getMaxZoom());
   ok(z0===19, 'map maxZoom is 19 / Leaflet 20 without the DoD layer (got '+z0+')');
-  await p.click('.filter-toggle'); await p.waitForTimeout(200);
   await p.click('#filter-dod'); await p.waitForTimeout(3000);
   const z1 = await p.evaluate(()=>window.__M.getMaxZoom());
   ok(z1===19, 'DoD layer does not raise it (got '+z1+')');
@@ -84,6 +83,20 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(deepest<=18, 'and never past Kartverket\'s tile zoom 18 (deepest '+deepest+')');
   ok(await p.evaluate(()=>window.__M.areTilesLoaded()), 'all requested tiles resolved');
   await p.click('#filter-dod'); await p.waitForTimeout(400);
+
+  const lg0 = await p.evaluate(() => document.getElementById('filter-panel').classList.contains('open'));
+  await p.click('.filter-toggle'); await p.waitForTimeout(300);
+  const lg1 = await p.evaluate(() => document.getElementById('filter-panel').classList.contains('open'));
+  ok(!lg0 && lg1, 'the legend stays shut until the button is pressed');
+  const legTog = await p.evaluate(() => {
+    const r = document.querySelector('.legend-row[data-toggle="filter-facilities"]');
+    r.click();
+    const box = document.getElementById('filter-facilities');
+    return { off: r.classList.contains('off'), checked: box.checked };
+  });
+  ok(legTog.off && !legTog.checked, 'a legend row switches its own layer off');
+  await p.evaluate(() => document.querySelector('.legend-row[data-toggle="filter-facilities"]').click());
+  await p.waitForTimeout(300);
 
   console.log('sidebar');
   await p.evaluate(()=>{location.hash='site=AK_AH_00126';}); await p.waitForTimeout(3000);
@@ -126,6 +139,40 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
      'site is vertically centred (off by ' + Math.round(Math.abs(fr0.y - fr0.h/2)) + 'px)');
 
   console.log('deck');
+  // It starts closed now, and the layer row is the way in.
+  const shut = await p.evaluate(() => {
+    const d = document.getElementById('deck');
+    return { closed: !d.classList.contains('half') && !d.classList.contains('full'),
+             h: Math.round(d.getBoundingClientRect().height) };
+  });
+  ok(shut.closed && shut.h < 40, 'the table starts closed (' + shut.h + 'px)');
+  await p.click('label[for="filter-facilities"]'); await p.waitForTimeout(600);
+  const opened = await p.evaluate(() => {
+    const d = document.getElementById('deck');
+    return { half: d.classList.contains('half'),
+             title: document.getElementById('deck-title').textContent.trim() };
+  });
+  ok(opened.half, 'touching a layer row opens it');
+  ok(/RECEPTION|MOTTAK/i.test(opened.title), 'showing that layer (' + opened.title + ')');
+  // the filter has to actually narrow something
+  const before = await p.evaluate(() => document.querySelectorAll('#site-table tbody tr').length);
+  await p.click('#deck-status'); await p.waitForTimeout(400);      // all -> active
+  const after = await p.evaluate(() => ({
+    n: document.querySelectorAll('#site-table tbody tr').length,
+    label: document.getElementById('deck-status').textContent.trim() }));
+  ok(after.n <= before && /activ|aktiv/i.test(after.label),
+     'the status filter narrows the table (' + before + ' -> ' + after.n + ', ' + after.label + ')');
+  await p.click('#deck-status'); await p.click('#deck-status'); await p.click('#deck-status');
+  await p.waitForTimeout(400);                                     // back to all
+  await p.click('#deck-size'); await p.waitForTimeout(500);         // half -> full
+  const full = await p.evaluate(() => {
+    const d = document.getElementById('deck');
+    return { full: d.classList.contains('full'), h: Math.round(d.getBoundingClientRect().height) };
+  });
+  ok(full.full && full.h > 400, 'it can take the whole page (' + full.h + 'px)');
+  await p.click('#deck-size'); await p.waitForTimeout(400);         // full -> closed
+  await p.click('.deck-head'); await p.waitForTimeout(500);         // and back open
+
   const dk = await p.evaluate(() => {
     const rows = [...document.querySelectorAll('#site-table tbody tr')];
     const head = [...document.querySelectorAll('#site-table thead th')].map(t => t.textContent.trim());
@@ -168,6 +215,25 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(cl.open && cl.sel === 1, 'clicking a row opens that site (' + cl.title + ')');
 
   console.log('3D terrain');
+  // The defect this guards: clicking 3D before the style has finished loading
+  // used to throw "cannot load terrain, because there exists no source with ID",
+  // and the map stayed flat with no way back. Reload and click it at once.
+  await p.reload();
+  await p.evaluate(() => {                       // the reload wiped the hook
+    const o = maplibregl.Map.prototype._render;
+    maplibregl.Map.prototype._render = function(){
+      if (this.getContainer() && this.getContainer().id === 'map') window.__M = this;
+      return o.apply(this, arguments);
+    };
+  });
+  await p.click('#terrain-3d', { timeout: 5000 }).catch(() => {});
+  await p.waitForTimeout(6000);
+  const early = await p.evaluate(() => {
+    const m = window.__M;
+    return { t: m && !!m.getTerrain(), checked: document.getElementById('terrain-3d').checked };
+  });
+  ok(!early.checked || early.t, 'switching 3D on immediately still attaches terrain');
+  if (early.checked) { await p.click('#terrain-3d'); await p.waitForTimeout(600); }
   await p.evaluate(() => { const m = window.__M; m.jumpTo({ center: [11.038, 60.063], zoom: 13 }); });
   await p.waitForTimeout(800);
   const demHits = [];
@@ -188,11 +254,14 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(demHits.every(u => !/\/1[6-9]\//.test(u.replace(/.*terrain\/[a-z]+/, ''))),
      'and never past the deepest DEM zoom that exists');
   await p.evaluate(() => window.__M.jumpTo({ center: [10.75, 59.91], zoom: 12 }));   // Oslo, outside the run
-  await p.waitForTimeout(2500);
+  await p.waitForTimeout(6000);
   const nat = await p.evaluate(() => {
-    const t = window.__M.getTerrain();
-    return { src: t && t.source, res: (document.getElementById('terrain-res') || {}).textContent || '' };
+    const m = window.__M, t = m.getTerrain(), c = m.getCenter();
+    return { src: t && t.source, res: (document.getElementById('terrain-res') || {}).textContent || '',
+             styled: m.isStyleLoaded(), hasNat: !!m.getSource('terrain-dem-no'),
+             hasFine: !!m.getSource('terrain-dem'), lng: +c.lng.toFixed(3), lat: +c.lat.toFixed(3) };
   });
+  console.log('    debug', JSON.stringify(nat));
   ok(nat.src === 'terrain-dem-no', 'outside the run it falls back to the national DEM (' + nat.src + ')');
   ok(/10 m/.test(nat.res), 'and says which resolution is under you (' + nat.res + ')');
   await p.evaluate(() => window.__M.jumpTo({ center: [11.038, 60.063], zoom: 13 }));  // back inside
