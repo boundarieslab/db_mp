@@ -114,8 +114,23 @@ button,input,select{font:inherit;color:inherit}
 .timeline-year{padding:0 4px 4px 42px;font-family:PlexMono,monospace;font-size:10px}
 
 /* ---------- tools window + legend ---------- */
-#tools-win{right:10px;top:10px;width:556px}
+#tools-win{right:10px;top:10px;width:640px}
 .pane{padding:7px 9px 8px}
+/* Only one pane is open at a time, and none of them is open to begin with:
+   the toolbar is the interface, the panes are what a button opens. */
+#filter-panel,#light-panel,#profile-panel{display:none}
+#filter-panel.open,#light-panel.open,#profile-panel.open{display:block}
+#map.picking canvas{cursor:crosshair}
+#sel-box{position:absolute;border:.5px dashed #000;background:rgba(0,0,0,.06);
+  pointer-events:none;z-index:15;display:none}
+.prof-svg{width:100%;height:120px;display:block}
+.prof-read{display:flex;gap:16px;margin-top:6px;font-family:PlexMono,monospace;font-size:10px;
+  color:var(--sub);flex-wrap:wrap}
+.prof-read b{font-weight:400;color:#000}
+.hint{color:var(--sub);font-size:10px}
+.dial{width:66px;height:66px;flex:0 0 66px;border:.5px solid var(--frame);cursor:crosshair;
+  touch-action:none;background:#fff}
+#light-panel .lrow>span:first-child{flex:0 0 58px}
 .pane-title{font-weight:500;letter-spacing:.08em;font-size:10px;margin-bottom:6px}
 .legend-cols{display:flex;gap:16px}
 .legend-left{flex:1 1 0;min-width:0}
@@ -306,6 +321,7 @@ iframe{border:0}
 <div id="stage">
 
 <div id="map" role="application" aria-label="Map of mass reception facilities and construction projects in Norway"></div>
+<div id="sel-box"></div>
 
 <!-- ============================== LAYERS ============================== -->
 <div class="win" id="layers-win">
@@ -457,6 +473,14 @@ iframe{border:0}
                 data-en="LEGEND" data-no="TEGNFORKLARING">LEGEND</button>
         <button type="button" class="btn txt" id="btn-3d" aria-pressed="false"
                 title="Terrain in three dimensions">3D</button>
+        <button type="button" class="btn txt" id="btn-light" aria-pressed="false"
+                title="Shade the terrain and turn the light" data-en="LIGHT" data-no="LYS">LIGHT</button>
+        <button type="button" class="btn txt" id="btn-profile" aria-pressed="false"
+                title="Draw a line and read the ground under it"
+                data-en="PROFILE" data-no="PROFIL">PROFILE</button>
+        <button type="button" class="btn txt" id="btn-select" aria-pressed="false"
+                title="Drag a box to select the sites inside it"
+                data-en="SELECT" data-no="VELG">SELECT</button>
         <button type="button" class="btn txt" id="btn-flat" title="Look straight down again"
                 data-en="RESET" data-no="NULLSTILL">RESET</button>
         <button type="button" class="btn txt" onclick="shareLink()" title="Copy a link to this view"
@@ -487,6 +511,39 @@ iframe{border:0}
                 <div class="legend-row" data-toggle="filter-plan-closed"><span class="sw" style="border-color:#d93806;background:rgba(217,56,6,.09)"></span><span class="legend-label" data-en="Closed landfill" data-no="Nedlagt deponi">Closed landfill</span><span class="legend-count">505</span></div>
             </div>
         </div>
+    </div>
+
+    <!-- LIGHT, docked inside the tools window -->
+    <div class="pane" id="light-panel">
+        <div class="pane-title" data-en="LIGHT" data-no="LYS">LIGHT</div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+            <canvas class="dial" id="light-dial" width="66" height="66"
+                    aria-label="Light direction"></canvas>
+            <div style="flex:1 1 auto;min-width:0">
+                <div class="lrow"><span data-en="direction" data-no="retning">direction</span>
+                    <input type="range" class="slider" id="light-az" min="0" max="359" value="315"
+                           aria-label="Illumination direction">
+                    <span class="val" id="light-az-val">315&deg;</span></div>
+                <div class="lrow"><span data-en="relief" data-no="relieff">relief</span>
+                    <input type="range" class="slider" id="light-ex" min="5" max="100" value="30"
+                           aria-label="Hillshade exaggeration">
+                    <span class="val" id="light-ex-val">0.30</span></div>
+                <div class="hint" id="light-note"
+                     data-en="Shading is computed from the same DEM the 3D view uses."
+                     data-no="Skyggen beregnes fra samme h&oslash;ydemodell som 3D-visningen.">Shading is computed from the same DEM the 3D view uses.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE, docked inside the tools window -->
+    <div class="pane" id="profile-panel">
+        <div class="pane-title" data-en="CROSS SECTION" data-no="TVERRSNITT">CROSS SECTION</div>
+        <svg class="prof-svg" id="prof-svg" viewBox="0 0 620 120" preserveAspectRatio="none"
+             role="img" aria-label="Elevation along the drawn line"></svg>
+        <div class="prof-read" id="prof-read"></div>
+        <div class="hint" id="prof-hint"
+             data-en="Click along the ground to draw a line. Double-click, or press Enter, to read it."
+             data-no="Klikk langs bakken for &aring; tegne en linje. Dobbeltklikk, eller trykk Enter, for &aring; lese den.">Click along the ground to draw a line. Double-click, or press Enter, to read it.</div>
     </div>
 </div>
 
@@ -1124,6 +1181,16 @@ document.addEventListener('DOMContentLoaded', function() {
         aerialshort: { en: "aerial", no: "flyfoto" },
         dtm1: { en: "1 m LiDAR (this run)", no: "1 m LiDAR (denne kjøringen)" },
         dtm10: { en: "10 m national, Kartverket", no: "10 m nasjonal, Kartverket" },
+        sampling: { en: "reading the ground\u2026", no: "leser bakken\u2026" },
+        noelev: { en: "No elevation could be read along that line.",
+                  no: "Ingen h\u00f8yde kunne leses langs den linjen." },
+        profhint: { en: "Click along the ground to draw a line. Double-click, or press Enter, to read it.",
+                    no: "Klikk langs bakken for \u00e5 tegne en linje. Dobbeltklikk, eller trykk Enter, for \u00e5 lese den." },
+        length: { en: "length", no: "lengde" },
+        lowest: { en: "lowest", no: "lavest" },
+        highest: { en: "highest", no: "h\u00f8yest" },
+        grade: { en: "grade", no: "stigning" },
+        nonesel: { en: "NOTHING IN THAT BOX", no: "INGENTING I DEN BOKSEN" },
         recep: { en: "RECEPTION SITES", no: "MOTTAKSANLEGG" },
         projects: { en: "CONSTRUCTION PROJECTS", no: "BYGGEPROSJEKTER" },
         allrec: { en: "ALL RECORDS", no: "ALLE POSTER" },
@@ -1756,6 +1823,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const deckHeadRow= document.querySelector('#site-table thead tr');
     const deckCount  = document.getElementById('deck-count');
     const hoverCard  = document.getElementById('hover-card');
+    let deckSelection = null;              // uids from a box selection, or null
     let deckScope  = 'facility';           // 'facility' | 'project' | 'all'
     let deckStatus = 'all';                // 'all' | 'active' | 'closed' | 'planned'
     let deckSize   = 'closed';             // 'closed' | 'half' | 'full'
@@ -1797,7 +1865,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function deckRows(){
         const rows = allSites.filter(s =>
             (deckScope === 'all' || s.__cat === (deckScope === 'project' ? 'project' : 'facility')) &&
-            (deckStatus === 'all' || statusClass(s.Status) === deckStatus));
+            (deckStatus === 'all' || statusClass(s.Status) === deckStatus) &&
+            (!deckSelection || deckSelection.has(s.UID || s.fid)));
         const k = deckSort.key, d = deckSort.dir;
         const col = COLS.find(c => c.key === k);
         return rows.sort((a,b) => {
@@ -2180,6 +2249,428 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!terrainBox.checked) return;
         const src = terrainSourceHere();
         if (map.getSource(src)) map.setTerrain({ source: src, exaggeration: exagValue() });
+    });
+
+
+    // ─────────────────────────────────────────────────────────────────────
+    // TOOL PANES
+    //
+    // LEGEND, LIGHT and CROSS SECTION dock under the toolbar and only one is
+    // ever open. Until this existed the legend had an .open class that no rule
+    // read, so it was simply always on screen.
+    const PANES = ['filter-panel', 'light-panel', 'profile-panel'];
+    const PANE_BTN = { 'filter-panel': '.filter-toggle', 'light-panel': '#btn-light',
+                       'profile-panel': '#btn-profile' };
+    function openPane(id) {
+        const was = document.getElementById(id).classList.contains('open');
+        PANES.forEach(p => {
+            const on = p === id && !was;
+            document.getElementById(p).classList.toggle('open', on);
+            const b = document.querySelector(PANE_BTN[p]);
+            if (b) b.setAttribute('aria-expanded', String(on));
+        });
+        syncToolButtons();
+        return !was;
+    }
+    function syncToolButtons() {
+        const set = (sel, on) => {
+            const b = document.querySelector(sel); if (!b) return;
+            b.setAttribute('aria-pressed', String(on)); b.classList.toggle('on', on);
+        };
+        set('.filter-toggle', document.getElementById('filter-panel').classList.contains('open'));
+        set('#btn-light', hsOn);
+        set('#btn-profile', profileMode);
+    }
+    window.toggleFilter = () => openPane('filter-panel');
+
+    // ─────────────────────────────────────────────────────────────────────
+    // LIGHT
+    //
+    // The same raster-DEM the 3D view stands on, read as a hillshade. It works
+    // flat, which is the point: you can see the shape of the ground without
+    // leaving the plan view the rest of the map is drawn in.
+    let hsOn = false, hsSource = null;
+    const azEl = document.getElementById('light-az');
+    const exEl = document.getElementById('light-ex');
+    const dial = document.getElementById('light-dial');
+
+    function hsPaint() {
+        return {
+            'hillshade-illumination-direction': +azEl.value,
+            'hillshade-illumination-anchor': 'map',
+            'hillshade-exaggeration': +exEl.value / 100,
+            'hillshade-shadow-color': '#000000',
+            'hillshade-highlight-color': '#ffffff',
+            'hillshade-accent-color': '#000000'
+        };
+    }
+    function buildHillshade() {
+        const want = terrainSourceHere();
+        if (map.getLayer('hillshade')) {
+            if (hsSource === want) {
+                Object.keys(hsPaint()).forEach(k => map.setPaintProperty('hillshade', k, hsPaint()[k]));
+                return;
+            }
+            map.removeLayer('hillshade');                 // a layer's source is fixed,
+        }                                                 // so a DEM swap means a rebuild
+        const before = ['cov-closed-fill', 'fp-fill', 'dod', 'dod-hit'].find(id => map.getLayer(id));
+        map.addLayer({ id: 'hillshade', type: 'hillshade', source: want, paint: hsPaint() }, before);
+        hsSource = want;
+    }
+    function setLightOn(on) {
+        hsOn = on;
+        if (!on) { if (map.getLayer('hillshade')) map.removeLayer('hillshade'); hsSource = null; return; }
+        whenStyleReady(() => { if (!hsOn) return; ensureTerrainSources(); buildHillshade(); drawDial(); });
+    }
+    function drawDial() {
+        const g = dial.getContext('2d'), R = 33, r = 26, a = (+azEl.value - 90) * Math.PI / 180;
+        g.clearRect(0, 0, 66, 66);
+        g.strokeStyle = '#d8d8d8'; g.lineWidth = 0.5;
+        g.beginPath(); g.arc(R, R, r, 0, Math.PI * 2); g.stroke();
+        g.strokeStyle = '#7d7d7d';
+        [0, 90, 180, 270].forEach(d => {
+            const t = (d - 90) * Math.PI / 180;
+            g.beginPath();
+            g.moveTo(R + Math.cos(t) * (r - 4), R + Math.sin(t) * (r - 4));
+            g.lineTo(R + Math.cos(t) * r, R + Math.sin(t) * r);
+            g.stroke();
+        });
+        // The ray points the way the light comes FROM, as a compass bearing.
+        g.strokeStyle = '#000'; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(R, R); g.lineTo(R + Math.cos(a) * r, R + Math.sin(a) * r); g.stroke();
+        g.fillStyle = '#000';
+        g.beginPath(); g.arc(R + Math.cos(a) * r, R + Math.sin(a) * r, 2.4, 0, Math.PI * 2); g.fill();
+    }
+    function dialTo(ev) {
+        const b = dial.getBoundingClientRect();
+        const x = (ev.clientX - b.left) - b.width / 2, y = (ev.clientY - b.top) - b.height / 2;
+        let d = Math.round(Math.atan2(y, x) * 180 / Math.PI + 90);
+        azEl.value = ((d % 360) + 360) % 360;
+        azEl.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    dial.addEventListener('pointerdown', e => {
+        dial.setPointerCapture(e.pointerId); dialTo(e);
+        const mv = ev => dialTo(ev);
+        const up = () => { dial.removeEventListener('pointermove', mv);
+                           dial.removeEventListener('pointerup', up); };
+        dial.addEventListener('pointermove', mv);
+        dial.addEventListener('pointerup', up);
+    });
+    [azEl, exEl].forEach(el => el.addEventListener('input', () => {
+        document.getElementById('light-az-val').textContent = azEl.value + '°';
+        document.getElementById('light-ex-val').textContent = (+exEl.value / 100).toFixed(2);
+        drawDial();
+        if (hsOn && map.getLayer('hillshade')) buildHillshade();
+    }));
+    document.getElementById('btn-light').onclick = () => {
+        // One switch: the pane and the shading go on and off together, and a
+        // pane pushed aside by another tool leaves the shading where it was.
+        const open = document.getElementById('light-panel').classList.contains('open');
+        if (open || hsOn) { openPane('light-panel'); if (hsOn) setLightOn(false); }
+        else { openPane('light-panel'); setLightOn(true); }
+        syncToolButtons();
+        updateStatus();
+    };
+    map.on('moveend', () => { if (hsOn && map.getLayer('hillshade')) buildHillshade(); });
+    drawDial();
+
+    // ─────────────────────────────────────────────────────────────────────
+    // CROSS SECTION
+    //
+    // The DEM is read straight from the Terrarium tiles rather than from
+    // MapLibre's terrain, so a profile can be taken with the map flat and with
+    // 3D switched off. Inside a run that is the metre LiDAR; outside it, the
+    // 10 m national model, and the readout says which.
+    const demCache = new Map();
+    function demTile(z, x, y, fine) {
+        const key = (fine ? 'f' : 'n') + '/' + z + '/' + x + '/' + y;
+        if (demCache.has(key)) return demCache.get(key);
+        const pr = new Promise(res => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                try {
+                    const c = document.createElement('canvas'); c.width = c.height = 256;
+                    const g = c.getContext('2d', { willReadFrequently: true });
+                    g.drawImage(img, 0, 0, 256, 256);
+                    res(g.getImageData(0, 0, 256, 256).data);
+                } catch (err) { res(null); }   // tainted canvas: no CORS header on the tile
+            };
+            img.onerror = () => res(null);
+            img.src = fine ? 'data/terrain/gjerdrum/' + z + '/' + x + '/' + y + '.png'
+                           : 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'
+                             + z + '/' + x + '/' + y + '.png';
+        });
+        demCache.set(key, pr);
+        return pr;
+    }
+    function insideRun(lng, lat) {
+        return lng > TERRAIN_BOUNDS[0] && lng < TERRAIN_BOUNDS[2]
+            && lat > TERRAIN_BOUNDS[1] && lat < TERRAIN_BOUNDS[3];
+    }
+    async function elevationAt(lng, lat, fine) {
+        const z = fine ? 15 : 14;
+        const n = Math.pow(2, z);
+        const xf = (lng + 180) / 360 * n;
+        const lr = lat * Math.PI / 180;
+        const yf = (1 - Math.log(Math.tan(lr) + 1 / Math.cos(lr)) / Math.PI) / 2 * n;
+        const tx = Math.floor(xf), ty = Math.floor(yf);
+        const d = await demTile(z, tx, ty, fine);
+        if (!d) return null;
+        const px = Math.min(255, Math.floor((xf - tx) * 256));
+        const py = Math.min(255, Math.floor((yf - ty) * 256));
+        const i = (py * 256 + px) * 4;
+        const h = d[i] * 256 + d[i + 1] + d[i + 2] / 256 - 32768;
+        return h < -400 || h > 3000 ? null : h;          // 0-pad in a tile reads as -32768
+    }
+    function metres(a, b) {
+        const R = 6371000, p1 = a[1] * Math.PI / 180, p2 = b[1] * Math.PI / 180;
+        const dp = p2 - p1, dl = (b[0] - a[0]) * Math.PI / 180;
+        const x = Math.sin(dp / 2) * Math.sin(dp / 2)
+                + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) * Math.sin(dl / 2);
+        return 2 * R * Math.asin(Math.sqrt(x));
+    }
+
+    let profileMode = false, profPts = [], profData = null;
+    function profSource() {
+        const fc = { type: 'FeatureCollection', features: [] };
+        if (profPts.length > 1)
+            fc.features.push({ type: 'Feature', properties: {},
+                               geometry: { type: 'LineString', coordinates: profPts } });
+        profPts.forEach(c => fc.features.push({ type: 'Feature', properties: {},
+                                                geometry: { type: 'Point', coordinates: c } }));
+        if (map.getSource('prof')) map.getSource('prof').setData(fc);
+        return fc;
+    }
+    function ensureProfLayers() {
+        if (map.getSource('prof')) return;
+        map.addSource('prof', { type: 'geojson', data: profSource() });
+        map.addLayer({ id: 'prof-line', type: 'line', source: 'prof',
+            filter: ['==', ['geometry-type'], 'LineString'],
+            paint: { 'line-color': '#000', 'line-width': 1.2 } });
+        map.addLayer({ id: 'prof-pt', type: 'circle', source: 'prof',
+            filter: ['==', ['geometry-type'], 'Point'],
+            paint: { 'circle-radius': 3, 'circle-color': '#fff',
+                     'circle-stroke-color': '#000', 'circle-stroke-width': 1 } });
+        map.addSource('prof-cur', { type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] } });
+        map.addLayer({ id: 'prof-cur', type: 'circle', source: 'prof-cur',
+            paint: { 'circle-radius': 4.5, 'circle-color': '#ff0066',
+                     'circle-stroke-color': '#fff', 'circle-stroke-width': 1 } });
+    }
+    function clearProfile() {
+        profPts = []; profData = null;
+        if (map.getSource('prof')) profSource();
+        if (map.getSource('prof-cur'))
+            map.getSource('prof-cur').setData({ type: 'FeatureCollection', features: [] });
+        document.getElementById('prof-svg').innerHTML = '';
+        document.getElementById('prof-read').innerHTML = '';
+    }
+    async function runProfile() {
+        if (profPts.length < 2) return;
+        const hint = document.getElementById('prof-hint');
+        hint.textContent = t('sampling');
+        // One sample every ~2 m at the fine DEM, capped so a long line stays
+        // one screenful of work rather than thousands of tile reads.
+        let total = 0;
+        const seg = [];
+        for (let i = 1; i < profPts.length; i++) {
+            const d = metres(profPts[i - 1], profPts[i]); seg.push(d); total += d;
+        }
+        const fine = profPts.every(c => insideRun(c[0], c[1]));
+        const N = Math.max(60, Math.min(400, Math.round(total / (fine ? 3 : 20))));
+        const pts = [];
+        for (let i = 0; i <= N; i++) {
+            const want = total * i / N;
+            let acc = 0, k = 0;
+            while (k < seg.length - 1 && acc + seg[k] < want) { acc += seg[k]; k++; }
+            const f = seg[k] ? (want - acc) / seg[k] : 0;
+            const a = profPts[k], b = profPts[k + 1] || profPts[k];
+            pts.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]);
+        }
+        const hs = [];
+        for (const c of pts) hs.push(await elevationAt(c[0], c[1], fine));
+        const good = hs.filter(h => h !== null);
+        if (!good.length) {
+            hint.textContent = t('noelev');
+            profData = null;
+            return;
+        }
+        hint.textContent = t('profhint');
+        profData = { pts: pts, hs: hs, total: total, fine: fine };
+        drawProfile();
+    }
+    function drawProfile() {
+        const d = profData; if (!d) return;
+        const W = 620, H = 120, L = 34, R = 6, T = 8, B = 16;
+        const good = d.hs.filter(h => h !== null);
+        const lo = Math.min.apply(null, good), hi = Math.max.apply(null, good);
+        const pad = Math.max(2, (hi - lo) * 0.12);
+        const y0 = lo - pad, y1 = hi + pad;
+        const X = i => L + (W - L - R) * i / (d.hs.length - 1);
+        const Y = h => T + (H - T - B) * (1 - (h - y0) / (y1 - y0));
+        let path = '', open = false;
+        d.hs.forEach((h, i) => {
+            if (h === null) { open = false; return; }
+            path += (open ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(h).toFixed(1) + ' ';
+            open = true;
+        });
+        const ticks = [y0, (y0 + y1) / 2, y1].map(v =>
+            '<line x1="' + L + '" y1="' + Y(v).toFixed(1) + '" x2="' + (W - R) +
+            '" y2="' + Y(v).toFixed(1) + '" stroke="#efefef" stroke-width=".5"/>' +
+            '<text x="' + (L - 4) + '" y="' + (Y(v) + 3).toFixed(1) +
+            '" text-anchor="end" font-size="9" fill="#7d7d7d">' + Math.round(v) + '</text>').join('');
+        const km = d.total >= 2000;
+        const xlab = [0, 0.5, 1].map(f =>
+            '<text x="' + X(f * (d.hs.length - 1)).toFixed(1) + '" y="' + (H - 4) +
+            '" text-anchor="' + (f === 0 ? 'start' : f === 1 ? 'end' : 'middle') +
+            '" font-size="9" fill="#7d7d7d">' +
+            (km ? (d.total * f / 1000).toFixed(1) + ' km' : Math.round(d.total * f) + ' m') +
+            '</text>').join('');
+        document.getElementById('prof-svg').innerHTML =
+            ticks +
+            '<line x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + (H - B) +
+            '" stroke="#2b2b2b" stroke-width=".5"/>' +
+            '<line x1="' + L + '" y1="' + (H - B) + '" x2="' + (W - R) + '" y2="' + (H - B) +
+            '" stroke="#2b2b2b" stroke-width=".5"/>' +
+            '<path d="' + path + '" fill="none" stroke="#000" stroke-width="1"/>' +
+            '<line id="prof-cursor" x1="-9" y1="' + T + '" x2="-9" y2="' + (H - B) +
+            '" stroke="#ff0066" stroke-width=".7"/>' + xlab;
+        const slope = (good[good.length - 1] - good[0]) / d.total * 100;
+        document.getElementById('prof-read').innerHTML =
+            '<span>' + t('length') + ' <b>' +
+                (km ? (d.total / 1000).toFixed(2) + ' km' : Math.round(d.total) + ' m') + '</b></span>' +
+            '<span>' + t('lowest') + ' <b>' + lo.toFixed(1) + ' m</b></span>' +
+            '<span>' + t('highest') + ' <b>' + hi.toFixed(1) + ' m</b></span>' +
+            '<span>&Delta; <b>' + (hi - lo).toFixed(1) + ' m</b></span>' +
+            '<span>' + t('grade') + ' <b>' + slope.toFixed(1) + ' %</b></span>' +
+            '<span>' + (d.fine ? t('dtm1') : t('dtm10')) + '</span>' +
+            '<button type="button" class="btn txt" style="height:19px" onclick="profileCSV()">CSV</button>';
+    }
+    window.profileCSV = () => {
+        if (!profData) return;
+        let csv = 'distance_m,lon,lat,elevation_m\n', acc = 0;
+        profData.pts.forEach((c, i) => {
+            if (i) acc += metres(profData.pts[i - 1], c);
+            csv += acc.toFixed(1) + ',' + c[0].toFixed(6) + ',' + c[1].toFixed(6) + ',' +
+                   (profData.hs[i] === null ? '' : profData.hs[i].toFixed(2)) + '\n';
+        });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+        a.download = 'dirtybusiness_profile.csv';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    };
+    // Running the cursor over the chart puts a dot on the map at that station.
+    document.getElementById('prof-svg').addEventListener('mousemove', e => {
+        if (!profData) return;
+        const b = e.currentTarget.getBoundingClientRect();
+        const f = Math.max(0, Math.min(1, (e.clientX - b.left) / b.width));
+        const W = 620, L = 34, R = 6;
+        const i = Math.round(f * (profData.pts.length - 1));
+        const c = profData.pts[i];
+        map.getSource('prof-cur').setData({ type: 'FeatureCollection', features: [
+            { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: c } }] });
+        const cur = document.getElementById('prof-cursor');
+        if (cur) { const x = L + (W - L - R) * i / (profData.pts.length - 1);
+                   cur.setAttribute('x1', x); cur.setAttribute('x2', x); }
+    });
+
+    function setProfileMode(on) {
+        profileMode = on;
+        document.getElementById('map').classList.toggle('picking', on);
+        syncToolButtons();
+        if (on) { map.doubleClickZoom.disable(); ensureProfLayers(); }
+        else { map.doubleClickZoom.enable(); }
+    }
+    document.getElementById('btn-profile').onclick = () => {
+        const open = openPane('profile-panel');
+        if (open) { clearProfile(); whenStyleReady(() => ensureProfLayers()); }
+        setProfileMode(open);
+    };
+    map.on('click', e => {
+        if (!profileMode) return;
+        if (profData) clearProfile();               // a finished line; start a new one
+        profPts.push([e.lngLat.lng, e.lngLat.lat]);
+        profSource();
+    });
+    map.on('dblclick', e => { if (profileMode) { e.preventDefault(); runProfile(); } });
+
+    // ─────────────────────────────────────────────────────────────────────
+    // SELECT
+    //
+    // Drag a box, and the table below becomes the records inside it. The map
+    // keeps every marker: the selection narrows what you are reading, not what
+    // exists, which is the distinction the whole site rests on.
+    let selectMode = false, selStart = null;
+    const selBox = document.getElementById('sel-box');
+    const btnSel = document.getElementById('btn-select');
+
+    function setSelectMode(on) {
+        selectMode = on;
+        document.getElementById('map').classList.toggle('picking', on);
+        btnSel.setAttribute('aria-pressed', String(on));
+        btnSel.classList.toggle('on', on);
+        if (on) map.dragPan.disable(); else map.dragPan.enable();
+        selBox.style.display = 'none';
+    }
+    function clearSelection() {
+        deckSelection = null;
+        if (typeof renderDeck === 'function') renderDeck();
+        updateStatus();
+    }
+    btnSel.onclick = () => {
+        if (deckSelection) { clearSelection(); setSelectMode(false); return; }
+        setSelectMode(!selectMode);
+    };
+    const canvasEl = () => map.getCanvasContainer();
+    canvasEl().addEventListener('mousedown', e => {
+        if (!selectMode || e.button !== 0) return;
+        const box = document.getElementById('stage').getBoundingClientRect();
+        selStart = [e.clientX - box.left, e.clientY - box.top];
+        selBox.style.display = 'block';
+        selBox.style.left = selStart[0] + 'px'; selBox.style.top = selStart[1] + 'px';
+        selBox.style.width = '0px'; selBox.style.height = '0px';
+        e.preventDefault();
+    });
+    window.addEventListener('mousemove', e => {
+        if (!selectMode || !selStart) return;
+        const box = document.getElementById('stage').getBoundingClientRect();
+        const x = e.clientX - box.left, y = e.clientY - box.top;
+        selBox.style.left = Math.min(x, selStart[0]) + 'px';
+        selBox.style.top = Math.min(y, selStart[1]) + 'px';
+        selBox.style.width = Math.abs(x - selStart[0]) + 'px';
+        selBox.style.height = Math.abs(y - selStart[1]) + 'px';
+    });
+    window.addEventListener('mouseup', e => {
+        if (!selectMode || !selStart) return;
+        const box = document.getElementById('stage').getBoundingClientRect();
+        const mb = map.getContainer().getBoundingClientRect();
+        const a = map.unproject([selStart[0] + box.left - mb.left, selStart[1] + box.top - mb.top]);
+        const b = map.unproject([e.clientX - mb.left, e.clientY - mb.top]);
+        selStart = null;
+        selBox.style.display = 'none';
+        const w = Math.min(a.lng, b.lng), ea = Math.max(a.lng, b.lng);
+        const so = Math.min(a.lat, b.lat), no = Math.max(a.lat, b.lat);
+        if (ea - w < 1e-6 && no - so < 1e-6) { setSelectMode(false); return; }   // a click, not a drag
+        const hit = allSites.filter(sIt => {
+            const la = num(sIt.Latitude), lo = num(sIt.Longitude);
+            return Number.isFinite(la) && Number.isFinite(lo)
+                && lo >= w && lo <= ea && la >= so && la <= no;
+        });
+        deckSelection = hit.length ? new Set(hit.map(sIt => sIt.UID || sIt.fid)) : null;
+        setSelectMode(false);
+        if (!hit.length) { updateStatus(t('nonesel')); return; }
+        openDeck('all');
+        updateStatus();
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            if (profileMode) { setProfileMode(false); openPane('profile-panel'); clearProfile(); }
+            if (selectMode) setSelectMode(false);
+        }
+        if (e.key === 'Enter' && profileMode) runProfile();
     });
 
     map.on('mousemove', e => {
