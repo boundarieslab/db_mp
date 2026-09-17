@@ -33,6 +33,14 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     if (!fs.existsSync(f)) return r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html>' });
     r.fulfill({ status: 200, contentType: 'text/html', body: fs.readFileSync(f, 'utf8') });
   });
+  // The metre-LiDAR Terrarium tiles are ~22 MB. When a checkout does not carry
+  // them, answer with a synthetic ramp so the 3D and section checks still run.
+  const RAMP = fs.readFileSync(HERE + '/terrain_ramp.png');
+  await ctx.route(/\/data\/terrain\//, r => {
+    const f = __dirname + '/..' + new URL(r.request().url()).pathname;
+    if (fs.existsSync(f)) return r.fallback();
+    r.fulfill({ status: 200, contentType: 'image/png', body: RAMP });
+  });
   // MapLibre and PapaParse come from a CDN. If a vendor/ copy is present, serve
   // that instead, so the test also runs with no network at all.
   const VENDOR = __dirname + '/../vendor';
@@ -57,164 +65,194 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   p.on('response', r => { if (r.status() >= 400 && !IGNORE.test(r.url()))
     errs.push('HTTP ' + r.status() + ' ' + r.url().slice(0, 90)); });
 
-  await p.goto('http://127.0.0.1:8901/index.html'); await p.waitForTimeout(2500);
-  // Reach the Map instance the page built. _render runs on every painted frame,
-  // so a single repaint after the hook is installed is enough to capture it.
-  await p.evaluate(()=>{
+  const hook = () => p.evaluate(() => {
     const o = maplibregl.Map.prototype._render;
     maplibregl.Map.prototype._render = function(){
       if (this.getContainer() && this.getContainer().id === 'map') window.__M = this;
       return o.apply(this, arguments);
     };
   });
+  const openTree = () => p.evaluate(() => {
+    document.querySelectorAll('#bar .grp').forEach(g => g.classList.remove('closed'));
+  });
+  const vis = id => p.evaluate(i => { const m = window.__M; return !!m.getLayer(i) && m.getLayoutProperty(i, 'visibility') !== 'none'; }, id);
+
+  await p.goto('http://127.0.0.1:8901/index.html'); await p.waitForTimeout(2500);
+  // _render runs on every painted frame, so one repaint after the hook is
+  // installed is enough to capture the map.
+  await hook();
   await p.click('.maplibregl-ctrl-zoom-in'); await p.waitForTimeout(900);
   ok(await p.evaluate(()=>!!window.__M), 'map instance reachable');
 
-  console.log('layer window');
-  const tree0 = await p.evaluate(() => ({
-    closed: [...document.querySelectorAll('#layers-win .grp.top')].every(g => g.classList.contains('closed')),
-    groups: document.querySelectorAll('#layers-win .grp.top').length,
-    thumbs: document.querySelectorAll('#layers-win .thumb').length,
-    subsShown: [...document.querySelectorAll('#layers-win .ds-sub')]
-                 .filter(d => d.offsetHeight > 0 && d.querySelector('.filter-facility-sub')).length
+  console.log('the bar');
+  const bar0 = await p.evaluate(() => ({
+    groups: document.querySelectorAll('#bar .grp.top').length,
+    closed: [...document.querySelectorAll('#bar .grp.top')].every(g => g.classList.contains('closed')),
+    tabs: [...document.querySelectorAll('#bar .tab')].map(t => t.dataset.tab).join(','),
+    tools: document.querySelectorAll('#bar .toolbar .btn').length,
+    right: !!document.getElementById('tools-win'),
+    icons: [...document.querySelectorAll('#bar .toolbar .btn')].every(b => b.querySelector('svg.px') && !b.textContent.trim())
   }));
-  ok(tree0.closed && tree0.groups === 4, 'the tree opens as four folded lines (' + tree0.groups + ')');
-  ok(tree0.thumbs === 0, 'with no thumbnails (' + tree0.thumbs + ')');
-  ok(tree0.subsShown === 0, 'and no record filters left in it');
+  ok(bar0.tabs === 'facility,project,dod', 'one bar with the three tabs (' + bar0.tabs + ')');
+  ok(bar0.tools >= 8 && !bar0.right, 'the tools live in it, and there is no second window on the right (' + bar0.tools + ')');
+  ok(bar0.icons, 'every tool is a pixel icon with no text on it');
+  ok(bar0.groups === 3 && bar0.closed, 'the layer groups start folded (' + bar0.groups + ')');
   const fold = await p.evaluate(() => {
-    const w = document.getElementById('layers-win');
-    const before = w.getBoundingClientRect().width;
+    const w = document.getElementById('bar');
+    const before = w.getBoundingClientRect().height;
     document.getElementById('btn-menu').click();
-    const after = w.getBoundingClientRect().width;
+    const after = w.getBoundingClientRect().height;
     document.getElementById('btn-menu').click();
     return { before: Math.round(before), after: Math.round(after) };
   });
-  ok(fold.after < 44, 'and folds to the button alone (' + fold.before + ' -> ' + fold.after + 'px)');
-  // Everything below reaches into the tree, so open it and let it be as tall
-  // as it needs: the real tree scrolls, which a click cannot.
-  await p.evaluate(() => {
-    document.querySelectorAll('.grp').forEach(g => g.classList.remove('closed'));
-    document.querySelector('.tree').style.maxHeight = 'none';
-  });
-  await p.waitForTimeout(200);
+  ok(fold.after < 40 && fold.before > 200, 'and it folds to its search strip (' + fold.before + ' -> ' + fold.after + 'px)');
+  const base0 = await p.evaluate(() => ({ sat: document.getElementById('base-sat').checked }));
+  ok(base0.sat && await vis('satellite') && !(await vis('graytone')), 'the map opens on satellite imagery');
+  ok(await p.evaluate(() => window.__M.dragRotate.isEnabled()), 'right-drag turns and tilts the map');
+  await openTree();
+  await p.waitForTimeout(300);
 
   console.log('zoom limits');
   const z0 = await p.evaluate(()=>window.__M.getMaxZoom());
-  ok(z0===19, 'map maxZoom is 19 / Leaflet 20 without the DoD layer (got '+z0+')');
-  await p.click('#filter-dod'); await p.waitForTimeout(3000);
+  ok(z0===19, 'map maxZoom is 19 without the DoD layer (got '+z0+')');
+  await p.click('#tab-dod'); await p.waitForTimeout(3000);
+  ok(await p.evaluate(() => document.getElementById('filter-dod').checked), 'the terrain tab switches its run on');
   const z1 = await p.evaluate(()=>window.__M.getMaxZoom());
   ok(z1===19, 'DoD layer does not raise it (got '+z1+')');
+  const dodData = await p.evaluate(() => {
+    const s = window.__M.getSource('dod-hit'); const f = s ? s._data.features : [];
+    return { n: f.length, ls: f.filter(x => x.properties.ls).length,
+             none: f.filter(x => x.properties.pl === 0).length, np: f.filter(x => 'np' in x.properties).length };
+  });
+  ok(dodData.n === 1320 && dodData.np === 0, 'the plan flag is the new one (' + dodData.n + ' polygons, ' + dodData.np + ' old flags)');
+  ok(dodData.none === 1045 && dodData.ls === 2, 'with 1 045 unplanned and the landslide pair marked (' + dodData.none + ', ' + dodData.ls + ')');
 
+  await p.click('#base-gray'); await p.waitForTimeout(200);
   hits.length = 0;
   await p.evaluate(()=>window.__M.jumpTo({center:[11.52031,59.81372], zoom:19}));
   await p.waitForTimeout(1500);
-  // The regression this guards: Kartverket serves nothing above tile zoom 18,
-  // so at full zoom the source must overzoom its deepest real tile rather than
-  // ask for one that does not exist and leave the basemap blank.
   const kv = hits.filter(u=>u.includes('kartverket'));
-  const deepest = Math.max(...kv.map(u=>{
-    const m = u.match(/webmercator\/(\d+)\//); return m ? +m[1] : -1; }), -1);
-  ok(kv.length>0, 'basemap still requests tiles at max zoom ('+kv.length+' requests)');
+  const deepest = Math.max(...kv.map(u=>{ const m = u.match(/webmercator\/(\d+)\//); return m ? +m[1] : -1; }), -1);
+  ok(kv.length>0, 'the grey map still requests tiles at max zoom ('+kv.length+' requests)');
   ok(deepest<=18, 'and never past Kartverket\'s tile zoom 18 (deepest '+deepest+')');
   ok(await p.evaluate(()=>window.__M.areTilesLoaded()), 'all requested tiles resolved');
-  await p.click('#filter-dod'); await p.waitForTimeout(400);
+  await p.click('#filter-dod'); await p.waitForTimeout(300);
+  await p.click('#base-sat'); await p.click('#tab-facility'); await p.waitForTimeout(300);
 
+  console.log('key');
   const seenH = () => p.evaluate(() => document.getElementById('filter-panel').offsetHeight);
   const lg0 = await seenH();
-  await p.click('.filter-toggle'); await p.waitForTimeout(300);
+  await p.click('#btn-key'); await p.waitForTimeout(350);
   const lg1 = await seenH();
-  ok(lg0 === 0 && lg1 > 0, 'the legend stays shut until the button is pressed (' + lg0 + ' -> ' + lg1 + ')');
-  const legTog = await p.evaluate(() => {
-    const r = document.querySelector('.legend-row[data-toggle="filter-facilities"]');
-    r.click();
-    const box = document.getElementById('filter-facilities');
-    return { off: r.classList.contains('off'), checked: box.checked };
+  ok(lg0 === 0 && lg1 > 40, 'the key stays shut until its button is pressed (' + lg0 + ' -> ' + lg1 + ')');
+  const cov = await p.evaluate(() => document.querySelector('[data-cov-ct="current"]').textContent);
+  ok(cov === '333', 'plan counts are read from the file, not typed in (' + cov + ')');
+  await p.click('#btn-help'); await p.waitForTimeout(350);
+  const hp = await p.evaluate(() => ({ help: document.getElementById('help-panel').offsetHeight,
+                                       key: document.getElementById('filter-panel').offsetHeight }));
+  ok(hp.help > 100 && hp.key === 0, 'help opens and puts the key away (' + hp.help + ')');
+  await p.click('#btn-help'); await p.waitForTimeout(300);
+
+  console.log('status and colour');
+  const cls = await p.evaluate(() => {
+    const s = window.__M.getSource('sites'); const f = s ? s._data.features : [];
+    const by = {}; f.forEach(x => by[x.properties.uid] = x.properties.cls + ' ' + x.properties.col);
+    return by;
   });
-  ok(legTog.off && !legTog.checked, 'a legend row switches its own layer off');
-  await p.evaluate(() => document.querySelector('.legend-row[data-toggle="filter-facilities"]').click());
-  await p.waitForTimeout(300);
+  ok(/^active #E8141E/.test(cls.AK_AH_001 || ''), 'an active reception site is red (' + cls.AK_AH_001 + ')');
+  ok(/^old #F2C200/.test(cls.AK_LI_002 || ''), '"closed (i etterdrift)" is yellow (' + cls.AK_LI_002 + ')');
+  ok(/^contaminated #8A2BE2/.test(cls.VF_HM_001 || ''), 'a hazardous-waste landfill is purple (' + cls.VF_HM_001 + ')');
+  ok(/^active #1F9E3A/.test(cls.CP_001 || ''), 'an active construction project is green (' + cls.CP_001 + ')');
+  ok(!cls.AK_XX_001, 'a record with no coordinates is not drawn');
+  ok(!(await p.evaluate(() => document.querySelectorAll('.maplibregl-marker').length)), 'there are no pictogram markers on the map');
 
   console.log('sidebar');
-  await p.evaluate(()=>{location.hash='site=AK_AH_00126';}); await p.waitForTimeout(3000);
+  await p.evaluate(()=>{location.hash='site=AK_AH_001';}); await p.waitForTimeout(3000);
   const sb = await p.evaluate(()=>{
     const el=document.querySelector('#sb-minimap');
     const r=el?el.getBoundingClientRect():null;
-    const cv=el?el.querySelector('canvas'):null;
+    const side=document.getElementById('sidebar').getBoundingClientRect();
     const share=document.querySelector('.share-btn').getBoundingClientRect();
     const close=document.querySelector('.close-btn').getBoundingClientRect();
     return { mini: r&&[Math.round(r.width),Math.round(r.height)],
-             canvas: cv?[cv.clientWidth,cv.clientHeight]:null,
-             dot: !!el&&!!el.querySelector('.minimap-dot'),
+             tiles: el ? el.querySelectorAll('.aerial .tl').length : 0,
+             outline: el ? el.querySelectorAll('.aerial svg path').length : 0,
+             top: Math.round(side.top), right: Math.round(window.innerWidth - side.right),
              overlap: share.right > close.left };
   });
-  ok(sb.mini && sb.mini[1]>100, 'aerial view has height ('+(sb.mini||[])+')');
-  ok(sb.canvas && sb.canvas[0]>0 && Math.abs(sb.canvas[1]-sb.mini[1])<4,
-     'aerial view canvas fills its box ('+(sb.canvas||[])+' in '+(sb.mini||[])+')');
-  ok(sb.dot, 'aerial view marks the site');
+  ok(sb.mini && sb.mini[1] > 150 && sb.mini[0] > 380, 'the picture band spans the window (' + (sb.mini||[]) + ')');
+  ok(sb.tiles > 0 && sb.outline > 0, 'it shows the aerial with the footprint drawn on it (' + sb.tiles + ' tiles)');
+  ok(sb.top <= 12 && sb.right <= 12, 'the site window sits in the top right corner (' + sb.top + ',' + sb.right + ')');
   ok(!sb.overlap, 'SHARE and the close button do not overlap');
+  const zoomed = await p.evaluate(() => {
+    const m = window.__M, b = m.getBounds();
+    const s = m.getSource('fp')._data.features.find(x => x.properties.uid === 'AK_AH_001');
+    let w = 180, so = 90, e = -180, n = -90;
+    (function walk(c){ if (typeof c[0] === 'number') { w = Math.min(w, c[0]); e = Math.max(e, c[0]); so = Math.min(so, c[1]); n = Math.max(n, c[1]); } else c.forEach(walk); })(s.geometry.coordinates);
+    const fpW = e - w, viewW = b.getEast() - b.getWest();
+    return { ratio: +(fpW / viewW).toFixed(2) };
+  });
+  ok(zoomed.ratio < 0.8 && zoomed.ratio > 0.1, 'the site is framed whole, with ground around it (' + zoomed.ratio + ' of the view)');
 
   console.log('framing');
   const fr0 = await p.evaluate(() => {
     const m = window.__M;
-    const pt = m.project([11.52031, 59.81372]);              // container coordinates
+    const pt = m.project([11.52031, 59.81372]);
     const box = document.getElementById('map').getBoundingClientRect();
-    const lw  = document.getElementById('layers-win').getBoundingClientRect();
+    const lw  = document.getElementById('bar').getBoundingClientRect();
     const sbb = document.getElementById('sidebar').getBoundingClientRect();
     const left = lw.right - box.left, right = sbb.left - box.left;
-    // Where a footprint exists the map frames the footprint, not the sheet's
-    // point, so the centring checks below follow the geometry.
-    const f = (m.getSource('fp') || { _data: { features: [] } })
-      ._data.features.find(x => x.properties.uid === 'AK_AH_00126');
+    const f = m.getSource('fp')._data.features.find(x => x.properties.uid === 'AK_AH_001');
     let w = 180, so = 90, e = -180, n = -90;
     if (f) (function walk(c) {
-      if (typeof c[0] === 'number') {
-        w = Math.min(w, c[0]); e = Math.max(e, c[0]);
-        so = Math.min(so, c[1]); n = Math.max(n, c[1]);
-      } else c.forEach(walk);
+      if (typeof c[0] === 'number') { w = Math.min(w, c[0]); e = Math.max(e, c[0]); so = Math.min(so, c[1]); n = Math.max(n, c[1]); }
+      else c.forEach(walk);
     })(f.geometry.coordinates);
     const ctr = f ? m.project([(w + e) / 2, (so + n) / 2]) : pt;
-    return { x: Math.round(pt.x), y: Math.round(pt.y),
-             cx: Math.round(ctr.x), cy: Math.round(ctr.y), fp: !!f,
-             band: [Math.round(left), Math.round(right)],
-             mid: Math.round((left + right) / 2), h: box.height, zoom: m.getZoom() };
+    return { x: Math.round(pt.x), y: Math.round(pt.y), cx: Math.round(ctr.x), cy: Math.round(ctr.y),
+             band: [Math.round(left), Math.round(right)], mid: Math.round((left + right) / 2), h: box.height };
   });
-  // the site should sit near the middle of the strip you can actually see,
-  // not under the panel and not behind the controls
-  ok(fr0.x > fr0.band[0] && fr0.x < fr0.band[1],
-     'site is inside the visible strip (x=' + fr0.x + ' in ' + fr0.band + ')');
-  ok(Math.abs(fr0.cx - fr0.mid) < 60,
-     (fr0.fp ? 'its footprint' : 'it') + ' is centred in it (off by ' +
-     Math.abs(fr0.cx - fr0.mid) + 'px)');
-  ok(Math.abs(fr0.cy - fr0.h / 2) < 60,
-     'and vertically centred (off by ' + Math.round(Math.abs(fr0.cy - fr0.h/2)) + 'px)');
-  ok(fr0.y > 0 && fr0.y < fr0.h, 'the sheet\'s point stays on screen with it');
+  ok(fr0.x > fr0.band[0] && fr0.x < fr0.band[1], 'site is inside the visible strip (x=' + fr0.x + ' in ' + fr0.band + ')');
+  ok(Math.abs(fr0.cx - fr0.mid) < 60, 'its footprint is centred in it (off by ' + Math.abs(fr0.cx - fr0.mid) + 'px)');
+  ok(Math.abs(fr0.cy - fr0.h / 2) < 60, 'and vertically centred (off by ' + Math.round(Math.abs(fr0.cy - fr0.h/2)) + 'px)');
+  const lit = await p.evaluate(() => window.__M.getFeatureState({ source: 'fp', id: 'AK_AH_001' }).hot);
+  ok(lit === true, 'the open site\'s outline is lit');
 
   console.log('deck');
-  // It starts closed now, and the layer row is the way in.
   const shut = await p.evaluate(() => {
     const d = document.getElementById('deck');
     return { closed: !d.classList.contains('half') && !d.classList.contains('full'),
-             h: Math.round(d.getBoundingClientRect().height) };
+             h: Math.round(d.getBoundingClientRect().height),
+             chips: document.querySelectorAll('#deck-chips .chip').length };
   });
   ok(shut.closed && shut.h < 40, 'the table starts closed (' + shut.h + 'px)');
-  await p.click('label[for="filter-facilities"]'); await p.waitForTimeout(600);
+  ok(shut.chips >= 3, 'with the colour key in its header even when closed (' + shut.chips + ' chips)');
+  await p.click('label[for="filter-facilities"]'); await p.waitForTimeout(400);
+  await p.click('label[for="filter-facilities"]'); await p.waitForTimeout(600);   // the click toggled it; put it back
   const opened = await p.evaluate(() => {
     const d = document.getElementById('deck');
-    return { half: d.classList.contains('half'),
-             title: document.getElementById('deck-title').textContent.trim() };
+    return { half: d.classList.contains('half'), title: document.getElementById('deck-title').textContent.trim(),
+             on: document.getElementById('filter-facilities').checked };
   });
-  ok(opened.half, 'touching a layer row opens it');
-  ok(/RECEPTION|MOTTAK/i.test(opened.title), 'showing that layer (' + opened.title + ')');
-  // the filter has to actually narrow something
-  const before = await p.evaluate(() => document.querySelectorAll('#site-table tbody tr').length);
-  await p.click('#deck-status'); await p.waitForTimeout(400);      // all -> active
-  const after = await p.evaluate(() => ({
-    n: document.querySelectorAll('#site-table tbody tr').length,
-    label: document.getElementById('deck-status').textContent.trim() }));
-  ok(after.n <= before && /activ|aktiv/i.test(after.label),
-     'the status filter narrows the table (' + before + ' -> ' + after.n + ', ' + after.label + ')');
-  await p.click('#deck-status'); await p.click('#deck-status'); await p.click('#deck-status');
-  await p.waitForTimeout(400);                                     // back to all
+  ok(opened.half && opened.on, 'touching the reception row opens the table');
+  ok(/RECEPTION|MOTTAK/i.test(opened.title), 'showing reception sites (' + opened.title + ')');
+
+  // The chips are the legend and the switch.
+  const rows0 = await p.evaluate(() => document.querySelectorAll('#site-table tbody tr').length);
+  const drawn0 = await p.evaluate(() => window.__M.querySourceFeatures('sites', { filter: window.__M.getFilter('site-dot') }).length);
+  await p.click('#deck-chips .chip[data-cls="active"]'); await p.waitForTimeout(500);
+  const chip = await p.evaluate(() => ({
+    rows: document.querySelectorAll('#site-table tbody tr').length,
+    pressed: document.querySelector('#deck-chips .chip[data-cls="active"]').getAttribute('aria-pressed'),
+    filter: JSON.stringify(window.__M.getFilter('site-dot')),
+    drawn: window.__M.queryRenderedFeatures({ layers: ['site-dot'] }).map(f => f.properties.uid)
+  }));
+  ok(chip.pressed === 'false' && chip.rows < rows0, 'a colour box takes that status out of the table (' + rows0 + ' -> ' + chip.rows + ')');
+  ok(!/facility:active/.test(chip.filter) && /facility:old/.test(chip.filter), 'and off the map');
+  await p.click('#deck-chips .chip[data-cls="active"]'); await p.waitForTimeout(400);
+  const rows1 = await p.evaluate(() => document.querySelectorAll('#site-table tbody tr').length);
+  ok(rows1 === rows0, 'pressing it again brings them back (' + rows1 + ')');
+
   await p.click('#deck-size'); await p.waitForTimeout(500);         // half -> full
   const full = await p.evaluate(() => {
     const d = document.getElementById('deck');
@@ -222,73 +260,75 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   });
   ok(full.full && full.h > 400, 'it can take the whole page (' + full.h + 'px)');
   await p.click('#deck-size'); await p.waitForTimeout(400);         // full -> closed
-  await p.click('.deck-head'); await p.waitForTimeout(500);         // and back open
+  await p.click('.deck-head .count'); await p.waitForTimeout(500);  // and back open
 
   const dk = await p.evaluate(() => {
     const rows = [...document.querySelectorAll('#site-table tbody tr')];
     const head = [...document.querySelectorAll('#site-table thead th')].map(t => t.textContent.trim());
     const ths = [...document.querySelectorAll('#site-table thead th')];
     const si = ths.findIndex(t => /[↓↑]/.test(t.textContent));
-    const area = rows.map(r => r.children[si].textContent.trim());
-    return { n: rows.length, head, area,
-             count: document.getElementById('deck-count').textContent.trim(),
+    return { n: rows.length, head, sorted: rows.map(r => r.children[si].textContent.trim()),
+             sym: rows.every(r => r.children[5].querySelector('svg')),
+             nogeo: rows.filter(r => r.classList.contains('nogeo')).length,
              sel: rows.filter(r => r.classList.contains('sel')).length };
   });
-  ok(dk.n > 0, 'the deck lists records (' + dk.n + ')');
-  ok(/UID/.test(dk.head[0]) && /AREA/.test(dk.head[5]), 'the deck has its columns (' + dk.head.join('|') + ')');
+  ok(dk.n === 5, 'the deck lists every reception record, located or not (' + dk.n + ')');
+  ok(/UID/.test(dk.head[0]) && /MATERIAL/.test(dk.head[4]) && /TYPE/.test(dk.head[5]) && /AREA/.test(dk.head[6]),
+     'TYPE follows MATERIAL (' + dk.head.join('|') + ')');
+  ok(dk.sym, 'and carries the symbol');
+  ok(dk.nogeo === 1, 'a record with no coordinates is marked (' + dk.nogeo + ')');
   ok(dk.sel === 1, 'the open site is the selected row (' + dk.sel + ')');
-  // blanks sort last whichever way the column runs, or an empty cell reads as zero
   const blanksLast = (() => { let seenBlank = false;
-    for (const a of dk.area) { if (!a) seenBlank = true; else if (seenBlank) return false; } return true; })();
-  ok(blanksLast, 'blank cells sort last in the sorted column (' + dk.area.join(',') + ')');
+    for (const a of dk.sorted) { if (!a) seenBlank = true; else if (seenBlank) return false; } return true; })();
+  ok(blanksLast, 'blank cells sort last in the sorted column (' + dk.sorted.join(',') + ')');
 
-  await p.hover('#site-table tbody tr');
+  await p.hover('#site-table tbody tr[data-uid="OS_OS_001"]');
   await p.waitForTimeout(400);
   const hv = await p.evaluate(() => {
     const c = document.getElementById('hover-card');
     const r = c.getBoundingClientRect();
     const stage = document.getElementById('stage').getBoundingClientRect();
-    return { on: c.classList.contains('on'),
-             img: !!c.querySelector('.im').style.backgroundImage.replace('none',''),
-             inside: r.left >= stage.left - 1 && r.right <= stage.right + 1 };
+    return { on: c.classList.contains('on'), img: c.dataset.img === '1',
+             big: r.width >= 240, tiles: c.querySelectorAll('.aerial .tl').length,
+             inside: r.left >= stage.left - 1 && r.right <= stage.right + 1,
+             lit: window.__M.getFeatureState({ source: 'sites', id: 'OS_OS_001' }).hot };
   });
-  ok(hv.on, 'hovering a row opens the preview');
-  ok(hv.img, 'the preview has an image');
+  ok(hv.on && hv.big, 'hovering a row opens a large preview');
+  ok(hv.img && hv.tiles > 0, 'with the aerial of that site (' + hv.tiles + ' tiles)');
   ok(hv.inside, 'the preview stays inside the map');
+  ok(hv.lit === true, 'and the site lights up on the map');
 
-  await p.click('#site-table tbody tr:nth-child(1)');
+  await p.click('#site-table tbody tr[data-uid="AK_XX_001"]');
+  await p.waitForTimeout(700);
+  const ng = await p.evaluate(() => ({ status: document.getElementById('status-strip').textContent,
+                                       title: (document.getElementById('sb-title') || {}).textContent || '' }));
+  ok(/Planned site/.test(ng.title) && /COORDINATES/.test(ng.status), 'a record with no coordinates opens and says why the map did not move');
+  await p.click('#site-table tbody tr[data-uid="AK_AH_001"]');
   await p.waitForTimeout(1200);
   const cl = await p.evaluate(() => ({
     open: document.getElementById('sidebar').classList.contains('active'),
     sel: document.querySelectorAll('#site-table tbody tr.sel').length,
     title: (document.getElementById('sb-title') || {}).textContent || ''
   }));
-  ok(cl.open && cl.sel === 1, 'clicking a row opens that site (' + cl.title + ')');
+  ok(cl.open && cl.sel === 1 && /Helgerud/.test(cl.title), 'clicking a row opens that site (' + cl.title + ')');
+  await p.click('#tab-project'); await p.waitForTimeout(400);
+  const pj = await p.evaluate(() => ({ title: document.getElementById('deck-title').textContent,
+    head: document.querySelector('#site-table thead th:nth-child(2)').textContent,
+    rows: document.querySelectorAll('#site-table tbody tr').length }));
+  ok(/CONSTRUCTION/.test(pj.title) && /PROJECT/.test(pj.head) && pj.rows === 1, 'the construction tab turns the table to projects (' + pj.head + ')');
+  await p.click('#tab-facility'); await p.waitForTimeout(300);
 
-  // The deck may be covering the page and the tree may have been re-folded.
   await p.evaluate(() => {
     const d = document.getElementById('deck');
     if (d.classList.contains('full')) document.getElementById('deck-size').click();
-    document.getElementById('layers-win').classList.remove('folded');
-    document.querySelectorAll('.grp').forEach(g => g.classList.remove('closed'));
-    document.querySelector('.tree').style.maxHeight = 'none';
   });
-  await p.waitForTimeout(300);
 
   console.log('3D terrain');
-  // The defect this guards: clicking 3D before the style has finished loading
-  // used to throw "cannot load terrain, because there exists no source with ID",
-  // and the map stayed flat with no way back. Reload and click it at once.
+  // The defect this guards: clicking 3D before the style has loaded used to
+  // throw "cannot load terrain, because there exists no source with ID".
   await p.reload();
-  await p.evaluate(() => {                       // the reload wiped the hook
-    const o = maplibregl.Map.prototype._render;
-    maplibregl.Map.prototype._render = function(){
-      if (this.getContainer() && this.getContainer().id === 'map') window.__M = this;
-      return o.apply(this, arguments);
-    };
-    document.querySelectorAll('.grp').forEach(g => g.classList.remove('closed'));
-    document.querySelector('.tree').style.maxHeight = 'none';
-  });
+  await hook();
+  await openTree();
   await p.click('#terrain-3d', { timeout: 5000 }).catch(() => {});
   await p.waitForTimeout(6000);
   const early = await p.evaluate(() => {
@@ -296,80 +336,81 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     return { t: m && !!m.getTerrain(), checked: document.getElementById('terrain-3d').checked };
   });
   ok(!early.checked || early.t, 'switching 3D on immediately still attaches terrain');
-  if (early.checked) { await p.click('#terrain-3d'); await p.waitForTimeout(600); }
-  await p.evaluate(() => { const m = window.__M; m.jumpTo({ center: [11.038, 60.063], zoom: 13 }); });
+  if (early.checked) { await p.click('#terrain-3d'); await p.waitForTimeout(900); }
+  // Outside the run, 3D must stay where you are.
+  await p.evaluate(() => window.__M.jumpTo({ center: [11.40, 60.19], zoom: 12, pitch: 0 }));
+  await p.waitForTimeout(600);
+  await p.click('#btn-3d'); await p.waitForTimeout(2500);
+  const stay = await p.evaluate(() => { const c = window.__M.getCenter(); return [+c.lng.toFixed(2), +c.lat.toFixed(2)]; });
+  ok(stay[0] === 11.40 && stay[1] === 60.19, '3D never flies you somewhere else (' + stay + ')');
+  const nat = await p.evaluate(() => {
+    const m = window.__M, t = m.getTerrain();
+    return { src: t && t.source, res: document.getElementById('terrain-res').textContent };
+  });
+  ok(nat.src === 'terrain-dem-no', 'outside the run it uses the national DEM (' + nat.src + ')');
+  ok(/10 m/.test(nat.res), 'and says which resolution is under you (' + nat.res + ')');
+  const ctl = await p.evaluate(() => ({ tilt: document.querySelector('#compass .tilt').textContent,
+                                        rot: document.querySelector('#compass svg').style.transform }));
+  ok(/\d+°/.test(ctl.tilt), 'the compass shows the tilt (' + ctl.tilt + ')');
+  await p.click('#btn-3d'); await p.waitForTimeout(900);
+
+  await p.evaluate(() => window.__M.jumpTo({ center: [11.038, 60.063], zoom: 13 }));
   await p.waitForTimeout(800);
   const demHits = [];
-  await p.route('**/data/terrain/**', r => { demHits.push(r.request().url()); r.continue(); });
+  await p.route('**/data/terrain/**', r => { demHits.push(r.request().url()); r.fallback(); });
   await p.click('#terrain-3d');
   await p.waitForTimeout(3500);
   const t3d = await p.evaluate(() => {
     const m = window.__M, t = m.getTerrain();
-    return { on: !!t, src: t && t.source, exag: t && t.exaggeration,
-             pitch: Math.round(m.getPitch()),
-             srcOk: !!m.getSource('terrain-dem'),
+    return { on: !!t, src: t && t.source, pitch: Math.round(m.getPitch()), bearing: Math.round(m.getBearing()),
              wrap: !document.getElementById('terrain-exag-wrap').hidden };
   });
-  ok(t3d.on && t3d.srcOk && t3d.src === 'terrain-dem', 'terrain is attached (' + t3d.src + ')');
+  ok(t3d.on && t3d.src === 'terrain-dem', 'inside the run the metre LiDAR is attached (' + t3d.src + ')');
   ok(t3d.pitch > 30, 'the map tilts so the terrain is visible (' + t3d.pitch + ' deg)');
-  ok(t3d.wrap, 'the exaggeration slider appears with it');
+  ok(t3d.wrap, 'the height slider appears with it');
   ok(demHits.length > 0, 'DEM tiles are requested (' + demHits.length + ')');
-  ok(demHits.every(u => !/\/1[6-9]\//.test(u.replace(/.*terrain\/[a-z]+/, ''))),
-     'and never past the deepest DEM zoom that exists');
-  await p.evaluate(() => window.__M.jumpTo({ center: [10.75, 59.91], zoom: 12 }));   // Oslo, outside the run
-  await p.waitForTimeout(6000);
-  const nat = await p.evaluate(() => {
-    const m = window.__M, t = m.getTerrain(), c = m.getCenter();
-    return { src: t && t.source, res: (document.getElementById('terrain-res') || {}).textContent || '',
-             styled: m.isStyleLoaded(), hasNat: !!m.getSource('terrain-dem-no'),
-             hasFine: !!m.getSource('terrain-dem'), lng: +c.lng.toFixed(3), lat: +c.lat.toFixed(3) };
-  });
-  console.log('    debug', JSON.stringify(nat));
-  ok(nat.src === 'terrain-dem-no', 'outside the run it falls back to the national DEM (' + nat.src + ')');
-  ok(/10 m/.test(nat.res), 'and says which resolution is under you (' + nat.res + ')');
-  await p.evaluate(() => window.__M.jumpTo({ center: [11.038, 60.063], zoom: 13 }));  // back inside
-  await p.waitForTimeout(2500);
-  const fine = await p.evaluate(() => {
-    const t = window.__M.getTerrain();
-    return { src: t && t.source, res: (document.getElementById('terrain-res') || {}).textContent || '' };
-  });
-  ok(fine.src === 'terrain-dem', 'and back to the metre LiDAR inside it (' + fine.src + ')');
-  ok(/1 m/.test(fine.res), 'and says so (' + fine.res + ')');
-
+  ok(demHits.every(u => !/\/1[6-9]\//.test(u.replace(/.*terrain\/[a-z]+/, ''))), 'and never past the deepest DEM zoom that exists');
+  // Right-drag turns the camera.
+  const mb = await p.evaluate(() => { const r = document.getElementById('map').getBoundingClientRect(); return [r.left + r.width * 0.6, r.top + r.height * 0.5]; });
+  const b0 = await p.evaluate(() => window.__M.getBearing());
+  await p.mouse.move(mb[0], mb[1]); await p.mouse.down({ button: 'right' });
+  await p.mouse.move(mb[0] + 120, mb[1], { steps: 10 }); await p.mouse.up({ button: 'right' });
+  await p.waitForTimeout(600);
+  const b1 = await p.evaluate(() => window.__M.getBearing());
+  ok(Math.abs(b1 - b0) > 5, 'right-drag turns the camera (' + Math.round(b0) + ' -> ' + Math.round(b1) + ' deg)');
+  await p.waitForTimeout(600);
+  await p.click('#compass'); await p.waitForTimeout(1300);
+  ok(Math.abs(await p.evaluate(() => window.__M.getBearing())) < 1, 'a click on the compass sets north up');
   await p.click('#terrain-3d'); await p.waitForTimeout(1200);
   const off = await p.evaluate(() => ({ t: !!window.__M.getTerrain(), pitch: Math.round(window.__M.getPitch()) }));
   ok(!off.t && off.pitch < 5, 'switching it off returns the map to flat (' + off.pitch + ' deg)');
 
   console.log('tools');
-  // One pane at a time: opening LIGHT must put the legend away again.
+  await p.click('#btn-key'); await p.waitForTimeout(300);
   await p.click('#btn-light'); await p.waitForTimeout(600);
   const panes = await p.evaluate(() => ({
     legend: document.getElementById('filter-panel').offsetHeight,
     light: document.getElementById('light-panel').offsetHeight,
     hs: !!window.__M.getLayer('hillshade'),
-    az: window.__M.getLayer('hillshade')
-        ? window.__M.getPaintProperty('hillshade', 'hillshade-illumination-direction') : null
+    az: window.__M.getLayer('hillshade') ? window.__M.getPaintProperty('hillshade', 'hillshade-illumination-direction') : null
   }));
-  ok(panes.light > 0 && panes.legend === 0, 'opening LIGHT closes the legend');
+  ok(panes.light > 0 && panes.legend === 0, 'opening LIGHT closes the key');
   ok(panes.hs, 'and puts a hillshade on the DEM');
   ok(panes.az === 315, 'lit from the northwest to begin with (' + panes.az + ')');
-  await p.evaluate(() => {
-    const a = document.getElementById('light-az');
-    a.value = 90; a.dispatchEvent(new Event('input', { bubbles: true }));
-  });
+  await p.evaluate(() => { const a = document.getElementById('light-az'); a.value = 90; a.dispatchEvent(new Event('input', { bubbles: true })); });
   await p.waitForTimeout(400);
-  const az2 = await p.evaluate(() =>
-    window.__M.getPaintProperty('hillshade', 'hillshade-illumination-direction'));
-  ok(az2 === 90, 'turning the light moves it (' + az2 + ')');
+  ok(await p.evaluate(() => window.__M.getPaintProperty('hillshade', 'hillshade-illumination-direction')) === 90, 'turning the light moves it');
+  await p.evaluate(() => window.__M.setBearing(90));
+  await p.click('#light-view'); await p.waitForTimeout(300);
+  const fromView = await p.evaluate(() => +document.getElementById('light-az').value);
+  ok(fromView === 45, 'light from this view follows the map\'s turn (' + fromView + ')');
+  await p.evaluate(() => window.__M.setBearing(0));
   await p.click('#btn-light'); await p.waitForTimeout(400);
   ok(!(await p.evaluate(() => !!window.__M.getLayer('hillshade'))), 'switching it off removes it');
 
-  // Cross section, over the Gjerdrum run where the metre DEM actually exists.
   await p.click('#btn-profile'); await p.waitForTimeout(400);
   await p.evaluate(() => window.__M.jumpTo({ center: [11.035, 60.075], zoom: 13 }));
   await p.waitForTimeout(800);
-  // Real clicks on the canvas: MapLibre's own handlers read originalEvent, so a
-  // fired event is not a substitute for one.
   const at = async (lng, lat) => p.evaluate(([a, b]) => {
     const pt = window.__M.project([a, b]);
     const r = document.getElementById('map').getBoundingClientRect();
@@ -382,156 +423,199 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   await p.waitForTimeout(4500);
   const prof = await p.evaluate(() => ({
     read: (document.getElementById('prof-read').textContent || '').replace(/\s+/g, ' ').trim(),
-    path: (document.querySelector('#prof-svg path') || {}).getAttribute
-          ? document.querySelector('#prof-svg path').getAttribute('d').length : 0,
-    line: !!window.__M.getLayer('prof-line')
+    path: document.querySelector('#prof-svg path') ? document.querySelector('#prof-svg path').getAttribute('d').length : 0,
+    line: !!window.__M.getLayer('prof-line'),
+    svg: /SVG/.test(document.getElementById('prof-read').textContent),
+    pin: !!document.querySelector('.pin')
   }));
   ok(prof.line, 'the drawn line is on the map');
   ok(prof.path > 200, 'the section is plotted (' + prof.path + ' chars of path)');
   ok(/1 m LiDAR/.test(prof.read), 'and read from the metre LiDAR');
   const mm = prof.read.match(/([0-9.]+) m/g) || [];
   ok(mm.length >= 3, 'with length, low, high and delta (' + prof.read.slice(0, 90) + ')');
+  ok(prof.svg, 'and can be saved as SVG as well as CSV');
+  ok(!prof.pin, 'drawing a section does not drop coordinate pins');
   await p.click('#btn-profile'); await p.waitForTimeout(300);
+
+  // A click on bare ground reads it.
+  const g = await at(11.03, 60.07);
+  await p.mouse.click(g[0], g[1]); await p.waitForTimeout(1500);
+  const pin = await p.evaluate(() => document.getElementById('coord-readout').textContent);
+  ok(/60\.0\d+ N/.test(pin) && /m$/.test(pin.trim()), 'a click on the ground gives coordinates and height (' + pin + ')');
+  await p.click('#btn-crs'); await p.waitForTimeout(200);
+  const utm = await p.evaluate(() => document.getElementById('coord-readout').textContent);
+  ok(/UTM33 E 2\d{5}\s+N 66\d{5}/.test(utm), 'and switches to UTM 33 (' + utm + ')');
+  await p.click('#btn-crs');
+  await p.mouse.click(g[0], g[1]); await p.waitForTimeout(300);
 
   // Box selection narrows the table without hiding anything on the map.
   await p.evaluate(() => { location.hash = ''; });
-  await p.evaluate(() => window.__M.jumpTo({ center: [11.52031, 59.81372], zoom: 12 }));
-  await p.waitForTimeout(800);
-  const rows0 = await p.evaluate(() => document.querySelectorAll('#site-table tbody tr').length);
+  await p.evaluate(() => window.__M.jumpTo({ center: [11.52031, 59.81372], zoom: 12, bearing: 0, pitch: 0 }));
+  await p.waitForTimeout(900);
+  const src0 = await p.evaluate(() => window.__M.getSource('sites')._data.features.length);
   await p.click('#btn-select'); await p.waitForTimeout(200);
-  await p.mouse.move(520, 260); await p.mouse.down();
-  await p.mouse.move(1000, 640, { steps: 8 }); await p.mouse.up();
+  const pc = await at(11.52031, 59.81372);
+  await p.mouse.move(pc[0] - 80, pc[1] - 80); await p.mouse.down();
+  await p.mouse.move(pc[0] + 80, pc[1] + 80, { steps: 8 }); await p.mouse.up();
   await p.waitForTimeout(900);
   const sel = await p.evaluate(() => ({
     rows: Array.from(document.querySelectorAll('#site-table tbody tr')).map(r => r.dataset.uid),
-    markers: document.querySelectorAll('.maplibregl-marker').length
+    src: window.__M.getSource('sites')._data.features.length,
+    title: document.getElementById('deck-title').textContent,
+    strip: document.getElementById('status-strip').textContent,
+    clear: !!document.getElementById('deck-clear')
   }));
-  ok(sel.rows.length === 1 && sel.rows[0] === 'AK_AH_00126',
-     'a box selects the records inside it (' + sel.rows.join(',') + ')');
-  ok(sel.markers >= 4, 'and leaves every marker on the map (' + sel.markers + ')');
-  await p.click('#btn-select'); await p.waitForTimeout(500);
-  const rows1 = await p.evaluate(() => document.querySelectorAll('#site-table tbody tr').length);
-  ok(rows1 >= rows0, 'pressing SELECT again clears it (' + rows0 + ' -> ' + rows1 + ')');
+  ok(sel.rows.length === 1 && sel.rows[0] === 'AK_AH_001', 'a box selects the records inside it (' + sel.rows.join(',') + ')');
+  ok(sel.src === src0, 'and leaves every site on the map (' + sel.src + ')');
+  ok(/SELECTION/.test(sel.title) && /SELECTED/.test(sel.strip) && sel.clear, 'the table and the status line say it is a selection');
+  await p.click('#deck-clear'); await p.waitForTimeout(500);
+  const after = await p.evaluate(() => ({ title: document.getElementById('deck-title').textContent,
+                                          rows: document.querySelectorAll('#site-table tbody tr').length }));
+  ok(/RECEPTION/.test(after.title) && after.rows === 5, 'clearing it returns the table to what it was (' + after.title + ', ' + after.rows + ')');
 
   console.log('polygons');
-  // Footprints are on from the first paint: no click precedes this.
   const fp = await p.evaluate(() => {
     const m = window.__M;
-    const vis = id => m.getLayer(id) && m.getLayoutProperty(id, 'visibility') !== 'none';
+    const v = id => m.getLayer(id) && m.getLayoutProperty(id, 'visibility') !== 'none';
     const src = m.getSource('fp');
-    return { fill: vis('fp-fill'), line: vis('fp-line'), soft: vis('fp-soft'),
-             n: src ? (src._data.features || []).length : 0 };
+    const f = src ? src._data.features : [];
+    return { all: ['fp-glow', 'fp-fill', 'fp-line', 'fp-soft'].every(v), n: f.length,
+             col: (f.find(x => x.properties.uid === 'AK_AH_001') || { properties: {} }).properties.col,
+             lineCol: JSON.stringify(m.getPaintProperty('fp-line', 'line-color')),
+             blur: JSON.stringify(m.getPaintProperty('fp-glow', 'line-blur')),
+             fill: JSON.stringify(m.getPaintProperty('fp-fill', 'fill-opacity')) };
   });
-  ok(fp.fill && fp.line && fp.soft, 'facility footprints draw without being asked');
+  ok(fp.all, 'footprints draw without being asked');
   ok(fp.n === 19, 'all 19 footprints are in the source (got ' + fp.n + ')');
+  ok(fp.col === '#E8141E' && /col/.test(fp.lineCol), 'they are coloured by status, not black (' + fp.col + ')');
+  ok(/4|7/.test(fp.blur) && /0\.16/.test(fp.fill), 'with a glow and a see-through fill');
 
-  // The regression this guards: a stated Area_m2 the research itself puts up
-  // to 2.3x off the ground, used to frame a site that has a real footprint.
-  await p.evaluate(() => { location.hash = ''; });
-  await p.waitForTimeout(200);
-  await p.evaluate(() => { location.hash = 'site=AK_AH_00126'; });
+  await p.evaluate(() => { location.hash = 'site=AK_AH_001'; });
   await p.waitForTimeout(3000);
   const frame = await p.evaluate(() => {
     const m = window.__M, b = m.getBounds();
-    const f = m.getSource('fp')._data.features.find(x => x.properties.uid === 'AK_AH_00126');
+    const f = m.getSource('fp')._data.features.find(x => x.properties.uid === 'AK_AH_001');
     let w = 180, so = 90, e = -180, n = -90;
-    (function walk(c) {
-      if (typeof c[0] === 'number') {
-        w = Math.min(w, c[0]); e = Math.max(e, c[0]);
-        so = Math.min(so, c[1]); n = Math.max(n, c[1]);
-      } else c.forEach(walk);
-    })(f.geometry.coordinates);
-    return { inside: b.getWest() <= w && b.getEast() >= e &&
-                     b.getSouth() <= so && b.getNorth() >= n,
+    (function walk(c) { if (typeof c[0] === 'number') { w = Math.min(w, c[0]); e = Math.max(e, c[0]); so = Math.min(so, c[1]); n = Math.max(n, c[1]); } else c.forEach(walk); })(f.geometry.coordinates);
+    return { inside: b.getWest() <= w && b.getEast() >= e && b.getSouth() <= so && b.getNorth() >= n,
              hit: m.queryRenderedFeatures({ layers: ['fp-fill'] }).length };
   });
   ok(frame.inside, 'opening a site frames its whole footprint');
   ok(frame.hit > 0, 'and the footprint is actually painted (' + frame.hit + ')');
 
-  // The sweep is context, not findings: off until asked, never clickable.
   const covOff = await p.evaluate(() => !!window.__M.getSource('cov'));
-  ok(!covOff, 'the 1 736-polygon sweep stays off until a box is ticked');
-  await p.evaluate(() => {
-    document.querySelectorAll('.grp').forEach(g => g.classList.remove('closed'));
-    const b = document.getElementById('filter-plan-current');
-    b.checked = true; b.dispatchEvent(new Event('change', { bubbles: true }));
-  });
-  await p.waitForTimeout(2500);
+  ok(!covOff, 'the plan sweep stays off until a box is ticked');
+  await openTree();
+  await p.click('#filter-plan-current'); await p.waitForTimeout(2500);
   const cov1 = await p.evaluate(() => {
     const m = window.__M;
-    const vis = id => m.getLayer(id) && m.getLayoutProperty(id, 'visibility') !== 'none';
+    const v = id => m.getLayer(id) && m.getLayoutProperty(id, 'visibility') !== 'none';
     const src = m.getSource('cov');
-    return { n: src ? src._data.features.length : 0,
-             inforce: vis('cov-current-line'), closed: vis('cov-old-line'),
-             below: m.getStyle().layers.findIndex(l => l.id === 'cov-current-line') <
-                    m.getStyle().layers.findIndex(l => l.id === 'fp-fill') };
+    const L = m.getStyle().layers.map(l => l.id);
+    return { n: src ? src._data.features.length : 0, inforce: v('cov-current-line'), closed: v('cov-old-line'),
+             below: L.indexOf('cov-current-line') < L.indexOf('fp-fill') };
   });
   ok(cov1.n === 1736, 'all 1 736 sweep polygons load (got ' + cov1.n + ')');
   ok(cov1.inforce && !cov1.closed, 'only the class that was ticked is shown');
   ok(cov1.below, 'and the sweep is drawn under the database footprints');
 
-  console.log('table filters and marker hover');
-  await p.evaluate(() => {
-    document.getElementById('deck').className = 'half';
-    document.querySelectorAll('.grp').forEach(g => g.classList.remove('closed'));
-  });
+  console.log('table flow filter, map hover, share');
+  await p.evaluate(() => { document.getElementById('deck').className = 'half'; });
   await p.waitForTimeout(400);
-  // The producing / receiving / mixed filter now lives in the table header.
   const dirs = await p.evaluate(async () => {
     const b = document.getElementById('deck-dir');
     const seen = [];
     for (let i = 0; i < 4; i++) {
-      seen.push({ label: b.textContent.trim(),
-                  rows: document.querySelectorAll('#site-table tbody tr').length });
+      seen.push({ label: b.textContent.trim(), rows: document.querySelectorAll('#site-table tbody tr').length });
       b.click();
       await new Promise(r => setTimeout(r, 150));
     }
     return seen;
   });
   ok(dirs[0].label === 'all flows', 'the table carries the flow filter (' + dirs[0].label + ')');
-  ok(dirs.some(d => d.rows < dirs[0].rows), 'and it narrows the table (' +
-     dirs.map(d => d.label + ':' + d.rows).join(' ') + ')');
+  ok(dirs.some(d => d.rows < dirs[0].rows), 'and it narrows the table (' + dirs.map(d => d.label + ':' + d.rows).join(' ') + ')');
 
-  const hov = await p.evaluate(async () => {
-    const el = document.querySelector('.custom-marker');
-    if (!el) return { no: true };
-    el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
-    await new Promise(r => setTimeout(r, 300));
-    const c = document.getElementById('hover-card');
-    const im = c.querySelector('.im');
-    return { on: c.classList.contains('on'), img: (im.style.backgroundImage || '').length > 6 };
-  });
-  ok(hov.on, 'hovering a marker raises the preview');
-  ok(hov.img, 'and the preview carries a picture');
-
-  // The graph used to be squeezed into 116px and cut in half.
   await p.evaluate(() => { location.hash = ''; });
-  await p.evaluate(() => { location.hash = 'site=AK_AH_00126'; });
+  await p.evaluate(() => document.getElementById('sb-close').click());
+  await p.evaluate(() => window.__M.jumpTo({ center: [10.83, 59.928], zoom: 11 }));
+  await p.waitForTimeout(1200);
+  const dot = await at(10.83, 59.928);
+  await p.mouse.move(dot[0] + 30, dot[1] + 30); await p.mouse.move(dot[0], dot[1], { steps: 4 });
+  await p.waitForTimeout(500);
+  const hov = await p.evaluate(() => {
+    const c = document.getElementById('hover-card');
+    return { on: c.classList.contains('on'), name: c.querySelector('.cp').textContent };
+  });
+  ok(hov.on && /Alnabru/.test(hov.name), 'hovering a site on the map raises its preview (' + hov.name.slice(0, 30) + ')');
+  await p.mouse.click(dot[0], dot[1]); await p.waitForTimeout(1500);
+  ok(await p.evaluate(() => /Alnabru/.test((document.getElementById('sb-title') || {}).textContent || '')), 'and clicking it opens the site');
+
+  await p.evaluate(() => { location.hash = 'site=AK_AH_001'; });
   await p.waitForTimeout(2500);
-  const g = await p.evaluate(() => {
+  const gr = await p.evaluate(() => {
     const c = document.getElementById('graph-container');
     const f = c && c.querySelector('iframe');
-    return { h: c ? c.offsetHeight : 0, frame: !!f };
+    return { h: c ? c.offsetHeight : 0, src: f ? f.getAttribute('src') : '' };
   });
-  ok(g.frame, 'the site panel carries its ownership graph');
-  ok(g.h >= 240, 'with room to be read (' + g.h + 'px)');
+  ok(/fc=E8141E/.test(gr.src), 'the ownership graph is told the site\'s colour');
+  ok(gr.h >= 240, 'with room to be read (' + gr.h + 'px)');
+  const url = await p.evaluate(() => { window.__M.jumpTo({ center: [11.5, 59.8], zoom: 13.2, bearing: 30, pitch: 20 });
+    return new Promise(res => setTimeout(() => { shareLink(); setTimeout(() => res(document.getElementById('share-notification').textContent), 300); }, 300)); });
+  ok(/LINK COPIED|#site=AK_AH_001&v=13\.20\/59\.8/.test(url), 'SHARE copies the whole view (' + url.slice(0, 80) + ')');
+
+  // Search: coordinates and the database.
+  await p.fill('#search-input', '59.81372, 11.52031'); await p.waitForTimeout(300);
+  const sr = await p.evaluate(() => [...document.querySelectorAll('#search-results .search-group')].map(g => g.textContent));
+  ok(sr.some(s => /COORDINATES/.test(s)), 'search understands coordinates (' + sr.join('|') + ')');
+  await p.fill('#search-input', 'qqqzzz'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => /No match/.test(document.getElementById('search-results').textContent)), 'and says so when nothing matches');
+  await p.fill('#search-input', 'langoya'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => /Langøya/.test(document.getElementById('search-results').textContent)), 'and finds Langøya typed without ø');
+  await p.fill('#search-input', '');
+
+  console.log('norwegian');
+  await p.click('#btn-no'); await p.waitForTimeout(500);
+  const no = await p.evaluate(() => ({
+    tab: document.querySelector('#tab-facility .tl').textContent,
+    dir: document.getElementById('deck-dir').textContent,
+    sel: document.getElementById('btn-select').title,
+    chips: document.getElementById('deck-chips').textContent,
+    icons: document.querySelectorAll('#bar .toolbar .btn svg.px').length
+  }));
+  ok(no.tab === 'MOTTAK' && no.dir === 'alle strømmer' && /aktiv/.test(no.chips), 'Norwegian reaches the tabs, the table and its key');
+  ok(/å velge/.test(no.sel) && !/\\u/.test(no.sel), 'tooltips are real Norwegian, not escape codes (' + no.sel + ')');
+  ok(no.icons >= 8, 'and switching language leaves the icons drawn');
+  await p.click('#btn-en'); await p.waitForTimeout(300);
+
+  console.log('phone');
+  const ph = await ctx.newPage();
+  await ph.setViewportSize({ width: 390, height: 844 });
+  await ph.goto('http://127.0.0.1:8901/index.html#site=AK_AH_001'); await ph.waitForTimeout(3500);
+  const pr = await ph.evaluate(() => {
+    const vw = window.innerWidth;
+    const sb = document.getElementById('sidebar').getBoundingClientRect();
+    const size = document.getElementById('deck-size').getBoundingClientRect();
+    return { folded: document.getElementById('bar').classList.contains('folded'),
+             sheet: Math.round(sb.left) === 0 && Math.round(sb.right) === vw && sb.bottom >= document.getElementById('stage').getBoundingClientRect().bottom - 2,
+             sizeOn: size.right <= vw && size.left >= 0,
+             wide: document.documentElement.scrollWidth > vw };
+  });
+  ok(pr.folded, 'on a phone the bar starts folded');
+  ok(pr.sheet, 'the site opens as a sheet from the bottom');
+  ok(pr.sizeOn && !pr.wide, 'the table button stays on screen and nothing scrolls sideways');
+  await ph.close();
 
   console.log('iframe embed (dirtybusiness.no)');
   const p2 = await ctx.newPage();
   await p2.setViewportSize({width:1600,height:900});
   await p2.goto('http://127.0.0.1:8901/tools/fixtures/embed.html'); await p2.waitForTimeout(4500);
   const fr = p2.frames().find(f=>f.url().includes('index.html'));
-  // The defect: the frame is laid out while hidden, the map measures 0x0, and
-  // nothing ever tells it otherwise, so it paints a small canvas into a large
-  // container. Compare the two.
-  const cov = await fr.evaluate(()=>{
-    const cv=document.querySelector('#map canvas');
+  const cv = await fr.evaluate(()=>{
+    const c=document.querySelector('#map canvas');
     const box=document.querySelector('#map').getBoundingClientRect();
-    return {c:[Math.round(box.width),Math.round(box.height)],
-            t:[cv?cv.clientWidth:0, cv?cv.clientHeight:0]};
+    return {c:[Math.round(box.width),Math.round(box.height)], t:[c?c.clientWidth:0, c?c.clientHeight:0]};
   });
-  ok(cov.t[0]>=cov.c[0]-2 && cov.t[1]>=cov.c[1]-2,
-     'canvas fills the map in the iframe ('+cov.t+' vs '+cov.c+')');
+  ok(cv.t[0]>=cv.c[0]-2 && cv.t[1]>=cv.c[1]-2, 'canvas fills the map in the iframe ('+cv.t+' vs '+cv.c+')');
 
   console.log(errs.length? 'JS errors:\n'+errs.join('\n') : 'no JS errors');
   if (errs.length) fail++;

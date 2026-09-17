@@ -14,9 +14,9 @@ db_database (Google Sheet, hello@lub.global)
         |
         |  File > Share > Publish to web > CSV, one published URL per tab
         v
-  two published CSVs ---> index.html ---> MapLibre map + sidebar
+  two published CSVs ---> index.html ---> MapLibre map, site window, table
         |                     |
-        |                     |-- picto_grammar/*.png   marker icons, by type
+        |                     |-- data/*.geojson        footprints, DoD, plan sweep
         |                     `-- network/*.html        ownership graphs, in an iframe
         v
    the map reads the sheet live: edit a cell, reload the map, the change is there.
@@ -27,8 +27,8 @@ Everything is one file. `index.html` carries the markup, the CSS and the whole
 application. Only MapLibre GL JS 4.7.1 and PapaParse 5.4.1 are loaded from a CDN.
 
 The map was Leaflet 1.9.4 until September 2026 and was ported to MapLibre GL so
-that terrain can be tilted; the 3D layer itself is not built yet. Two things about
-MapLibre are worth knowing before editing the file:
+that terrain can be tilted. Two things about MapLibre are worth knowing before
+editing the file:
 
 * **Zoom is counted against 512px tiles.** Every service used here serves 256px
   tiles, so a source declared `tileSize: 256` is fetched one level deeper than the
@@ -38,32 +38,68 @@ MapLibre are worth knowing before editing the file:
   real tile is stretched rather than requested and 404'd, which is what keeps
   Kartverket's basemap (nothing above tile zoom 18) on screen at full zoom.
 
-Markers are still plain DOM elements, so the pictogram set is unchanged. The map
-now needs WebGL; a browser without it gets a message rather than a grey rectangle.
+The map needs WebGL; a browser without it gets a message rather than a grey rectangle.
+
+## The interface
+
+```
++-- bar (left) -----------+                               +-- site window --+
+| search · EN NO          |                               | aerial, framed  |
+| RECEPTION | CONSTRUCTION| TERRAIN CHANGE                | on the footprint|
+|  the tab's own switches |                               | status, owner,  |
+| tools: key 3D light     |          the map              | network graph   |
+|  section select reset   |                               +-----------------+
+|  share · help           |
+| layers: background, 3D, |   compass (click: north up, drag: turn)
+|  plan coverage          |   zoom, scale
++-------------------------+
++-- table: the database, and the legend: its colour boxes switch the map --+
++-- status line: what is shown, coordinates (WGS84 / UTM 33), attribution --+
+```
+
+* **Colour is status and nothing else.** Reception sites: red active, orange to
+  come, yellow closed or historical, purple built for contaminated masses.
+  Construction: dark green finished, green under way, light green planned. Grey is
+  a record with no status. Blue is kept free. The classes and colours are in
+  `CLASSES` in `index.html`; the sheet's free-text `Status` is classified by
+  `statusClass()`, and a `StatusClass` column, if the sheet grows one, wins.
+* **No pictograms on the map.** A site with a footprint is drawn as its outline
+  (thin fill, soft glow); a site without one, or any site when zoomed out, is a dot.
+  The circle and square symbols live in the table's TYPE column.
+* **The table is the legend.** Its colour boxes filter the map and the table
+  together; alt-click shows one colour alone. Hovering a row lights the site on the
+  map and shows an aerial of the whole site; clicking opens it.
+* **3D never moves the map.** Right-drag or Ctrl-drag turns and tilts, always.
+* **SHARE copies the whole view**: `#site=UID&v=zoom/lat/lon/bearing/pitch&l=layers`.
+  A bare `#site=UID` still works.
+* Icons are 1-bit, drawn on a 16 px grid, and generated as inline SVG paths.
 
 ## Repository layout
 
 | Path | What it is |
 |---|---|
 | `index.html` | The entire application. |
-| `network/*.html` | One standalone ownership-network graph per facility, opened in an iframe in the sidebar. Most are hand-built D3-style graphs in IBM Plex Mono. |
-| `picto_grammar/*.png` | The marker pictogram set. Naming: `f_*` facility, `cp_*` construction project; `_r_` receiving, `_s_` source; then the type (`f_d_inert`, `cp_r_bolig`, and so on). |
+| `network/*.html` | One standalone ownership-network graph per facility, opened in an iframe in the site window. Reception nodes are red, construction nodes green; the map passes the site's own status colour as `?fc=RRGGBB`. |
+| `picto_grammar/*.png` | The older pictogram set, no longer drawn by the map. Naming: `f_*` facility, `cp_*` construction project; `_r_` receiving, `_s_` source; then the type. |
+| `data/facility_polygons.geojson` | Hand-resolved facility footprints, joined to the sheet by `uid`. |
+| `data/plan_coverage.geojson` | The national plan sweep, context only. |
 | `data/dod/<slug>/{z}/{x}/{y}.png` | Pre-rendered DoD tiles, z11-16. Only tiles containing change exist, so a 404 inside the layer bounds is the normal case. |
-| `data/dod_<slug>.geojson` | The same change as polygons, loaded invisibly as click targets for the area / volume / mean-dh popup. |
+| `data/dod_<slug>.geojson` | The same change as polygons, loaded invisibly as click targets. Properties: `a` area, `v` volume, `dh` mean change, `pl` plan finding (0 none, 1 in force during the window, 2 adopted later, 3 date unknown), `pn` / `pd` plan name and date, `ls` the Gjerdrum landslide. |
 | `tools/make_dod_tiles.py` | Builds both of the above from one pipeline run. |
-| `tools/smoke_test.js` | Headless checks: zoom limits, the sidebar, the iframe embed. |
-| `tools/fixtures/` | Stub CSVs and an embed page, so the test runs offline. |
+| `tools/smoke_test.js` | Headless checks of everything that has broken before, plus the interface rules above. |
+| `tools/fixtures/` | Stub CSVs, an embed page and a synthetic DEM tile, so the test runs offline. |
 
 ## Data sources
 
 | Source | Used for |
 |---|---|
-| Google Sheet `db_database`, Facilities tab (published CSV) | facility markers and sidebar |
-| Google Sheet, construction projects tab (published CSV) | project markers and sidebar |
-| Kartverket `topograatone` WMTS | grayscale basemap |
-| Esri World Imagery | satellite basemap |
+| Google Sheet `db_database`, Facilities tab (published CSV) | reception sites, table, site window |
+| Google Sheet, construction projects tab (published CSV) | construction projects, same |
+| Esri World Imagery | default basemap, and the static aerials in the hover card and site window |
+| Kartverket `topograatone` WMTS | grey basemap |
+| Kartverket stedsnavn API (`ws.geonorge.no/stedsnavn`) | place names in search |
+| Tilezen terrain tiles (Kartverket 10 m) and our own DTM1 Terrarium tiles | 3D, light, cross sections, ground height on click |
 | Esri Wayback WMTS | historical imagery, one release pinned per year 2014-2025 in `WAYBACK_YEARS` |
-| Geonorge `wms.hoyde-dom1_33`, layer `DOM1_33_Terrengskygge` | terrain hillshade overlay |
 | `unigis_tesis` DoD run (Kartverket DTM1) | the DoD layer, pre-rendered into `data/dod/` |
 
 ## The DoD layer
@@ -85,16 +121,22 @@ To add a municipality, from a finished run holding `DoD_final.tif`,
 
     python tools/make_dod_tiles.py <run_dir> <slug>
 
-Then add the layer in `index.html`: it prints the `L.latLngBounds` and the legend
-range to use. Currently only `gjerdrum_2007_2020` exists, because it is the only
-completed run outside the `G:` drive.
+Then add one entry to `DOD_RUNS` in `index.html` with the bounds and counts it
+prints; the TERRAIN CHANGE tab lists runs from that array. Currently only
+`gjerdrum_2007_2020` exists, because it is the only completed run outside the `G:`
+drive.
 
 ## The Facilities columns the map actually reads
 
-`UID` - `Name` - `Latitude` - `Longitude` - `Status` - `Type` - `Municipality` -
-`County` - `Company` - `Operator` - `OrgNr` - `ParentCompany` - `Description` -
-`Description_NO` - `Images` (comma-separated URLs, drives the slideshow) -
-`GraphURL` - `Website` - `PermitDocuments`
+`UID` - `Name` - `Latitude` - `Longitude` - `Status` - `Type` - `Subtype` -
+`Municipality` - `County` - `Company` - `Operator` - `OrgNr` - `ParentCompany` -
+`MassesAccepted` - `Area_m2` - `AnnualCapacity` - `TotalCapacity` - `PermitRef` -
+`Description` - `Description_NO` - `Images` (comma-separated URLs) - `GraphURL` -
+`Website` - `PermitDocuments` - `Sources` - optionally `StatusClass`
+(active / future / old / contaminated).
+
+A record without coordinates is listed in the table and opens in the site window,
+but is not drawn.
 
 Anything else in the sheet is reference material for the investigation, not map input.
 
@@ -119,7 +161,7 @@ file, add its name to `KNOWN_GRAPHS`.**
 1. Add a row to the Facilities tab. Coordinates in WGS84 decimal degrees.
 2. `UID` follows `COUNTY_MUNICIPALITY_NUMBER`, two letters each, three digits:
    `AK_LI_003`. Several existing rows do not, see below.
-3. Set `Type` to a value that has a pictogram in `picto_grammar/`.
+3. Write `Status` so it starts with the state: `active`, `closed`, `planned`.
 4. If there is an ownership graph, drop the HTML file in `network/`, add the filename
    to `KNOWN_GRAPHS` in `index.html`, and put the full
    `boundarieslab.github.io/db_mp/network/...` URL in `GraphURL`.
@@ -131,37 +173,22 @@ file, add its name to `KNOWN_GRAPHS`.**
     node tools/smoke_test.js
 
 Sheet CSVs and every tile server are stubbed, so the result never depends on
-Kartverket or Esri being up. It checks the things that have actually broken:
-the map's zoom limits, the sidebar's aerial view and button layout, and whether
-the basemap fills the frame when the page is embedded in an iframe the way
-dirtybusiness.no embeds it.
+Kartverket or Esri being up. It needs `playwright` and, for a fully offline run, the
+two CDN libraries copied into `vendor/`.
 
 ## Known gaps
 
-- **The database is smaller than it claims.** The sheet's own user guide and its
-  Statistics tab describe 58 facilities across 7 counties. The Facilities tab holds
-  19 filled rows, all in Oslo, Akershus and Ostfold. The 58 is a target.
+- **Most of the 94 facilities have no coordinates yet**, so they are in the table but
+  not on the map. Construction projects need coordinates too.
 - **Footprints cover 19 of the 94 researched facilities.** `data/facility_polygons.geojson`
   holds the extents resolved by hand against reguleringsplaner, cadastral parcels and
   NGU delineations; the other 75 sites are still a point, and until they have an extent
   nothing can be joined to them. `data/plan_coverage.geojson` puts the national sweep
-  underneath as context: 1 736 polygons, classified old / current / future, drawn as a
-  green perimeter with no fill and never clickable.
-- **`RelatedGeometries` references facilities that do not exist** in the Facilities
-  tab: `BU_DR_001`, `BU_LI_003`, `OF_FR_001`.
-- **UID scheme is inconsistent**: `AK_LI_002` next to `AK_UL_00120`, `AK_LI_00512`,
-  and a bare `C28`.
-- **Two graphs are LibreOffice exports, not master networks**, and look nothing like
-  the rest: `skedsmo_massesenter_network.html` (447 KB) and
-  `veidekke_gardermoen_network.html`.
-- **Two graphs have no facility**: `mr_pukk_network.html` (Mr. Pukk Furuset) and
-  `feiring_bruK_enebakk_network.html` (Feiring Bruk, Enebakk), both sites that exist
-  in reality but not yet in the database.
+  underneath as context: 1 736 polygons, classified old / current / future, drawn as
+  pale hairlines and never clickable.
 - **The DoD layer covers Gjerdrum only.** Every other municipality needs a pipeline
   run, which needs the `G:` source drive.
 - **Nothing joins detected change to the facility that received the masses.** Both are
-  on the map now, but only visually. That join needs facility footprints, which is
-  what the empty `FacilityPolygons` tab is for.
-- **Every Gjerdrum polygon is flagged `sin_plan`.** That is a missing reguleringsplan
-  layer in the pipeline config, not a finding, and the popup wording stays neutral
-  about it.
+  on the map, but only visually.
+- **The plan finding comes from the national register**, which holds nothing for Oslo
+  or Lillestrøm, and only plans still in force; "no plan on record" is an upper bound.
