@@ -141,8 +141,12 @@ dirtybusiness.no embeds it.
 - **The database is smaller than it claims.** The sheet's own user guide and its
   Statistics tab describe 58 facilities across 7 counties. The Facilities tab holds
   19 filled rows, all in Oslo, Akershus and Ostfold. The 58 is a target.
-- **No facility footprints.** The `FacilityPolygons` tab is an empty template, so
-  every site is a point and extent cannot be drawn or joined to anything.
+- **Footprints cover 19 of the 94 researched facilities.** `data/facility_polygons.geojson`
+  holds the extents resolved by hand against reguleringsplaner, cadastral parcels and
+  NGU delineations; the other 75 sites are still a point, and until they have an extent
+  nothing can be joined to them. `data/plan_coverage.geojson` puts the national sweep
+  underneath as context: 1 736 polygons, classified old / current / future, drawn as a
+  green perimeter with no fill and never clickable.
 - **`RelatedGeometries` references facilities that do not exist** in the Facilities
   tab: `BU_DR_001`, `BU_LI_003`, `OF_FR_001`.
 - **UID scheme is inconsistent**: `AK_LI_002` next to `AK_UL_00120`, `AK_LI_00512`,
