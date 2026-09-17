@@ -1,4 +1,6 @@
-UID,Name,Type,Status,Municipality,County,Latitude,Longitude,Company,Operator,Area_m2,CargoType,Description,GraphURL
-AK_AH_00126,Helgerud Inert Deponi,Deponi,Active,Aurskog-Høland,Akershus,59.81372,11.52031,Helgerud Massemottak AS,Helgerud Massemottak AS,35000,receiving,Inert landfill for restoring agricultural land.,https://boundarieslab.github.io/db_mp/network/skedsmo_massesenter_network.html
-OS_OS_001,Alnabru Massemottak,Massemottak,Active,Oslo,Oslo,59.9280,10.8300,Veidekke Industri AS,Veidekke Industri AS,18000,receiving,Short term mass reception.,
-AK_LI_002,Esval Miljopark,Deponi,Active,Nes,Akershus,60.1400,11.2500,Esval Miljopark KF,Esval Miljopark KF,120000,mixed,Regional landfill.,
+UID,Name,Type,Subtype,Status,Municipality,County,Latitude,Longitude,Company,Operator,Area_m2,TotalCapacity,CargoType,Description,GraphURL
+AK_AH_001,Helgerud Inert Deponi,Deponi,,Active,Aurskog-Høland,Akershus,59.81372,11.52031,Helgerud Massemottak AS,Helgerud Massemottak AS,35000,120000,receiving,Inert landfill for restoring agricultural land.,https://boundarieslab.github.io/db_mp/network/skedsmo_massesenter_network.html
+OS_OS_001,Alnabru Massemottak,Massemottak,,Active,Oslo,Oslo,59.9280,10.8300,Veidekke Industri AS,Veidekke Industri AS,18000,,receiving,Short term mass reception.,
+AK_LI_002,Esval Miljopark,Deponi,,closed (i etterdrift),Nes,Akershus,60.1400,11.2500,Esval Miljopark KF,Esval Miljopark KF,120000,50000,mixed,Regional landfill.,
+VF_HM_001,Noah Solutions Langøya,Spesialdeponi,Deponi for farlig avfall,active,Holmestrand,Vestfold,59.4900,10.3300,NOAH AS,Noah Solutions AS,,9300000,receiving,Hazardous waste in a limestone quarry.,
+AK_XX_001,Planned site without coordinates,Massemottak,,planned,Lillestrøm,Akershus,,,Nobody AS,Nobody AS,,,receiving,Not located yet.,

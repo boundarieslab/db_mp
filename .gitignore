@@ -1,7 +1,6 @@
 # Local copies of the CDN libraries, so tools/smoke_test.js can run offline.
 vendor/
 
-# Files handed over from a Cowork session, and working rasters. Neither belongs
-# in the published site.
-Claude outputs/
+# Hand-over folders and working rasters. Neither belongs in the published site.
+* outputs/
 *.tif

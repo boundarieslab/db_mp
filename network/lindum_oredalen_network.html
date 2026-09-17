@@ -52,8 +52,8 @@
     <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="#666"/></svg> Division</div>
     <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="none" stroke="#666" stroke-width="1.5"/></svg> Subsidiary</div>
     <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#666" stroke-width="1.5"/></svg> Affiliated site</div>
-    <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#FF0066" stroke-width="1.5"/><line x1="1" y1="1" x2="13" y2="13" stroke="#FF0066" stroke-width="1.5"/></svg> Construction project</div>
-    <div class="legend-item"><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="#39FF14" stroke-width="1.5"/><path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/></svg> Facility</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#1F9E3A" stroke-width="1.5"/><line x1="1" y1="1" x2="13" y2="13" stroke="#1F9E3A" stroke-width="1.5"/></svg> Construction project</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="#E8141E" stroke-width="1.5"/><path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/></svg> Facility</div>
 </div>
 
 <div id="network-container"></div>
@@ -136,8 +136,8 @@
 
     // ── Shared node vocabulary ────────────────────────────────────────────
     // One shape set for every graph in this repo. Colours are the site's:
-    // black, grey, --col-facility #39FF14, --col-project #FF0066.
-    var DB_BLACK = "#000", DB_GREY = "#666", DB_GREEN = "#39FF14", DB_PINK = "#FF0066";
+    // black, grey, --col-facility #E8141E (reception), --col-project #1F9E3A (construction).
+    var DB_BLACK = "#000", DB_GREY = "#666", DB_RECEPTION = "#E8141E", DB_PROJECT = "#1F9E3A";
 
     function dbShape(node) {
         var ns = "http://www.w3.org/2000/svg";
@@ -197,14 +197,14 @@
         } else if (type === "div_ent" || type === "subsidiary") {  // SUBSIDIARY
             halo("tri"); tri("none", DB_GREY);
         } else if (type === "construction" || type === "cp") {     // CONSTRUCTION PROJECT
-            halo("sq"); sq("none", DB_PINK);
+            halo("sq"); sq("none", DB_PROJECT);
             var d = document.createElementNS(ns, "line");
             d.setAttribute("x1", -r); d.setAttribute("y1", -r);
             d.setAttribute("x2", r);  d.setAttribute("y2", r);
-            d.setAttribute("stroke", DB_PINK); d.setAttribute("stroke-width", "1");
+            d.setAttribute("stroke", DB_PROJECT); d.setAttribute("stroke-width", "1");
             g.appendChild(d);
         } else if (type === "receiving" || type === "f" || type === "facility") {  // FACILITY
-            halo("circle"); halfCircle(DB_GREEN);
+            halo("circle"); halfCircle(DB_RECEPTION);
         } else {                                            // AFFILIATED SITE
             halo("sq"); sq("none", DB_GREY);
         }
@@ -272,7 +272,7 @@
             g.appendChild(bg);
             var c = document.createElementNS(ns, "circle");
             c.setAttribute("r", r); c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#39FF14"); c.setAttribute("stroke-width", "1");
+            c.setAttribute("stroke", "#E8141E"); c.setAttribute("stroke-width", "1");
             var pa = document.createElementNS(ns, "path");
             pa.setAttribute("fill", "#000");
             pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
@@ -522,6 +522,24 @@
         clearTimeout(_rt);
         _rt = setTimeout(function(){ frame = 0; init(); }, 250);
     });
+})();
+</script>
+<script>
+/* Colour of the facility this graph belongs to, passed by the map as ?fc=RRGGBB
+   (reception sites run yellow / orange / red / purple by status). Construction
+   projects stay green. */
+(function(){
+  var q=new URLSearchParams(location.search), fc=q.get('fc');
+  if(!fc||!/^[0-9a-fA-F]{6}$/.test(fc)) return;
+  fc='#'+fc.toUpperCase();
+  function paint(){
+    document.querySelectorAll('[stroke="#E8141E"],[fill="#E8141E"]').forEach(function(e){
+      if(e.getAttribute('stroke')==='#E8141E') e.setAttribute('stroke',fc);
+      if(e.getAttribute('fill')==='#E8141E') e.setAttribute('fill',fc);
+    });
+  }
+  document.documentElement.style.setProperty('--col-facility',fc);
+  window.addEventListener('load',function(){paint();setTimeout(paint,60);setTimeout(paint,400);});
 })();
 </script>
 </body>
