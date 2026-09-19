@@ -846,7 +846,7 @@ document.addEventListener('DOMContentLoaded', function() {
     //   PeriodStart  PeriodEnd  EvidenceClass  Confidence  SourceURL
     // EvidenceClass: evidenced | structural | modelled  (default modelled)
     // VolumeUnit:    pfm3 | pam3
-    const FLOWS_CSV = '';
+    const FLOWS_CSV = 'data/flows.csv';
 
     // ─────────────────────────────────────────────────────────────────────
     // Ownership-graph links. The GraphURL column has accumulated three URL
@@ -3669,6 +3669,18 @@ document.addEventListener('DOMContentLoaded', function() {
         return pts;
     }
 
+    // Material carries the colour; evidence stays a line treatment, so a modelled
+    // arc still cannot pass for a receipt. Blue and ochre are the two hues the status
+    // palette does not use; contaminated keeps --r-cont.
+    const FLOW_MAT = { rock: '#2a6fd6', soil: '#a06a2c', contam: '#B300FF', other: '#8b8a84' };
+    const matOf = f => {
+        const m = String(f.MassType || '').toLowerCase();
+        if (/contamin|forurens/.test(m))              return 'contam';
+        if (/rock|stein|fjell|sprengt/.test(m))       return 'rock';
+        if (/soil|clay|jord|leire|silt/.test(m))      return 'soil';
+        return 'other';
+    };
+
     function flowFeatures() {
         const drawn = allFlows.filter(f => f.__xy);
         const vols = drawn.map(f => qty(f.Volume_m3)).filter(v => Number.isFinite(v) && v > 0);
@@ -3682,7 +3694,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 geometry: { type: 'LineString', coordinates: arc(
                     [num(f.__from.Longitude), num(f.__from.Latitude)],
                     [num(f.__to.Longitude),   num(f.__to.Latitude)]) },
-                properties: { fid: f.FlowUID, ev: f.__ev, w: w,
+                properties: { fid: f.FlowUID, ev: f.__ev, w: w, mat: matOf(f),
                               lbl: f.__fromName + ' \u2192 ' + f.__toName }
             };
         }) };
@@ -3696,12 +3708,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const before = under(['site-hot', 'site-sym', 'prof-line']);
         const HOT = ['boolean', ['feature-state', 'hot'], false];
-        const W = base => ['*', ['case', HOT, 2.2, 1],
-                           ['+', base, ['*', ['get', 'w'], 2.6]]];
+        const W = base => ['*', ['case', HOT, 1.8, 1],
+                           ['+', base, ['*', ['get', 'w'], 9]]];
+        const COL = ['match', ['get', 'mat'],
+                     'rock',   FLOW_MAT.rock,
+                     'soil',   FLOW_MAT.soil,
+                     'contam', FLOW_MAT.contam,
+                     FLOW_MAT.other];
         const SPEC = {
-            'flow-modelled':   { ev: 'modelled',   col: '#7d7d7d', dash: [3.5, 3],  base: 0.5, op: 0.55 },
-            'flow-structural': { ev: 'structural', col: '#111111', dash: [1, 2.2],  base: 0.6, op: 0.80 },
-            'flow-evidenced':  { ev: 'evidenced',  col: '#111111', dash: null,      base: 0.7, op: 0.95 }
+            'flow-modelled':   { ev: 'modelled',   col: '#7d7d7d', dash: [3.5, 3],  base: 0.5, op: 0.30 },
+            'flow-structural': { ev: 'structural', col: COL,       dash: [1, 2.2],  base: 1.0, op: 0.70 },
+            'flow-evidenced':  { ev: 'evidenced',  col: COL,       dash: null,      base: 1.4, op: 0.92 }
         };
         FLOW_LAYERS.forEach(id => {
             if (map.getLayer(id)) return;
