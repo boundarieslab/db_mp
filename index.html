@@ -69,32 +69,28 @@ button,input,select{font:inherit;color:inherit}
 .btn.small .px{transform:scale(.75)}
 
 /* ---------- the bar: everything on the left ---------- */
-/* The bar is a rail of tools with a drawer behind it. Shut, it is 34px of
-   icons and the map has the rest. The drawer slides out under whichever tool
-   is pressed, one at a time, and never covers the compass or the scale. */
-#bar{position:absolute;left:10px;top:10px;bottom:10px;z-index:20;
-  display:flex;align-items:flex-start;gap:0;pointer-events:none}
+/* The tool bar is one horizontal strip, top left, and the drawer drops under
+   whichever tool is pressed — one pane at a time, nothing open on load. */
+#bar{position:absolute;left:10px;top:10px;max-height:calc(100% - 20px);z-index:20;
+  display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
 #bar > *{pointer-events:auto}
-.rail{flex:0 0 auto;width:var(--rail);max-height:100%;overflow-y:auto;overflow-x:hidden;background:#fff;border:.5px solid var(--frame);
-  display:flex;flex-direction:column;gap:2px;padding:3px;align-items:center}
-.rail .sp{display:block;width:16px;height:0;border-top:.5px solid var(--rule);margin:3px 0}
-.rail .lang{display:flex;flex-direction:column;gap:2px;margin-top:3px;border-top:.5px solid var(--rule);padding-top:4px}
-.rail .btn.txt{width:26px;padding:0;justify-content:center;font-size:9px}
-.drawer{flex:0 0 auto;width:0;visibility:hidden;max-height:100%;overflow:hidden;background:#fff;
-  border:.5px solid var(--frame);border-left:0;opacity:0;
-  transition:width .22s var(--ease),opacity .16s}
-#bar.open .drawer{width:var(--bar);opacity:1;visibility:visible}
+.toolbar{flex:0 0 auto;background:#fff;border:.5px solid var(--frame);
+  display:flex;flex-direction:row;gap:2px;padding:3px;align-items:center}
+.toolbar .sp{display:block;width:0;height:16px;border-left:.5px solid var(--rule);margin:0 3px}
+.toolbar .lang{display:flex;flex-direction:row;gap:2px;margin-left:3px;
+  border-left:.5px solid var(--rule);padding-left:5px}
+.toolbar .btn.txt{width:24px;padding:0;justify-content:center;font-size:9px}
+.drawer{flex:0 0 auto;width:var(--bar);max-height:0;overflow:hidden;background:#fff;
+  border:.5px solid var(--frame);border-top:0;visibility:hidden;opacity:0;
+  transition:max-height .22s var(--ease),opacity .16s}
+#bar.open .drawer{max-height:var(--drawerh,50vh);opacity:1;visibility:visible}
 .bar-head{flex:0 0 auto;border-bottom:.5px solid var(--frame);padding:3px;display:flex;align-items:center;gap:3px}
-.bar-scroll{max-height:100%;overflow-y:auto;overflow-x:hidden;width:var(--bar)}
-#bar.folded .drawer{width:0;opacity:0}
+.bar-scroll{max-height:var(--drawerh,50vh);overflow-y:auto;overflow-x:hidden;width:var(--bar)}
+#bar.folded .drawer{max-height:0;opacity:0}
 
-/* The three tabs are the primary navigation, so they never fold away. */
-#tabstrip{position:absolute;left:calc(var(--rail) + 18px);top:10px;z-index:19;
-  transition:left .22s var(--ease);
-  width:340px;max-width:calc(100% - var(--rail) - 28px);
-  background:var(--tab);border:.5px solid var(--frame)}
-#tabstrip .tabs{border-bottom:0}
-body.drawer-open #tabstrip{left:calc(var(--rail) + var(--bar) + 18px)}
+/* The three tabs are the sheets of the table, so they live on top of it. */
+#tabstrip{display:flex;align-self:stretch;flex:0 0 auto;margin:0 12px 0 0;
+  border-right:.5px solid var(--frame)}
 .drag-handle{cursor:move;touch-action:none}
 .drag-handle input,.drag-handle button{cursor:default}
 
@@ -119,8 +115,8 @@ body.drawer-open #tabstrip{left:calc(var(--rail) + var(--bar) + 18px)}
 
 /* tabs, folder-style: the one in front joins the page below it */
 .tabs{display:flex;border-bottom:.5px solid var(--frame);background:var(--tab);position:relative}
-.tab{flex:1 1 0;min-width:0;height:34px;border:0;border-right:.5px solid var(--rule);background:transparent;
-  cursor:pointer;padding:5px 6px 4px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;
+.tab{flex:0 0 auto;min-width:0;height:100%;border:0;border-right:.5px solid var(--rule);background:transparent;
+  cursor:pointer;padding:0 12px;text-align:left;display:flex;flex-direction:row;align-items:center;gap:7px;
   position:relative;transition:background-color .15s}
 .tab:last-child{border-right:0}
 .tab:hover{background:#fbfbfb}
@@ -128,7 +124,7 @@ body.drawer-open #tabstrip{left:calc(var(--rail) + var(--bar) + 18px)}
 .tab .tc{font-family:PlexMono,monospace;font-size:10px;color:var(--sub)}
 .tab::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--tabc);
   transform:scaleX(0);transform-origin:left;transition:transform .22s var(--ease)}
-.tab[aria-selected="true"]{background:#fff;margin-bottom:-.5px;border-bottom:.5px solid #fff}
+.tab[aria-selected="true"]{background:#fff}
 .tab[aria-selected="true"]::before{transform:scaleX(1)}
 #tab-facility{--tabc:var(--r-active)}
 #tab-project{--tabc:var(--c-active)}
@@ -166,9 +162,6 @@ body.drawer-open #tabstrip{left:calc(var(--rail) + var(--bar) + 18px)}
 .lrow .slider{flex:1 1 auto;width:auto}
 .lrow .val{font-family:PlexMono,monospace;font-size:10px;min-width:34px;text-align:right}
 
-/* toolbar */
-.toolbar{display:flex;gap:3px;padding:4px;border-bottom:.5px solid var(--frame);flex-wrap:wrap}
-.toolbar .sp{flex:1 1 auto}
 
 /* panes: one at a time, and they open, they do not appear */
 .pane{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .2s var(--ease),opacity .18s}
@@ -210,10 +203,9 @@ body.drawer-open #tabstrip{left:calc(var(--rail) + var(--bar) + 18px)}
 .timeline-labels{display:flex;justify-content:space-between;color:var(--sub);font-size:9px;font-family:PlexMono,monospace}
 
 /* ---------- map controls: compass, zoom, scale ---------- */
-/* Compass, zoom and scale sit bottom left, clear of the rail by a fixed
-   amount. The drawer opens over them and they do not move: nothing about the
-   bar's state is allowed to shift the map's own controls again. */
-.maplibregl-ctrl-bottom-left{z-index:6;margin:0 0 10px calc(var(--rail) + 16px)}
+/* Compass, zoom and scale sit in the corner. Nothing about the tool bar's
+   state is allowed to shift the map's own controls. */
+.maplibregl-ctrl-bottom-left{z-index:6;margin:0 0 10px 10px}
 .maplibregl-ctrl-bottom-left .maplibregl-ctrl{margin:0 0 6px 0}
 .maplibregl-ctrl-bottom-right{z-index:6;margin:0 10px 10px 0}
 .maplibregl-ctrl-scale{background:#fff;border:.5px solid var(--frame);border-top:0;color:#000;font:10px PlexMono,monospace;padding:0 4px}
@@ -306,14 +298,16 @@ iframe{border:0}
 .aerial svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 
 /* ---------- deck: the database as a table, and the map's legend ---------- */
-#deck{flex:0 0 26px;display:flex;flex-direction:column;overflow:hidden;background:#fff;
+#deck{flex:0 0 30px;display:flex;flex-direction:column;overflow:hidden;background:#fff;
   transition:flex-basis .24s var(--ease)}
 #deck.half{flex-basis:260px}
 #deck.full{position:absolute;left:0;right:0;top:0;bottom:24px;z-index:60;flex-basis:auto}
 #deck:not(.half):not(.full) .deck-scroll{display:none}
-.deck-head{height:26px;flex:0 0 26px;display:flex;align-items:center;gap:12px;
-  padding:0 var(--gut);border-bottom:.5px solid var(--frame);font-size:10px;overflow:hidden}
-.deck-head .ttl{letter-spacing:.06em;font-weight:500;white-space:nowrap;cursor:pointer}
+.deck-head{height:30px;flex:0 0 30px;display:flex;align-items:stretch;gap:12px;
+  padding:0 var(--gut) 0 0;border-bottom:.5px solid var(--frame);font-size:10px;overflow:hidden;
+  background:var(--tab);cursor:pointer}
+.deck-head > :not(#tabstrip){align-self:center}
+.deck-head .ttl{display:none}
 .deck-head .count{color:var(--sub);font-family:PlexMono,monospace;white-space:nowrap}
 .chips{display:flex;gap:4px;align-items:center;flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
@@ -350,10 +344,6 @@ iframe{border:0}
 .deck-empty{padding:10px var(--gut);color:var(--sub)}
 
 /* hover preview */
-/* the pictogram in the TYPE column */
-td.sym{white-space:nowrap}
-td.sym .mk{width:17px;height:17px;object-fit:contain;vertical-align:middle;margin-right:5px}
-td.sym svg{vertical-align:middle}
 #hover-card{position:fixed;z-index:120;background:#fff;border:.5px solid var(--frame);padding:4px;
   pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s var(--ease);visibility:hidden}
 #hover-card.on{opacity:1;transform:none;visibility:visible}
@@ -376,9 +366,9 @@ td.sym svg{vertical-align:middle}
 
 /* ---------- narrow ---------- */
 @media (max-width:760px){
-  :root{--bar:calc(100vw - var(--rail) - 20px)}
-  #tabstrip{left:calc(var(--rail) + 14px);width:auto;right:10px}
-  body.drawer-open #tabstrip{display:none}
+  :root{--bar:calc(100vw - 20px)}
+  #tabstrip{margin-right:6px}
+  .tab{padding:0 7px}
   .tab .tl{font-size:8px}
   #sidebar{right:0;left:0;top:auto;bottom:0;width:auto;max-height:62%;border-width:.5px 0 0}
   #sidebar:not(.active){transform:translateY(24px)}
@@ -403,23 +393,11 @@ td.sym svg{vertical-align:middle}
 <div id="map" role="application" aria-label="Map of mass reception sites, construction projects and terrain change in the Oslo region"></div>
 <div id="sel-box"></div>
 
-<!-- =============================== TABS =============================== -->
-<div id="tabstrip">
-<div class="tabs" role="tablist">
-            <button type="button" class="tab" id="tab-facility" role="tab" aria-selected="true" data-tab="facility" aria-controls="tb-facility">
-                <span class="tl" data-en="RECEPTION" data-no="MOTTAK">RECEPTION</span><span class="tc" id="count-facilities">–</span></button>
-            <button type="button" class="tab" id="tab-project" role="tab" aria-selected="false" data-tab="project" aria-controls="tb-project">
-                <span class="tl" data-en="CONSTRUCTION" data-no="BYGGEPROSJEKT">CONSTRUCTION</span><span class="tc" id="count-projects">–</span></button>
-            <button type="button" class="tab" id="tab-dod" role="tab" aria-selected="false" data-tab="dod" aria-controls="tb-dod">
-                <span class="tl" data-en="TERRAIN CHANGE" data-no="TERRENG">TERRAIN CHANGE</span><span class="tc" id="count-runs">1</span></button>
-        </div>
-</div>
-
 <!-- ================================ BAR ================================ -->
-<!-- A rail of tools, and one drawer that opens behind whichever is pressed.
-     Nothing is open when the map loads: the map is the thing to look at. -->
+<!-- One horizontal strip of tools, top left, and a drawer that drops under
+     whichever is pressed. Nothing is open when the map loads. -->
 <div id="bar">
-    <div class="rail" role="toolbar" aria-label="Tools">
+    <div class="toolbar" role="toolbar" aria-label="Tools">
         <button type="button" class="btn" id="btn-menu" aria-controls="data-panel" aria-expanded="false"
                 data-title-en="Layers and what is on the map" data-title-no="Lag og hva som er på kartet"
                 title="Layers and what is on the map" aria-label="Layers"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3h14v1h-14zM1 4h14v1h-14zM1 7h14v1h-14zM1 8h14v1h-14zM1 11h14v1h-14zM1 12h14v1h-14z"/></svg></button>
@@ -685,7 +663,17 @@ td.sym svg{vertical-align:middle}
 
 <!-- ================================ DECK ================================ -->
 <div id="deck">
+    <!-- The head of the table is its navigation: one tab per sheet, then the
+         colour key, which is also the map's legend. -->
     <div class="deck-head">
+        <div id="tabstrip" role="tablist">
+                <button type="button" class="tab" id="tab-facility" role="tab" aria-selected="true" data-tab="facility" aria-controls="tb-facility">
+                    <span class="tl" data-en="RECEPTION" data-no="MOTTAK">RECEPTION</span><span class="tc" id="count-facilities">–</span></button>
+                <button type="button" class="tab" id="tab-project" role="tab" aria-selected="false" data-tab="project" aria-controls="tb-project">
+                    <span class="tl" data-en="CONSTRUCTION" data-no="BYGGEPROSJEKT">CONSTRUCTION</span><span class="tc" id="count-projects">–</span></button>
+                <button type="button" class="tab" id="tab-dod" role="tab" aria-selected="false" data-tab="dod" aria-controls="tb-dod">
+                    <span class="tl" data-en="TERRAIN CHANGE" data-no="TERRENG">TERRAIN CHANGE</span><span class="tc" id="count-runs">1</span></button>
+        </div>
         <span class="ttl" id="deck-title" data-en="RECEPTION SITES" data-no="MOTTAKSANLEGG">RECEPTION SITES</span>
         <span class="count" id="deck-count"></span>
         <span class="chips" id="deck-chips" role="group" aria-label="Show on the map"></span>
@@ -1180,68 +1168,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return { category, direction };
     }
     const symbolFor = site => (site.__cat === 'project' ? projectSymbol : facilitySymbol)(getMarkerInfo(site).direction, colourOf(site));
-
-    // ─────────────────────────────────────────────────────────────────────
-    // THE PICTOGRAM GRAMMAR
-    //
-    // Every site carries one of the 29 marks in assets/marks/, drawn black on
-    // white. They are the same drawings as picto_grammar/, trimmed and sized.
-    // Naming: f_* a facility, cp_* a construction project; for a project
-    // _s_ means it is a source of mass and _r_ that it receives; then the type.
-    //
-    // The mark says WHAT the place is. Colour says what state it is in. The
-    // two are read separately and never encode each other.
-    // ─────────────────────────────────────────────────────────────────────
-    const MARKS = new Set(['cp_r_bolig','cp_r_industri','cp_r_infrastruktur','cp_r_land_bruk',
-        'cp_r_naering','cp_r_offentlig','cp_s_bolig','cp_s_industri','cp_s_infrastruktur',
-        'cp_s_land_bruk','cp_s_naering','cp_s_offentlig','f_d_gjevenning','f_d_inert','f_d_inter',
-        'f_d_kommunalt','f_d_ordinaert','f_d_ordinaert_inert','f_d_ordinaert_inert_forurenset',
-        'f_d_sortering','f_gjevenning','f_massemottak','f_mm_inert','f_mm_inter','f_mm_knusing',
-        'f_mm_rene','f_pukkverk','f_pv_massemottak','f_pv_renemasser']);
-    const MARK_DIR = 'assets/marks/';
-
-    function markFor(site) {
-        const type = String(site.Type || '').toLowerCase();
-        const sub  = String(site.Subtype || '').toLowerCase();
-        const both = type + ' ' + sub;
-        if ((site.__cat || 'facility') === 'project') {
-            const side = getMarkerInfo(site).direction === 'producing' ? 's' : 'r';
-            let sector = 'naering';
-            if (/bolig|boligutvikling|byutvikling/.test(both)) sector = 'bolig';
-            else if (/infrastruktur|vei|bane|tunnel|fiber|havn/.test(both)) sector = 'infrastruktur';
-            else if (/offentlig|skole|sykehus|universitet|museum|statlig|helse/.test(both)) sector = 'offentlig';
-            else if (/industri|logistikk|datasenter/.test(both)) sector = 'industri';
-            else if (/landbruk|land bruk|jordbruk/.test(both)) sector = 'land_bruk';
-            const k = 'cp_' + side + '_' + sector;
-            return MARKS.has(k) ? k : 'cp_' + side + '_naering';
-        }
-        // Pukkverk first: a quarry that also takes mass is still a quarry.
-        if (/pukkverk|pukk|steinbrudd/.test(type)) {
-            if (/massemottak|deponi|massesenter/.test(both)) return 'f_pv_massemottak';
-            if (/rene masser|renemasser|ren masse/.test(both)) return 'f_pv_renemasser';
-            return 'f_pukkverk';
-        }
-        if (/deponi/.test(type)) {
-            if (/forurenset|pfas|spesial|farlig/.test(both)) return 'f_d_ordinaert_inert_forurenset';
-            if (/sortering|ettersortering/.test(both)) return 'f_d_sortering';
-            if (/kommunal/.test(both)) return 'f_d_kommunalt';
-            if (/gjenvinning|betonggjenvinning|kompost/.test(both)) return 'f_d_gjevenning';
-            if (/ordin/.test(both) && /inert/.test(both)) return 'f_d_ordinaert_inert';
-            if (/ordin/.test(both)) return 'f_d_ordinaert';
-            if (/inert/.test(both)) return 'f_d_inert';
-            if (/intermediate|mellomlagr/.test(both)) return 'f_d_inter';
-            return 'f_d_ordinaert';
-        }
-        if (/gjenvinning|miljøpark|miljopark|omlasting|avfallsmottak/.test(type)) return 'f_gjevenning';
-        if (/massemottak|massesenter|sjøutfylling|sjoutfylling|bakkeplanering|ravinefylling/.test(type)) {
-            if (/inert/.test(both)) return 'f_mm_inert';
-            if (/knusing|mellomlagr/.test(both)) return 'f_mm_knusing';
-            if (/rene masser|renemasser|jordforbedring/.test(both)) return 'f_mm_rene';
-            if (/intermediate/.test(both)) return 'f_mm_inter';
-            return 'f_massemottak';
-        }
-        return 'f_massemottak';
-    }
 
 
     // ─────────────────────────────────────────────────────────────────────
@@ -1798,10 +1724,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─────────────────────────────────────────────────────────────────────
     // THE SITES ON THE MAP
     //
-    // No pictograms on the map any more. A site with a resolved footprint is
-    // drawn as its outline: pure colour, a thin fill, a soft glow. A site
-    // without one is a glowing dot. Zoomed out, every site is a dot, since a
-    // footprint a few pixels wide says nothing.
+    // Every site is the symbol the table draws in its TYPE column, at map
+    // size: a white face, a ring in the pure status colour, and a black part
+    // for the direction the masses run. A site with a resolved footprint also
+    // draws its outline, at every zoom. Nothing glows.
     //
     // Two sources: 'fp' (the footprint file, joined to the sheet by UID) and
     // 'sites' (a point per record with coordinates). Both are coloured from
@@ -1809,8 +1735,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─────────────────────────────────────────────────────────────────────
     const FOOTPRINTS_GEOJSON = 'data/facility_polygons.geojson';
     const COVERAGE_GEOJSON = 'data/plan_coverage.geojson';
-    const FP_LAYERS = ['fp-glow', 'fp-fill', 'fp-line', 'fp-soft'];
-    const PT_LAYERS = ['site-glow', 'site-plate', 'site-mark'];
+    const FP_LAYERS = ['fp-fill', 'fp-line', 'fp-soft'];
+    const PT_LAYERS = ['site-hot', 'site-sym'];
     const SITE_LAYERS = FP_LAYERS.concat(PT_LAYERS);
     const COV_LAYERS = {
         'filter-plan-old':     ['cov-old-line'],
@@ -1823,16 +1749,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Class -> line treatment, as a MapLibre match on the feature's class.
     const byClass = (table, fallback) => ['match', ['get', 'cls']]
         .concat(...Object.keys(table).map(k => [k, table[k]])).concat([fallback]);
-    const LINE_W   = byClass({ active: 2, contaminated: 2, future: 1.5, old: 1.5, unknown: 1.2 }, 1.5);
-    const LINE_W_H = byClass({ active: 3.2, contaminated: 3.2, future: 2.6, old: 2.6, unknown: 2.2 }, 2.6);
-    const FILL_A   = byClass({ active: 0.18, contaminated: 0.18, future: 0.10, old: 0.12, unknown: 0 }, 0.14);
-    const FILL_A_H = byClass({ active: 0.34, contaminated: 0.34, future: 0.24, old: 0.26, unknown: 0.08 }, 0.28);
+    const LINE_W   = byClass({ active: 2.4, contaminated: 2.4, future: 1.8, old: 1.8, unknown: 1.4 }, 1.8);
+    const LINE_W_H = byClass({ active: 3.6, contaminated: 3.6, future: 3, old: 3, unknown: 2.4 }, 3);
+    const FILL_A   = byClass({ active: 0.14, contaminated: 0.14, future: 0.08, old: 0.10, unknown: 0 }, 0.12);
+    const FILL_A_H = byClass({ active: 0.30, contaminated: 0.30, future: 0.20, old: 0.22, unknown: 0.08 }, 0.26);
     // A white mark needs a dark ring or it disappears on snow and concrete.
-    // Plate and pictogram share one growth curve, so the mark never drifts
-    // off its plate as the map zooms. Size is a layout property, which cannot
-    // read feature-state, so hover is answered by the glow underneath.
-    const PLATE_SIZE = ['interpolate', ['linear'], ['zoom'], 6, 0.42, 15, 0.64];
-    const MARK_SIZE  = ['interpolate', ['linear'], ['zoom'], 6, 0.28, 15, 0.44];
+    // Size is a layout property and cannot read feature-state, so hover is
+    // answered by the ring underneath instead.
+    const SYM_SIZE = ['interpolate', ['linear'], ['zoom'], 6, 0.62, 15, 1];
 
     let fpData = null, fpState = 0, sitesReady = false;
     let covState = 0;
@@ -1855,25 +1779,49 @@ document.addEventListener('DOMContentLoaded', function() {
             geometry: { type: 'Point', coordinates: [num(s.Longitude), num(s.Latitude)] },
             properties: { uid: uidOf(s), cat: s.__cat, cls: s.__cls, col: classInfo(s.__cat, s.__cls).col,
                           fp: fpBounds[uidOf(s)] ? 1 : 0, dir: getMarkerInfo(s).direction,
-                          pic: 'mk-' + markFor(s),
-                          plate: 'plate-' + s.__cat + '-' + s.__cls }
+                          sym: symId(s.__cat, s.__cls, getMarkerInfo(s).direction) }
         })) };
     }
 
-    // The pictograms are fetched the first time the map asks for one, so a
-    // mark nobody can see is never downloaded.
-    const markAsked = Object.create(null);
+    // The marker is the table's own symbol, drawn large: a white face, a ring
+    // in the pure status colour, and the black part that says which way the
+    // masses go. Circle for a reception site, square for a construction
+    // project. It is rendered from the same function the TYPE column uses, so
+    // the two can never drift apart, and rasterised once per combination.
+    const SYM_DIRS = ['producing', 'receiving', 'mixed'];
+    const symId = (cat, cls, dir) => 'sym-' + cat + '-' + cls + '-' + dir;
+    const SYM_PX = 56;                       // drawn at 2x, so 28 CSS px at size 1
+
+    function symbolSVG(cat, cls, dir) {
+        const col = classInfo(cat, cls).col;
+        const raw = (cat === 'project' ? projectSymbol : facilitySymbol)(dir, col);
+        // An <img> will not parse an SVG without the namespace, and the
+        // symbol builders leave it out because inline SVG does not need it.
+        return raw.replace(/width="\d+" height="\d+"/,
+                           'xmlns="http://www.w3.org/2000/svg" width="' + SYM_PX +
+                           '" height="' + SYM_PX + '"');
+    }
+    function loadSymbol(id, cat, cls, dir) {
+        const svg = symbolSVG(cat, cls, dir);
+        const img = new Image(SYM_PX, SYM_PX);
+        img.onload = () => {
+            if (map.hasImage(id)) return;
+            const c = document.createElement('canvas');
+            c.width = c.height = SYM_PX;
+            const g = c.getContext('2d');
+            g.drawImage(img, 0, 0, SYM_PX, SYM_PX);
+            map.addImage(id, g.getImageData(0, 0, SYM_PX, SYM_PX), { pixelRatio: 2 });
+        };
+        img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+    const symAsked = Object.create(null);
     map.on('styleimagemissing', e => {
         const id = String(e.id || '');
-        if (markAsked[id]) return;
-        let file = null;
-        if (id.startsWith('mk-') && MARKS.has(id.slice(3))) file = id.slice(3);
-        else if (id.startsWith('plate-')) file = id;
-        if (!file) return;
-        markAsked[id] = 1;
-        map.loadImage(MARK_DIR + file + '.png')
-           .then(r => { if (!map.hasImage(id)) map.addImage(id, r.data, { pixelRatio: 2 }); })
-           .catch(() => { console.warn('mark missing:', file); });
+        if (!id.startsWith('sym-') || symAsked[id]) return;
+        const p = id.split('-');
+        if (p.length !== 4) return;
+        symAsked[id] = 1;
+        loadSymbol(id, p[1], p[2], p[3]);
     });
 
     function ensureSiteLayers() {
@@ -1884,12 +1832,8 @@ document.addEventListener('DOMContentLoaded', function() {
         map.addSource('sites', { type: 'geojson', data: siteFeatures(), promoteId: 'uid' });
 
         // Footprints draw at every zoom. A shape a few pixels wide still says
-        // where the ground is taken, and the mark on top says what it is.
-        map.addLayer({ id: 'fp-glow', type: 'line', source: 'fp',
-            filter: ['==', ['get', 'firm'], 1],
-            layout: { 'line-join': 'round' },
-            paint: { 'line-color': ['get', 'col'], 'line-blur': ['case', HOVER, 9, 6],
-                     'line-width': ['case', HOVER, 16, 10], 'line-opacity': ['case', HOVER, 0.85, 0.6] } }, before);
+        // where the ground is taken, and the marker on top says what it is.
+        // No glow: a flat contour in pure colour and a thin fill, nothing else.
         map.addLayer({ id: 'fp-fill', type: 'fill', source: 'fp',
             filter: ['==', ['get', 'firm'], 1],
             paint: { 'fill-color': ['get', 'col'], 'fill-opacity': ['case', HOVER, FILL_A_H, FILL_A] } }, before);
@@ -1900,33 +1844,23 @@ document.addEventListener('DOMContentLoaded', function() {
         // Dashed: still to come, and the NGU resource areas that are not a
         // measured operating extent.
         map.addLayer({ id: 'fp-soft', type: 'line', source: 'fp',
-            filter: ['any', ['==', ['get', 'firm'], 0], ['==', ['get', 'cls'], 'future']],
             layout: { 'line-join': 'round' },
+            filter: ['any', ['==', ['get', 'firm'], 0], ['==', ['get', 'cls'], 'future']],
             paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, LINE_W_H, LINE_W],
                      'line-dasharray': [3, 2], 'line-opacity': 0.95 } }, before);
 
-        // Every site is its pictogram: the drawing in black and white, on a
-        // white disc ringed in the status colour, over a glow of the same.
-        map.addLayer({ id: 'site-glow', type: 'circle', source: 'sites',
-            paint: { 'circle-color': ['get', 'col'],
-                     'circle-radius': ['interpolate', ['linear'], ['zoom'],
-                                       6, ['case', HOVER, 16, 11], 15, ['case', HOVER, 26, 19]],
-                     'circle-blur': 0.9,
-                     'circle-opacity': ['case', ['==', ['get', 'cls'], 'unknown'], 0,
-                                        ['case', HOVER, 0.85, 0.5]] } }, before);
-        // Round for a reception site, square for a construction project, so
-        // the two families stay apart even where their colours do not.
-        map.addLayer({ id: 'site-plate', type: 'symbol', source: 'sites',
-            layout: { 'icon-image': ['get', 'plate'],
-                      'icon-size': PLATE_SIZE,
+        // Hover is a ring, not a glow: it appears only under the marker the
+        // pointer is on, and has no radius at all otherwise.
+        map.addLayer({ id: 'site-hot', type: 'circle', source: 'sites',
+            paint: { 'circle-color': 'rgba(0,0,0,0)',
+                     'circle-radius': ['case', HOVER, 17, 0],
+                     'circle-stroke-color': '#111',
+                     'circle-stroke-width': ['case', HOVER, 1, 0] } }, before);
+        map.addLayer({ id: 'site-sym', type: 'symbol', source: 'sites',
+            layout: { 'icon-image': ['get', 'sym'],
+                      'icon-size': SYM_SIZE,
                       'icon-allow-overlap': true, 'icon-ignore-placement': true,
                       'icon-anchor': 'center' } }, before);
-        map.addLayer({ id: 'site-mark', type: 'symbol', source: 'sites',
-            layout: { 'icon-image': ['get', 'pic'],
-                      'icon-size': MARK_SIZE,
-                      'icon-allow-overlap': true, 'icon-ignore-placement': true,
-                      'icon-anchor': 'center' },
-            paint: { 'icon-opacity': ['case', ['==', ['get', 'cls'], 'future'], 0.75, 1] } }, before);
 
         const pick = e => {
             if (toolBusy() || !e.features || !e.features.length) return;
@@ -2064,7 +1998,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (sitesReady) {
             const f = mapFilter();
             const fpOn = $('filter-footprints').checked;
-            ['fp-glow', 'fp-fill'].forEach(id => map.setFilter(id, ['all', ['==', ['get', 'firm'], 1], f]));
+            map.setFilter('fp-fill', ['all', ['==', ['get', 'firm'], 1], f]);
             map.setFilter('fp-line', ['all', ['==', ['get', 'firm'], 1], ['!=', ['get', 'cls'], 'future'], f]);
             map.setFilter('fp-soft', ['all', ['any', ['==', ['get', 'firm'], 0], ['==', ['get', 'cls'], 'future']], f]);
             FP_LAYERS.forEach(id => setVis(id, fpOn));
@@ -2111,7 +2045,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { key:'Operator',     th:'th_op',   pth:'th_dev', w:'180px', cls:'c-op', get: s => s.Operator || s.Company || '' },
         { key:'Municipality', th:'th_kom',  w:'110px', cls:'c-kom', get: s => s.Municipality || '' },
         { key:'MassesAccepted', th:'th_mat', w:'150px', cls:'c-mat', get: s => s.MassesAccepted || s.Type || '' },
-        { key:'__dir',        th:'th_type', w:'74px', cls:'sym', sym:true,
+        { key:'__dir',        th:'th_type', w:'52px', cls:'sym', sym:true,
           get: s => getMarkerInfo(s).direction, sort: s => getMarkerInfo(s).direction },
         { key:'Area_m2',      th:'th_area', w:'96px', num:true, cls:'c-area', get: s => fmt(qty(s.Area_m2)) },
         { key:'TotalCapacity',th:'th_cap',  w:'112px', num:true, cls:'c-cap', get: s => fmt(qty(s.TotalCapacity)) },
@@ -2185,9 +2119,8 @@ document.addEventListener('DOMContentLoaded', function() {
             COLS.forEach(c => {
                 const td = document.createElement('td');
                 if (c.sym) {
-                    td.innerHTML = `<img class="mk" src="${MARK_DIR}${markFor(site)}.png" alt="" loading="lazy">`
-                                 + symbolFor(site);
-                    td.title = markFor(site).replace(/_/g, ' ') + ' · ' + t('dir_' + c.get(site));
+                    td.innerHTML = symbolFor(site);
+                    td.title = t('dir_' + c.get(site));
                 } else if (c.key === '__cls') {
                     td.innerHTML = `<span class="swatch" style="background:${colourOf(site)}"></span>${esc(c.get(site))}`;
                     td.title = c.get(site);
@@ -2265,6 +2198,9 @@ document.addEventListener('DOMContentLoaded', function() {
         $('deck-size').setAttribute('aria-expanded', String(next !== 'closed'));
         if (next !== 'closed' && !deckBody.children.length) renderDeck();
         if (next !== 'closed') markDeckSelection();
+        // The table just changed the height of the map, so the drawer's
+        // ceiling changed with it.
+        setTimeout(() => window.__sizeDrawer && window.__sizeDrawer(), 260);
     }
     function setScope(scope) {
         if (scope === deckScope && !deckSelection) return;
@@ -2432,7 +2368,8 @@ document.addEventListener('DOMContentLoaded', function() {
         setScope(tab);
     }
     document.querySelectorAll('.tab').forEach(b => {
-        b.onclick = () => selectTab(b.dataset.tab);
+        // The tabs are the sheets of the table, so picking one shows it.
+        b.onclick = () => { selectTab(b.dataset.tab); if (deckSize === 'closed') setDeckSize('half'); };
         b.addEventListener('keydown', e => {
             if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
             const tabs = [...document.querySelectorAll('.tab')];
@@ -2900,6 +2837,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const b = document.querySelector(PANE_BTN[p]);
             if (b) { b.setAttribute('aria-expanded', String(on)); b.classList.toggle('on', on); }
         });
+        if (!was) sizeDrawer();
         $('bar').classList.toggle('open', !was);
         document.body.classList.toggle('drawer-open', !was);
         if (!was) setFolded(false);
@@ -2907,6 +2845,18 @@ document.addEventListener('DOMContentLoaded', function() {
         syncToolButtons();
         return !was;
     }
+    // The drawer is bounded by the map, not by the window: the table can take
+    // half the screen, and a pane must never reach over it.
+    function sizeDrawer() {
+        const stage = $('stage').getBoundingClientRect();
+        const tb = document.querySelector('#bar .toolbar');
+        const h = Math.max(120, Math.round(stage.height - (tb ? tb.offsetHeight : 32) - 24));
+        document.documentElement.style.setProperty('--drawerh', h + 'px');
+    }
+    window.__sizeDrawer = sizeDrawer;
+    addEventListener('resize', sizeDrawer);
+    sizeDrawer();
+
     function closePanes() {
         PANES.forEach(p => {
             $(p).classList.remove('open');

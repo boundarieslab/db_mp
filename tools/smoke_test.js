@@ -98,32 +98,33 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     groups: document.querySelectorAll('#bar .grp.top').length,
     closed: [...document.querySelectorAll('#bar .grp.top')].every(g => g.classList.contains('closed')),
     tabs: [...document.querySelectorAll('#tabstrip .tab')].map(t => t.dataset.tab).join(','),
-    tabsOutside: !document.querySelector('#bar .tab'),
-    tools: document.querySelectorAll('#bar .rail .btn').length,
-    railW: Math.round(document.querySelector('#bar .rail').getBoundingClientRect().width),
-    barW: Math.round(document.getElementById('bar').getBoundingClientRect().width),
+    tabsOnTable: !!document.querySelector('#deck .deck-head #tabstrip'),
+    tools: document.querySelectorAll('#bar .toolbar .btn').length,
+    railH: Math.round(document.querySelector('#bar .toolbar').getBoundingClientRect().height),
+    railW: Math.round(document.querySelector('#bar .toolbar').getBoundingClientRect().width),
+    barH: Math.round(document.getElementById('bar').getBoundingClientRect().height),
     right: !!document.getElementById('tools-win'),
     open: document.getElementById('bar').classList.contains('open'),
-    icons: [...document.querySelectorAll('#bar .rail .btn:not(.txt)')].every(b => b.querySelector('svg.px') && !b.textContent.trim())
+    icons: [...document.querySelectorAll('#bar .toolbar .btn:not(.txt)')].every(b => b.querySelector('svg.px') && !b.textContent.trim())
   }));
-  ok(bar0.tabs === 'facility,project,dod' && bar0.tabsOutside,
-     'the three tabs stand outside the bar (' + bar0.tabs + ')');
-  ok(bar0.tools >= 10 && !bar0.right, 'every tool is on the rail, and there is no second window on the right (' + bar0.tools + ')');
+  ok(bar0.tabs === 'facility,project,dod' && bar0.tabsOnTable,
+     'the three tabs are the sheets of the table, on top of it (' + bar0.tabs + ')');
+  ok(bar0.tools >= 10 && !bar0.right, 'every tool is on one bar, and there is no second window on the right (' + bar0.tools + ')');
   ok(bar0.icons, 'every tool is a pixel icon with no text on it');
   ok(bar0.groups === 3 && bar0.closed, 'the layer groups start folded (' + bar0.groups + ')');
-  ok(!bar0.open && bar0.railW <= 40 && bar0.barW <= 44,
-     'the bar opens shut, a rail and nothing else (' + bar0.railW + '/' + bar0.barW + 'px)');
+  ok(!bar0.open && bar0.railH <= 40 && bar0.barH <= 44 && bar0.railW > 200,
+     'the tool bar is horizontal and opens shut (' + bar0.railW + 'x' + bar0.railH + 'px)');
   const drawer = await p.evaluate(async () => {
     const w = document.getElementById('bar');
     document.getElementById('btn-menu').click();
     await new Promise(r => setTimeout(r, 420));
-    const open = Math.round(w.getBoundingClientRect().width);
+    const open = Math.round(w.getBoundingClientRect().height);
     document.getElementById('btn-menu').click();
     await new Promise(r => setTimeout(r, 420));
-    return { open, shut: Math.round(w.getBoundingClientRect().width) };
+    return { open, shut: Math.round(w.getBoundingClientRect().height) };
   });
-  ok(drawer.open > 200 && drawer.shut <= 44,
-     'the layers button slides the drawer out and back (' + drawer.shut + ' -> ' + drawer.open + 'px)');
+  ok(drawer.open > 150 && drawer.shut <= 44,
+     'the layers button drops the drawer and puts it back (' + drawer.shut + ' -> ' + drawer.open + 'px)');
   // They used to be pushed sideways by the bar's width. Now the offset is the
   // rail and nothing else, so opening the drawer must not move them a pixel.
   const nudge = await p.evaluate(async () => {
@@ -135,10 +136,10 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     const open = box();
     window.__closePanes();
     await new Promise(r => setTimeout(r, 420));
-    return { shut, open, rail: Math.round(document.querySelector('#bar .rail').getBoundingClientRect().right) };
+    return { shut, open, rail: 0 };
   });
   ok(nudge.shut.kids >= 3, 'the compass, zoom and scale are all there (' + nudge.shut.kids + ')');
-  ok(nudge.shut.l === nudge.open.l && nudge.shut.l >= nudge.rail,
+  ok(nudge.shut.l === nudge.open.l,
      'and opening the drawer does not move them (' + nudge.shut.l + ' -> ' + nudge.open.l + 'px)');
   const base0 = await p.evaluate(() => ({ sat: document.getElementById('base-sat').checked }));
   ok(base0.sat && await vis('satellite') && !(await vis('graytone')), 'the map opens on satellite imagery');
@@ -217,29 +218,25 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(sat.length > 0 && sat.every(([c, v]) => v > 0.99),
      'every status colour is fully saturated (' + sat.filter(([c,v]) => v <= 0.99).map(x=>x[0]).join(',') + 'none below)');
 
-  console.log('the marks');
+  console.log('the markers');
   const marks = await p.evaluate(() => {
-    const s = window.__M.getSource('sites'); const f = s ? s._data.features : [];
-    const drawn = window.__M.queryRenderedFeatures({ layers: ['site-mark', 'site-plate'] });
-    return { withPic: f.filter(x => /^mk-/.test(x.properties.pic || '')).length,
-             withPlate: f.filter(x => /^plate-(facility|project)-/.test(x.properties.plate || '')).length,
-             total: f.length, drawn: drawn.length,
-             images: ['mk-f_massemottak', 'plate-facility-active', 'plate-project-active']
-                       .filter(i => window.__M.hasImage(i)),
-             layers: ['site-glow', 'site-plate', 'site-mark'].filter(i => window.__M.getLayer(i)),
-             vis: ['site-plate', 'site-mark'].map(i => window.__M.getLayer(i) ? window.__M.getLayoutProperty(i, 'visibility') : 'gone'),
-             centre: window.__M.getCenter().toArray().map(v => +v.toFixed(3)), z: +window.__M.getZoom().toFixed(2),
-             onScreen: (window.__M.getSource('sites') ? window.__M.getSource('sites')._data.features : [])
-                        .filter(f => { const pt = window.__M.project(f.geometry.coordinates);
-                                       return pt.x > 0 && pt.y > 0 && pt.x < innerWidth && pt.y < innerHeight; }).length };
+    const m = window.__M;
+    const f = m.getSource('sites') ? m.getSource('sites')._data.features : [];
+    return { total: f.length,
+             withSym: f.filter(x => /^sym-(facility|project)-\w+-\w+$/.test(x.properties.sym || '')).length,
+             drawn: m.queryRenderedFeatures({ layers: ['site-sym'] }).length,
+             images: f.map(x => x.properties.sym).filter(i => m.hasImage(i)).length,
+             noGlow: !m.getLayer('site-glow') && !m.getLayer('fp-glow'),
+             hot: !!m.getLayer('site-hot'),
+             stale: ['site-plate', 'site-mark', 'site-dot'].filter(i => m.getLayer(i)) };
   });
-  ok(marks.withPic === marks.total && marks.total > 0,
-     'every site carries a pictogram (' + marks.withPic + '/' + marks.total + ')');
-  ok(marks.withPlate === marks.total, 'and a plate: round for reception, square for construction');
-  ok(marks.images.length === 3, 'the mark and plate images are loaded (' + marks.images.join(', ') + ')');
-  ok(marks.drawn > 0, 'the marks are actually drawn on the map (' + marks.drawn + ')');
-  if (!marks.drawn) console.log('       layers=' + marks.layers.join(',') + ' vis=' + marks.vis.join(',')
-      + ' z=' + marks.z + ' centre=' + marks.centre.join(',') + ' onScreen=' + marks.onScreen);
+  ok(marks.withSym === marks.total && marks.total > 0,
+     'every site carries the table\'s own symbol (' + marks.withSym + '/' + marks.total + ')');
+  ok(marks.images >= 1, 'the symbols are rasterised and registered (' + marks.images + ')');
+  ok(marks.drawn > 0, 'and drawn on the map (' + marks.drawn + ')');
+  ok(marks.noGlow && !marks.stale.length,
+     'nothing glows: no glow layer on the sites or the footprints');
+  ok(marks.hot, 'hover is a ring under the marker instead');
 
   console.log('sidebar');
   await p.evaluate(()=>{location.hash='site=AK_AH_001';}); await p.waitForTimeout(3000);
@@ -294,6 +291,12 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(lit === true, 'the open site\'s outline is lit');
 
   console.log('deck');
+  // A tab click opens the sheet it names, so the table may well be open by
+  // now. Shut it first: what is being checked is the closed state itself.
+  await p.evaluate(() => { const d = document.getElementById('deck');
+    if (!d.classList.contains('half') && !d.classList.contains('full')) return;
+    document.querySelector('.deck-head').click(); });
+  await p.waitForTimeout(400);
   const shut = await p.evaluate(() => {
     const d = document.getElementById('deck');
     return { closed: !d.classList.contains('half') && !d.classList.contains('full'),
@@ -324,13 +327,13 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
 
   // The chips are the legend and the switch.
   const rows0 = await p.evaluate(() => document.querySelectorAll('#site-table tbody tr').length);
-  const drawn0 = await p.evaluate(() => window.__M.querySourceFeatures('sites', { filter: window.__M.getFilter('site-plate') }).length);
+  const drawn0 = await p.evaluate(() => window.__M.querySourceFeatures('sites', { filter: window.__M.getFilter('site-sym') }).length);
   await p.click('#deck-chips .chip[data-cls="active"]'); await p.waitForTimeout(500);
   const chip = await p.evaluate(() => ({
     rows: document.querySelectorAll('#site-table tbody tr').length,
     pressed: document.querySelector('#deck-chips .chip[data-cls="active"]').getAttribute('aria-pressed'),
-    filter: JSON.stringify(window.__M.getFilter('site-plate')),
-    drawn: window.__M.queryRenderedFeatures({ layers: ['site-plate'] }).map(f => f.properties.uid)
+    filter: JSON.stringify(window.__M.getFilter('site-sym')),
+    drawn: window.__M.queryRenderedFeatures({ layers: ['site-sym'] }).map(f => f.properties.uid)
   }));
   ok(chip.pressed === 'false' && chip.rows < rows0, 'a colour box takes that status out of the table (' + rows0 + ' -> ' + chip.rows + ')');
   ok(!/facility:active/.test(chip.filter) && /facility:old/.test(chip.filter), 'and off the map');
@@ -585,17 +588,16 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     const v = id => m.getLayer(id) && m.getLayoutProperty(id, 'visibility') !== 'none';
     const src = m.getSource('fp');
     const f = src ? src._data.features : [];
-    return { all: ['fp-glow', 'fp-fill', 'fp-line', 'fp-soft'].every(v), n: f.length,
+    return { all: ['fp-fill', 'fp-line', 'fp-soft'].every(v), n: f.length,
              col: (f.find(x => x.properties.uid === 'AK_AH_001') || { properties: {} }).properties.col,
              lineCol: JSON.stringify(m.getPaintProperty('fp-line', 'line-color')),
-             blur: JSON.stringify(m.getPaintProperty('fp-glow', 'line-blur')),
              fill: JSON.stringify(m.getPaintProperty('fp-fill', 'fill-opacity')) };
   });
   ok(fp.all, 'footprints draw without being asked');
   ok(fp.n === 19, 'all 19 footprints are in the source (got ' + fp.n + ')');
   ok(fp.col === '#FF0000' && /col/.test(fp.lineCol), 'they are coloured by status, not black (' + fp.col + ')');
-  ok(/6|9/.test(fp.blur) && /0\.18/.test(fp.fill) && /match/.test(fp.fill),
-     'with a glow, and a fill whose weight follows the status');
+  ok(/0\.14/.test(fp.fill) && /match/.test(fp.fill),
+     'with a see-through fill whose weight follows the status, and no glow');
 
   await p.evaluate(() => { location.hash = 'site=AK_AH_001'; });
   await p.waitForTimeout(3000);
@@ -689,7 +691,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     dir: document.getElementById('deck-dir').textContent,
     sel: document.getElementById('btn-select').title,
     chips: document.getElementById('deck-chips').textContent,
-    icons: document.querySelectorAll('#bar .rail .btn svg.px').length
+    icons: document.querySelectorAll('#bar .toolbar .btn svg.px').length
   }));
   ok(no.tab === 'MOTTAK' && no.dir === 'alle strømmer' && /mottar nå/.test(no.chips), 'Norwegian reaches the tabs, the table and its key (' + no.chips.trim().slice(0, 40) + ')');
   ok(/å velge/.test(no.sel) && !/\\u/.test(no.sel), 'tooltips are real Norwegian, not escape codes (' + no.sel + ')');
@@ -705,12 +707,12 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     const sb = document.getElementById('sidebar').getBoundingClientRect();
     const size = document.getElementById('deck-size').getBoundingClientRect();
     return { folded: !document.getElementById('bar').classList.contains('open')
-                     && Math.round(document.querySelector('#bar .rail').getBoundingClientRect().width) <= 40,
+                     && Math.round(document.querySelector('#bar .toolbar').getBoundingClientRect().height) <= 40,
              sheet: Math.round(sb.left) === 0 && Math.round(sb.right) === vw && sb.bottom >= document.getElementById('stage').getBoundingClientRect().bottom - 2,
              sizeOn: size.right <= vw && size.left >= 0,
              wide: document.documentElement.scrollWidth > vw };
   });
-  ok(pr.folded, 'on a phone the bar is a rail with the drawer shut');
+  ok(pr.folded, 'on a phone the bar is one strip with the drawer shut');
   ok(pr.sheet, 'the site opens as a sheet from the bottom');
   ok(pr.sizeOn && !pr.wide, 'the table button stays on screen and nothing scrolls sideways');
   await ph.close();

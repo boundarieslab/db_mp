@@ -73,12 +73,20 @@ The map needs WebGL; a browser without it gets a message rather than a grey rect
   `index.html`; the sheet's free-text `Status` is classified by `statusClass()`,
   and a `StatusClass` column, if the sheet grows one, wins.
 * **Red and green sit close together** for a red-green colour-blind reader, so
-  the two families are also told apart by shape: a reception site is drawn on a
-  round plate, a construction project on a square one.
-* **Every site is its pictogram.** The mark says what the place is, drawn black
-  and white; the plate under it says what state it is in. A site with a footprint
-  also draws its outline, at every zoom — pure colour, thin fill, soft glow. Marks
-  are fetched only when the map first asks for one.
+  the two families are also told apart by shape: a circle for a reception site,
+  a square for a construction project.
+* **The marker on the map is the table's own symbol**, drawn large: a white face,
+  a ring in the pure status colour, and the black part that says which way the
+  masses run. It is rendered from `facilitySymbol()` / `projectSymbol()` — the
+  same functions the TYPE column uses — rasterised once per combination through a
+  canvas, so map and table can never drift apart.
+* **Nothing glows.** A site with a footprint draws its outline at every zoom:
+  a flat contour in pure colour and a thin fill, nothing else. Hover is a thin
+  dark ring under the marker.
+* **The three tabs are the sheets of the table** and sit on top of it. The tools
+  are one horizontal strip at the top left of the map; pressing one drops a
+  drawer under it, one pane at a time, and the drawer is bounded by the map so it
+  never reaches over the table.
 * **The table is the legend.** Its colour boxes filter the map and the table
   together; alt-click shows one colour alone. Hovering a row lights the site on the
   map and shows an aerial of the whole site; clicking opens it.
@@ -93,8 +101,7 @@ The map needs WebGL; a browser without it gets a message rather than a grey rect
 |---|---|
 | `index.html` | The entire application. |
 | `network/*.html` | One standalone ownership-network graph per facility, opened in an iframe in the site window. Reception nodes are `#FF0000`, construction nodes `#00FF00`; the map passes the site's own status colour as `?fc=RRGGBB`. |
-| `picto_grammar/*.png` | The pictogram grammar at drawing size. Naming: `f_*` facility, `cp_*` construction project; `_r_` receiving, `_s_` source; then the type. |
-| `assets/marks/*.png` | The same 29 marks trimmed to 88px for the map, plus the 9 plates (`plate-<category>-<class>.png`). Rebuilt from `picto_grammar/` whenever the grammar changes. |
+| `picto_grammar/*.png` | The pictogram grammar, kept for print and for the report. The map does not use it. |
 | `data/facility_polygons.geojson` | Hand-resolved facility footprints, joined to the sheet by `uid`. |
 | `data/plan_coverage.geojson` | The national plan sweep, context only. |
 | `data/dod/<slug>/{z}/{x}/{y}.png` | Pre-rendered DoD tiles, z11-16. Only tiles containing change exist, so a 404 inside the layer bounds is the normal case. |
