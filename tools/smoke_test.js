@@ -107,8 +107,8 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     open: document.getElementById('bar').classList.contains('open'),
     icons: [...document.querySelectorAll('#bar .toolbar .btn:not(.txt)')].every(b => b.querySelector('svg.px') && !b.textContent.trim())
   }));
-  ok(bar0.tabs === 'facility,project,dod' && bar0.tabsOnTable,
-     'the three tabs are the sheets of the table, on top of it (' + bar0.tabs + ')');
+  ok(bar0.tabs === 'all,facility,project,dod,flow' && bar0.tabsOnTable,
+     'the sheets of the table sit on top of it, ALL first (' + bar0.tabs + ')');
   ok(bar0.tools >= 10 && !bar0.right, 'every tool is on one bar, and there is no second window on the right (' + bar0.tools + ')');
   ok(bar0.icons, 'every tool is a pixel icon with no text on it');
   ok(bar0.groups === 3 && bar0.closed, 'the layer groups start folded (' + bar0.groups + ')');
@@ -125,6 +125,20 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   });
   ok(drawer.open > 150 && drawer.shut <= 44,
      'the layers button drops the drawer and puts it back (' + drawer.shut + ' -> ' + drawer.open + 'px)');
+  // One module: whatever drops out of the tool bar is exactly as wide as
+  // the tool bar, and starts on the same pixel.
+  const mod = await p.evaluate(async () => {
+    window.__openPane('help-panel');
+    await new Promise(r => setTimeout(r, 420));
+    const tb = document.querySelector('#bar .toolbar').getBoundingClientRect();
+    const dr = document.querySelector('#bar .drawer').getBoundingClientRect();
+    window.__closePanes();
+    await new Promise(r => setTimeout(r, 300));
+    return { tw: +tb.width.toFixed(1), dw: +dr.width.toFixed(1),
+             tx: +tb.x.toFixed(1), dx: +dr.x.toFixed(1) };
+  });
+  ok(mod.tw === mod.dw && mod.tx === mod.dx,
+     'a pane is exactly as wide as the tool bar (' + mod.tw + ' vs ' + mod.dw + 'px)');
   // They used to be pushed sideways by the bar's width. Now the offset is the
   // rail and nothing else, so opening the drawer must not move them a pixel.
   const nudge = await p.evaluate(async () => {
@@ -138,7 +152,11 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     await new Promise(r => setTimeout(r, 420));
     return { shut, open, rail: 0 };
   });
-  ok(nudge.shut.kids >= 3, 'the compass, zoom and scale are all there (' + nudge.shut.kids + ')');
+  ok(nudge.shut.kids >= 2, 'the compass and zoom are in the corner (' + nudge.shut.kids + ')');
+  // The scale bar left the corner for the status line: a bar whose length
+  // changes with the zoom cannot share an edge with anything stacked.
+  ok(await p.evaluate(() => !!document.querySelector('.status-strip .maplibregl-ctrl-scale')),
+     'the scale bar reads on the status line');
   ok(nudge.shut.l === nudge.open.l,
      'and opening the drawer does not move them (' + nudge.shut.l + ' -> ' + nudge.open.l + 'px)');
   const base0 = await p.evaluate(() => ({ sat: document.getElementById('base-sat').checked }));
@@ -152,6 +170,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   console.log('zoom limits');
   const z0 = await p.evaluate(()=>window.__M.getMaxZoom());
   ok(z0===19, 'map maxZoom is 19 without the DoD layer (got '+z0+')');
+  await p.evaluate(() => window.__closePanes()); await p.waitForTimeout(300);
   await p.click('#tab-dod'); await p.waitForTimeout(3000);
   ok(await p.evaluate(() => document.getElementById('filter-dod').checked), 'the terrain tab switches its run on');
   const z1 = await p.evaluate(()=>window.__M.getMaxZoom());
@@ -164,6 +183,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(dodData.n === 1320 && dodData.np === 0, 'the plan flag is the new one (' + dodData.n + ' polygons, ' + dodData.np + ' old flags)');
   ok(dodData.none === 1045 && dodData.ls === 2, 'with 1 045 unplanned and the landslide pair marked (' + dodData.none + ', ' + dodData.ls + ')');
 
+  await openTree();
   await p.click('#base-gray'); await p.waitForTimeout(200);
   hits.length = 0;
   await p.evaluate(()=>window.__M.jumpTo({center:[11.52031,59.81372], zoom:19}));
@@ -173,8 +193,10 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(kv.length>0, 'the grey map still requests tiles at max zoom ('+kv.length+' requests)');
   ok(deepest<=18, 'and never past Kartverket\'s tile zoom 18 (deepest '+deepest+')');
   ok(await p.evaluate(()=>window.__M.areTilesLoaded()), 'all requested tiles resolved');
+  await openTree();
   await p.click('#filter-dod'); await p.waitForTimeout(300);
-  await p.click('#base-sat'); await p.click('#tab-facility'); await p.waitForTimeout(300);
+  await p.click('#base-sat'); await p.evaluate(() => window.__closePanes()); await p.waitForTimeout(300);
+  await p.click('#tab-facility'); await p.waitForTimeout(300);
 
   console.log('key');
   const seenH = () => p.evaluate(() => document.getElementById('filter-panel').offsetHeight);
@@ -217,6 +239,22 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   });
   ok(sat.length > 0 && sat.every(([c, v]) => v > 0.99),
      'every status colour is fully saturated (' + sat.filter(([c,v]) => v <= 0.99).map(x=>x[0]).join(',') + 'none below)');
+
+  const all = await p.evaluate(async () => {
+    document.getElementById('tab-all').click();
+    await new Promise(r => setTimeout(r, 600));
+    const cats = [...document.querySelectorAll('#deck-chips .chip')].map(c => c.dataset.cat);
+    const rows = document.querySelectorAll('#site-table tbody tr').length;
+    const uids = [...document.querySelectorAll('#site-table tbody tr')].map(r => r.dataset.uid);
+    document.getElementById('tab-facility').click();
+    await new Promise(r => setTimeout(r, 400));
+    return { cats: [...new Set(cats)].sort().join(','), rows,
+             hasProject: uids.some(u => /^CP_/.test(u)),
+             back: document.querySelectorAll('#site-table tbody tr').length };
+  });
+  ok(all.cats === 'facility,project', 'ALL puts both families in the key (' + all.cats + ')');
+  ok(all.hasProject && all.rows > all.back,
+     'and lists reception and construction together (' + all.rows + ' vs ' + all.back + ')');
 
   console.log('the markers');
   const marks = await p.evaluate(() => {
@@ -697,6 +735,25 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(/å velge/.test(no.sel) && !/\\u/.test(no.sel), 'tooltips are real Norwegian, not escape codes (' + no.sel + ')');
   ok(no.icons >= 8, 'and switching language leaves the icons drawn');
   await p.click('#btn-en'); await p.waitForTimeout(300);
+
+  console.log('flows');
+  const fl = await p.evaluate(async () => {
+    document.getElementById('tab-flow').click();
+    await new Promise(r => setTimeout(r, 450));
+    return { title: document.getElementById('deck-title').textContent,
+             empty: !!document.querySelector('#deck .deck-empty'),
+             chips: [...document.querySelectorAll('#deck-chips .chip .ev')].map(e => e.className).join('|'),
+             cols: [...document.querySelectorAll('#site-table thead th')].length,
+             panel: !document.getElementById('tb-flow').hidden,
+             key: document.querySelectorAll('#filter-panel [data-flow-ct]').length };
+  });
+  ok(fl.panel && /FLOWS|STR/.test(fl.title), 'the FLOWS sheet opens with its own switches (' + fl.title + ')');
+  ok(fl.empty && fl.cols === 0, 'and says where its data comes from while there is none');
+  ok(fl.chips === 'ev evidenced|ev structural|ev modelled',
+     'evidence is three line treatments, not three colours (' + fl.chips + ')');
+  ok(fl.key === 3, 'and the key carries the same three lines (' + fl.key + ')');
+  await p.evaluate(() => document.getElementById('tab-facility').click());
+  await p.waitForTimeout(300);
 
   console.log('phone');
   const ph = await ctx.newPage();

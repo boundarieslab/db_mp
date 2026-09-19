@@ -4,3 +4,7 @@ vendor/
 # Hand-over folders and working rasters. Neither belongs in the published site.
 * outputs/
 *.tif
+
+# Patch backups and scratch left by tooling.
+*.bak
+_to_delete/

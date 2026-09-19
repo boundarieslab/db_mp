@@ -35,9 +35,11 @@
   --terrain:#007FFF;   /* terrain change: the third tab */
   --unknown:#FFFFFF;
   --row:25px;
-  --gut:12px;
+  --gut:10px;        /* one gutter, and the page's left edge         */
   --rail:34px;
-  --bar:300px;
+  --bar:342px;       /* THE MODULE: tool bar and every pane share it */
+  --ctl:34px;        /* compass and zoom: one width in the corner    */
+  --t-title:15px;    /* the one step above the instrument sizes      */
   --ease:cubic-bezier(.2,.7,.2,1);
 }
 *{box-sizing:border-box;border-radius:0}
@@ -45,7 +47,7 @@ html,body{height:100%;margin:0;padding:0}
 body{font:400 11px/1.45 Plex,Helvetica,Arial,sans-serif;color:#000;background:#fff;
      -webkit-font-smoothing:antialiased;overflow:hidden}
 .m,.mono{font-family:PlexMono,ui-monospace,monospace}
-h1{font:500 13px/1.2 Plex,sans-serif;margin:0 0 3px}
+h1{font:500 var(--t-title)/1.25 Plex,sans-serif;margin:0 0 4px;letter-spacing:-.006em}
 a{color:#00f;text-decoration:none}
 button,input,select{font:inherit;color:inherit}
 [hidden]{display:none!important}
@@ -72,12 +74,12 @@ button,input,select{font:inherit;color:inherit}
 /* The tool bar is one horizontal strip, top left, and the drawer drops under
    whichever tool is pressed — one pane at a time, nothing open on load. */
 #bar{position:absolute;left:10px;top:10px;max-height:calc(100% - 20px);z-index:20;
-  display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
+  display:flex;flex-direction:column;align-items:flex-start;pointer-events:none;overflow:hidden}
 #bar > *{pointer-events:auto}
-.toolbar{flex:0 0 auto;background:#fff;border:.5px solid var(--frame);
+.toolbar{flex:0 0 auto;width:var(--bar);background:#fff;border:.5px solid var(--frame);
   display:flex;flex-direction:row;gap:2px;padding:3px;align-items:center}
 .toolbar .sp{display:block;width:0;height:16px;border-left:.5px solid var(--rule);margin:0 3px}
-.toolbar .lang{display:flex;flex-direction:row;gap:2px;margin-left:3px;
+.toolbar .lang{display:flex;flex-direction:row;gap:2px;margin-left:auto;
   border-left:.5px solid var(--rule);padding-left:5px}
 .toolbar .btn.txt{width:24px;padding:0;justify-content:center;font-size:9px}
 .drawer{flex:0 0 auto;width:var(--bar);max-height:0;overflow:hidden;background:#fff;
@@ -89,8 +91,12 @@ button,input,select{font:inherit;color:inherit}
 #bar.folded .drawer{max-height:0;opacity:0}
 
 /* The three tabs are the sheets of the table, so they live on top of it. */
-#tabstrip{display:flex;align-self:stretch;flex:0 0 auto;margin:0 12px 0 0;
-  border-right:.5px solid var(--frame)}
+/* The sheet strip keeps its place at the left of the head and gives way
+   sideways when there is not room for every sheet, so the size control
+   on the right stays where it is on any screen. */
+#tabstrip{display:flex;align-self:stretch;flex:0 1 auto;min-width:0;margin:0 12px 0 0;
+  overflow-x:auto;scrollbar-width:none;border-right:.5px solid var(--frame)}
+#tabstrip::-webkit-scrollbar{display:none}
 .drag-handle{cursor:move;touch-action:none}
 .drag-handle input,.drag-handle button{cursor:default}
 
@@ -100,8 +106,8 @@ button,input,select{font:inherit;color:inherit}
   padding:0 8px 0 24px;line-height:22px;font-size:11px}
 .search-box .px{position:absolute;left:5px;top:4px;pointer-events:none;fill:var(--sub)}
 .search-input::placeholder{color:var(--sub)}
-.search-results{position:absolute;left:0;top:24px;width:calc(var(--bar) - 8px);background:#fff;border:.5px solid var(--frame);
-  max-height:300px;overflow-y:auto;display:none;z-index:40}
+.search-results{width:100%;background:#fff;border:.5px solid var(--frame);border-top:0;
+  max-height:none;display:none;margin-top:-0.5px}
 .search-results.open{display:block}
 .search-group{padding:4px 8px 2px;color:var(--sub);font-size:9px;letter-spacing:.1em;font-weight:500;
   border-bottom:.5px solid var(--hair)}
@@ -116,7 +122,7 @@ button,input,select{font:inherit;color:inherit}
 /* tabs, folder-style: the one in front joins the page below it */
 .tabs{display:flex;border-bottom:.5px solid var(--frame);background:var(--tab);position:relative}
 .tab{flex:0 0 auto;min-width:0;height:100%;border:0;border-right:.5px solid var(--rule);background:transparent;
-  cursor:pointer;padding:0 12px;text-align:left;display:flex;flex-direction:row;align-items:center;gap:7px;
+  cursor:pointer;padding:0 var(--gut);text-align:left;display:flex;flex-direction:row;align-items:center;gap:7px;
   position:relative;transition:background-color .15s}
 .tab:last-child{border-right:0}
 .tab:hover{background:#fbfbfb}
@@ -206,20 +212,28 @@ button,input,select{font:inherit;color:inherit}
 /* Compass, zoom and scale sit in the corner. Nothing about the tool bar's
    state is allowed to shift the map's own controls. */
 .maplibregl-ctrl-bottom-left{z-index:6;margin:0 0 10px 10px}
-.maplibregl-ctrl-bottom-left .maplibregl-ctrl{margin:0 0 6px 0}
+.maplibregl-ctrl-bottom-left .maplibregl-ctrl{margin:0}
+.maplibregl-ctrl-bottom-left .maplibregl-ctrl-group{border-top:0}
 .maplibregl-ctrl-bottom-right{z-index:6;margin:0 10px 10px 0}
 .maplibregl-ctrl-scale{background:#fff;border:.5px solid var(--frame);border-top:0;color:#000;font:10px PlexMono,monospace;padding:0 4px}
-.maplibregl-ctrl-attrib{background:rgba(255,255,255,.85)!important;font:9px Plex,sans-serif}
+.maplibregl-ctrl-attrib{background:rgba(255,255,255,.85)!important;font:9px Plex,sans-serif;
+  border-radius:0!important;padding:0 4px}
+.maplibregl-ctrl-attrib-button{border-radius:0!important;background:#fff!important;
+  border:.5px solid var(--frame);width:14px;height:14px;background-size:11px!important}
+.maplibregl-ctrl-attrib.maplibregl-compact-show{padding-right:18px}
+/* the scale bar, once it has moved into the status line */
+.status-strip .maplibregl-ctrl-scale{position:static;margin:0;flex:0 0 auto;
+  border:.5px solid var(--frame);height:15px;line-height:14px}
 .maplibregl-ctrl-attrib a{color:var(--sub)}
 .maplibregl-ctrl-bottom-left .maplibregl-ctrl-group,
 .maplibregl-ctrl-bottom-right .maplibregl-ctrl-group{background:#fff;border:.5px solid var(--frame);box-shadow:none}
-.maplibregl-ctrl-group button{width:24px;height:24px;background:#fff}
+.maplibregl-ctrl-group button{width:var(--ctl);height:24px;background:#fff}
 .maplibregl-ctrl-group button+button{border-top:.5px solid var(--rule)}
 .maplibregl-ctrl-group button:hover{background:#f6f6f6}
-.compass{width:36px;height:60px;background:#fff;border:.5px solid var(--frame);cursor:grab;position:relative;
+.compass{width:var(--ctl);height:56px;border-bottom:0;background:#fff;border:.5px solid var(--frame);cursor:grab;position:relative;
   touch-action:none;padding:0;display:block}
 .compass:active{cursor:grabbing}
-.compass svg{position:absolute;left:8px;top:3px;transition:transform .12s linear}
+.compass svg{position:absolute;left:calc((var(--ctl) - 20px) / 2);top:3px;transition:transform .12s linear}
 .compass .n{position:absolute;left:0;right:0;bottom:12px;text-align:center;font:500 9px Plex,sans-serif}
 .compass .tilt{position:absolute;left:0;right:0;bottom:1px;text-align:center;font:9px PlexMono,monospace;color:var(--sub)}
 
@@ -300,7 +314,7 @@ iframe{border:0}
 /* ---------- deck: the database as a table, and the map's legend ---------- */
 #deck{flex:0 0 30px;display:flex;flex-direction:column;overflow:hidden;background:#fff;
   transition:flex-basis .24s var(--ease)}
-#deck.half{flex-basis:260px}
+#deck.half{flex-basis:280px}        /* 30 head + 25 header + 9 rows */
 #deck.full{position:absolute;left:0;right:0;top:0;bottom:24px;z-index:60;flex-basis:auto}
 #deck:not(.half):not(.full) .deck-scroll{display:none}
 .deck-head{height:30px;flex:0 0 30px;display:flex;align-items:stretch;gap:12px;
@@ -319,7 +333,12 @@ iframe{border:0}
 .chip:hover{background:#f6f6f6}
 .chip.clear{border-style:dashed}
 .deck-head .actions{margin-left:auto;display:flex;gap:14px;align-items:center;color:var(--sub);white-space:nowrap;flex:0 0 auto}
-.deck-head .actions button{background:none;border:0;color:var(--sub);cursor:pointer;padding:0}
+.deck-head .actions button{background:none;border:0;color:var(--sub);cursor:pointer;padding:0;
+  height:24px;display:flex;align-items:center}
+.deck-head .actions #deck-size{width:24px;justify-content:center}
+.deck-head .actions #deck-size .px{fill:var(--sub);transition:transform .2s var(--ease)}
+.deck-head .actions #deck-size[aria-expanded="true"] .px{transform:rotate(180deg)}
+.deck-head .actions button:hover .px{fill:#000}
 .deck-head .actions button:hover{color:#000}
 .deck-scroll{flex:1 1 auto;min-height:0;overflow:auto}
 #site-table{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed;min-width:980px}
@@ -352,6 +371,20 @@ iframe{border:0}
 #hover-card .cp .swatch{align-self:center}
 #hover-card .cp span{color:var(--sub);font-size:9px;font-family:PlexMono,monospace;margin-left:auto;white-space:nowrap}
 
+/* ---------- flows: the fourth sheet ---------- */
+/* Evidence is drawn, not coloured: a documented edge is a solid black
+   line, a structural one is dotted, a modelled one a faint dash. A
+   modelled arc must never be able to pass for a receipt. */
+#tab-flow{--tabc:#111}
+.ev{display:inline-block;width:22px;height:0;vertical-align:middle;margin-right:7px;
+    border-top:1.5px solid #111}
+.ev.structural{border-top-style:dotted}
+.ev.modelled{border-top:1px dashed var(--sub)}
+.chip .ev{width:16px;margin-right:0}
+#site-table td.ev-cell .ev{margin-right:6px}
+.deck-empty{padding:12px var(--gut);color:var(--sub);max-width:74ch;line-height:1.55}
+.deck-empty b{font-weight:500;color:#000;display:block;margin-bottom:3px}
+
 /* ---------- status line ---------- */
 .status-strip{height:24px;flex:0 0 24px;display:flex;align-items:center;padding:0 var(--gut);gap:14px;font-size:10px;
   background:#fff;white-space:nowrap;overflow:hidden}
@@ -373,7 +406,7 @@ iframe{border:0}
   #sidebar{right:0;left:0;top:auto;bottom:0;width:auto;max-height:62%;border-width:.5px 0 0}
   #sidebar:not(.active){transform:translateY(24px)}
   .sb-media{height:150px}
-  #deck.half{flex-basis:200px}
+  #deck.half{flex-basis:205px}
   #site-table{min-width:0}
   #site-table .c-op,#site-table .c-mat,#site-table .c-plan,#site-table .c-cap,#site-table .c-uid,#site-table .c-kom,#site-table .c-area{display:none}
   .status-strip .right{display:none}
@@ -504,6 +537,16 @@ iframe{border:0}
                       </div>
                   </div>
 
+                  <div class="tab-body" id="tb-flow" role="tabpanel" hidden>
+                      <label class="row" for="filter-flows">
+                          <span class="nm"><b data-en="Mass flows on the map" data-no="Massestrømmer på kartet">Mass flows on the map</b>
+                              <span class="src" data-en="construction project → reception site" data-no="byggeprosjekt → mottaksanlegg">construction project → reception site</span></span>
+                          <span class="ct" id="count-flow-drawn">–</span>
+                          <input type="checkbox" id="filter-flows" checked></label>
+                      <div class="note" data-en="An arc bows to the right of its direction of travel, so a pair of sites that trade both ways draws two lines rather than one." data-no="En bue krummer til høyre for reiseretningen, så to steder som utveksler begge veier tegner to linjer, ikke én.">An arc bows to the right of its direction of travel, so a pair of sites that trade both ways draws two lines rather than one.</div>
+                      <div class="note" data-en="A destination is on record only where a pollution permit was needed, so the documented set leans toward large infrastructure and contaminated mass. Everything else is modelled." data-no="En destinasjon er dokumentert bare der det trengtes utslippstillatelse, så det dokumenterte settet heller mot store infrastrukturprosjekter og forurensede masser. Resten er modellert.">A destination is on record only where a pollution permit was needed, so the documented set leans toward large infrastructure and contaminated mass. Everything else is modelled.</div>
+                  </div>
+
         
           <!-- layers -->
                   <div class="tree-head">
@@ -580,6 +623,10 @@ iframe{border:0}
                         <div class="kr"><span class="swatch" style="background:#fff;border:1.5px dashed #FF0000"></span><span data-en="Footprint, NGU resource area only" data-no="Omriss, kun NGU-ressursområde">Footprint, NGU resource area only</span></div>
                         <div class="kr"><span class="swatch ring" style="background:#fff;border:2.5px solid #FF0000;box-shadow:0 0 0 .5px #999"></span><span data-en="Site with no footprint yet" data-no="Sted uten omriss ennå">Site with no footprint yet</span></div>
                         <div class="key-sep"></div>
+                        <div class="kr"><span class="ev"></span><span data-en="Flow, documented" data-no="Strøm, dokumentert">Flow, documented</span><span class="ct" data-flow-ct="evidenced"></span></div>
+                        <div class="kr"><span class="ev structural"></span><span data-en="Flow, shared ownership" data-no="Strøm, felles eierskap">Flow, shared ownership</span><span class="ct" data-flow-ct="structural"></span></div>
+                        <div class="kr"><span class="ev modelled"></span><span data-en="Flow, modelled" data-no="Strøm, modellert">Flow, modelled</span><span class="ct" data-flow-ct="modelled"></span></div>
+                        <div class="key-sep"></div>
                         <div class="kr"><span class="swatch" style="background:#fff;border:1px dotted #555"></span><span data-en="Plan, old (closed landfill)" data-no="Plan, gammel (nedlagt deponi)">Plan, old (closed landfill)</span><span class="ct" data-cov-ct="old"></span></div>
                         <div class="kr"><span class="swatch" style="background:#fff;border:1px solid #555"></span><span data-en="Plan, in force" data-no="Plan, gjeldende">Plan, in force</span><span class="ct" data-cov-ct="current"></span></div>
                         <div class="kr"><span class="swatch" style="background:#fff;border:1px dashed #555"></span><span data-en="Plan, proposed" data-no="Plan, foreslått">Plan, proposed</span><span class="ct" data-cov-ct="future"></span></div>
@@ -623,11 +670,13 @@ iframe{border:0}
                         <dt>wheel</dt><dd data-en="zoom" data-no="zoom">zoom</dd>
                         <dt>R-drag</dt><dd data-en="turn and tilt (also Ctrl-drag, two fingers on a phone)" data-no="snu og vipp (også Ctrl-dra, to fingre på mobil)">turn and tilt (also Ctrl-drag, two fingers on a phone)</dd>
                         <dt>click</dt><dd data-en="open a site, or read the coordinates and height of the ground" data-no="åpne et sted, eller les koordinater og høyde for bakken">open a site, or read the coordinates and height of the ground</dd>
-                        <dt>Esc</dt><dd data-en="close what is open" data-no="lukk det som er åpent">close what is open</dd>
-                        <dt>N</dt><dd data-en="click the compass: north up. Double-click: look straight down" data-no="klikk kompasset: nord opp. Dobbeltklikk: se rett ned">click the compass: north up. Double-click: look straight down</dd>
+                        <dt>Esc</dt><dd data-en="close the top thing that is open, one press at a time" data-no="lukk det øverste som er åpent, ett trykk om gangen">close the top thing that is open, one press at a time</dd>
+                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 1h2v1h-2zM6 2h1v1h-1zM9 2h1v1h-1zM6 3h1v1h-1zM9 3h1v1h-1zM5 4h1v1h-1zM10 4h1v1h-1zM5 5h1v1h-1zM10 5h1v1h-1zM7 6h2v1h-2zM7 7h2v1h-2zM7 8h2v1h-2zM7 9h2v1h-2zM7 10h2v1h-2zM7 11h2v1h-2zM7 12h2v1h-2zM7 13h2v1h-2z"/></svg></dt><dd data-en="click the compass: north up. Double-click: look straight down" data-no="klikk kompasset: nord opp. Dobbeltklikk: se rett ned">click the compass: north up. Double-click: look straight down</dd>
                     </dl>
                     <h4 data-en="TOOLS" data-no="VERKTØY">TOOLS</h4>
                     <dl>
+                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3h14v1h-14zM1 4h14v1h-14zM1 7h14v1h-14zM1 8h14v1h-14zM1 11h14v1h-14zM1 12h14v1h-14z"/></svg></dt><dd data-en="layers, and what is on the map" data-no="lag, og hva som er på kartet">layers, and what is on the map</dd>
+                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM10 3h1v1h-1zM2 4h1v1h-1zM10 4h1v1h-1zM2 5h1v1h-1zM10 5h1v1h-1zM2 6h1v1h-1zM10 6h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM4 8h5v1h-5zM10 8h1v1h-1zM11 9h1v1h-1zM12 10h1v1h-1zM13 11h1v1h-1zM14 12h1v1h-1z"/></svg></dt><dd data-en="search a site, an operator, a place or coordinates" data-no="søk sted, operatør, stedsnavn eller koordinater">search a site, an operator, a place or coordinates</dd>
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h5v1h-5zM1 2h1v1h-1zM5 2h1v1h-1zM1 3h1v1h-1zM5 3h1v1h-1zM7 3h8v1h-8zM1 4h1v1h-1zM5 4h1v1h-1zM1 5h5v1h-5zM1 8h5v1h-5zM1 9h5v1h-5zM1 10h5v1h-5zM7 10h8v1h-8zM1 11h5v1h-5zM1 12h5v1h-5z"/></svg></dt><dd data-en="key to colours and lines" data-no="tegnforklaring">key to colours and lines</dd>
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM5 1h2v1h-2zM9 1h2v1h-2zM3 2h2v1h-2zM11 2h2v1h-2zM1 3h2v1h-2zM13 3h2v1h-2zM1 4h3v1h-3zM12 4h3v1h-3zM1 5h1v1h-1zM4 5h2v1h-2zM10 5h2v1h-2zM14 5h1v1h-1zM1 6h1v1h-1zM6 6h4v1h-4zM14 6h1v1h-1zM1 7h1v1h-1zM8 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM8 8h1v1h-1zM14 8h1v1h-1zM1 9h1v1h-1zM8 9h1v1h-1zM14 9h1v1h-1zM1 10h1v1h-1zM8 10h1v1h-1zM14 10h1v1h-1zM1 11h2v1h-2zM8 11h1v1h-1zM13 11h2v1h-2zM3 12h2v1h-2zM8 12h1v1h-1zM11 12h2v1h-2zM5 13h2v1h-2zM8 13h1v1h-1zM10 13h2v1h-2zM7 14h3v1h-3z"/></svg></dt><dd data-en="terrain in 3D, 1 m LiDAR where a run exists" data-no="terreng i 3D, 1 m LiDAR der en kjøring finnes">terrain in 3D, 1 m LiDAR where a run exists</dd>
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 0h1v1h-1zM7 0h1v1h-1zM13 0h1v1h-1zM2 1h1v1h-1zM7 1h1v1h-1zM12 1h1v1h-1zM3 2h1v1h-1zM11 2h1v1h-1zM6 3h3v1h-3zM5 4h5v1h-5zM1 5h2v1h-2zM4 5h7v1h-7zM12 5h2v1h-2zM5 6h5v1h-5zM6 7h3v1h-3zM10 9h1v1h-1zM9 10h3v1h-3zM7 11h2v1h-2zM12 11h2v1h-2zM5 12h2v1h-2zM14 12h1v1h-1zM3 13h2v1h-2zM15 13h1v1h-1zM1 14h2v1h-2zM0 15h16v1h-16z"/></svg></dt><dd data-en="shade the ground and turn the light" data-no="skyggelegg bakken og drei lyset">shade the ground and turn the light</dd>
@@ -667,12 +716,16 @@ iframe{border:0}
          colour key, which is also the map's legend. -->
     <div class="deck-head">
         <div id="tabstrip" role="tablist">
+                <button type="button" class="tab" id="tab-all" role="tab" aria-selected="false" data-tab="all" aria-controls="tb-facility">
+                    <span class="tl" data-en="ALL" data-no="ALLE">ALL</span><span class="tc" id="count-all">–</span></button>
                 <button type="button" class="tab" id="tab-facility" role="tab" aria-selected="true" data-tab="facility" aria-controls="tb-facility">
                     <span class="tl" data-en="RECEPTION" data-no="MOTTAK">RECEPTION</span><span class="tc" id="count-facilities">–</span></button>
                 <button type="button" class="tab" id="tab-project" role="tab" aria-selected="false" data-tab="project" aria-controls="tb-project">
                     <span class="tl" data-en="CONSTRUCTION" data-no="BYGGEPROSJEKT">CONSTRUCTION</span><span class="tc" id="count-projects">–</span></button>
                 <button type="button" class="tab" id="tab-dod" role="tab" aria-selected="false" data-tab="dod" aria-controls="tb-dod">
                     <span class="tl" data-en="TERRAIN CHANGE" data-no="TERRENG">TERRAIN CHANGE</span><span class="tc" id="count-runs">1</span></button>
+                <button type="button" class="tab" id="tab-flow" role="tab" aria-selected="false" data-tab="flow" aria-controls="tb-flow">
+                    <span class="tl" data-en="FLOWS" data-no="STRØMMER">FLOWS</span><span class="tc" id="count-flows">–</span></button>
         </div>
         <span class="ttl" id="deck-title" data-en="RECEPTION SITES" data-no="MOTTAKSANLEGG">RECEPTION SITES</span>
         <span class="count" id="deck-count"></span>
@@ -680,7 +733,7 @@ iframe{border:0}
         <span class="actions">
             <button type="button" id="deck-dir" data-en="all flows" data-no="alle strømmer">all flows</button>
             <button type="button" id="deck-csv">csv</button>
-            <button type="button" id="deck-size" data-title-en="Half screen, whole page, closed" data-title-no="Halv skjerm, hel side, lukket" title="Half screen, whole page, closed" aria-label="Table size">▲</button>
+            <button type="button" id="deck-size" data-title-en="Half screen, whole page, closed" data-title-no="Halv skjerm, hel side, lukket" title="Half screen, whole page, closed" aria-label="Table size"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 4h2v1h-2zM5 5h2v1h-2zM9 5h2v1h-2zM3 6h2v1h-2zM11 6h2v1h-2zM1 7h2v1h-2zM13 7h2v1h-2z"/></svg></button>
         </span>
     </div>
     <div class="deck-scroll">
@@ -732,6 +785,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const FACILITIES_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?output=csv';
     const PROJECTS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR8NceaLhnLslv2TKIReqCnB1q0UON_yEef-vs7zfKxnQc8LaxiNfSKTTp8528mKG882T3XlxF59437/pub?output=csv';
+    // The fourth sheet. Publish the database's Flows tab to the web and
+    // paste its CSV address here: the table, the counts, the key and the
+    // arcs on the map all fill themselves. Left empty, the sheet says so.
+    // Columns read, in any order:
+    //   FlowUID  FromUID  ToUID  Volume_m3  VolumeUnit  MassType
+    //   PeriodStart  PeriodEnd  EvidenceClass  Confidence  SourceURL
+    // EvidenceClass: evidenced | structural | modelled  (default modelled)
+    // VolumeUnit:    pfm3 | pam3
+    const FLOWS_CSV = '';
 
     // ─────────────────────────────────────────────────────────────────────
     // Ownership-graph links. The GraphURL column has accumulated three URL
@@ -893,6 +955,13 @@ document.addEventListener('DOMContentLoaded', function() {
             { k: 'unknown',      col: '#FFFFFF', en: 'no status',     no: 'ukjent' }
         ]
     };
+    // Flows carry no colour. Evidence is a line treatment, so a modelled
+    // arc can never be mistaken for a documented one.
+    const FLOW_CLASSES = [
+        { k: 'evidenced',  en: 'documented',       no: 'dokumentert' },
+        { k: 'structural', en: 'shared ownership', no: 'felles eierskap' },
+        { k: 'modelled',   en: 'modelled',         no: 'modellert' }
+    ];
     // Line treatment carries the lifecycle alongside the hue, so the ramp is
     // still readable to someone who cannot separate the two ends of it.
     //   solid 2px  = running     solid 1.5px = over     dashed = not built yet
@@ -954,6 +1023,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const show = {
         facility: { on: true, cls: new Set(CLASSES.facility.map(c => c.k)) },
         project:  { on: true, cls: new Set(CLASSES.project.map(c => c.k)) },
+        flow:     { on: true, cls: new Set(['evidenced', 'structural', 'modelled']) },
         dir: 'all'
     };
 
@@ -1219,9 +1289,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return [lon - dLon, lat - dLat, lon + dLon, lat + dLat];
     }
 
-    function frameSite(site) {
+    // mode 'auto' moves the camera only when the site is off screen or too
+    // small to read, so clicking a marker you are already looking at does
+    // not throw the view away — and clicking a six-pixel dot at national
+    // zoom does take you to it.
+    function frameSite(site, mode) {
         const b = siteBox(site);
         if (!b) { updateStatus(t('nocoords')); return; }
+        if (mode === 'auto' && !worthFraming(b)) return;
         const opts = { padding: visiblePadding(), maxZoom: 17.5, duration: dur(1100), essential: true };
         if (terrainBox && terrainBox.checked) {
             // In 3D, keep the tilt and turn you chose; only move the camera.
@@ -1232,6 +1307,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         map.fitBounds(b, opts);
+    }
+    function worthFraming(b) {
+        const c = map.getContainer();
+        const p = visiblePadding();
+        const sw = map.project([b[0], b[1]]), ne = map.project([b[2], b[3]]);
+        const x0 = Math.min(sw.x, ne.x), x1 = Math.max(sw.x, ne.x);
+        const y0 = Math.min(sw.y, ne.y), y1 = Math.max(sw.y, ne.y);
+        if (x0 < p.left || x1 > c.clientWidth - p.right) return true;    // off screen
+        if (y0 < p.top  || y1 > c.clientHeight - p.bottom) return true;
+        return Math.max(x1 - x0, y1 - y0) < 90;                          // too small to read
     }
     // kept under its old name for anything that still calls it
     function smartZoom(lat, lon, area, uid) {
@@ -1395,10 +1480,31 @@ document.addEventListener('DOMContentLoaded', function() {
         th_uid: { en: "UID", no: "UID" }, th_name: { en: "FACILITY", no: "ANLEGG" },
         th_pname: { en: "PROJECT", no: "PROSJEKT" }, th_op: { en: "OPERATOR", no: "OPERATØR" },
         th_dev: { en: "DEVELOPER", no: "UTBYGGER" },
-        th_kom: { en: "KOMMUNE", no: "KOMMUNE" }, th_mat: { en: "MATERIAL", no: "MASSER" },
+        th_kom: { en: "MUNICIPALITY", no: "KOMMUNE" }, th_mat: { en: "MATERIAL", no: "MASSER" },
         th_type: { en: "TYPE", no: "TYPE" }, th_area: { en: "AREA m²", no: "AREAL m²" },
         th_cap: { en: "CAPACITY", no: "KAPASITET" }, th_plan: { en: "PERMIT", no: "TILLATELSE" },
-        th_st: { en: "STATUS", no: "STATUS" }
+        th_st: { en: "STATUS", no: "STATUS" },
+        flows: { en: "MASS FLOWS", no: "MASSESTRØMMER" },
+        th_flow: { en: "FLOW", no: "STRØM" },
+        th_from: { en: "FROM", no: "FRA" },
+        th_to: { en: "TO", no: "TIL" },
+        th_vol: { en: "VOLUME m³", no: "VOLUM m³" },
+        th_unit: { en: "UNIT", no: "ENHET" },
+        th_period: { en: "PERIOD", no: "PERIODE" },
+        th_ev: { en: "EVIDENCE", no: "GRUNNLAG" },
+        th_conf: { en: "CONF", no: "SIKKERHET" },
+        th_src: { en: "SOURCE", no: "KILDE" },
+        ev_evidenced: { en: "documented", no: "dokumentert" },
+        ev_structural: { en: "shared ownership", no: "felles eierskap" },
+        ev_modelled: { en: "modelled", no: "modellert" },
+        flows_none_t: { en: "No flows published yet.",
+                        no: "Ingen strømmer publisert ennå." },
+        flows_none_b: { en: "This sheet draws the line between a construction project and the site that received its mass. It fills itself from the Flows tab of the database: publish that tab to the web and paste its CSV address into FLOWS_CSV in index.html.",
+                        no: "Dette arket tegner forbindelsen mellom et byggeprosjekt og stedet som tok imot massene. Det fyller seg selv fra Flows-fanen i databasen: publiser fanen til nettet og lim CSV-adressen inn i FLOWS_CSV i index.html." },
+        flows_empty: { en: "No flows match what is switched on.",
+                       no: "Ingen strømmer passer det som er slått på." },
+        flows_nogeo: { en: "both ends need coordinates before a flow can be drawn",
+                       no: "begge ender trenger koordinater før en strøm kan tegnes" }
     };
     const t = k => i18n[k] ? i18n[k][currentLang] : k;
     const t2 = (k, lang) => (i18n[k] ? i18n[k][lang] : k);
@@ -1414,6 +1520,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     let mediaMode = 'photo';
     window.openSidebar = function(site, keepMedia) {
+        // Two pictures of the same place, one on top of the other, is the
+        // commonest way this window gets read wrong.
+        if (typeof hideHover === 'function') hideHover();
         currentSite = site;
         const sbEl = $('sidebar');
         sbEl.classList.add('active');
@@ -1749,14 +1858,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Class -> line treatment, as a MapLibre match on the feature's class.
     const byClass = (table, fallback) => ['match', ['get', 'cls']]
         .concat(...Object.keys(table).map(k => [k, table[k]])).concat([fallback]);
-    const LINE_W   = byClass({ active: 2.4, contaminated: 2.4, future: 1.8, old: 1.8, unknown: 1.4 }, 1.8);
-    const LINE_W_H = byClass({ active: 3.6, contaminated: 3.6, future: 3, old: 3, unknown: 2.4 }, 3);
+    const LINE_W   = byClass({ active: 1.2, contaminated: 1.2, future: 1, old: 1, unknown: 0.8 }, 1);
+    const LINE_W_H = byClass({ active: 2, contaminated: 2, future: 1.8, old: 1.8, unknown: 1.5 }, 1.8);
     const FILL_A   = byClass({ active: 0.14, contaminated: 0.14, future: 0.08, old: 0.10, unknown: 0 }, 0.12);
     const FILL_A_H = byClass({ active: 0.30, contaminated: 0.30, future: 0.20, old: 0.22, unknown: 0.08 }, 0.26);
     // A white mark needs a dark ring or it disappears on snow and concrete.
     // Size is a layout property and cannot read feature-state, so hover is
     // answered by the ring underneath instead.
-    const SYM_SIZE = ['interpolate', ['linear'], ['zoom'], 6, 0.62, 15, 1];
+    const SYM_SIZE = ['interpolate', ['linear'], ['zoom'], 6, 0.40, 15, 0.66];
 
     let fpData = null, fpState = 0, sitesReady = false;
     let covState = 0;
@@ -1853,7 +1962,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // pointer is on, and has no radius at all otherwise.
         map.addLayer({ id: 'site-hot', type: 'circle', source: 'sites',
             paint: { 'circle-color': 'rgba(0,0,0,0)',
-                     'circle-radius': ['case', HOVER, 17, 0],
+                     'circle-radius': ['case', HOVER, 13, 0],
                      'circle-stroke-color': '#111',
                      'circle-stroke-width': ['case', HOVER, 1, 0] } }, before);
         map.addLayer({ id: 'site-sym', type: 'symbol', source: 'sites',
@@ -1868,7 +1977,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.originalEvent.__handled = true;
             const site = allSites.find(s => uidOf(s) === e.features[0].properties.uid);
             if (!site) { updateStatus(t('notfound')); return; }
-            openSite(site, false);
+            openSite(site, 'auto');
         };
         SITE_LAYERS.forEach(id => {
             map.on('click', id, pick);
@@ -2055,7 +2164,28 @@ document.addEventListener('DOMContentLoaded', function() {
           sort: s => ['active', 'future', 'contaminated', 'old', 'unknown'].indexOf(s.__cls) }
     ];
 
+    // A flow is an edge, not a place, so the FLOWS sheet gets its own
+    // columns rather than empty cells in the site table.
+    const FLOW_COLS = [
+        { key:'FlowUID',     th:'th_flow',   w:'104px', cls:'uid c-uid', get: f => f.FlowUID || '' },
+        { key:'__from',      th:'th_from',   w:'',      get: f => f.__fromName },
+        { key:'__to',        th:'th_to',     w:'',      get: f => f.__toName },
+        { key:'MassType',    th:'th_mat',    w:'150px', cls:'c-mat', get: f => f.MassType || '' },
+        { key:'Volume_m3',   th:'th_vol',    w:'112px', num:true, cls:'c-cap', get: f => fmt(qty(f.Volume_m3)) },
+        { key:'VolumeUnit',  th:'th_unit',   w:'64px',  cls:'c-area', get: f => f.VolumeUnit || '' },
+        { key:'__period',    th:'th_period', w:'104px', cls:'c-kom',
+          get: f => [f.PeriodStart, f.PeriodEnd].filter(Boolean).join('\u2013'),
+          sort: f => String(f.PeriodStart || '') },
+        { key:'__ev',        th:'th_ev',     w:'150px', cls:'ev-cell',
+          get: f => t('ev_' + f.__ev),
+          sort: f => ['evidenced', 'structural', 'modelled'].indexOf(f.__ev) },
+        { key:'Confidence',  th:'th_conf',   w:'72px',  num:true, cls:'c-plan', get: f => f.Confidence || '' },
+        { key:'SourceURL',   th:'th_src',    w:'150px', cls:'c-op', get: f => f.SourceURL || '' }
+    ];
+    const activeCols = () => deckScope === 'flow' ? FLOW_COLS : COLS;
+
     function deckRows(){
+        if (deckScope === 'flow') return flowRows();
         const rows = allSites.filter(s =>
             (deckSelection ? deckSelection.has(uidOf(s)) : (deckScope === 'all' || s.__cat === deckScope)) &&
             passes(s));
@@ -2082,7 +2212,7 @@ document.addEventListener('DOMContentLoaded', function() {
         deckHeadRow.innerHTML = '';
         const cg = document.createElement('colgroup');
         const proj = deckScope === 'project';
-        COLS.forEach(c => {
+        activeCols().forEach(c => {
             const col = document.createElement('col');
             if (c.w) col.style.width = c.w;
             if (c.cls) col.className = c.cls.split(' ').filter(x => x.startsWith('c-')).join(' ');
@@ -2107,6 +2237,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderDeck(){
+        if (deckScope === 'flow') { renderFlowDeck(); return; }
+        clearDeckEmpty();
         renderDeckHead();
         const rows = deckRows();
         deckBody.innerHTML = '';
@@ -2140,7 +2272,8 @@ document.addEventListener('DOMContentLoaded', function() {
         deckBody.appendChild(frag);
         deckCount.textContent = rows.length + ' ' + t('records');
         const title = $('deck-title');
-        const key = deckSelection ? 'selection' : deckScope === 'project' ? 'projects' : deckScope === 'all' ? 'selection' : 'recep';
+        const key = deckSelection ? 'selection' : deckScope === 'project' ? 'projects' :
+                    deckScope === 'flow' ? 'flows' : deckScope === 'all' ? 'selection' : 'recep';
         title.setAttribute('data-en', t2(key, 'en')); title.setAttribute('data-no', t2(key, 'no'));
         title.textContent = t(key);
         renderChips();
@@ -2152,7 +2285,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderChips() {
         const box = $('deck-chips');
         box.innerHTML = '';
-        const cats = deckSelection ? ['facility', 'project'] : [deckScope === 'project' ? 'project' : 'facility'];
+        if (deckScope === 'flow' && !deckSelection) { renderFlowChips(box); return; }
+        // On the ALL sheet both families get their colours, so everything can
+        // be switched on the map from one place.
+        const cats = (deckSelection || deckScope === 'all') ? ['facility', 'project']
+                                                            : [deckScope === 'project' ? 'project' : 'facility'];
         cats.forEach(cat => {
             const pool = allSites.filter(s => s.__cat === cat && (!deckSelection || deckSelection.has(uidOf(s))));
             if (deckSelection && !pool.length) return;
@@ -2234,8 +2371,9 @@ document.addEventListener('DOMContentLoaded', function() {
         currentSite = site;
         if (site.__cat !== deckScope && !deckSelection && site.__cat) { selectTab(site.__cat, true); }
         openSidebar(site);
-        if (frame !== false) frameSite(site);
-        else if (!hasXY(site)) updateStatus(t('nocoords'));
+        if (frame === 'auto') frameSite(site, 'auto');
+        else if (frame !== false) frameSite(site);
+        if (!hasXY(site)) updateStatus(t('nocoords'));
         markDeckSelection();
     }
 
@@ -2283,6 +2421,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // sideways but never covers the rows being read.
         const deck = $('deck').getBoundingClientRect();
         if (py >= deck.top - 1 && deck.top > h + pad) top = deck.top - h - 8;
+        // The record window owns its band of the screen; the card gives way.
+        const sbEl = $('sidebar');
+        if (sbEl && sbEl.classList.contains('active')) {
+            const sb = sbEl.getBoundingClientRect();
+            if (left + w > sb.left - 8 && top < sb.bottom && top + h > sb.top)
+                left = Math.max(pad, sb.left - w - 8);
+        }
         hoverCard.style.left = Math.round(left) + 'px';
         hoverCard.style.top = Math.round(top) + 'px';
     }
@@ -2339,8 +2484,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('label[for="filter-projects"]').addEventListener('click', () => openDeck('project'));
     $('deck-csv').onclick = () => {
         const rows = deckRows();
-        const head = COLS.map(c => t2(c.th, 'en')).join(',');
-        const body = rows.map(s => COLS.map(c => {
+        const cols = activeCols();
+        const head = cols.map(c => t2(c.th, 'en')).join(',');
+        const body = rows.map(s => cols.map(c => {
             const v = String(c.get(s)).replace(/"/g, '""');
             return /[",\n]/.test(v) ? `"${v}"` : v;
         }).join(',')).join('\n');
@@ -2360,7 +2506,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function selectTab(tab, quiet) {
         currentTab = tab;
         document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
-        ['facility', 'project', 'dod'].forEach(k => { $('tb-' + k).hidden = k !== tab; });
+        // ALL keeps both families on the map and both sets of colours in the
+        // key; the reception rows stay in the drawer so the counts still read.
+        ['facility', 'project', 'dod', 'flow'].forEach(k => {
+            $('tb-' + k).hidden = tab === 'all' ? (k === 'dod' || k === 'flow') : k !== tab;
+        });
         if (tab === 'dod') {
             if (!quiet && !$('filter-dod').checked) { $('filter-dod').checked = true; toggleDod(true); }
             return;
@@ -2384,7 +2534,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const p = allSites.filter(s => s.__cat === 'project');
         $('count-facilities').textContent = f.length;
         $('count-projects').textContent = p.length;
+        $('count-all').textContent = f.length + p.length;
         $('count-runs').textContent = DOD_RUNS.length;
+        if (typeof updateFlowCounts === 'function') updateFlowCounts();
         $('count-fac-mapped').textContent = f.filter(hasXY).length + ' / ' + f.length;
         $('count-proj-mapped').textContent = p.filter(hasXY).length + ' / ' + p.length;
         renderKey();
@@ -2405,6 +2557,7 @@ document.addEventListener('DOMContentLoaded', function() {
              `<span>${facilitySymbol('producing', '#555')}</span><span>${t('dir_producing')}</span>` +
              `<span>${facilitySymbol('mixed', '#555')}</span><span>${t('dir_mixed')}</span></div>`;
         box.innerHTML = h;
+        if (typeof updateFlowCounts === 'function') updateFlowCounts();
     }
 
     // ── panel folding and dragging ──
@@ -2706,18 +2859,39 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCounts();
         renderDeck();
         whenStyleReady(() => { ensureSiteLayers(); refreshSiteData(); });
+        loadFlows();
         updateStatus();
 
         const h = readHash();
         const viewed = applyView(h);
         if (h.site) openFromHash(h.site, viewed);
-        else if (!viewed) {
-            const b = new maplibregl.LngLatBounds();
-            allSites.filter(hasXY).forEach(s => b.extend([num(s.Longitude), num(s.Latitude)]));
-            if (!b.isEmpty()) map.fitBounds(b, { padding: visiblePadding(), maxZoom: 10, duration: 0 });
+        else if (!viewed) fitAll(0);
+        // Embedded in a frame, the map is laid out before the frame has its
+        // final size, and a fit computed against a box of the wrong size
+        // opens on the whole world. Watch the container instead, and while
+        // nobody has touched the map, fit it again each time the box moves.
+        if (!viewed && !h.site && window.ResizeObserver) {
+            let touched = false;
+            const stop = () => { touched = true; };
+            ['dragstart', 'zoomstart', 'rotatestart', 'pitchstart'].forEach(ev => map.once(ev, stop));
+            const ro = new ResizeObserver(() => { map.resize(); if (!touched) fitAll(0); });
+            ro.observe(map.getContainer());
+            setTimeout(() => ro.disconnect(), 10000);
         }
       })
       .catch(err => { console.error('Data load failed:', err); updateStatus(t('loadfail')); });
+
+    // One place that knows how the map opens: every located record, with
+    // room left for the chrome, and never so far out that the region
+    // stops being the subject.
+    function fitAll(duration) {
+        const b = new maplibregl.LngLatBounds();
+        allSites.filter(hasXY).forEach(s => b.extend([num(s.Longitude), num(s.Latitude)]));
+        if (b.isEmpty()) return;
+        map.fitBounds(b, { padding: visiblePadding(), maxZoom: 10, duration: duration || 0 });
+        if (map.getZoom() < 5.5) map.setZoom(5.5);
+    }
+    window.__fitAll = fitAll;
 
     function openFromHash(id, keepView) {
         if (!id) return;
@@ -2796,7 +2970,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             // Seen from straight above, relief is invisible; tilt, in place.
             if (!keepCamera && map.getPitch() < 30)
-                map.easeTo({ pitch: 62, bearing: map.getBearing() || -18, duration: dur(1000), essential: true });
+                // Tilting a whole country shows a flat slab under a white sky.
+            map.easeTo({ pitch: 62, zoom: Math.max(map.getZoom(), 11.5),
+                         bearing: map.getBearing() || -18, duration: dur(1000), essential: true });
             $('grp-3d').classList.remove('closed');
         } else {
             map.setTerrain(null);
@@ -2855,6 +3031,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.__sizeDrawer = sizeDrawer;
     addEventListener('resize', sizeDrawer);
+    // The table changes the map's height without a window resize, so watch the
+    // stage itself rather than trying to guess when.
+    if (window.ResizeObserver) new ResizeObserver(sizeDrawer).observe($('stage'));
     sizeDrawer();
 
     function closePanes() {
@@ -3236,6 +3415,336 @@ document.addEventListener('DOMContentLoaded', function() {
         updateStatus();
     });
 
+    // ─────────────────────────────────────────────────────────────────────
+    // FLOWS. An edge from a construction project to the site that received
+    // its mass. Three classes of evidence, drawn apart: documented, shared
+    // ownership, modelled. Nothing here carries colour — evidence is a line
+    // treatment, so a modelled arc cannot pass for a receipt.
+    // ─────────────────────────────────────────────────────────────────────
+    let allFlows = [];
+    let flowsReady = false;
+    let hotFlowId = null;
+    let flowSort = { key: 'Volume_m3', dir: -1 };
+    const FLOW_LAYERS = ['flow-modelled', 'flow-structural', 'flow-evidenced'];
+    const EV_KEYS = ['evidenced', 'structural', 'modelled'];
+    const evOf = f => {
+        const v = String(f.EvidenceClass || '').trim().toLowerCase();
+        return EV_KEYS.indexOf(v) >= 0 ? v : 'modelled';
+    };
+
+    function tagFlows(rows) {
+        const byUid = new Map(allSites.map(s => [uidOf(s), s]));
+        return rows.filter(r => r.FlowUID || r.FromUID || r.ToUID).map((r, i) => {
+            const from = byUid.get(String(r.FromUID || '').trim());
+            const to   = byUid.get(String(r.ToUID   || '').trim());
+            r.__cat = 'flow';
+            r.__ev = evOf(r);
+            r.__from = from || null;
+            r.__to = to || null;
+            r.__fromName = (from && from.Name) || r.FromName || r.FromUID || '';
+            r.__toName   = (to && to.Name)     || r.ToName   || r.ToUID   || '';
+            r.__xy = !!(from && to && hasXY(from) && hasXY(to));
+            if (!r.FlowUID) r.FlowUID = 'F' + String(i + 1).padStart(4, '0');
+            return r;
+        });
+    }
+
+    const flowPasses = f => show.flow.on && show.flow.cls.has(f.__ev);
+
+    function flowRows() {
+        const col = FLOW_COLS.find(c => c.key === flowSort.key);
+        const d = flowSort.dir;
+        return allFlows.filter(flowPasses).sort((a, b) => {
+            if (col && col.num) {
+                const av = qty(a[flowSort.key]), bv = qty(b[flowSort.key]);
+                const an = Number.isFinite(av), bn = Number.isFinite(bv);
+                if (!an && !bn) return 0;
+                if (!an) return 1;
+                if (!bn) return -1;
+                return (av - bv) * d;
+            }
+            if (col && col.sort) {
+                const av = col.sort(a), bv = col.sort(b);
+                return (av < bv ? -1 : av > bv ? 1 : 0) * d;
+            }
+            if (!col) return 0;
+            return String(col.get(a) || '').localeCompare(String(col.get(b) || ''), 'nb') * d;
+        });
+    }
+
+    function clearDeckEmpty() {
+        const wrap = document.querySelector('#deck .deck-scroll');
+        if (!wrap) return;
+        const e = wrap.querySelector('.deck-empty');
+        if (e) e.remove();
+        $('site-table').hidden = false;
+    }
+
+    function sayInDeck(title, body) {
+        const wrap = document.querySelector('#deck .deck-scroll');
+        const d = document.createElement('div');
+        d.className = 'deck-empty';
+        d.innerHTML = '<b>' + esc(title) + '</b>' + esc(body);
+        wrap.appendChild(d);
+    }
+
+    function renderFlowDeck() {
+        clearDeckEmpty();
+        deckHeadRow.innerHTML = '';
+        deckBody.innerHTML = '';
+        const table = $('site-table');
+        const oldCg = table.querySelector('colgroup');
+        if (oldCg) oldCg.remove();
+
+        const title = $('deck-title');
+        title.setAttribute('data-en', t2('flows', 'en'));
+        title.setAttribute('data-no', t2('flows', 'no'));
+        title.textContent = t('flows');
+
+        if (!allFlows.length) {
+            table.hidden = true;
+            sayInDeck(t('flows_none_t'), t('flows_none_b'));
+            deckCount.textContent = '0 ' + t('records');
+            renderChips();
+            return;
+        }
+
+        const cg = document.createElement('colgroup');
+        FLOW_COLS.forEach(c => {
+            const col = document.createElement('col');
+            if (c.w) col.style.width = c.w;
+            const cc = c.cls ? c.cls.split(' ').filter(x => x.startsWith('c-')).join(' ') : '';
+            if (cc) col.className = cc;
+            cg.appendChild(col);
+            const th = document.createElement('th');
+            th.textContent = t(c.th);
+            th.className = [c.num ? 'num' : '', cc].join(' ').trim();
+            if (flowSort.key === c.key) th.textContent += flowSort.dir < 0 ? ' \u2193' : ' \u2191';
+            th.setAttribute('aria-sort', flowSort.key === c.key
+                ? (flowSort.dir < 0 ? 'descending' : 'ascending') : 'none');
+            th.onclick = () => {
+                flowSort = flowSort.key === c.key
+                    ? { key: c.key, dir: -flowSort.dir }
+                    : { key: c.key, dir: c.num ? -1 : 1 };
+                renderFlowDeck();
+            };
+            deckHeadRow.appendChild(th);
+        });
+        table.insertBefore(cg, table.firstChild);
+
+        const rows = flowRows();
+        const frag = document.createDocumentFragment();
+        rows.forEach(f => {
+            const tr = document.createElement('tr');
+            tr.dataset.flow = f.FlowUID;
+            if (!f.__xy) tr.classList.add('nogeo');
+            FLOW_COLS.forEach(c => {
+                const td = document.createElement('td');
+                const v = c.get(f);
+                if (c.key === '__ev') {
+                    td.innerHTML = '<span class="ev ' + f.__ev + '"></span>' + esc(v);
+                } else if (c.key === 'SourceURL' && safeUrl(v)) {
+                    td.innerHTML = '<a href="' + esc(safeUrl(v)) + '" target="_blank" rel="noopener">'
+                                 + esc(String(v).replace(/^https?:\/\//, '')) + '</a>';
+                } else {
+                    td.textContent = v;
+                }
+                td.title = String(v == null ? '' : v);
+                td.className = [c.num ? 'num' : '', c.cls || ''].join(' ').trim();
+                tr.appendChild(td);
+            });
+            tr.onclick = () => frameFlow(f, true);
+            tr.onmouseenter = () => hotFlow(f.FlowUID);
+            tr.onmouseleave = () => hotFlow(null);
+            frag.appendChild(tr);
+        });
+        deckBody.appendChild(frag);
+        if (!rows.length) sayInDeck(t('flows_empty'), '');
+        deckCount.textContent = rows.length + ' ' + t('records');
+        renderChips();
+    }
+
+    function renderFlowChips(box) {
+        FLOW_CLASSES.forEach(ci => {
+            const n = allFlows.filter(f => f.__ev === ci.k).length;
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'chip';
+            const on = show.flow.on && show.flow.cls.has(ci.k);
+            b.setAttribute('aria-pressed', String(on));
+            b.title = ci[currentLang];
+            b.innerHTML = '<span class="ev ' + ci.k + '"></span>' + esc(ci[currentLang])
+                        + ' <span class="ct">' + n + '</span>';
+            b.onclick = e => {
+                e.stopPropagation();
+                const set = show.flow.cls;
+                if (e.altKey) { set.clear(); set.add(ci.k); }
+                else if (set.has(ci.k)) set.delete(ci.k); else set.add(ci.k);
+                if (!show.flow.on) { show.flow.on = true; $('filter-flows').checked = true; }
+                applyFlowFilter();
+                renderFlowDeck();
+            };
+            box.appendChild(b);
+        });
+    }
+
+    // A bowed line, always to the right of the direction of travel, so two
+    // places that trade both ways draw two arcs rather than one line.
+    function arc(a, b) {
+        const N = 36, BOW = 0.13, pts = [];
+        const dx = b[0] - a[0], dy = b[1] - a[1];
+        const cx = (a[0] + b[0]) / 2 + dy * BOW;
+        const cy = (a[1] + b[1]) / 2 - dx * BOW;
+        for (let i = 0; i <= N; i++) {
+            const s = i / N, u = 1 - s;
+            pts.push([u * u * a[0] + 2 * u * s * cx + s * s * b[0],
+                      u * u * a[1] + 2 * u * s * cy + s * s * b[1]]);
+        }
+        return pts;
+    }
+
+    function flowFeatures() {
+        const drawn = allFlows.filter(f => f.__xy);
+        const vols = drawn.map(f => qty(f.Volume_m3)).filter(v => Number.isFinite(v) && v > 0);
+        const max = vols.length ? Math.max.apply(null, vols) : 0;
+        return { type: 'FeatureCollection', features: drawn.map(f => {
+            const v = qty(f.Volume_m3);
+            const w = (max > 0 && Number.isFinite(v) && v > 0) ? Math.sqrt(v / max) : 0.22;
+            return {
+                type: 'Feature',
+                id: f.FlowUID,
+                geometry: { type: 'LineString', coordinates: arc(
+                    [num(f.__from.Longitude), num(f.__from.Latitude)],
+                    [num(f.__to.Longitude),   num(f.__to.Latitude)]) },
+                properties: { fid: f.FlowUID, ev: f.__ev, w: w,
+                              lbl: f.__fromName + ' \u2192 ' + f.__toName }
+            };
+        }) };
+    }
+
+    function ensureFlowLayers() {
+        if (!map.getSource('flows')) {
+            map.addSource('flows', { type: 'geojson', data: flowFeatures(), promoteId: 'fid' });
+        } else {
+            map.getSource('flows').setData(flowFeatures());
+        }
+        const before = under(['site-hot', 'site-sym', 'prof-line']);
+        const HOT = ['boolean', ['feature-state', 'hot'], false];
+        const W = base => ['*', ['case', HOT, 2.2, 1],
+                           ['+', base, ['*', ['get', 'w'], 2.6]]];
+        const SPEC = {
+            'flow-modelled':   { ev: 'modelled',   col: '#7d7d7d', dash: [3.5, 3],  base: 0.5, op: 0.55 },
+            'flow-structural': { ev: 'structural', col: '#111111', dash: [1, 2.2],  base: 0.6, op: 0.80 },
+            'flow-evidenced':  { ev: 'evidenced',  col: '#111111', dash: null,      base: 0.7, op: 0.95 }
+        };
+        FLOW_LAYERS.forEach(id => {
+            if (map.getLayer(id)) return;
+            const s = SPEC[id];
+            const paint = { 'line-color': s.col, 'line-width': W(s.base),
+                            'line-opacity': ['case', HOT, 1, s.op] };
+            if (s.dash) paint['line-dasharray'] = s.dash;
+            map.addLayer({ id: id, type: 'line', source: 'flows',
+                filter: ['==', ['get', 'ev'], s.ev],
+                layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: paint }, before);
+            map.on('mousemove', id, e => {
+                if (toolBusy() || !e.features || !e.features.length) return;
+                map.getCanvas().style.cursor = 'pointer';
+                hotFlow(e.features[0].properties.fid);
+                updateStatus(e.features[0].properties.lbl);
+            });
+            map.on('mouseleave', id, () => {
+                if (!toolBusy()) map.getCanvas().style.cursor = '';
+                hotFlow(null);
+            });
+            map.on('click', id, e => {
+                if (toolBusy() || !e.features || !e.features.length) return;
+                const f = allFlows.find(x => x.FlowUID === e.features[0].properties.fid);
+                if (!f) return;
+                if (deckScope !== 'flow') selectTab('flow');
+                if (deckSize === 'closed') setDeckSize('half');
+                frameFlow(f);
+            });
+        });
+        flowsReady = true;
+        applyFlowFilter();
+    }
+
+    function hotFlow(id) {
+        if (id === hotFlowId) return;
+        if (flowsReady && map.getSource('flows')) {
+            if (hotFlowId) map.setFeatureState({ source: 'flows', id: hotFlowId }, { hot: false });
+            if (id)        map.setFeatureState({ source: 'flows', id: id },        { hot: true });
+        }
+        if (deckScope === 'flow') {
+            deckBody.querySelectorAll('tr.hot').forEach(r => r.classList.remove('hot'));
+            if (id) {
+                const r = deckBody.querySelector('tr[data-flow="' + CSS.escape(id) + '"]');
+                if (r) r.classList.add('hot');
+            }
+        }
+        hotFlowId = id;
+    }
+
+    function frameFlow(f, fromRow) {
+        hotFlow(f.FlowUID);
+        if (!f.__xy) { updateStatus(t('flows_nogeo')); return; }
+        const b = new maplibregl.LngLatBounds();
+        b.extend([num(f.__from.Longitude), num(f.__from.Latitude)]);
+        b.extend([num(f.__to.Longitude),   num(f.__to.Latitude)]);
+        map.fitBounds(b, { padding: visiblePadding(), maxZoom: 13,
+                           duration: dur(900), essential: true });
+        if (!fromRow) {
+            const r = deckBody.querySelector('tr[data-flow="' + CSS.escape(f.FlowUID) + '"]');
+            if (r && deckSize !== 'closed') {
+                const sc = r.closest('.deck-scroll');
+                sc.scrollTo({ top: Math.max(0, r.offsetTop - sc.clientHeight / 2 + r.offsetHeight),
+                              behavior: reduceMotion ? 'auto' : 'smooth' });
+            }
+        }
+    }
+
+    function applyFlowFilter() {
+        show.flow.on = $('filter-flows').checked;
+        if (flowsReady) {
+            FLOW_LAYERS.forEach(id => {
+                if (!map.getLayer(id)) return;
+                const ev = id.replace('flow-', '');
+                const on = show.flow.on && show.flow.cls.has(ev);
+                map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
+            });
+        }
+        updateFlowCounts();
+    }
+    $('filter-flows').addEventListener('change', () => {
+        applyFlowFilter();
+        if (deckScope === 'flow') renderFlowDeck();
+    });
+
+    function updateFlowCounts() {
+        const drawn = allFlows.filter(f => f.__xy).length;
+        $('count-flows').textContent = allFlows.length;
+        $('count-flow-drawn').textContent = allFlows.length
+            ? drawn + ' / ' + allFlows.length : '\u2013';
+        document.querySelectorAll('[data-flow-ct]').forEach(el => {
+            const n = allFlows.filter(f => f.__ev === el.dataset.flowCt).length;
+            el.textContent = n || '';
+        });
+    }
+
+    function loadFlows() {
+        if (!FLOWS_CSV) { updateFlowCounts(); return; }
+        parseCsv(FLOWS_CSV).then(r => {
+            allFlows = tagFlows(r.data || []);
+            updateFlowCounts();
+            whenStyleReady(ensureFlowLayers);
+            if (deckScope === 'flow') renderFlowDeck();
+        }).catch(err => {
+            console.error('Flows load failed:', err);
+            updateFlowCounts();
+        });
+    }
+
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
             if (profileMode) { setProfileMode(false); openPane('profile-panel'); clearProfile(); return; }
@@ -3247,6 +3756,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (e.key === 'Enter' && profileMode) runProfile();
     });
+
+    // The corner keeps one width. A scale bar that changes length as you
+    // zoom belongs on a line that is already horizontal.
+    (function moveScale() {
+        const sc = document.querySelector('.maplibregl-ctrl-scale');
+        const strip = document.querySelector('.status-strip');
+        const crs = $('btn-crs');
+        if (sc && strip && crs) strip.insertBefore(sc, crs);
+    })();
 
     try {
         const savedLang = localStorage.getItem('db_lang');
