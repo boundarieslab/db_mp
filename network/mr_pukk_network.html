@@ -52,8 +52,8 @@
     <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="#666"/></svg> Division</div>
     <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="none" stroke="#666" stroke-width="1.5"/></svg> Subsidiary</div>
     <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#666" stroke-width="1.5"/></svg> Affiliated site</div>
-    <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#1F9E3A" stroke-width="1.5"/><line x1="1" y1="1" x2="13" y2="13" stroke="#1F9E3A" stroke-width="1.5"/></svg> Construction project</div>
-    <div class="legend-item"><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="#E8141E" stroke-width="1.5"/><path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/></svg> Facility</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#00FF00" stroke-width="1.5"/><line x1="1" y1="1" x2="13" y2="13" stroke="#00FF00" stroke-width="1.5"/></svg> Construction project</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="#FF0000" stroke-width="1.5"/><path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/></svg> Facility</div>
 </div>
 
 <div id="network-container"></div>
@@ -134,8 +134,8 @@
 
     // ── Shared node vocabulary ────────────────────────────────────────────
     // One shape set for every graph in this repo. Colours are the site's:
-    // black, grey, --col-facility #E8141E (reception), --col-project #1F9E3A (construction).
-    var DB_BLACK = "#000", DB_GREY = "#666", DB_RECEPTION = "#E8141E", DB_PROJECT = "#1F9E3A";
+    // black, grey, --col-facility #FF0000 (reception), --col-project #00FF00 (construction).
+    var DB_BLACK = "#000", DB_GREY = "#666", DB_RECEPTION = "#FF0000", DB_PROJECT = "#00FF00";
 
     function dbShape(node) {
         var ns = "http://www.w3.org/2000/svg";
@@ -270,7 +270,7 @@
             g.appendChild(bg);
             var c = document.createElementNS(ns, "circle");
             c.setAttribute("r", r); c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#E8141E"); c.setAttribute("stroke-width", "1");
+            c.setAttribute("stroke", "#FF0000"); c.setAttribute("stroke-width", "1");
             var pa = document.createElementNS(ns, "path");
             pa.setAttribute("fill", "#000");
             pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
@@ -531,9 +531,9 @@
   if(!fc||!/^[0-9a-fA-F]{6}$/.test(fc)) return;
   fc='#'+fc.toUpperCase();
   function paint(){
-    document.querySelectorAll('[stroke="#E8141E"],[fill="#E8141E"]').forEach(function(e){
-      if(e.getAttribute('stroke')==='#E8141E') e.setAttribute('stroke',fc);
-      if(e.getAttribute('fill')==='#E8141E') e.setAttribute('fill',fc);
+    document.querySelectorAll('[stroke="#FF0000"],[fill="#FF0000"]').forEach(function(e){
+      if(e.getAttribute('stroke')==='#FF0000') e.setAttribute('stroke',fc);
+      if(e.getAttribute('fill')==='#FF0000') e.setAttribute('fill',fc);
     });
   }
   document.documentElement.style.setProperty('--col-facility',fc);

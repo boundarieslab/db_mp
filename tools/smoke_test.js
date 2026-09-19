@@ -72,9 +72,18 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
       return o.apply(this, arguments);
     };
   });
-  const openTree = () => p.evaluate(() => {
-    document.querySelectorAll('#bar .grp').forEach(g => g.classList.remove('closed'));
-  });
+  // The layer tree lives in the drawer now, so it has to be out before the
+  // checks can reach a control inside it. Everything is shut first, so this is
+  // the same move whatever the step before left open.
+  const openTree = async () => {
+    await p.evaluate(async () => {
+      window.__closePanes();
+      window.__openPane('data-panel');
+      await new Promise(r => setTimeout(r, 400));
+      document.querySelectorAll('#bar .grp').forEach(g => g.classList.remove('closed'));
+    });
+    await p.waitForTimeout(140);
+  };
   const vis = id => p.evaluate(i => { const m = window.__M; return !!m.getLayer(i) && m.getLayoutProperty(i, 'visibility') !== 'none'; }, id);
 
   await p.goto('http://127.0.0.1:8901/index.html'); await p.waitForTimeout(2500);
@@ -88,27 +97,54 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   const bar0 = await p.evaluate(() => ({
     groups: document.querySelectorAll('#bar .grp.top').length,
     closed: [...document.querySelectorAll('#bar .grp.top')].every(g => g.classList.contains('closed')),
-    tabs: [...document.querySelectorAll('#bar .tab')].map(t => t.dataset.tab).join(','),
-    tools: document.querySelectorAll('#bar .toolbar .btn').length,
+    tabs: [...document.querySelectorAll('#tabstrip .tab')].map(t => t.dataset.tab).join(','),
+    tabsOutside: !document.querySelector('#bar .tab'),
+    tools: document.querySelectorAll('#bar .rail .btn').length,
+    railW: Math.round(document.querySelector('#bar .rail').getBoundingClientRect().width),
+    barW: Math.round(document.getElementById('bar').getBoundingClientRect().width),
     right: !!document.getElementById('tools-win'),
-    icons: [...document.querySelectorAll('#bar .toolbar .btn')].every(b => b.querySelector('svg.px') && !b.textContent.trim())
+    open: document.getElementById('bar').classList.contains('open'),
+    icons: [...document.querySelectorAll('#bar .rail .btn:not(.txt)')].every(b => b.querySelector('svg.px') && !b.textContent.trim())
   }));
-  ok(bar0.tabs === 'facility,project,dod', 'one bar with the three tabs (' + bar0.tabs + ')');
-  ok(bar0.tools >= 8 && !bar0.right, 'the tools live in it, and there is no second window on the right (' + bar0.tools + ')');
+  ok(bar0.tabs === 'facility,project,dod' && bar0.tabsOutside,
+     'the three tabs stand outside the bar (' + bar0.tabs + ')');
+  ok(bar0.tools >= 10 && !bar0.right, 'every tool is on the rail, and there is no second window on the right (' + bar0.tools + ')');
   ok(bar0.icons, 'every tool is a pixel icon with no text on it');
   ok(bar0.groups === 3 && bar0.closed, 'the layer groups start folded (' + bar0.groups + ')');
-  const fold = await p.evaluate(() => {
+  ok(!bar0.open && bar0.railW <= 40 && bar0.barW <= 44,
+     'the bar opens shut, a rail and nothing else (' + bar0.railW + '/' + bar0.barW + 'px)');
+  const drawer = await p.evaluate(async () => {
     const w = document.getElementById('bar');
-    const before = w.getBoundingClientRect().height;
     document.getElementById('btn-menu').click();
-    const after = w.getBoundingClientRect().height;
+    await new Promise(r => setTimeout(r, 420));
+    const open = Math.round(w.getBoundingClientRect().width);
     document.getElementById('btn-menu').click();
-    return { before: Math.round(before), after: Math.round(after) };
+    await new Promise(r => setTimeout(r, 420));
+    return { open, shut: Math.round(w.getBoundingClientRect().width) };
   });
-  ok(fold.after < 40 && fold.before > 200, 'and it folds to its search strip (' + fold.before + ' -> ' + fold.after + 'px)');
+  ok(drawer.open > 200 && drawer.shut <= 44,
+     'the layers button slides the drawer out and back (' + drawer.shut + ' -> ' + drawer.open + 'px)');
+  // They used to be pushed sideways by the bar's width. Now the offset is the
+  // rail and nothing else, so opening the drawer must not move them a pixel.
+  const nudge = await p.evaluate(async () => {
+    const box = () => { const r = document.querySelector('.maplibregl-ctrl-bottom-left');
+                        const b = r.getBoundingClientRect(); return { l: Math.round(b.left), kids: r.children.length }; };
+    const shut = box();
+    window.__openPane('data-panel');
+    await new Promise(r => setTimeout(r, 420));
+    const open = box();
+    window.__closePanes();
+    await new Promise(r => setTimeout(r, 420));
+    return { shut, open, rail: Math.round(document.querySelector('#bar .rail').getBoundingClientRect().right) };
+  });
+  ok(nudge.shut.kids >= 3, 'the compass, zoom and scale are all there (' + nudge.shut.kids + ')');
+  ok(nudge.shut.l === nudge.open.l && nudge.shut.l >= nudge.rail,
+     'and opening the drawer does not move them (' + nudge.shut.l + ' -> ' + nudge.open.l + 'px)');
   const base0 = await p.evaluate(() => ({ sat: document.getElementById('base-sat').checked }));
   ok(base0.sat && await vis('satellite') && !(await vis('graytone')), 'the map opens on satellite imagery');
   ok(await p.evaluate(() => window.__M.dragRotate.isEnabled()), 'right-drag turns and tilts the map');
+  await p.evaluate(() => window.__openPane('data-panel'));
+  await p.waitForTimeout(350);
   await openTree();
   await p.waitForTimeout(300);
 
@@ -159,12 +195,51 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     const by = {}; f.forEach(x => by[x.properties.uid] = x.properties.cls + ' ' + x.properties.col);
     return by;
   });
-  ok(/^active #E8141E/.test(cls.AK_AH_001 || ''), 'an active reception site is red (' + cls.AK_AH_001 + ')');
-  ok(/^old #F2C200/.test(cls.AK_LI_002 || ''), '"closed (i etterdrift)" is yellow (' + cls.AK_LI_002 + ')');
-  ok(/^contaminated #8A2BE2/.test(cls.VF_HM_001 || ''), 'a hazardous-waste landfill is purple (' + cls.VF_HM_001 + ')');
-  ok(/^active #1F9E3A/.test(cls.CP_001 || ''), 'an active construction project is green (' + cls.CP_001 + ')');
+  ok(/^active #FF0000/.test(cls.AK_AH_001 || ''), 'an active reception site is pure red (' + cls.AK_AH_001 + ')');
+  ok(/^old #FFD400/.test(cls.AK_LI_002 || ''), '"closed (i etterdrift)" is pure yellow (' + cls.AK_LI_002 + ')');
+  ok(/^contaminated #B300FF/.test(cls.VF_HM_001 || ''), 'a hazardous-waste landfill is pure violet (' + cls.VF_HM_001 + ')');
+  ok(/^active #00FF00/.test(cls.CP_001 || ''), 'an active construction project is pure green (' + cls.CP_001 + ')');
   ok(!cls.AK_XX_001, 'a record with no coordinates is not drawn');
-  ok(!(await p.evaluate(() => document.querySelectorAll('.maplibregl-marker').length)), 'there are no pictogram markers on the map');
+  const sat = await p.evaluate(() => {
+    const hsl = h => { h = h.slice(1);
+      const v = [0,2,4].map(i => parseInt(h.slice(i,i+2),16)/255);
+      const mx = Math.max(...v), mn = Math.min(...v), l = (mx+mn)/2;
+      if (mx === mn) return { s: 0, l };
+      return { s: (mx-mn)/(1-Math.abs(2*l-1)), l };
+    };
+    const out = [];
+    [...document.querySelectorAll('#key-list .swatch')].forEach(() => {});
+    window.__CLASSES && 0;
+    const s = window.__M.getSource('sites'); const f = s ? s._data.features : [];
+    f.forEach(x => { const c = x.properties.col; if (c !== '#FFFFFF') out.push([c, hsl(c).s]); });
+    return out;
+  });
+  ok(sat.length > 0 && sat.every(([c, v]) => v > 0.99),
+     'every status colour is fully saturated (' + sat.filter(([c,v]) => v <= 0.99).map(x=>x[0]).join(',') + 'none below)');
+
+  console.log('the marks');
+  const marks = await p.evaluate(() => {
+    const s = window.__M.getSource('sites'); const f = s ? s._data.features : [];
+    const drawn = window.__M.queryRenderedFeatures({ layers: ['site-mark', 'site-plate'] });
+    return { withPic: f.filter(x => /^mk-/.test(x.properties.pic || '')).length,
+             withPlate: f.filter(x => /^plate-(facility|project)-/.test(x.properties.plate || '')).length,
+             total: f.length, drawn: drawn.length,
+             images: ['mk-f_massemottak', 'plate-facility-active', 'plate-project-active']
+                       .filter(i => window.__M.hasImage(i)),
+             layers: ['site-glow', 'site-plate', 'site-mark'].filter(i => window.__M.getLayer(i)),
+             vis: ['site-plate', 'site-mark'].map(i => window.__M.getLayer(i) ? window.__M.getLayoutProperty(i, 'visibility') : 'gone'),
+             centre: window.__M.getCenter().toArray().map(v => +v.toFixed(3)), z: +window.__M.getZoom().toFixed(2),
+             onScreen: (window.__M.getSource('sites') ? window.__M.getSource('sites')._data.features : [])
+                        .filter(f => { const pt = window.__M.project(f.geometry.coordinates);
+                                       return pt.x > 0 && pt.y > 0 && pt.x < innerWidth && pt.y < innerHeight; }).length };
+  });
+  ok(marks.withPic === marks.total && marks.total > 0,
+     'every site carries a pictogram (' + marks.withPic + '/' + marks.total + ')');
+  ok(marks.withPlate === marks.total, 'and a plate: round for reception, square for construction');
+  ok(marks.images.length === 3, 'the mark and plate images are loaded (' + marks.images.join(', ') + ')');
+  ok(marks.drawn > 0, 'the marks are actually drawn on the map (' + marks.drawn + ')');
+  if (!marks.drawn) console.log('       layers=' + marks.layers.join(',') + ' vis=' + marks.vis.join(',')
+      + ' z=' + marks.z + ' centre=' + marks.centre.join(',') + ' onScreen=' + marks.onScreen);
 
   console.log('sidebar');
   await p.evaluate(()=>{location.hash='site=AK_AH_001';}); await p.waitForTimeout(3000);
@@ -227,6 +302,16 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   });
   ok(shut.closed && shut.h < 40, 'the table starts closed (' + shut.h + 'px)');
   ok(shut.chips >= 3, 'with the colour key in its header even when closed (' + shut.chips + ' chips)');
+  const headToggle = await p.evaluate(async () => {
+    const d = document.getElementById('deck'), head = document.querySelector('.deck-head');
+    const h = () => Math.round(d.getBoundingClientRect().height);
+    head.click(); await new Promise(r => setTimeout(r, 400)); const open = h();
+    head.click(); await new Promise(r => setTimeout(r, 400)); const shut = h();
+    return { open, shut };
+  });
+  ok(headToggle.open > 150 && headToggle.shut < 40,
+     'a click on the bar opens the table and a second one shuts it (' + headToggle.shut + ' -> ' + headToggle.open + 'px)');
+  await openTree();
   await p.click('label[for="filter-facilities"]'); await p.waitForTimeout(400);
   await p.click('label[for="filter-facilities"]'); await p.waitForTimeout(600);   // the click toggled it; put it back
   const opened = await p.evaluate(() => {
@@ -239,13 +324,13 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
 
   // The chips are the legend and the switch.
   const rows0 = await p.evaluate(() => document.querySelectorAll('#site-table tbody tr').length);
-  const drawn0 = await p.evaluate(() => window.__M.querySourceFeatures('sites', { filter: window.__M.getFilter('site-dot') }).length);
+  const drawn0 = await p.evaluate(() => window.__M.querySourceFeatures('sites', { filter: window.__M.getFilter('site-plate') }).length);
   await p.click('#deck-chips .chip[data-cls="active"]'); await p.waitForTimeout(500);
   const chip = await p.evaluate(() => ({
     rows: document.querySelectorAll('#site-table tbody tr').length,
     pressed: document.querySelector('#deck-chips .chip[data-cls="active"]').getAttribute('aria-pressed'),
-    filter: JSON.stringify(window.__M.getFilter('site-dot')),
-    drawn: window.__M.queryRenderedFeatures({ layers: ['site-dot'] }).map(f => f.properties.uid)
+    filter: JSON.stringify(window.__M.getFilter('site-plate')),
+    drawn: window.__M.queryRenderedFeatures({ layers: ['site-plate'] }).map(f => f.properties.uid)
   }));
   ok(chip.pressed === 'false' && chip.rows < rows0, 'a colour box takes that status out of the table (' + rows0 + ' -> ' + chip.rows + ')');
   ok(!/facility:active/.test(chip.filter) && /facility:old/.test(chip.filter), 'and off the map');
@@ -290,12 +375,31 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     const stage = document.getElementById('stage').getBoundingClientRect();
     return { on: c.classList.contains('on'), img: c.dataset.img === '1',
              big: r.width >= 240, tiles: c.querySelectorAll('.aerial .tl').length,
-             inside: r.left >= stage.left - 1 && r.right <= stage.right + 1,
+             inside: r.left >= -1 && r.right <= innerWidth + 1 && r.top >= -1 && r.bottom <= innerHeight + 1,
+             nearPointer: true,
              lit: window.__M.getFeatureState({ source: 'sites', id: 'OS_OS_001' }).hot };
   });
   ok(hv.on && hv.big, 'hovering a row opens a large preview');
+  // It used to be pinned to the bottom left of the map, which put it on top of
+  // the table it was describing.
+  const follow = await p.evaluate(async () => {
+    const row = document.querySelector('#site-table tbody tr[data-uid="OS_OS_001"]');
+    const card = document.getElementById('hover-card');
+    const at = (x, y) => { row.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: x, clientY: y })); };
+    const r = row.getBoundingClientRect();
+    at(r.left + 60, r.top + 4); await new Promise(z => setTimeout(z, 60));
+    const a = card.getBoundingClientRect();
+    at(r.left + 520, r.top + 4); await new Promise(z => setTimeout(z, 60));
+    const b = card.getBoundingClientRect();
+    return { moved: Math.round(b.left - a.left), gapA: Math.round(a.left - (r.left + 60)),
+             deckTop: Math.round(document.getElementById('deck').getBoundingClientRect().top),
+             cardBottom: Math.round(b.bottom) };
+  });
+  ok(follow.moved > 300, 'and the preview follows the pointer along the row (' + follow.moved + 'px)');
+  ok(follow.cardBottom <= follow.deckTop + 2,
+     'sitting above the table rather than on top of it (' + follow.cardBottom + ' vs ' + follow.deckTop + ')');
   ok(hv.img && hv.tiles > 0, 'with the aerial of that site (' + hv.tiles + ' tiles)');
-  ok(hv.inside, 'the preview stays inside the map');
+  ok(hv.inside, 'the preview stays inside the window');
   ok(hv.lit === true, 'and the site lights up on the map');
 
   await p.click('#site-table tbody tr[data-uid="AK_XX_001"]');
@@ -328,6 +432,8 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   // throw "cannot load terrain, because there exists no source with ID".
   await p.reload();
   await hook();
+  await p.evaluate(() => window.__openPane('data-panel'));
+  await p.waitForTimeout(350);
   await openTree();
   await p.click('#terrain-3d', { timeout: 5000 }).catch(() => {});
   await p.waitForTimeout(6000);
@@ -487,8 +593,9 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   });
   ok(fp.all, 'footprints draw without being asked');
   ok(fp.n === 19, 'all 19 footprints are in the source (got ' + fp.n + ')');
-  ok(fp.col === '#E8141E' && /col/.test(fp.lineCol), 'they are coloured by status, not black (' + fp.col + ')');
-  ok(/4|7/.test(fp.blur) && /0\.16/.test(fp.fill), 'with a glow and a see-through fill');
+  ok(fp.col === '#FF0000' && /col/.test(fp.lineCol), 'they are coloured by status, not black (' + fp.col + ')');
+  ok(/6|9/.test(fp.blur) && /0\.18/.test(fp.fill) && /match/.test(fp.fill),
+     'with a glow, and a fill whose weight follows the status');
 
   await p.evaluate(() => { location.hash = 'site=AK_AH_001'; });
   await p.waitForTimeout(3000);
@@ -505,6 +612,8 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
 
   const covOff = await p.evaluate(() => !!window.__M.getSource('cov'));
   ok(!covOff, 'the plan sweep stays off until a box is ticked');
+  await p.evaluate(() => window.__openPane('data-panel'));
+  await p.waitForTimeout(350);
   await openTree();
   await p.click('#filter-plan-current'); await p.waitForTimeout(2500);
   const cov1 = await p.evaluate(() => {
@@ -557,7 +666,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     const f = c && c.querySelector('iframe');
     return { h: c ? c.offsetHeight : 0, src: f ? f.getAttribute('src') : '' };
   });
-  ok(/fc=E8141E/.test(gr.src), 'the ownership graph is told the site\'s colour');
+  ok(/fc=FF0000/.test(gr.src), 'the ownership graph is told the site\'s colour');
   ok(gr.h >= 240, 'with room to be read (' + gr.h + 'px)');
   const url = await p.evaluate(() => { window.__M.jumpTo({ center: [11.5, 59.8], zoom: 13.2, bearing: 30, pitch: 20 });
     return new Promise(res => setTimeout(() => { shareLink(); setTimeout(() => res(document.getElementById('share-notification').textContent), 300); }, 300)); });
@@ -576,13 +685,13 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   console.log('norwegian');
   await p.click('#btn-no'); await p.waitForTimeout(500);
   const no = await p.evaluate(() => ({
-    tab: document.querySelector('#tab-facility .tl').textContent,
+    tab: document.querySelector('#tabstrip #tab-facility .tl').textContent,
     dir: document.getElementById('deck-dir').textContent,
     sel: document.getElementById('btn-select').title,
     chips: document.getElementById('deck-chips').textContent,
-    icons: document.querySelectorAll('#bar .toolbar .btn svg.px').length
+    icons: document.querySelectorAll('#bar .rail .btn svg.px').length
   }));
-  ok(no.tab === 'MOTTAK' && no.dir === 'alle strømmer' && /aktiv/.test(no.chips), 'Norwegian reaches the tabs, the table and its key');
+  ok(no.tab === 'MOTTAK' && no.dir === 'alle strømmer' && /mottar nå/.test(no.chips), 'Norwegian reaches the tabs, the table and its key (' + no.chips.trim().slice(0, 40) + ')');
   ok(/å velge/.test(no.sel) && !/\\u/.test(no.sel), 'tooltips are real Norwegian, not escape codes (' + no.sel + ')');
   ok(no.icons >= 8, 'and switching language leaves the icons drawn');
   await p.click('#btn-en'); await p.waitForTimeout(300);
@@ -595,12 +704,13 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     const vw = window.innerWidth;
     const sb = document.getElementById('sidebar').getBoundingClientRect();
     const size = document.getElementById('deck-size').getBoundingClientRect();
-    return { folded: document.getElementById('bar').classList.contains('folded'),
+    return { folded: !document.getElementById('bar').classList.contains('open')
+                     && Math.round(document.querySelector('#bar .rail').getBoundingClientRect().width) <= 40,
              sheet: Math.round(sb.left) === 0 && Math.round(sb.right) === vw && sb.bottom >= document.getElementById('stage').getBoundingClientRect().bottom - 2,
              sizeOn: size.right <= vw && size.left >= 0,
              wide: document.documentElement.scrollWidth > vw };
   });
-  ok(pr.folded, 'on a phone the bar starts folded');
+  ok(pr.folded, 'on a phone the bar is a rail with the drawer shut');
   ok(pr.sheet, 'the site opens as a sheet from the bottom');
   ok(pr.sizeOn && !pr.wide, 'the table button stays on screen and nothing scrolls sideways');
   await ph.close();

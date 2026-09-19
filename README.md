@@ -57,15 +57,28 @@ The map needs WebGL; a browser without it gets a message rather than a grey rect
 +-- status line: what is shown, coordinates (WGS84 / UTM 33), attribution --+
 ```
 
-* **Colour is status and nothing else.** Reception sites: red active, orange to
-  come, yellow closed or historical, purple built for contaminated masses.
-  Construction: dark green finished, green under way, light green planned. Grey is
-  a record with no status. Blue is kept free. The classes and colours are in
-  `CLASSES` in `index.html`; the sheet's free-text `Status` is classified by
-  `statusClass()`, and a `StatusClass` column, if the sheet grows one, wins.
-* **No pictograms on the map.** A site with a footprint is drawn as its outline
-  (thin fill, soft glow); a site without one, or any site when zoomed out, is a dot.
-  The circle and square symbols live in the table's TYPE column.
+* **Colour is status and nothing else, and every hue is pure** — HSL saturation
+  100 across the board. The lifecycle is carried by hue, lightness and the line,
+  never by desaturating a colour.
+
+  | | closed / finished | running | still to come | other |
+  |---|---|---|---|---|
+  | Reception | `#FFD400` yellow | `#FF0000` red | `#FF8000` orange, dashed | `#B300FF` violet: built for contaminated masses |
+  | Construction | `#00B218` deep green | `#00FF00` green | `#95FF00` chartreuse, dashed | |
+  | Either | | | | `#FFFFFF` hollow, dotted: no status |
+  | Terrain change | | | | `#007FFF` blue |
+
+  Outline 2px and 18% fill while it runs, 1.5px and 12% once it is over, dashed
+  and 10% before it is built. The classes and colours are in `CLASSES` in
+  `index.html`; the sheet's free-text `Status` is classified by `statusClass()`,
+  and a `StatusClass` column, if the sheet grows one, wins.
+* **Red and green sit close together** for a red-green colour-blind reader, so
+  the two families are also told apart by shape: a reception site is drawn on a
+  round plate, a construction project on a square one.
+* **Every site is its pictogram.** The mark says what the place is, drawn black
+  and white; the plate under it says what state it is in. A site with a footprint
+  also draws its outline, at every zoom — pure colour, thin fill, soft glow. Marks
+  are fetched only when the map first asks for one.
 * **The table is the legend.** Its colour boxes filter the map and the table
   together; alt-click shows one colour alone. Hovering a row lights the site on the
   map and shows an aerial of the whole site; clicking opens it.
@@ -79,8 +92,9 @@ The map needs WebGL; a browser without it gets a message rather than a grey rect
 | Path | What it is |
 |---|---|
 | `index.html` | The entire application. |
-| `network/*.html` | One standalone ownership-network graph per facility, opened in an iframe in the site window. Reception nodes are red, construction nodes green; the map passes the site's own status colour as `?fc=RRGGBB`. |
-| `picto_grammar/*.png` | The older pictogram set, no longer drawn by the map. Naming: `f_*` facility, `cp_*` construction project; `_r_` receiving, `_s_` source; then the type. |
+| `network/*.html` | One standalone ownership-network graph per facility, opened in an iframe in the site window. Reception nodes are `#FF0000`, construction nodes `#00FF00`; the map passes the site's own status colour as `?fc=RRGGBB`. |
+| `picto_grammar/*.png` | The pictogram grammar at drawing size. Naming: `f_*` facility, `cp_*` construction project; `_r_` receiving, `_s_` source; then the type. |
+| `assets/marks/*.png` | The same 29 marks trimmed to 88px for the map, plus the 9 plates (`plate-<category>-<class>.png`). Rebuilt from `picto_grammar/` whenever the grammar changes. |
 | `data/facility_polygons.geojson` | Hand-resolved facility footprints, joined to the sheet by `uid`. |
 | `data/plan_coverage.geojson` | The national plan sweep, context only. |
 | `data/dod/<slug>/{z}/{x}/{y}.png` | Pre-rendered DoD tiles, z11-16. Only tiles containing change exist, so a 404 inside the layer bounds is the normal case. |
