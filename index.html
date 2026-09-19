@@ -27,13 +27,16 @@
   --sub:#7d7d7d;        /* secondary text                         */
   --sel:#f1f1f1;        /* selection                              */
   --tab:#f7f7f7;        /* a tab that is not in front             */
-  /* reception sites: yellow old, red active, orange to come; purple contaminated */
-  --r-old:#F2C200; --r-active:#E8141E; --r-future:#FF7A00; --r-cont:#8A2BE2;
-  /* construction: a run of greens */
-  --c-done:#0B6B2A; --c-active:#1F9E3A; --c-planned:#7DDC4B;
-  --unknown:#9A9A9A;
+  /* Every status colour is pure: HSL saturation 100 across the board.
+     Reception: yellow closed, red receiving, orange to come, violet
+     contaminated. Construction: a run of greens. Blue is terrain change. */
+  --r-old:#FFD400; --r-active:#FF0000; --r-future:#FF8000; --r-cont:#B300FF;
+  --c-done:#00B218; --c-active:#00FF00; --c-planned:#95FF00;
+  --terrain:#007FFF;   /* terrain change: the third tab */
+  --unknown:#FFFFFF;
   --row:25px;
   --gut:12px;
+  --rail:34px;
   --bar:300px;
   --ease:cubic-bezier(.2,.7,.2,1);
 }
@@ -66,13 +69,32 @@ button,input,select{font:inherit;color:inherit}
 .btn.small .px{transform:scale(.75)}
 
 /* ---------- the bar: everything on the left ---------- */
-#bar{position:absolute;left:10px;top:10px;width:var(--bar);max-height:calc(100% - 20px);
-  background:#fff;border:.5px solid var(--frame);z-index:20;display:flex;flex-direction:column;
-  transition:box-shadow .2s}
+/* The bar is a rail of tools with a drawer behind it. Shut, it is 34px of
+   icons and the map has the rest. The drawer slides out under whichever tool
+   is pressed, one at a time, and never covers the compass or the scale. */
+#bar{position:absolute;left:10px;top:10px;bottom:10px;z-index:20;
+  display:flex;align-items:flex-start;gap:0;pointer-events:none}
+#bar > *{pointer-events:auto}
+.rail{flex:0 0 auto;width:var(--rail);max-height:100%;overflow-y:auto;overflow-x:hidden;background:#fff;border:.5px solid var(--frame);
+  display:flex;flex-direction:column;gap:2px;padding:3px;align-items:center}
+.rail .sp{display:block;width:16px;height:0;border-top:.5px solid var(--rule);margin:3px 0}
+.rail .lang{display:flex;flex-direction:column;gap:2px;margin-top:3px;border-top:.5px solid var(--rule);padding-top:4px}
+.rail .btn.txt{width:26px;padding:0;justify-content:center;font-size:9px}
+.drawer{flex:0 0 auto;width:0;visibility:hidden;max-height:100%;overflow:hidden;background:#fff;
+  border:.5px solid var(--frame);border-left:0;opacity:0;
+  transition:width .22s var(--ease),opacity .16s}
+#bar.open .drawer{width:var(--bar);opacity:1;visibility:visible}
 .bar-head{flex:0 0 auto;border-bottom:.5px solid var(--frame);padding:3px;display:flex;align-items:center;gap:3px}
-.bar-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden}
-#bar.folded .bar-scroll{display:none}
-#bar.folded .bar-head{border-bottom:0}
+.bar-scroll{max-height:100%;overflow-y:auto;overflow-x:hidden;width:var(--bar)}
+#bar.folded .drawer{width:0;opacity:0}
+
+/* The three tabs are the primary navigation, so they never fold away. */
+#tabstrip{position:absolute;left:calc(var(--rail) + 18px);top:10px;z-index:19;
+  transition:left .22s var(--ease);
+  width:340px;max-width:calc(100% - var(--rail) - 28px);
+  background:var(--tab);border:.5px solid var(--frame)}
+#tabstrip .tabs{border-bottom:0}
+body.drawer-open #tabstrip{left:calc(var(--rail) + var(--bar) + 18px)}
 .drag-handle{cursor:move;touch-action:none}
 .drag-handle input,.drag-handle button{cursor:default}
 
@@ -110,7 +132,7 @@ button,input,select{font:inherit;color:inherit}
 .tab[aria-selected="true"]::before{transform:scaleX(1)}
 #tab-facility{--tabc:var(--r-active)}
 #tab-project{--tabc:var(--c-active)}
-#tab-dod{--tabc:linear-gradient(90deg,#4145ab,#39a2fc,#24eca6,#a4fc3b,#f3c63a,#f36315,#b11901)}
+#tab-dod{--tabc:var(--terrain)}
 .tab-body{padding:6px 8px 8px;border-bottom:.5px solid var(--frame);animation:fade .18s ease-out}
 @keyframes fade{from{opacity:0;transform:translateY(-2px)}to{opacity:1;transform:none}}
 
@@ -188,13 +210,17 @@ button,input,select{font:inherit;color:inherit}
 .timeline-labels{display:flex;justify-content:space-between;color:var(--sub);font-size:9px;font-family:PlexMono,monospace}
 
 /* ---------- map controls: compass, zoom, scale ---------- */
-.maplibregl-ctrl-bottom-left{z-index:6;margin:0 0 10px calc(var(--bar) + 20px);transition:margin .2s var(--ease)}
-body.bar-folded .maplibregl-ctrl-bottom-left{margin-left:0}
-.maplibregl-ctrl-bottom-left .maplibregl-ctrl{margin:0 0 6px 10px}
+/* Compass, zoom and scale sit bottom left, clear of the rail by a fixed
+   amount. The drawer opens over them and they do not move: nothing about the
+   bar's state is allowed to shift the map's own controls again. */
+.maplibregl-ctrl-bottom-left{z-index:6;margin:0 0 10px calc(var(--rail) + 16px)}
+.maplibregl-ctrl-bottom-left .maplibregl-ctrl{margin:0 0 6px 0}
+.maplibregl-ctrl-bottom-right{z-index:6;margin:0 10px 10px 0}
 .maplibregl-ctrl-scale{background:#fff;border:.5px solid var(--frame);border-top:0;color:#000;font:10px PlexMono,monospace;padding:0 4px}
 .maplibregl-ctrl-attrib{background:rgba(255,255,255,.85)!important;font:9px Plex,sans-serif}
 .maplibregl-ctrl-attrib a{color:var(--sub)}
-.maplibregl-ctrl-bottom-left .maplibregl-ctrl-group{background:#fff;border:.5px solid var(--frame);box-shadow:none}
+.maplibregl-ctrl-bottom-left .maplibregl-ctrl-group,
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group{background:#fff;border:.5px solid var(--frame);box-shadow:none}
 .maplibregl-ctrl-group button{width:24px;height:24px;background:#fff}
 .maplibregl-ctrl-group button+button{border-top:.5px solid var(--rule)}
 .maplibregl-ctrl-group button:hover{background:#f6f6f6}
@@ -324,7 +350,11 @@ iframe{border:0}
 .deck-empty{padding:10px var(--gut);color:var(--sub)}
 
 /* hover preview */
-#hover-card{position:absolute;z-index:40;background:#fff;border:.5px solid var(--frame);padding:4px;
+/* the pictogram in the TYPE column */
+td.sym{white-space:nowrap}
+td.sym .mk{width:17px;height:17px;object-fit:contain;vertical-align:middle;margin-right:5px}
+td.sym svg{vertical-align:middle}
+#hover-card{position:fixed;z-index:120;background:#fff;border:.5px solid var(--frame);padding:4px;
   pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s var(--ease);visibility:hidden}
 #hover-card.on{opacity:1;transform:none;visibility:visible}
 #hover-card .im{width:240px;height:160px;background:#f3f3f3 center/cover no-repeat;border:.5px solid var(--rule);position:relative;overflow:hidden}
@@ -346,9 +376,10 @@ iframe{border:0}
 
 /* ---------- narrow ---------- */
 @media (max-width:760px){
-  :root{--bar:calc(100vw - 20px)}
-  #bar{max-height:calc(100% - 20px)}
-  .maplibregl-ctrl-bottom-left{margin-left:0}
+  :root{--bar:calc(100vw - var(--rail) - 20px)}
+  #tabstrip{left:calc(var(--rail) + 14px);width:auto;right:10px}
+  body.drawer-open #tabstrip{display:none}
+  .tab .tl{font-size:8px}
   #sidebar{right:0;left:0;top:auto;bottom:0;width:auto;max-height:62%;border-width:.5px 0 0}
   #sidebar:not(.active){transform:translateY(24px)}
   .sb-media{height:150px}
@@ -372,27 +403,9 @@ iframe{border:0}
 <div id="map" role="application" aria-label="Map of mass reception sites, construction projects and terrain change in the Oslo region"></div>
 <div id="sel-box"></div>
 
-<!-- ================================ BAR ================================ -->
-<div id="bar">
-    <div class="bar-head">
-        <button type="button" class="btn" id="btn-menu" aria-expanded="true"
-                data-title-en="Fold the panel" data-title-no="Fold sammen panelet"
-                title="Fold the panel" aria-label="Fold the panel"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3h14v1h-14zM1 4h14v1h-14zM1 7h14v1h-14zM1 8h14v1h-14zM1 11h14v1h-14zM1 12h14v1h-14z"/></svg></button>
-        <div class="search-box">
-            <svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM10 3h1v1h-1zM2 4h1v1h-1zM10 4h1v1h-1zM2 5h1v1h-1zM10 5h1v1h-1zM2 6h1v1h-1zM10 6h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM4 8h5v1h-5zM10 8h1v1h-1zM11 9h1v1h-1zM12 10h1v1h-1zM13 11h1v1h-1zM14 12h1v1h-1z"/></svg>
-            <input type="text" class="search-input" id="search-input"
-                   data-ph-en="Site, operator, place or coordinates" data-ph-no="Sted, operatør, stedsnavn eller koordinater"
-                   placeholder="Site, operator, place or coordinates"
-                   aria-label="Search" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="search-results">
-            <div class="search-results" id="search-results" role="listbox"></div>
-        </div>
-        <button type="button" class="btn txt" id="btn-en" aria-pressed="true">EN</button>
-        <button type="button" class="btn txt" id="btn-no" aria-pressed="false">NO</button>
-    </div>
-
-    <div class="bar-scroll">
-        <!-- tabs: what the map and the table are about -->
-        <div class="tabs" role="tablist">
+<!-- =============================== TABS =============================== -->
+<div id="tabstrip">
+<div class="tabs" role="tablist">
             <button type="button" class="tab" id="tab-facility" role="tab" aria-selected="true" data-tab="facility" aria-controls="tb-facility">
                 <span class="tl" data-en="RECEPTION" data-no="MOTTAK">RECEPTION</span><span class="tc" id="count-facilities">–</span></button>
             <button type="button" class="tab" id="tab-project" role="tab" aria-selected="false" data-tab="project" aria-controls="tb-project">
@@ -400,216 +413,258 @@ iframe{border:0}
             <button type="button" class="tab" id="tab-dod" role="tab" aria-selected="false" data-tab="dod" aria-controls="tb-dod">
                 <span class="tl" data-en="TERRAIN CHANGE" data-no="TERRENG">TERRAIN CHANGE</span><span class="tc" id="count-runs">1</span></button>
         </div>
+</div>
 
-        <div class="tab-body" id="tb-facility" role="tabpanel">
-            <label class="row" for="filter-facilities">
-                <span class="nm"><b data-en="Reception sites on the map" data-no="Mottaksanlegg på kartet">Reception sites on the map</b>
-                    <span class="src" data-en="LUB db_database" data-no="LUB db_database">LUB db_database</span></span>
-                <span class="ct" id="count-fac-mapped"></span>
-                <input type="checkbox" id="filter-facilities" checked></label>
-            <label class="row" for="filter-footprints">
-                <span class="nm"><b data-en="Footprints" data-no="Anleggsomriss">Footprints</b>
-                    <span class="src" id="footprint-note" data-en="plan and cadastre, matched by hand" data-no="plan og matrikkel, koblet for hånd">plan and cadastre, matched by hand</span></span>
-                <span class="ct" id="count-footprints">–</span>
-                <input type="checkbox" id="filter-footprints" checked></label>
-            <div class="note" data-en="Colour is status. Tick the colours in the table below to choose what the map shows."
-                 data-no="Fargen er status. Kryss av fargene i tabellen under for å velge hva kartet viser.">Colour is status. Tick the colours in the table below to choose what the map shows.</div>
-            <!-- kept for saved links and the flow filter in the table -->
-            <div hidden>
-                <input type="checkbox" class="filter-facility-sub" value="producing" checked>
-                <input type="checkbox" class="filter-facility-sub" value="receiving" checked>
-                <input type="checkbox" class="filter-facility-sub" value="mixed" checked>
-            </div>
+<!-- ================================ BAR ================================ -->
+<!-- A rail of tools, and one drawer that opens behind whichever is pressed.
+     Nothing is open when the map loads: the map is the thing to look at. -->
+<div id="bar">
+    <div class="rail" role="toolbar" aria-label="Tools">
+        <button type="button" class="btn" id="btn-menu" aria-controls="data-panel" aria-expanded="false"
+                data-title-en="Layers and what is on the map" data-title-no="Lag og hva som er på kartet"
+                title="Layers and what is on the map" aria-label="Layers"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3h14v1h-14zM1 4h14v1h-14zM1 7h14v1h-14zM1 8h14v1h-14zM1 11h14v1h-14zM1 12h14v1h-14z"/></svg></button>
+        <button type="button" class="btn" id="btn-search" aria-controls="search-panel" aria-expanded="false"
+                data-title-en="Search a site, operator, place or coordinates" data-title-no="Søk sted, operatør, stedsnavn eller koordinater"
+                title="Search" aria-label="Search"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM10 3h1v1h-1zM2 4h1v1h-1zM10 4h1v1h-1zM2 5h1v1h-1zM10 5h1v1h-1zM2 6h1v1h-1zM10 6h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM4 8h5v1h-5zM10 8h1v1h-1zM11 9h1v1h-1zM12 10h1v1h-1zM13 11h1v1h-1zM14 12h1v1h-1z"/></svg></button>
+        <button type="button" class="btn filter-toggle" id="btn-key" aria-controls="filter-panel" aria-expanded="false"
+                data-title-en="Key to colours and lines" data-title-no="Tegnforklaring"
+                title="Key to colours and lines" aria-label="Key to colours and lines"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h5v1h-5zM1 2h1v1h-1zM5 2h1v1h-1zM1 3h1v1h-1zM5 3h1v1h-1zM7 3h8v1h-8zM1 4h1v1h-1zM5 4h1v1h-1zM1 5h5v1h-5zM1 8h5v1h-5zM1 9h5v1h-5zM1 10h5v1h-5zM7 10h8v1h-8zM1 11h5v1h-5zM1 12h5v1h-5z"/></svg></button>
+        <span class="sp"></span>
+        <button type="button" class="btn" id="btn-3d" aria-pressed="false"
+                data-title-en="3D terrain. Right-drag or Ctrl-drag to turn and tilt" data-title-no="3D-terreng. Høyredra eller Ctrl-dra for å snu og vippe"
+                title="3D terrain. Right-drag or Ctrl-drag to turn and tilt" aria-label="3D terrain"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM5 1h2v1h-2zM9 1h2v1h-2zM3 2h2v1h-2zM11 2h2v1h-2zM1 3h2v1h-2zM13 3h2v1h-2zM1 4h3v1h-3zM12 4h3v1h-3zM1 5h1v1h-1zM4 5h2v1h-2zM10 5h2v1h-2zM14 5h1v1h-1zM1 6h1v1h-1zM6 6h4v1h-4zM14 6h1v1h-1zM1 7h1v1h-1zM8 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM8 8h1v1h-1zM14 8h1v1h-1zM1 9h1v1h-1zM8 9h1v1h-1zM14 9h1v1h-1zM1 10h1v1h-1zM8 10h1v1h-1zM14 10h1v1h-1zM1 11h2v1h-2zM8 11h1v1h-1zM13 11h2v1h-2zM3 12h2v1h-2zM8 12h1v1h-1zM11 12h2v1h-2zM5 13h2v1h-2zM8 13h1v1h-1zM10 13h2v1h-2zM7 14h3v1h-3z"/></svg></button>
+        <button type="button" class="btn" id="btn-light" aria-pressed="false"
+                data-title-en="Shade the terrain and turn the light" data-title-no="Skyggelegg terrenget og drei lyset"
+                title="Shade the terrain and turn the light" aria-label="Shade the terrain"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 0h1v1h-1zM7 0h1v1h-1zM13 0h1v1h-1zM2 1h1v1h-1zM7 1h1v1h-1zM12 1h1v1h-1zM3 2h1v1h-1zM11 2h1v1h-1zM6 3h3v1h-3zM5 4h5v1h-5zM1 5h2v1h-2zM4 5h7v1h-7zM12 5h2v1h-2zM5 6h5v1h-5zM6 7h3v1h-3zM10 9h1v1h-1zM9 10h3v1h-3zM7 11h2v1h-2zM12 11h2v1h-2zM5 12h2v1h-2zM14 12h1v1h-1zM3 13h2v1h-2zM15 13h1v1h-1zM1 14h2v1h-2zM0 15h16v1h-16z"/></svg></button>
+        <button type="button" class="btn" id="btn-profile" aria-pressed="false"
+                data-title-en="Draw a line and read the ground under it" data-title-no="Tegn en linje og les bakken under den"
+                title="Draw a line and read the ground under it" aria-label="Cross section"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h1v1h-1zM0 1h1v1h-1zM0 2h1v1h-1zM10 2h2v1h-2zM0 3h1v1h-1zM9 3h1v1h-1zM12 3h1v1h-1zM0 4h1v1h-1zM3 4h2v1h-2zM8 4h1v1h-1zM13 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM5 5h1v1h-1zM7 5h1v1h-1zM14 5h1v1h-1zM0 6h2v1h-2zM6 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM0 8h1v1h-1zM0 9h1v1h-1zM0 10h1v1h-1zM0 11h1v1h-1zM0 12h1v1h-1zM0 13h1v1h-1zM0 14h16v1h-16z"/></svg></button>
+        <button type="button" class="btn" id="btn-select" aria-pressed="false"
+                data-title-en="Drag a box to select the sites inside it" data-title-no="Dra en boks for å velge stedene i den"
+                title="Drag a box to select the sites inside it" aria-label="Select an area"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h2v1h-2zM3 0h2v1h-2zM6 0h2v1h-2zM9 0h2v1h-2zM12 0h2v1h-2zM0 2h1v1h-1zM12 2h1v1h-1zM0 3h1v1h-1zM12 3h1v1h-1zM0 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM7 6h1v1h-1zM12 6h1v1h-1zM7 7h2v1h-2zM0 8h1v1h-1zM7 8h3v1h-3zM12 8h1v1h-1zM0 9h1v1h-1zM7 9h4v1h-4zM12 9h1v1h-1zM7 10h5v1h-5zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h3v1h-3zM7 12h2v1h-2zM10 12h2v1h-2zM10 13h2v1h-2zM11 14h2v1h-2z"/></svg></button>
+        <button type="button" class="btn" id="btn-flat"
+                data-title-en="Look straight down, north up" data-title-no="Se rett ned, nord opp"
+                title="Look straight down, north up" aria-label="Reset the view"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM7 1h2v1h-2zM7 2h2v1h-2zM7 3h2v1h-2zM4 4h8v1h-8zM5 5h6v1h-6zM6 6h4v1h-4zM7 7h2v1h-2zM7 9h2v1h-2zM5 10h2v1h-2zM9 10h2v1h-2zM3 11h2v1h-2zM11 11h2v1h-2zM1 12h2v1h-2zM13 12h2v1h-2zM3 13h2v1h-2zM11 13h2v1h-2zM5 14h2v1h-2zM9 14h2v1h-2zM7 15h2v1h-2z"/></svg></button>
+        <button type="button" class="btn" id="btn-share"
+                data-title-en="Copy a link to this exact view" data-title-no="Kopier en lenke til akkurat denne visningen"
+                title="Copy a link to this exact view" aria-label="Copy a link to this view"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 0h3v1h-3zM9 1h5v1h-5zM9 2h5v1h-5zM7 3h2v1h-2zM10 3h3v1h-3zM5 4h2v1h-2zM2 5h3v1h-3zM1 6h5v1h-5zM1 7h5v1h-5zM2 8h3v1h-3zM5 9h2v1h-2zM7 10h2v1h-2zM10 10h3v1h-3zM9 11h5v1h-5zM9 12h5v1h-5zM10 13h3v1h-3z"/></svg></button>
+        <span class="sp"></span>
+        <button type="button" class="btn" id="btn-help" aria-pressed="false" aria-controls="help-panel"
+                data-title-en="How to use the map" data-title-no="Slik bruker du kartet"
+                title="How to use the map" aria-label="Help"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h16v1h-16zM0 1h1v1h-1zM15 1h1v1h-1zM0 2h1v1h-1zM6 2h4v1h-4zM15 2h1v1h-1zM0 3h1v1h-1zM5 3h2v1h-2zM9 3h2v1h-2zM15 3h1v1h-1zM0 4h1v1h-1zM5 4h2v1h-2zM9 4h2v1h-2zM15 4h1v1h-1zM0 5h1v1h-1zM8 5h2v1h-2zM15 5h1v1h-1zM0 6h1v1h-1zM7 6h2v1h-2zM15 6h1v1h-1zM0 7h1v1h-1zM7 7h2v1h-2zM15 7h1v1h-1zM0 8h1v1h-1zM7 8h2v1h-2zM15 8h1v1h-1zM0 9h1v1h-1zM15 9h1v1h-1zM0 10h1v1h-1zM7 10h2v1h-2zM15 10h1v1h-1zM0 11h1v1h-1zM7 11h2v1h-2zM15 11h1v1h-1zM0 12h1v1h-1zM15 12h1v1h-1zM0 13h1v1h-1zM15 13h1v1h-1zM0 14h16v1h-16z"/></svg></button>
+        <div class="lang">
+            <button type="button" class="btn txt" id="btn-en" aria-pressed="true">EN</button>
+            <button type="button" class="btn txt" id="btn-no" aria-pressed="false">NO</button>
         </div>
+    </div>
 
-        <div class="tab-body" id="tb-project" role="tabpanel" hidden>
-            <label class="row" for="filter-projects">
-                <span class="nm"><b data-en="Construction projects on the map" data-no="Byggeprosjekter på kartet">Construction projects on the map</b>
-                    <span class="src" data-en="LUB db_database" data-no="LUB db_database">LUB db_database</span></span>
-                <span class="ct" id="count-proj-mapped"></span>
-                <input type="checkbox" id="filter-projects" checked></label>
-            <div class="note" id="proj-note" data-en="Only projects with coordinates can be drawn. The rest are listed in the table."
-                 data-no="Bare prosjekter med koordinater kan tegnes. Resten står i tabellen.">Only projects with coordinates can be drawn. The rest are listed in the table.</div>
-            <div hidden>
-                <input type="checkbox" class="filter-project-sub" value="producing" checked>
-                <input type="checkbox" class="filter-project-sub" value="receiving" checked>
-                <input type="checkbox" class="filter-project-sub" value="mixed" checked>
-            </div>
-        </div>
+    <div class="drawer">
+      <div class="bar-scroll">
 
-        <div class="tab-body" id="tb-dod" role="tabpanel" hidden>
-            <div class="note" data-en="DEM of Difference runs, by kommune. Tick one to draw it; the name flies you there."
-                 data-no="DEM-differanse-kjøringer, per kommune. Kryss av for å tegne; navnet tar deg dit.">DEM of Difference runs, by kommune. Tick one to draw it; the name flies you there.</div>
-            <div id="run-list"></div>
-            <div style="margin-top:6px">
-                <div class="ramp"></div>
-                <div class="ramp-scale"><span>−12.1 m</span><span data-en="excavated · deposited" data-no="utgravd · deponert">excavated · deposited</span><span>+12.1 m</span></div>
-            </div>
-        </div>
+        <!-- SEARCH -->
+        <div class="pane" id="search-panel"><div class="in"><div class="pad">
+            <div class="pane-title" data-en="SEARCH" data-no="SØK">SEARCH</div>
+            <div class="search-box">
+                        <svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM10 3h1v1h-1zM2 4h1v1h-1zM10 4h1v1h-1zM2 5h1v1h-1zM10 5h1v1h-1zM2 6h1v1h-1zM10 6h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM4 8h5v1h-5zM10 8h1v1h-1zM11 9h1v1h-1zM12 10h1v1h-1zM13 11h1v1h-1zM14 12h1v1h-1z"/></svg>
+                        <input type="text" class="search-input" id="search-input"
+                               data-ph-en="Site, operator, place or coordinates" data-ph-no="Sted, operatør, stedsnavn eller koordinater"
+                               placeholder="Site, operator, place or coordinates"
+                               aria-label="Search" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="search-results">
+                        <div class="search-results" id="search-results" role="listbox"></div>
+                    </div>
+        
+        </div></div></div>
 
-        <!-- tools -->
-        <div class="toolbar" role="toolbar" aria-label="Tools">
-            <button type="button" class="btn filter-toggle" id="btn-key" aria-controls="filter-panel" aria-expanded="false"
-                    data-title-en="Key to colours and lines" data-title-no="Tegnforklaring"
-                    title="Key to colours and lines" aria-label="Key to colours and lines"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h5v1h-5zM1 2h1v1h-1zM5 2h1v1h-1zM1 3h1v1h-1zM5 3h1v1h-1zM7 3h8v1h-8zM1 4h1v1h-1zM5 4h1v1h-1zM1 5h5v1h-5zM1 8h5v1h-5zM1 9h5v1h-5zM1 10h5v1h-5zM7 10h8v1h-8zM1 11h5v1h-5zM1 12h5v1h-5z"/></svg></button>
-            <button type="button" class="btn" id="btn-3d" aria-pressed="false"
-                    data-title-en="3D terrain. Right-drag or Ctrl-drag to turn and tilt" data-title-no="3D-terreng. Høyredra eller Ctrl-dra for å snu og vippe"
-                    title="3D terrain. Right-drag or Ctrl-drag to turn and tilt" aria-label="3D terrain"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM5 1h2v1h-2zM9 1h2v1h-2zM3 2h2v1h-2zM11 2h2v1h-2zM1 3h2v1h-2zM13 3h2v1h-2zM1 4h3v1h-3zM12 4h3v1h-3zM1 5h1v1h-1zM4 5h2v1h-2zM10 5h2v1h-2zM14 5h1v1h-1zM1 6h1v1h-1zM6 6h4v1h-4zM14 6h1v1h-1zM1 7h1v1h-1zM8 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM8 8h1v1h-1zM14 8h1v1h-1zM1 9h1v1h-1zM8 9h1v1h-1zM14 9h1v1h-1zM1 10h1v1h-1zM8 10h1v1h-1zM14 10h1v1h-1zM1 11h2v1h-2zM8 11h1v1h-1zM13 11h2v1h-2zM3 12h2v1h-2zM8 12h1v1h-1zM11 12h2v1h-2zM5 13h2v1h-2zM8 13h1v1h-1zM10 13h2v1h-2zM7 14h3v1h-3z"/></svg></button>
-            <button type="button" class="btn" id="btn-light" aria-pressed="false"
-                    data-title-en="Shade the terrain and turn the light" data-title-no="Skyggelegg terrenget og drei lyset"
-                    title="Shade the terrain and turn the light" aria-label="Shade the terrain"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 0h1v1h-1zM7 0h1v1h-1zM13 0h1v1h-1zM2 1h1v1h-1zM7 1h1v1h-1zM12 1h1v1h-1zM3 2h1v1h-1zM11 2h1v1h-1zM6 3h3v1h-3zM5 4h5v1h-5zM1 5h2v1h-2zM4 5h7v1h-7zM12 5h2v1h-2zM5 6h5v1h-5zM6 7h3v1h-3zM10 9h1v1h-1zM9 10h3v1h-3zM7 11h2v1h-2zM12 11h2v1h-2zM5 12h2v1h-2zM14 12h1v1h-1zM3 13h2v1h-2zM15 13h1v1h-1zM1 14h2v1h-2zM0 15h16v1h-16z"/></svg></button>
-            <button type="button" class="btn" id="btn-profile" aria-pressed="false"
-                    data-title-en="Draw a line and read the ground under it" data-title-no="Tegn en linje og les bakken under den"
-                    title="Draw a line and read the ground under it" aria-label="Cross section"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h1v1h-1zM0 1h1v1h-1zM0 2h1v1h-1zM10 2h2v1h-2zM0 3h1v1h-1zM9 3h1v1h-1zM12 3h1v1h-1zM0 4h1v1h-1zM3 4h2v1h-2zM8 4h1v1h-1zM13 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM5 5h1v1h-1zM7 5h1v1h-1zM14 5h1v1h-1zM0 6h2v1h-2zM6 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM0 8h1v1h-1zM0 9h1v1h-1zM0 10h1v1h-1zM0 11h1v1h-1zM0 12h1v1h-1zM0 13h1v1h-1zM0 14h16v1h-16z"/></svg></button>
-            <button type="button" class="btn" id="btn-select" aria-pressed="false"
-                    data-title-en="Drag a box to select the sites inside it" data-title-no="Dra en boks for å velge stedene i den"
-                    title="Drag a box to select the sites inside it" aria-label="Select an area"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h2v1h-2zM3 0h2v1h-2zM6 0h2v1h-2zM9 0h2v1h-2zM12 0h2v1h-2zM0 2h1v1h-1zM12 2h1v1h-1zM0 3h1v1h-1zM12 3h1v1h-1zM0 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM7 6h1v1h-1zM12 6h1v1h-1zM7 7h2v1h-2zM0 8h1v1h-1zM7 8h3v1h-3zM12 8h1v1h-1zM0 9h1v1h-1zM7 9h4v1h-4zM12 9h1v1h-1zM7 10h5v1h-5zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h3v1h-3zM7 12h2v1h-2zM10 12h2v1h-2zM10 13h2v1h-2zM11 14h2v1h-2z"/></svg></button>
-            <button type="button" class="btn" id="btn-flat"
-                    data-title-en="Look straight down, north up" data-title-no="Se rett ned, nord opp"
-                    title="Look straight down, north up" aria-label="Reset the view"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM7 1h2v1h-2zM7 2h2v1h-2zM7 3h2v1h-2zM4 4h8v1h-8zM5 5h6v1h-6zM6 6h4v1h-4zM7 7h2v1h-2zM7 9h2v1h-2zM5 10h2v1h-2zM9 10h2v1h-2zM3 11h2v1h-2zM11 11h2v1h-2zM1 12h2v1h-2zM13 12h2v1h-2zM3 13h2v1h-2zM11 13h2v1h-2zM5 14h2v1h-2zM9 14h2v1h-2zM7 15h2v1h-2z"/></svg></button>
-            <button type="button" class="btn" id="btn-share"
-                    data-title-en="Copy a link to this exact view" data-title-no="Kopier en lenke til akkurat denne visningen"
-                    title="Copy a link to this exact view" aria-label="Copy a link to this view"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 0h3v1h-3zM9 1h5v1h-5zM9 2h5v1h-5zM7 3h2v1h-2zM10 3h3v1h-3zM5 4h2v1h-2zM2 5h3v1h-3zM1 6h5v1h-5zM1 7h5v1h-5zM2 8h3v1h-3zM5 9h2v1h-2zM7 10h2v1h-2zM10 10h3v1h-3zM9 11h5v1h-5zM9 12h5v1h-5zM10 13h3v1h-3z"/></svg></button>
-            <span class="sp"></span>
-            <button type="button" class="btn" id="btn-help" aria-pressed="false" aria-controls="help-panel"
-                    data-title-en="How to use the map" data-title-no="Slik bruker du kartet"
-                    title="How to use the map" aria-label="Help"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h16v1h-16zM0 1h1v1h-1zM15 1h1v1h-1zM0 2h1v1h-1zM6 2h4v1h-4zM15 2h1v1h-1zM0 3h1v1h-1zM5 3h2v1h-2zM9 3h2v1h-2zM15 3h1v1h-1zM0 4h1v1h-1zM5 4h2v1h-2zM9 4h2v1h-2zM15 4h1v1h-1zM0 5h1v1h-1zM8 5h2v1h-2zM15 5h1v1h-1zM0 6h1v1h-1zM7 6h2v1h-2zM15 6h1v1h-1zM0 7h1v1h-1zM7 7h2v1h-2zM15 7h1v1h-1zM0 8h1v1h-1zM7 8h2v1h-2zM15 8h1v1h-1zM0 9h1v1h-1zM15 9h1v1h-1zM0 10h1v1h-1zM7 10h2v1h-2zM15 10h1v1h-1zM0 11h1v1h-1zM7 11h2v1h-2zM15 11h1v1h-1zM0 12h1v1h-1zM15 12h1v1h-1zM0 13h1v1h-1zM15 13h1v1h-1zM0 14h16v1h-16z"/></svg></button>
-        </div>
+        <!-- WHAT IS ON THE MAP -->
+        <div class="pane" id="data-panel"><div class="in">
+          <div class="pad">
+            <div class="pane-title" data-en="ON THE MAP" data-no="PÅ KARTET">ON THE MAP</div>
+          </div>
+          <div class="tab-body" id="tb-facility" role="tabpanel">
+                      <label class="row" for="filter-facilities">
+                          <span class="nm"><b data-en="Reception sites on the map" data-no="Mottaksanlegg på kartet">Reception sites on the map</b>
+                              <span class="src" data-en="LUB db_database" data-no="LUB db_database">LUB db_database</span></span>
+                          <span class="ct" id="count-fac-mapped"></span>
+                          <input type="checkbox" id="filter-facilities" checked></label>
+                      <label class="row" for="filter-footprints">
+                          <span class="nm"><b data-en="Footprints" data-no="Anleggsomriss">Footprints</b>
+                              <span class="src" id="footprint-note" data-en="plan and cadastre, matched by hand" data-no="plan og matrikkel, koblet for hånd">plan and cadastre, matched by hand</span></span>
+                          <span class="ct" id="count-footprints">–</span>
+                          <input type="checkbox" id="filter-footprints" checked></label>
+                      <div class="note" data-en="Colour is status. Tick the colours in the table below to choose what the map shows."
+                           data-no="Fargen er status. Kryss av fargene i tabellen under for å velge hva kartet viser.">Colour is status. Tick the colours in the table below to choose what the map shows.</div>
+                      <!-- kept for saved links and the flow filter in the table -->
+                      <div hidden>
+                          <input type="checkbox" class="filter-facility-sub" value="producing" checked>
+                          <input type="checkbox" class="filter-facility-sub" value="receiving" checked>
+                          <input type="checkbox" class="filter-facility-sub" value="mixed" checked>
+                      </div>
+                  </div>
+
+                  <div class="tab-body" id="tb-project" role="tabpanel" hidden>
+                      <label class="row" for="filter-projects">
+                          <span class="nm"><b data-en="Construction projects on the map" data-no="Byggeprosjekter på kartet">Construction projects on the map</b>
+                              <span class="src" data-en="LUB db_database" data-no="LUB db_database">LUB db_database</span></span>
+                          <span class="ct" id="count-proj-mapped"></span>
+                          <input type="checkbox" id="filter-projects" checked></label>
+                      <div class="note" id="proj-note" data-en="Only projects with coordinates can be drawn. The rest are listed in the table."
+                           data-no="Bare prosjekter med koordinater kan tegnes. Resten står i tabellen.">Only projects with coordinates can be drawn. The rest are listed in the table.</div>
+                      <div hidden>
+                          <input type="checkbox" class="filter-project-sub" value="producing" checked>
+                          <input type="checkbox" class="filter-project-sub" value="receiving" checked>
+                          <input type="checkbox" class="filter-project-sub" value="mixed" checked>
+                      </div>
+                  </div>
+
+                  <div class="tab-body" id="tb-dod" role="tabpanel" hidden>
+                      <div class="note" data-en="DEM of Difference runs, by kommune. Tick one to draw it; the name flies you there."
+                           data-no="DEM-differanse-kjøringer, per kommune. Kryss av for å tegne; navnet tar deg dit.">DEM of Difference runs, by kommune. Tick one to draw it; the name flies you there.</div>
+                      <div id="run-list"></div>
+                      <div style="margin-top:6px">
+                          <div class="ramp"></div>
+                          <div class="ramp-scale"><span>−12.1 m</span><span data-en="excavated · deposited" data-no="utgravd · deponert">excavated · deposited</span><span>+12.1 m</span></div>
+                      </div>
+                  </div>
+
+        
+          <!-- layers -->
+                  <div class="tree-head">
+                      <span data-en="LAYERS" data-no="LAG">LAYERS</span>
+                      <button type="button" class="btn small" id="btn-expand" data-title-en="Open all" data-title-no="Åpne alle" title="Open all" aria-label="Open all"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h13v1h-13zM1 2h1v1h-1zM13 2h1v1h-1zM1 3h1v1h-1zM7 3h1v1h-1zM13 3h1v1h-1zM1 4h1v1h-1zM7 4h1v1h-1zM13 4h1v1h-1zM1 5h1v1h-1zM5 5h5v1h-5zM13 5h1v1h-1zM1 6h1v1h-1zM7 6h1v1h-1zM13 6h1v1h-1zM1 7h1v1h-1zM7 7h1v1h-1zM13 7h1v1h-1zM1 8h1v1h-1zM13 8h1v1h-1zM1 9h13v1h-13z"/></svg></button>
+                      <button type="button" class="btn small" id="btn-collapse" data-title-en="Close all" data-title-no="Lukk alle" title="Close all" aria-label="Close all"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h13v1h-13zM1 2h1v1h-1zM13 2h1v1h-1zM1 3h1v1h-1zM13 3h1v1h-1zM1 4h1v1h-1zM13 4h1v1h-1zM1 5h1v1h-1zM5 5h5v1h-5zM13 5h1v1h-1zM1 6h1v1h-1zM13 6h1v1h-1zM1 7h1v1h-1zM13 7h1v1h-1zM1 8h1v1h-1zM13 8h1v1h-1zM1 9h13v1h-13z"/></svg></button>
+                  </div>
+                  <div class="tree">
+                      <div class="grp top closed" id="grp-base">
+                          <div class="grp-head"><i class="tri"></i><span data-en="BACKGROUND" data-no="BAKGRUNN">BACKGROUND</span></div>
+                          <div class="grp-body"><div class="in">
+                              <label class="row" for="base-sat">
+                                  <span class="nm"><b data-en="Satellite" data-no="Satellitt">Satellite</b><span class="src">Esri World Imagery</span></span>
+                                  <input type="radio" name="basemap" id="base-sat" value="satellite" checked></label>
+                              <label class="row" for="base-gray">
+                                  <span class="nm"><b data-en="Map, grey" data-no="Kart, grått">Map, grey</b><span class="src">Kartverket topograatone</span></span>
+                                  <input type="radio" name="basemap" id="base-gray" value="graytone"></label>
+                              <label class="row" for="base-bym">
+                                  <span class="nm"><b data-en="Oslo aerial survey" data-no="Oslo flyfoto">Oslo aerial survey</b>
+                                      <span class="src" data-en="Bymiljøetaten. Sharper, but stops at the city boundary" data-no="Bymiljøetaten. Skarpere, men stopper ved bygrensen">Bymiljøetaten. Sharper, but stops at the city boundary</span></span>
+                                  <input type="radio" name="basemap" id="base-bym" value="bym"></label>
+                              <label class="row" for="timeline-enabled">
+                                  <span class="nm"><b data-en="Historical imagery" data-no="Historiske flyfoto">Historical imagery</b><span class="src">Esri Wayback · <span id="timeline-year">—</span></span></span>
+                                  <input type="checkbox" id="timeline-enabled"></label>
+                              <div style="padding:0 0 6px">
+                                  <input type="range" class="slider" id="timeline-slider" min="0" max="8" value="0" disabled aria-label="Imagery year">
+                                  <div class="timeline-labels"><span>14</span><span>16</span><span>18</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span></div>
+                              </div>
+                          </div></div>
+                      </div>
+
+                      <div class="grp top closed" id="grp-3d">
+                          <div class="grp-head"><i class="tri"></i><span data-en="3D TERRAIN" data-no="3D-TERRENG">3D TERRAIN</span></div>
+                          <div class="grp-body"><div class="in">
+                              <label class="row" for="terrain-3d">
+                                  <span class="nm"><b data-en="Terrain in 3D" data-no="Terreng i 3D">Terrain in 3D</b>
+                                      <span class="src" id="terrain-res" data-en="1 m LiDAR where a run exists, Kartverket 10 m elsewhere" data-no="1 m LiDAR der en kjøring finnes, Kartverket 10 m ellers">1 m LiDAR where a run exists, Kartverket 10 m elsewhere</span></span>
+                                  <input type="checkbox" id="terrain-3d"></label>
+                              <div class="lrow" id="terrain-exag-wrap" hidden><span data-en="height ×" data-no="høyde ×">height ×</span>
+                                  <input type="range" class="slider" id="terrain-exag" min="10" max="40" value="15" aria-label="Vertical exaggeration">
+                                  <span class="val" id="terrain-exag-val">1.5</span></div>
+                          </div></div>
+                      </div>
+
+                      <div class="grp top closed" id="grp-plan">
+                          <div class="grp-head"><i class="tri"></i><span data-en="PLAN COVERAGE" data-no="PLANDEKNING">PLAN COVERAGE</span></div>
+                          <div class="grp-body"><div class="in">
+                              <label class="row" for="filter-plan-old">
+                                  <span class="nm"><b data-en="Old" data-no="Gamle">Old</b><span class="src" data-en="closed landfills, Grunnforurensning" data-no="nedlagte deponier, Grunnforurensning">closed landfills, Grunnforurensning</span></span>
+                                  <span class="ct" data-cov-ct="old"></span>
+                                  <input type="checkbox" id="filter-plan-old"></label>
+                              <label class="row" for="filter-plan-current">
+                                  <span class="nm"><b data-en="In force" data-no="Gjeldende">In force</b><span class="src" data-en="reguleringsplan" data-no="reguleringsplan">reguleringsplan</span></span>
+                                  <span class="ct" data-cov-ct="current"></span>
+                                  <input type="checkbox" id="filter-plan-current"></label>
+                              <label class="row" for="filter-plan-future">
+                                  <span class="nm"><b data-en="Proposed" data-no="Foreslåtte">Proposed</b><span class="src" data-en="on public consultation, not adopted" data-no="på høring, ikke vedtatt">on public consultation, not adopted</span></span>
+                                  <span class="ct" data-cov-ct="future"></span>
+                                  <input type="checkbox" id="filter-plan-future"></label>
+                              <div class="note" data-en="Context only, not clickable. The plan register returns nothing for Oslo or Lillestrøm."
+                                   data-no="Kun kontekst, ikke klikkbar. Planregisteret gir ingen treff for Oslo eller Lillestrøm.">Context only, not clickable. The plan register returns nothing for Oslo or Lillestrøm.</div>
+                          </div></div>
+                      </div>
+                  </div>
+        </div></div>
 
         <!-- KEY -->
-        <div class="pane" id="filter-panel"><div class="in"><div class="pad">
-            <div class="pane-title" data-en="KEY" data-no="TEGNFORKLARING">KEY</div>
-            <div class="key-list" id="key-list"></div>
-            <div class="key-sep"></div>
-            <div class="key-list">
-                <div class="kr"><span class="swatch" style="background:rgba(232,20,30,.16);border:1.4px solid #E8141E"></span><span data-en="Footprint, operating extent" data-no="Omriss, driftsområde">Footprint, operating extent</span></div>
-                <div class="kr"><span class="swatch" style="background:#fff;border:1px dashed #E8141E"></span><span data-en="Footprint, NGU resource area only" data-no="Omriss, kun NGU-ressursområde">Footprint, NGU resource area only</span></div>
-                <div class="kr"><span class="swatch ring" style="background:#E8141E;border-color:#fff;box-shadow:0 0 0 .5px #999"></span><span data-en="Site with no footprint yet" data-no="Sted uten omriss ennå">Site with no footprint yet</span></div>
-                <div class="key-sep"></div>
-                <div class="kr"><span class="swatch" style="background:#fff;border:1px dotted #555"></span><span data-en="Plan, old (closed landfill)" data-no="Plan, gammel (nedlagt deponi)">Plan, old (closed landfill)</span><span class="ct" data-cov-ct="old"></span></div>
-                <div class="kr"><span class="swatch" style="background:#fff;border:1px solid #555"></span><span data-en="Plan, in force" data-no="Plan, gjeldende">Plan, in force</span><span class="ct" data-cov-ct="current"></span></div>
-                <div class="kr"><span class="swatch" style="background:#fff;border:1px dashed #555"></span><span data-en="Plan, proposed" data-no="Plan, foreslått">Plan, proposed</span><span class="ct" data-cov-ct="future"></span></div>
-            </div>
-        </div></div></div>
-
-        <!-- LIGHT -->
-        <div class="pane" id="light-panel"><div class="in"><div class="pad">
-            <div class="pane-title"><span data-en="LIGHT" data-no="LYS">LIGHT</span>
-                <button type="button" class="linkbtn rt" id="light-view" data-en="light from this view" data-no="lys fra denne visningen">light from this view</button></div>
-            <div style="display:flex;gap:10px;align-items:flex-start">
-                <canvas class="dial" id="light-dial" width="62" height="62" aria-label="Light direction"></canvas>
-                <div style="flex:1 1 auto;min-width:0">
-                    <div class="lrow"><span data-en="direction" data-no="retning">direction</span>
-                        <input type="range" class="slider" id="light-az" min="0" max="359" value="315" aria-label="Light direction">
-                        <span class="val" id="light-az-val">315&deg;</span></div>
-                    <div class="lrow"><span data-en="relief" data-no="relieff">relief</span>
-                        <input type="range" class="slider" id="light-ex" min="5" max="100" value="30" aria-label="Relief">
-                        <span class="val" id="light-ex-val">0.30</span></div>
-                    <div class="hint" data-en="Shading comes from the same elevation model as the 3D view."
-                         data-no="Skyggen kommer fra samme høydemodell som 3D-visningen.">Shading comes from the same elevation model as the 3D view.</div>
-                </div>
-            </div>
-        </div></div></div>
-
-        <!-- CROSS SECTION -->
-        <div class="pane" id="profile-panel"><div class="in"><div class="pad">
-            <div class="pane-title" data-en="CROSS SECTION" data-no="TVERRSNITT">CROSS SECTION</div>
-            <svg class="prof-svg" id="prof-svg" viewBox="0 0 620 120" preserveAspectRatio="none" role="img" aria-label="Elevation along the drawn line"></svg>
-            <div class="prof-read" id="prof-read"></div>
-            <div class="hint" id="prof-hint" data-en="Click along the ground to draw a line. Double-click, or press Enter, to read it."
-                 data-no="Klikk langs bakken for å tegne en linje. Dobbeltklikk, eller trykk Enter, for å lese den.">Click along the ground to draw a line. Double-click, or press Enter, to read it.</div>
-        </div></div></div>
-
-        <!-- HELP -->
-        <div class="pane help" id="help-panel"><div class="in"><div class="pad">
-            <div class="pane-title" data-en="HOW TO USE THE MAP" data-no="SLIK BRUKER DU KARTET">HOW TO USE THE MAP</div>
-            <h4 data-en="MOUSE AND KEYS" data-no="MUS OG TASTER">MOUSE AND KEYS</h4>
-            <dl>
-                <dt>drag</dt><dd data-en="move the map" data-no="flytt kartet">move the map</dd>
-                <dt>wheel</dt><dd data-en="zoom" data-no="zoom">zoom</dd>
-                <dt>R-drag</dt><dd data-en="turn and tilt (also Ctrl-drag, two fingers on a phone)" data-no="snu og vipp (også Ctrl-dra, to fingre på mobil)">turn and tilt (also Ctrl-drag, two fingers on a phone)</dd>
-                <dt>click</dt><dd data-en="open a site, or read the coordinates and height of the ground" data-no="åpne et sted, eller les koordinater og høyde for bakken">open a site, or read the coordinates and height of the ground</dd>
-                <dt>Esc</dt><dd data-en="close what is open" data-no="lukk det som er åpent">close what is open</dd>
-                <dt>N</dt><dd data-en="click the compass: north up. Double-click: look straight down" data-no="klikk kompasset: nord opp. Dobbeltklikk: se rett ned">click the compass: north up. Double-click: look straight down</dd>
-            </dl>
-            <h4 data-en="TOOLS" data-no="VERKTØY">TOOLS</h4>
-            <dl>
-                <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h5v1h-5zM1 2h1v1h-1zM5 2h1v1h-1zM1 3h1v1h-1zM5 3h1v1h-1zM7 3h8v1h-8zM1 4h1v1h-1zM5 4h1v1h-1zM1 5h5v1h-5zM1 8h5v1h-5zM1 9h5v1h-5zM1 10h5v1h-5zM7 10h8v1h-8zM1 11h5v1h-5zM1 12h5v1h-5z"/></svg></dt><dd data-en="key to colours and lines" data-no="tegnforklaring">key to colours and lines</dd>
-                <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM5 1h2v1h-2zM9 1h2v1h-2zM3 2h2v1h-2zM11 2h2v1h-2zM1 3h2v1h-2zM13 3h2v1h-2zM1 4h3v1h-3zM12 4h3v1h-3zM1 5h1v1h-1zM4 5h2v1h-2zM10 5h2v1h-2zM14 5h1v1h-1zM1 6h1v1h-1zM6 6h4v1h-4zM14 6h1v1h-1zM1 7h1v1h-1zM8 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM8 8h1v1h-1zM14 8h1v1h-1zM1 9h1v1h-1zM8 9h1v1h-1zM14 9h1v1h-1zM1 10h1v1h-1zM8 10h1v1h-1zM14 10h1v1h-1zM1 11h2v1h-2zM8 11h1v1h-1zM13 11h2v1h-2zM3 12h2v1h-2zM8 12h1v1h-1zM11 12h2v1h-2zM5 13h2v1h-2zM8 13h1v1h-1zM10 13h2v1h-2zM7 14h3v1h-3z"/></svg></dt><dd data-en="terrain in 3D, 1 m LiDAR where a run exists" data-no="terreng i 3D, 1 m LiDAR der en kjøring finnes">terrain in 3D, 1 m LiDAR where a run exists</dd>
-                <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 0h1v1h-1zM7 0h1v1h-1zM13 0h1v1h-1zM2 1h1v1h-1zM7 1h1v1h-1zM12 1h1v1h-1zM3 2h1v1h-1zM11 2h1v1h-1zM6 3h3v1h-3zM5 4h5v1h-5zM1 5h2v1h-2zM4 5h7v1h-7zM12 5h2v1h-2zM5 6h5v1h-5zM6 7h3v1h-3zM10 9h1v1h-1zM9 10h3v1h-3zM7 11h2v1h-2zM12 11h2v1h-2zM5 12h2v1h-2zM14 12h1v1h-1zM3 13h2v1h-2zM15 13h1v1h-1zM1 14h2v1h-2zM0 15h16v1h-16z"/></svg></dt><dd data-en="shade the ground and turn the light" data-no="skyggelegg bakken og drei lyset">shade the ground and turn the light</dd>
-                <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h1v1h-1zM0 1h1v1h-1zM0 2h1v1h-1zM10 2h2v1h-2zM0 3h1v1h-1zM9 3h1v1h-1zM12 3h1v1h-1zM0 4h1v1h-1zM3 4h2v1h-2zM8 4h1v1h-1zM13 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM5 5h1v1h-1zM7 5h1v1h-1zM14 5h1v1h-1zM0 6h2v1h-2zM6 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM0 8h1v1h-1zM0 9h1v1h-1zM0 10h1v1h-1zM0 11h1v1h-1zM0 12h1v1h-1zM0 13h1v1h-1zM0 14h16v1h-16z"/></svg></dt><dd data-en="cross section along a line, with CSV and SVG" data-no="tverrsnitt langs en linje, med CSV og SVG">cross section along a line, with CSV and SVG</dd>
-                <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h2v1h-2zM3 0h2v1h-2zM6 0h2v1h-2zM9 0h2v1h-2zM12 0h2v1h-2zM0 2h1v1h-1zM12 2h1v1h-1zM0 3h1v1h-1zM12 3h1v1h-1zM0 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM7 6h1v1h-1zM12 6h1v1h-1zM7 7h2v1h-2zM0 8h1v1h-1zM7 8h3v1h-3zM12 8h1v1h-1zM0 9h1v1h-1zM7 9h4v1h-4zM12 9h1v1h-1zM7 10h5v1h-5zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h3v1h-3zM7 12h2v1h-2zM10 12h2v1h-2zM10 13h2v1h-2zM11 14h2v1h-2z"/></svg></dt><dd data-en="drag a box; the table lists what is inside" data-no="dra en boks; tabellen viser det som er inni">drag a box; the table lists what is inside</dd>
-                <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM7 1h2v1h-2zM7 2h2v1h-2zM7 3h2v1h-2zM4 4h8v1h-8zM5 5h6v1h-6zM6 6h4v1h-4zM7 7h2v1h-2zM7 9h2v1h-2zM5 10h2v1h-2zM9 10h2v1h-2zM3 11h2v1h-2zM11 11h2v1h-2zM1 12h2v1h-2zM13 12h2v1h-2zM3 13h2v1h-2zM11 13h2v1h-2zM5 14h2v1h-2zM9 14h2v1h-2zM7 15h2v1h-2z"/></svg></dt><dd data-en="flat, north up" data-no="flatt, nord opp">flat, north up</dd>
-                <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 0h3v1h-3zM9 1h5v1h-5zM9 2h5v1h-5zM7 3h2v1h-2zM10 3h3v1h-3zM5 4h2v1h-2zM2 5h3v1h-3zM1 6h5v1h-5zM1 7h5v1h-5zM2 8h3v1h-3zM5 9h2v1h-2zM7 10h2v1h-2zM10 10h3v1h-3zM9 11h5v1h-5zM9 12h5v1h-5zM10 13h3v1h-3z"/></svg></dt><dd data-en="copy a link to this exact view" data-no="kopier en lenke til denne visningen">copy a link to this exact view</dd>
-            </dl>
-            <h4 data-en="THE TABLE" data-no="TABELLEN">THE TABLE</h4>
-            <div class="hint" data-en="The table is the legend. Its coloured boxes switch groups on and off on the map. Hover a row to see the site; click it to open it."
-                 data-no="Tabellen er tegnforklaringen. De fargede boksene slår grupper av og på i kartet. Hold over en rad for å se stedet; klikk for å åpne.">The table is the legend. Its coloured boxes switch groups on and off on the map. Hover a row to see the site; click it to open it.</div>
-        </div></div></div>
-
-        <!-- layers -->
-        <div class="tree-head">
-            <span data-en="LAYERS" data-no="LAG">LAYERS</span>
-            <button type="button" class="btn small" id="btn-expand" data-title-en="Open all" data-title-no="Åpne alle" title="Open all" aria-label="Open all"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h13v1h-13zM1 2h1v1h-1zM13 2h1v1h-1zM1 3h1v1h-1zM7 3h1v1h-1zM13 3h1v1h-1zM1 4h1v1h-1zM7 4h1v1h-1zM13 4h1v1h-1zM1 5h1v1h-1zM5 5h5v1h-5zM13 5h1v1h-1zM1 6h1v1h-1zM7 6h1v1h-1zM13 6h1v1h-1zM1 7h1v1h-1zM7 7h1v1h-1zM13 7h1v1h-1zM1 8h1v1h-1zM13 8h1v1h-1zM1 9h13v1h-13z"/></svg></button>
-            <button type="button" class="btn small" id="btn-collapse" data-title-en="Close all" data-title-no="Lukk alle" title="Close all" aria-label="Close all"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h13v1h-13zM1 2h1v1h-1zM13 2h1v1h-1zM1 3h1v1h-1zM13 3h1v1h-1zM1 4h1v1h-1zM13 4h1v1h-1zM1 5h1v1h-1zM5 5h5v1h-5zM13 5h1v1h-1zM1 6h1v1h-1zM13 6h1v1h-1zM1 7h1v1h-1zM13 7h1v1h-1zM1 8h1v1h-1zM13 8h1v1h-1zM1 9h13v1h-13z"/></svg></button>
-        </div>
-        <div class="tree">
-            <div class="grp top closed" id="grp-base">
-                <div class="grp-head"><i class="tri"></i><span data-en="BACKGROUND" data-no="BAKGRUNN">BACKGROUND</span></div>
-                <div class="grp-body"><div class="in">
-                    <label class="row" for="base-sat">
-                        <span class="nm"><b data-en="Satellite" data-no="Satellitt">Satellite</b><span class="src">Esri World Imagery</span></span>
-                        <input type="radio" name="basemap" id="base-sat" value="satellite" checked></label>
-                    <label class="row" for="base-gray">
-                        <span class="nm"><b data-en="Map, grey" data-no="Kart, grått">Map, grey</b><span class="src">Kartverket topograatone</span></span>
-                        <input type="radio" name="basemap" id="base-gray" value="graytone"></label>
-                    <label class="row" for="base-bym">
-                        <span class="nm"><b data-en="Oslo aerial survey" data-no="Oslo flyfoto">Oslo aerial survey</b>
-                            <span class="src" data-en="Bymiljøetaten. Sharper, but stops at the city boundary" data-no="Bymiljøetaten. Skarpere, men stopper ved bygrensen">Bymiljøetaten. Sharper, but stops at the city boundary</span></span>
-                        <input type="radio" name="basemap" id="base-bym" value="bym"></label>
-                    <label class="row" for="timeline-enabled">
-                        <span class="nm"><b data-en="Historical imagery" data-no="Historiske flyfoto">Historical imagery</b><span class="src">Esri Wayback · <span id="timeline-year">—</span></span></span>
-                        <input type="checkbox" id="timeline-enabled"></label>
-                    <div style="padding:0 0 6px">
-                        <input type="range" class="slider" id="timeline-slider" min="0" max="8" value="0" disabled aria-label="Imagery year">
-                        <div class="timeline-labels"><span>14</span><span>16</span><span>18</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span></div>
+                <div class="pane" id="filter-panel"><div class="in"><div class="pad">
+                    <div class="pane-title" data-en="KEY" data-no="TEGNFORKLARING">KEY</div>
+                    <div class="key-list" id="key-list"></div>
+                    <div class="key-sep"></div>
+                    <div class="key-list">
+                        <div class="kr"><span class="swatch" style="background:rgba(255,0,0,.18);border:2px solid #FF0000"></span><span data-en="Footprint, operating extent" data-no="Omriss, driftsområde">Footprint, operating extent</span></div>
+                        <div class="kr"><span class="swatch" style="background:#fff;border:1.5px dashed #FF0000"></span><span data-en="Footprint, NGU resource area only" data-no="Omriss, kun NGU-ressursområde">Footprint, NGU resource area only</span></div>
+                        <div class="kr"><span class="swatch ring" style="background:#fff;border:2.5px solid #FF0000;box-shadow:0 0 0 .5px #999"></span><span data-en="Site with no footprint yet" data-no="Sted uten omriss ennå">Site with no footprint yet</span></div>
+                        <div class="key-sep"></div>
+                        <div class="kr"><span class="swatch" style="background:#fff;border:1px dotted #555"></span><span data-en="Plan, old (closed landfill)" data-no="Plan, gammel (nedlagt deponi)">Plan, old (closed landfill)</span><span class="ct" data-cov-ct="old"></span></div>
+                        <div class="kr"><span class="swatch" style="background:#fff;border:1px solid #555"></span><span data-en="Plan, in force" data-no="Plan, gjeldende">Plan, in force</span><span class="ct" data-cov-ct="current"></span></div>
+                        <div class="kr"><span class="swatch" style="background:#fff;border:1px dashed #555"></span><span data-en="Plan, proposed" data-no="Plan, foreslått">Plan, proposed</span><span class="ct" data-cov-ct="future"></span></div>
                     </div>
-                </div></div>
-            </div>
+                </div></div></div>
 
-            <div class="grp top closed" id="grp-3d">
-                <div class="grp-head"><i class="tri"></i><span data-en="3D TERRAIN" data-no="3D-TERRENG">3D TERRAIN</span></div>
-                <div class="grp-body"><div class="in">
-                    <label class="row" for="terrain-3d">
-                        <span class="nm"><b data-en="Terrain in 3D" data-no="Terreng i 3D">Terrain in 3D</b>
-                            <span class="src" id="terrain-res" data-en="1 m LiDAR where a run exists, Kartverket 10 m elsewhere" data-no="1 m LiDAR der en kjøring finnes, Kartverket 10 m ellers">1 m LiDAR where a run exists, Kartverket 10 m elsewhere</span></span>
-                        <input type="checkbox" id="terrain-3d"></label>
-                    <div class="lrow" id="terrain-exag-wrap" hidden><span data-en="height ×" data-no="høyde ×">height ×</span>
-                        <input type="range" class="slider" id="terrain-exag" min="10" max="40" value="15" aria-label="Vertical exaggeration">
-                        <span class="val" id="terrain-exag-val">1.5</span></div>
-                </div></div>
-            </div>
+                <!-- LIGHT -->
+                <div class="pane" id="light-panel"><div class="in"><div class="pad">
+                    <div class="pane-title"><span data-en="LIGHT" data-no="LYS">LIGHT</span>
+                        <button type="button" class="linkbtn rt" id="light-view" data-en="light from this view" data-no="lys fra denne visningen">light from this view</button></div>
+                    <div style="display:flex;gap:10px;align-items:flex-start">
+                        <canvas class="dial" id="light-dial" width="62" height="62" aria-label="Light direction"></canvas>
+                        <div style="flex:1 1 auto;min-width:0">
+                            <div class="lrow"><span data-en="direction" data-no="retning">direction</span>
+                                <input type="range" class="slider" id="light-az" min="0" max="359" value="315" aria-label="Light direction">
+                                <span class="val" id="light-az-val">315&deg;</span></div>
+                            <div class="lrow"><span data-en="relief" data-no="relieff">relief</span>
+                                <input type="range" class="slider" id="light-ex" min="5" max="100" value="30" aria-label="Relief">
+                                <span class="val" id="light-ex-val">0.30</span></div>
+                            <div class="hint" data-en="Shading comes from the same elevation model as the 3D view."
+                                 data-no="Skyggen kommer fra samme høydemodell som 3D-visningen.">Shading comes from the same elevation model as the 3D view.</div>
+                        </div>
+                    </div>
+                </div></div></div>
 
-            <div class="grp top closed" id="grp-plan">
-                <div class="grp-head"><i class="tri"></i><span data-en="PLAN COVERAGE" data-no="PLANDEKNING">PLAN COVERAGE</span></div>
-                <div class="grp-body"><div class="in">
-                    <label class="row" for="filter-plan-old">
-                        <span class="nm"><b data-en="Old" data-no="Gamle">Old</b><span class="src" data-en="closed landfills, Grunnforurensning" data-no="nedlagte deponier, Grunnforurensning">closed landfills, Grunnforurensning</span></span>
-                        <span class="ct" data-cov-ct="old"></span>
-                        <input type="checkbox" id="filter-plan-old"></label>
-                    <label class="row" for="filter-plan-current">
-                        <span class="nm"><b data-en="In force" data-no="Gjeldende">In force</b><span class="src" data-en="reguleringsplan" data-no="reguleringsplan">reguleringsplan</span></span>
-                        <span class="ct" data-cov-ct="current"></span>
-                        <input type="checkbox" id="filter-plan-current"></label>
-                    <label class="row" for="filter-plan-future">
-                        <span class="nm"><b data-en="Proposed" data-no="Foreslåtte">Proposed</b><span class="src" data-en="on public consultation, not adopted" data-no="på høring, ikke vedtatt">on public consultation, not adopted</span></span>
-                        <span class="ct" data-cov-ct="future"></span>
-                        <input type="checkbox" id="filter-plan-future"></label>
-                    <div class="note" data-en="Context only, not clickable. The plan register returns nothing for Oslo or Lillestrøm."
-                         data-no="Kun kontekst, ikke klikkbar. Planregisteret gir ingen treff for Oslo eller Lillestrøm.">Context only, not clickable. The plan register returns nothing for Oslo or Lillestrøm.</div>
-                </div></div>
-            </div>
-        </div>
+                <!-- CROSS SECTION -->
+                <div class="pane" id="profile-panel"><div class="in"><div class="pad">
+                    <div class="pane-title" data-en="CROSS SECTION" data-no="TVERRSNITT">CROSS SECTION</div>
+                    <svg class="prof-svg" id="prof-svg" viewBox="0 0 620 120" preserveAspectRatio="none" role="img" aria-label="Elevation along the drawn line"></svg>
+                    <div class="prof-read" id="prof-read"></div>
+                    <div class="hint" id="prof-hint" data-en="Click along the ground to draw a line. Double-click, or press Enter, to read it."
+                         data-no="Klikk langs bakken for å tegne en linje. Dobbeltklikk, eller trykk Enter, for å lese den.">Click along the ground to draw a line. Double-click, or press Enter, to read it.</div>
+                </div></div></div>
+
+                <!-- HELP -->
+                <div class="pane help" id="help-panel"><div class="in"><div class="pad">
+                    <div class="pane-title" data-en="HOW TO USE THE MAP" data-no="SLIK BRUKER DU KARTET">HOW TO USE THE MAP</div>
+                    <h4 data-en="MOUSE AND KEYS" data-no="MUS OG TASTER">MOUSE AND KEYS</h4>
+                    <dl>
+                        <dt>drag</dt><dd data-en="move the map" data-no="flytt kartet">move the map</dd>
+                        <dt>wheel</dt><dd data-en="zoom" data-no="zoom">zoom</dd>
+                        <dt>R-drag</dt><dd data-en="turn and tilt (also Ctrl-drag, two fingers on a phone)" data-no="snu og vipp (også Ctrl-dra, to fingre på mobil)">turn and tilt (also Ctrl-drag, two fingers on a phone)</dd>
+                        <dt>click</dt><dd data-en="open a site, or read the coordinates and height of the ground" data-no="åpne et sted, eller les koordinater og høyde for bakken">open a site, or read the coordinates and height of the ground</dd>
+                        <dt>Esc</dt><dd data-en="close what is open" data-no="lukk det som er åpent">close what is open</dd>
+                        <dt>N</dt><dd data-en="click the compass: north up. Double-click: look straight down" data-no="klikk kompasset: nord opp. Dobbeltklikk: se rett ned">click the compass: north up. Double-click: look straight down</dd>
+                    </dl>
+                    <h4 data-en="TOOLS" data-no="VERKTØY">TOOLS</h4>
+                    <dl>
+                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h5v1h-5zM1 2h1v1h-1zM5 2h1v1h-1zM1 3h1v1h-1zM5 3h1v1h-1zM7 3h8v1h-8zM1 4h1v1h-1zM5 4h1v1h-1zM1 5h5v1h-5zM1 8h5v1h-5zM1 9h5v1h-5zM1 10h5v1h-5zM7 10h8v1h-8zM1 11h5v1h-5zM1 12h5v1h-5z"/></svg></dt><dd data-en="key to colours and lines" data-no="tegnforklaring">key to colours and lines</dd>
+                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM5 1h2v1h-2zM9 1h2v1h-2zM3 2h2v1h-2zM11 2h2v1h-2zM1 3h2v1h-2zM13 3h2v1h-2zM1 4h3v1h-3zM12 4h3v1h-3zM1 5h1v1h-1zM4 5h2v1h-2zM10 5h2v1h-2zM14 5h1v1h-1zM1 6h1v1h-1zM6 6h4v1h-4zM14 6h1v1h-1zM1 7h1v1h-1zM8 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM8 8h1v1h-1zM14 8h1v1h-1zM1 9h1v1h-1zM8 9h1v1h-1zM14 9h1v1h-1zM1 10h1v1h-1zM8 10h1v1h-1zM14 10h1v1h-1zM1 11h2v1h-2zM8 11h1v1h-1zM13 11h2v1h-2zM3 12h2v1h-2zM8 12h1v1h-1zM11 12h2v1h-2zM5 13h2v1h-2zM8 13h1v1h-1zM10 13h2v1h-2zM7 14h3v1h-3z"/></svg></dt><dd data-en="terrain in 3D, 1 m LiDAR where a run exists" data-no="terreng i 3D, 1 m LiDAR der en kjøring finnes">terrain in 3D, 1 m LiDAR where a run exists</dd>
+                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 0h1v1h-1zM7 0h1v1h-1zM13 0h1v1h-1zM2 1h1v1h-1zM7 1h1v1h-1zM12 1h1v1h-1zM3 2h1v1h-1zM11 2h1v1h-1zM6 3h3v1h-3zM5 4h5v1h-5zM1 5h2v1h-2zM4 5h7v1h-7zM12 5h2v1h-2zM5 6h5v1h-5zM6 7h3v1h-3zM10 9h1v1h-1zM9 10h3v1h-3zM7 11h2v1h-2zM12 11h2v1h-2zM5 12h2v1h-2zM14 12h1v1h-1zM3 13h2v1h-2zM15 13h1v1h-1zM1 14h2v1h-2zM0 15h16v1h-16z"/></svg></dt><dd data-en="shade the ground and turn the light" data-no="skyggelegg bakken og drei lyset">shade the ground and turn the light</dd>
+                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h1v1h-1zM0 1h1v1h-1zM0 2h1v1h-1zM10 2h2v1h-2zM0 3h1v1h-1zM9 3h1v1h-1zM12 3h1v1h-1zM0 4h1v1h-1zM3 4h2v1h-2zM8 4h1v1h-1zM13 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM5 5h1v1h-1zM7 5h1v1h-1zM14 5h1v1h-1zM0 6h2v1h-2zM6 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM0 8h1v1h-1zM0 9h1v1h-1zM0 10h1v1h-1zM0 11h1v1h-1zM0 12h1v1h-1zM0 13h1v1h-1zM0 14h16v1h-16z"/></svg></dt><dd data-en="cross section along a line, with CSV and SVG" data-no="tverrsnitt langs en linje, med CSV og SVG">cross section along a line, with CSV and SVG</dd>
+                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h2v1h-2zM3 0h2v1h-2zM6 0h2v1h-2zM9 0h2v1h-2zM12 0h2v1h-2zM0 2h1v1h-1zM12 2h1v1h-1zM0 3h1v1h-1zM12 3h1v1h-1zM0 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM7 6h1v1h-1zM12 6h1v1h-1zM7 7h2v1h-2zM0 8h1v1h-1zM7 8h3v1h-3zM12 8h1v1h-1zM0 9h1v1h-1zM7 9h4v1h-4zM12 9h1v1h-1zM7 10h5v1h-5zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h3v1h-3zM7 12h2v1h-2zM10 12h2v1h-2zM10 13h2v1h-2zM11 14h2v1h-2z"/></svg></dt><dd data-en="drag a box; the table lists what is inside" data-no="dra en boks; tabellen viser det som er inni">drag a box; the table lists what is inside</dd>
+                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM7 1h2v1h-2zM7 2h2v1h-2zM7 3h2v1h-2zM4 4h8v1h-8zM5 5h6v1h-6zM6 6h4v1h-4zM7 7h2v1h-2zM7 9h2v1h-2zM5 10h2v1h-2zM9 10h2v1h-2zM3 11h2v1h-2zM11 11h2v1h-2zM1 12h2v1h-2zM13 12h2v1h-2zM3 13h2v1h-2zM11 13h2v1h-2zM5 14h2v1h-2zM9 14h2v1h-2zM7 15h2v1h-2z"/></svg></dt><dd data-en="flat, north up" data-no="flatt, nord opp">flat, north up</dd>
+                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 0h3v1h-3zM9 1h5v1h-5zM9 2h5v1h-5zM7 3h2v1h-2zM10 3h3v1h-3zM5 4h2v1h-2zM2 5h3v1h-3zM1 6h5v1h-5zM1 7h5v1h-5zM2 8h3v1h-3zM5 9h2v1h-2zM7 10h2v1h-2zM10 10h3v1h-3zM9 11h5v1h-5zM9 12h5v1h-5zM10 13h3v1h-3z"/></svg></dt><dd data-en="copy a link to this exact view" data-no="kopier en lenke til denne visningen">copy a link to this exact view</dd>
+                    </dl>
+                    <h4 data-en="THE TABLE" data-no="TABELLEN">THE TABLE</h4>
+                    <div class="hint" data-en="The table is the legend. Its coloured boxes switch groups on and off on the map. Hover a row to see the site; click it to open it."
+                         data-no="Tabellen er tegnforklaringen. De fargede boksene slår grupper av og på i kartet. Hold over en rad for å se stedet; klikk for å åpne.">The table is the legend. Its coloured boxes switch groups on and off on the map. Hover a row to see the site; click it to open it.</div>
+                </div></div></div>
+
+        
+      </div>
     </div>
 </div>
 
@@ -625,7 +680,6 @@ iframe{border:0}
     </div>
 </div>
 
-<div id="hover-card" aria-hidden="true"><div class="im"></div><div class="cp"></div></div>
 <div class="share-notification" id="share-notification" role="status"></div>
 </div><!-- /stage -->
 
@@ -656,6 +710,8 @@ iframe{border:0}
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+<div id="hover-card" aria-hidden="true"><div class="im"></div><div class="cp"></div></div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -818,11 +874,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─────────────────────────────────────────────────────────────────────
     // STATUS AND COLOUR
     //
-    // Colour on this map is status, and nothing else. Reception sites run
-    // yellow (closed or historical) to red (receiving now) to orange (still to
-    // come); a site built to take contaminated masses is purple whatever its
-    // age. Construction runs dark to light green: finished, under way,
-    // planned. Blue is left free on purpose.
+    // Colour on this map is status, and nothing else, and every hue is a pure
+    // one: the lifecycle is carried by lightness order and by the line, never
+    // by washing the colour out. Reception runs yellow (closed) to red
+    // (receiving now) to orange (still to come); a site built to take
+    // contaminated masses is violet whatever its age. Construction runs deep
+    // green (finished) to green (under way) to chartreuse (planned). Every
+    // hue here is at full saturation — HSL S=100 — and the lifecycle moves
+    // along hue and lightness, never by desaturating. Blue belongs to terrain
+    // change. Red and green are close together for a red-green colour-blind
+    // reader, so the two families are also told apart by their shape: round
+    // for reception, square for construction.
     //
     // The sheet's Status column is free text ("closed (i etterdrift)",
     // "extraction ended 2022; still receives masses"), so it is classified
@@ -830,19 +892,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─────────────────────────────────────────────────────────────────────
     const CLASSES = {
         facility: [
-            { k: 'active',       col: '#E8141E', en: 'active',       no: 'aktiv' },
-            { k: 'future',       col: '#FF7A00', en: 'to come',      no: 'kommende' },
-            { k: 'old',          col: '#F2C200', en: 'closed',       no: 'nedlagt' },
-            { k: 'contaminated', col: '#8A2BE2', en: 'contaminated', no: 'forurenset' },
-            { k: 'unknown',      col: '#9A9A9A', en: 'no status',    no: 'ukjent' }
+            { k: 'active',       col: '#FF0000', en: 'receiving now', no: 'mottar nå' },
+            { k: 'future',       col: '#FF8000', en: 'to come',       no: 'kommende' },
+            { k: 'old',          col: '#FFD400', en: 'closed',        no: 'nedlagt' },
+            { k: 'contaminated', col: '#B300FF', en: 'contaminated',  no: 'forurenset' },
+            { k: 'unknown',      col: '#FFFFFF', en: 'no status',     no: 'ukjent' }
         ],
         project: [
-            { k: 'active',       col: '#1F9E3A', en: 'under way',    no: 'pågår' },
-            { k: 'future',       col: '#7DDC4B', en: 'planned',      no: 'planlagt' },
-            { k: 'old',          col: '#0B6B2A', en: 'finished',     no: 'ferdig' },
-            { k: 'unknown',      col: '#9A9A9A', en: 'no status',    no: 'ukjent' }
+            { k: 'active',       col: '#00FF00', en: 'under way',     no: 'pågår' },
+            { k: 'future',       col: '#95FF00', en: 'planned',       no: 'planlagt' },
+            { k: 'old',          col: '#00B218', en: 'finished',      no: 'ferdig' },
+            { k: 'unknown',      col: '#FFFFFF', en: 'no status',     no: 'ukjent' }
         ]
     };
+    // Line treatment carries the lifecycle alongside the hue, so the ramp is
+    // still readable to someone who cannot separate the two ends of it.
+    //   solid 2px  = running     solid 1.5px = over     dashed = not built yet
+    //   dotted, unfilled        = no status
+    const DASH = { future: [3, 2], unknown: [1, 2] };
+    const WEIGHT = { active: 2, contaminated: 2, future: 1.5, old: 1.5, unknown: 1.2 };
+    const FILL = { active: 0.18, contaminated: 0.18, future: 0.10, old: 0.12, unknown: 0 };
+
     const classInfo = (cat, k) => (CLASSES[cat] || CLASSES.facility).find(c => c.k === k)
                                   || CLASSES.facility[CLASSES.facility.length - 1];
 
@@ -1080,14 +1150,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // black part says which way the masses go, the colour says its status.
     // ─────────────────────────────────────────────────────────────────────
     function projectSymbol(dir, col) {
-        const s = 13, c = col || '#1F9E3A';
+        const s = 13, c = col === '#FFFFFF' ? '#4A4A4A' : (col || '#00FF00');
         const fill = dir === 'producing' ? '<polygon points="1,15 15,15 1,1" fill="#000"/>'
                    : dir === 'receiving' ? '<polygon points="15,1 15,15 1,1" fill="#000"/>'
                    : '<polygon points="1,1 8,8 1,15" fill="#000"/><polygon points="15,1 8,8 15,15" fill="#000"/>';
         return `<svg width="${s}" height="${s}" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="14" height="14" fill="#fff" stroke="${c}" stroke-width="2"/>${fill}</svg>`;
     }
     function facilitySymbol(dir, col) {
-        const s = 13, c = col || '#E8141E';
+        const s = 13, c = col === '#FFFFFF' ? '#4A4A4A' : (col || '#FF0000');
         const fill = dir === 'producing' ? '<path d="M1,8 A7,7 0 0,1 15,8 Z" fill="#000"/>'
                    : dir === 'receiving' ? '<path d="M1,8 A7,7 0 0,0 15,8 Z" fill="#000"/>'
                    : '<path d="M8,1 A7,7 0 0,1 15,8 L8,8 Z" fill="#000"/><path d="M8,15 A7,7 0 0,1 1,8 L8,8 Z" fill="#000"/>';
@@ -1110,6 +1180,69 @@ document.addEventListener('DOMContentLoaded', function() {
         return { category, direction };
     }
     const symbolFor = site => (site.__cat === 'project' ? projectSymbol : facilitySymbol)(getMarkerInfo(site).direction, colourOf(site));
+
+    // ─────────────────────────────────────────────────────────────────────
+    // THE PICTOGRAM GRAMMAR
+    //
+    // Every site carries one of the 29 marks in assets/marks/, drawn black on
+    // white. They are the same drawings as picto_grammar/, trimmed and sized.
+    // Naming: f_* a facility, cp_* a construction project; for a project
+    // _s_ means it is a source of mass and _r_ that it receives; then the type.
+    //
+    // The mark says WHAT the place is. Colour says what state it is in. The
+    // two are read separately and never encode each other.
+    // ─────────────────────────────────────────────────────────────────────
+    const MARKS = new Set(['cp_r_bolig','cp_r_industri','cp_r_infrastruktur','cp_r_land_bruk',
+        'cp_r_naering','cp_r_offentlig','cp_s_bolig','cp_s_industri','cp_s_infrastruktur',
+        'cp_s_land_bruk','cp_s_naering','cp_s_offentlig','f_d_gjevenning','f_d_inert','f_d_inter',
+        'f_d_kommunalt','f_d_ordinaert','f_d_ordinaert_inert','f_d_ordinaert_inert_forurenset',
+        'f_d_sortering','f_gjevenning','f_massemottak','f_mm_inert','f_mm_inter','f_mm_knusing',
+        'f_mm_rene','f_pukkverk','f_pv_massemottak','f_pv_renemasser']);
+    const MARK_DIR = 'assets/marks/';
+
+    function markFor(site) {
+        const type = String(site.Type || '').toLowerCase();
+        const sub  = String(site.Subtype || '').toLowerCase();
+        const both = type + ' ' + sub;
+        if ((site.__cat || 'facility') === 'project') {
+            const side = getMarkerInfo(site).direction === 'producing' ? 's' : 'r';
+            let sector = 'naering';
+            if (/bolig|boligutvikling|byutvikling/.test(both)) sector = 'bolig';
+            else if (/infrastruktur|vei|bane|tunnel|fiber|havn/.test(both)) sector = 'infrastruktur';
+            else if (/offentlig|skole|sykehus|universitet|museum|statlig|helse/.test(both)) sector = 'offentlig';
+            else if (/industri|logistikk|datasenter/.test(both)) sector = 'industri';
+            else if (/landbruk|land bruk|jordbruk/.test(both)) sector = 'land_bruk';
+            const k = 'cp_' + side + '_' + sector;
+            return MARKS.has(k) ? k : 'cp_' + side + '_naering';
+        }
+        // Pukkverk first: a quarry that also takes mass is still a quarry.
+        if (/pukkverk|pukk|steinbrudd/.test(type)) {
+            if (/massemottak|deponi|massesenter/.test(both)) return 'f_pv_massemottak';
+            if (/rene masser|renemasser|ren masse/.test(both)) return 'f_pv_renemasser';
+            return 'f_pukkverk';
+        }
+        if (/deponi/.test(type)) {
+            if (/forurenset|pfas|spesial|farlig/.test(both)) return 'f_d_ordinaert_inert_forurenset';
+            if (/sortering|ettersortering/.test(both)) return 'f_d_sortering';
+            if (/kommunal/.test(both)) return 'f_d_kommunalt';
+            if (/gjenvinning|betonggjenvinning|kompost/.test(both)) return 'f_d_gjevenning';
+            if (/ordin/.test(both) && /inert/.test(both)) return 'f_d_ordinaert_inert';
+            if (/ordin/.test(both)) return 'f_d_ordinaert';
+            if (/inert/.test(both)) return 'f_d_inert';
+            if (/intermediate|mellomlagr/.test(both)) return 'f_d_inter';
+            return 'f_d_ordinaert';
+        }
+        if (/gjenvinning|miljøpark|miljopark|omlasting|avfallsmottak/.test(type)) return 'f_gjevenning';
+        if (/massemottak|massesenter|sjøutfylling|sjoutfylling|bakkeplanering|ravinefylling/.test(type)) {
+            if (/inert/.test(both)) return 'f_mm_inert';
+            if (/knusing|mellomlagr/.test(both)) return 'f_mm_knusing';
+            if (/rene masser|renemasser|jordforbedring/.test(both)) return 'f_mm_rene';
+            if (/intermediate/.test(both)) return 'f_mm_inter';
+            return 'f_massemottak';
+        }
+        return 'f_massemottak';
+    }
+
 
     // ─────────────────────────────────────────────────────────────────────
     // FRAMING
@@ -1677,7 +1810,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const FOOTPRINTS_GEOJSON = 'data/facility_polygons.geojson';
     const COVERAGE_GEOJSON = 'data/plan_coverage.geojson';
     const FP_LAYERS = ['fp-glow', 'fp-fill', 'fp-line', 'fp-soft'];
-    const PT_LAYERS = ['site-glow', 'site-dot'];
+    const PT_LAYERS = ['site-glow', 'site-plate', 'site-mark'];
     const SITE_LAYERS = FP_LAYERS.concat(PT_LAYERS);
     const COV_LAYERS = {
         'filter-plan-old':     ['cov-old-line'],
@@ -1686,14 +1819,21 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const under = ids => ids.find(id => map.getLayer(id));
     const HOVER = ['boolean', ['feature-state', 'hot'], false];
-    const FP_SWITCH = 12.5;     // below this zoom a footprinted site is a dot
 
-    // MapLibre only takes zoom at the top of an expression, so the fade is an
-    // interpolation whose far end is 0 for a site with a footprint.
-    const dotFade = (v, fpOn) => fpOn
-        ? ['interpolate', ['linear'], ['zoom'], FP_SWITCH - 0.6, v, FP_SWITCH + 0.2,
-           ['case', ['==', ['get', 'fp'], 1], 0, v]]
-        : v;
+    // Class -> line treatment, as a MapLibre match on the feature's class.
+    const byClass = (table, fallback) => ['match', ['get', 'cls']]
+        .concat(...Object.keys(table).map(k => [k, table[k]])).concat([fallback]);
+    const LINE_W   = byClass({ active: 2, contaminated: 2, future: 1.5, old: 1.5, unknown: 1.2 }, 1.5);
+    const LINE_W_H = byClass({ active: 3.2, contaminated: 3.2, future: 2.6, old: 2.6, unknown: 2.2 }, 2.6);
+    const FILL_A   = byClass({ active: 0.18, contaminated: 0.18, future: 0.10, old: 0.12, unknown: 0 }, 0.14);
+    const FILL_A_H = byClass({ active: 0.34, contaminated: 0.34, future: 0.24, old: 0.26, unknown: 0.08 }, 0.28);
+    // A white mark needs a dark ring or it disappears on snow and concrete.
+    // Plate and pictogram share one growth curve, so the mark never drifts
+    // off its plate as the map zooms. Size is a layout property, which cannot
+    // read feature-state, so hover is answered by the glow underneath.
+    const PLATE_SIZE = ['interpolate', ['linear'], ['zoom'], 6, 0.42, 15, 0.64];
+    const MARK_SIZE  = ['interpolate', ['linear'], ['zoom'], 6, 0.28, 15, 0.44];
+
     let fpData = null, fpState = 0, sitesReady = false;
     let covState = 0;
 
@@ -1714,9 +1854,27 @@ document.addEventListener('DOMContentLoaded', function() {
             type: 'Feature',
             geometry: { type: 'Point', coordinates: [num(s.Longitude), num(s.Latitude)] },
             properties: { uid: uidOf(s), cat: s.__cat, cls: s.__cls, col: classInfo(s.__cat, s.__cls).col,
-                          fp: fpBounds[uidOf(s)] ? 1 : 0, dir: getMarkerInfo(s).direction }
+                          fp: fpBounds[uidOf(s)] ? 1 : 0, dir: getMarkerInfo(s).direction,
+                          pic: 'mk-' + markFor(s),
+                          plate: 'plate-' + s.__cat + '-' + s.__cls }
         })) };
     }
+
+    // The pictograms are fetched the first time the map asks for one, so a
+    // mark nobody can see is never downloaded.
+    const markAsked = Object.create(null);
+    map.on('styleimagemissing', e => {
+        const id = String(e.id || '');
+        if (markAsked[id]) return;
+        let file = null;
+        if (id.startsWith('mk-') && MARKS.has(id.slice(3))) file = id.slice(3);
+        else if (id.startsWith('plate-')) file = id;
+        if (!file) return;
+        markAsked[id] = 1;
+        map.loadImage(MARK_DIR + file + '.png')
+           .then(r => { if (!map.hasImage(id)) map.addImage(id, r.data, { pixelRatio: 2 }); })
+           .catch(() => { console.warn('mark missing:', file); });
+    });
 
     function ensureSiteLayers() {
         if (map.getSource('sites')) return;
@@ -1724,34 +1882,51 @@ document.addEventListener('DOMContentLoaded', function() {
         map.addSource('fp', { type: 'geojson', data: fpFeatures(), promoteId: 'uid',
             attribution: 'Footprints: Kartverket plan and cadastre · NGU · LUB' });
         map.addSource('sites', { type: 'geojson', data: siteFeatures(), promoteId: 'uid' });
-        const fpOn = ['>=', ['zoom'], FP_SWITCH - 0.5];
-        map.addLayer({ id: 'fp-glow', type: 'line', source: 'fp', minzoom: FP_SWITCH - 0.5,
+
+        // Footprints draw at every zoom. A shape a few pixels wide still says
+        // where the ground is taken, and the mark on top says what it is.
+        map.addLayer({ id: 'fp-glow', type: 'line', source: 'fp',
             filter: ['==', ['get', 'firm'], 1],
             layout: { 'line-join': 'round' },
-            paint: { 'line-color': ['get', 'col'], 'line-blur': ['case', HOVER, 7, 4],
-                     'line-width': ['case', HOVER, 12, 7], 'line-opacity': ['case', HOVER, 0.75, 0.45] } }, before);
-        map.addLayer({ id: 'fp-fill', type: 'fill', source: 'fp', minzoom: FP_SWITCH - 0.5,
+            paint: { 'line-color': ['get', 'col'], 'line-blur': ['case', HOVER, 9, 6],
+                     'line-width': ['case', HOVER, 16, 10], 'line-opacity': ['case', HOVER, 0.85, 0.6] } }, before);
+        map.addLayer({ id: 'fp-fill', type: 'fill', source: 'fp',
             filter: ['==', ['get', 'firm'], 1],
-            paint: { 'fill-color': ['get', 'col'], 'fill-opacity': ['case', HOVER, 0.34, 0.16] } }, before);
-        map.addLayer({ id: 'fp-line', type: 'line', source: 'fp', minzoom: FP_SWITCH - 0.5,
-            filter: ['==', ['get', 'firm'], 1],
+            paint: { 'fill-color': ['get', 'col'], 'fill-opacity': ['case', HOVER, FILL_A_H, FILL_A] } }, before);
+        map.addLayer({ id: 'fp-line', type: 'line', source: 'fp',
+            filter: ['all', ['==', ['get', 'firm'], 1], ['!=', ['get', 'cls'], 'future']],
             layout: { 'line-join': 'round' },
-            paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, 2.4, 1.5] } }, before);
-        map.addLayer({ id: 'fp-soft', type: 'line', source: 'fp', minzoom: FP_SWITCH - 0.5,
-            filter: ['==', ['get', 'firm'], 0],
-            paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, 2, 1.2],
-                     'line-dasharray': [3, 2], 'line-opacity': 0.9 } }, before);
-        // A footprinted site's dot fades out as its outline fades in.
+            paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, LINE_W_H, LINE_W] } }, before);
+        // Dashed: still to come, and the NGU resource areas that are not a
+        // measured operating extent.
+        map.addLayer({ id: 'fp-soft', type: 'line', source: 'fp',
+            filter: ['any', ['==', ['get', 'firm'], 0], ['==', ['get', 'cls'], 'future']],
+            layout: { 'line-join': 'round' },
+            paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, LINE_W_H, LINE_W],
+                     'line-dasharray': [3, 2], 'line-opacity': 0.95 } }, before);
+
+        // Every site is its pictogram: the drawing in black and white, on a
+        // white disc ringed in the status colour, over a glow of the same.
         map.addLayer({ id: 'site-glow', type: 'circle', source: 'sites',
             paint: { 'circle-color': ['get', 'col'],
-                     'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, ['case', HOVER, 11, 7], 14, ['case', HOVER, 18, 13]],
+                     'circle-radius': ['interpolate', ['linear'], ['zoom'],
+                                       6, ['case', HOVER, 16, 11], 15, ['case', HOVER, 26, 19]],
                      'circle-blur': 0.9,
-                     'circle-opacity': dotFade(['case', HOVER, 0.8, 0.5], true) } }, before);
-        map.addLayer({ id: 'site-dot', type: 'circle', source: 'sites',
-            paint: { 'circle-color': ['get', 'col'],
-                     'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, ['case', HOVER, 5, 3.4], 14, ['case', HOVER, 7, 5]],
-                     'circle-stroke-color': '#fff', 'circle-stroke-width': ['case', HOVER, 1.5, 1],
-                     'circle-opacity': dotFade(1, true), 'circle-stroke-opacity': dotFade(1, true) } }, before);
+                     'circle-opacity': ['case', ['==', ['get', 'cls'], 'unknown'], 0,
+                                        ['case', HOVER, 0.85, 0.5]] } }, before);
+        // Round for a reception site, square for a construction project, so
+        // the two families stay apart even where their colours do not.
+        map.addLayer({ id: 'site-plate', type: 'symbol', source: 'sites',
+            layout: { 'icon-image': ['get', 'plate'],
+                      'icon-size': PLATE_SIZE,
+                      'icon-allow-overlap': true, 'icon-ignore-placement': true,
+                      'icon-anchor': 'center' } }, before);
+        map.addLayer({ id: 'site-mark', type: 'symbol', source: 'sites',
+            layout: { 'icon-image': ['get', 'pic'],
+                      'icon-size': MARK_SIZE,
+                      'icon-allow-overlap': true, 'icon-ignore-placement': true,
+                      'icon-anchor': 'center' },
+            paint: { 'icon-opacity': ['case', ['==', ['get', 'cls'], 'future'], 0.75, 1] } }, before);
 
         const pick = e => {
             if (toolBusy() || !e.features || !e.features.length) return;
@@ -1889,13 +2064,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (sitesReady) {
             const f = mapFilter();
             const fpOn = $('filter-footprints').checked;
-            ['fp-glow', 'fp-fill', 'fp-line'].forEach(id => map.setFilter(id, ['all', ['==', ['get', 'firm'], 1], f]));
-            map.setFilter('fp-soft', ['all', ['==', ['get', 'firm'], 0], f]);
+            ['fp-glow', 'fp-fill'].forEach(id => map.setFilter(id, ['all', ['==', ['get', 'firm'], 1], f]));
+            map.setFilter('fp-line', ['all', ['==', ['get', 'firm'], 1], ['!=', ['get', 'cls'], 'future'], f]);
+            map.setFilter('fp-soft', ['all', ['any', ['==', ['get', 'firm'], 0], ['==', ['get', 'cls'], 'future']], f]);
             FP_LAYERS.forEach(id => setVis(id, fpOn));
-            // With footprints switched off, every site falls back to its dot.
-            map.setPaintProperty('site-dot', 'circle-opacity', dotFade(1, fpOn));
-            map.setPaintProperty('site-dot', 'circle-stroke-opacity', dotFade(1, fpOn));
-            map.setPaintProperty('site-glow', 'circle-opacity', dotFade(['case', HOVER, 0.8, 0.5], fpOn));
             PT_LAYERS.forEach(id => map.setFilter(id, f));
         }
         if (currentSite && !passes(currentSite)) setHot(null);
@@ -1939,7 +2111,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { key:'Operator',     th:'th_op',   pth:'th_dev', w:'180px', cls:'c-op', get: s => s.Operator || s.Company || '' },
         { key:'Municipality', th:'th_kom',  w:'110px', cls:'c-kom', get: s => s.Municipality || '' },
         { key:'MassesAccepted', th:'th_mat', w:'150px', cls:'c-mat', get: s => s.MassesAccepted || s.Type || '' },
-        { key:'__dir',        th:'th_type', w:'52px', cls:'sym', sym:true,
+        { key:'__dir',        th:'th_type', w:'74px', cls:'sym', sym:true,
           get: s => getMarkerInfo(s).direction, sort: s => getMarkerInfo(s).direction },
         { key:'Area_m2',      th:'th_area', w:'96px', num:true, cls:'c-area', get: s => fmt(qty(s.Area_m2)) },
         { key:'TotalCapacity',th:'th_cap',  w:'112px', num:true, cls:'c-cap', get: s => fmt(qty(s.TotalCapacity)) },
@@ -2013,8 +2185,9 @@ document.addEventListener('DOMContentLoaded', function() {
             COLS.forEach(c => {
                 const td = document.createElement('td');
                 if (c.sym) {
-                    td.innerHTML = symbolFor(site);
-                    td.title = t('dir_' + c.get(site));
+                    td.innerHTML = `<img class="mk" src="${MARK_DIR}${markFor(site)}.png" alt="" loading="lazy">`
+                                 + symbolFor(site);
+                    td.title = markFor(site).replace(/_/g, ' ') + ' · ' + t('dir_' + c.get(site));
                 } else if (c.key === '__cls') {
                     td.innerHTML = `<span class="swatch" style="background:${colourOf(site)}"></span>${esc(c.get(site))}`;
                     td.title = c.get(site);
@@ -2026,7 +2199,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 tr.appendChild(td);
             });
             tr.onclick = () => openSite(site, true);
-            tr.onmouseenter = () => showHover(site, tr);
+            tr.onmouseenter = e => showHover(site, e);
+            tr.onmousemove = e => { if (hoverUid === uidOf(site)) placeHover(e); };
             tr.onmouseleave = hideHover;
             frag.appendChild(tr);
         });
@@ -2150,21 +2324,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // ── hover preview: the whole site and some ground around it ──
     let hoverUid = null;
     function placeHover(anchor) {
-        const stage = $('stage').getBoundingClientRect();
+        // Viewport coordinates, so the card can sit over the map or over the
+        // table alike. It follows the pointer and stays clear of it.
         const w = hoverCard.offsetWidth || 250, h = hoverCard.offsetHeight || 190;
-        let left, top;
-        if (anchor instanceof Element) {
+        const pad = 10, GAP = 16;
+        let px, py;
+        if (anchor && typeof anchor.clientX === 'number') { px = anchor.clientX; py = anchor.clientY; }
+        else if (anchor && typeof anchor.x === 'number') {
+            const c = map.getCanvas().getBoundingClientRect();
+            px = c.left + anchor.x; py = c.top + anchor.y;
+        } else if (anchor instanceof Element) {
             const r = anchor.getBoundingClientRect();
-            const lw = $('bar');
-            const floor = lw && lw.getClientRects().length ? Math.round(lw.getBoundingClientRect().right - stage.left) + 8 : 8;
-            left = Math.max(floor, Math.min(r.left - stage.left + 180, stage.width - w - 8));
-            top = stage.height - h - 8;
-        } else {
-            left = anchor.x + 18; top = anchor.y - h - 12;
-            if (left + w > stage.width - 8) left = anchor.x - w - 18;
-            if (top < 8) top = anchor.y + 18;
-            left = Math.max(8, left); top = Math.max(8, Math.min(top, stage.height - h - 8));
-        }
+            px = r.left + Math.min(200, r.width / 2); py = r.top + r.height / 2;
+        } else return;
+        let left = px + GAP, top = py - h - GAP;
+        if (left + w > innerWidth - pad) left = px - w - GAP;      // flip left
+        if (left < pad) left = Math.min(px + GAP, innerWidth - w - pad);
+        if (top < pad) top = py + GAP;                              // flip below
+        top = Math.max(pad, Math.min(top, innerHeight - h - pad));
+        left = Math.max(pad, left);
+        // Over the table, the picture rides above it: it follows the pointer
+        // sideways but never covers the rows being read.
+        const deck = $('deck').getBoundingClientRect();
+        if (py >= deck.top - 1 && deck.top > h + pad) top = deck.top - h - 8;
         hoverCard.style.left = Math.round(left) + 'px';
         hoverCard.style.top = Math.round(top) + 'px';
     }
@@ -2210,10 +2392,11 @@ document.addEventListener('DOMContentLoaded', function() {
         e.stopPropagation();
         setDeckSize(deckSize === 'closed' ? 'half' : deckSize === 'half' ? 'full' : 'closed');
     };
-    $('deck-title').onclick = () => setDeckSize(deckSize === 'closed' ? 'half' : 'closed');
+    // One handler on the head, so a click anywhere on the bar that is not a
+    // button toggles the table open and shut.
     document.querySelector('.deck-head').addEventListener('click', e => {
         if (e.target.closest('button')) return;
-        if (deckSize === 'closed') setDeckSize('half');
+        setDeckSize(deckSize === 'closed' ? 'half' : 'closed');
     });
     // The rows in the bar are a way into the table too.
     document.querySelector('label[for="filter-facilities"]').addEventListener('click', () => openDeck('facility'));
@@ -2317,16 +2500,15 @@ document.addEventListener('DOMContentLoaded', function() {
         handle.addEventListener('pointerup', stop);
         handle.addEventListener('pointercancel', stop);
     }
-    makeDraggable($('bar'), document.querySelector('#bar .bar-head'));
     makeDraggable($('sidebar'), document.querySelector('#sidebar .sb-header'));
 
     function setFolded(f) {
         $('bar').classList.toggle('folded', f);
         document.body.classList.toggle('bar-folded', f);
-        $('btn-menu').setAttribute('aria-expanded', String(!f));
     }
-    $('btn-menu').onclick = () => setFolded(!$('bar').classList.contains('folded'));
-    if (narrow()) setFolded(true);
+    // The layers button is a pane like any other now; openPane is defined
+    // further down, so the handler reads it at click time.
+    $('btn-menu').onclick = () => window.__openPane && window.__openPane('data-panel');
 
     document.querySelectorAll('.grp-head').forEach(h => {
         h.setAttribute('role', 'button'); h.tabIndex = 0;
@@ -2704,21 +2886,39 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─────────────────────────────────────────────────────────────────────
     // TOOL PANES: key, light, cross section, help. One open at a time.
     // ─────────────────────────────────────────────────────────────────────
-    const PANES = ['filter-panel', 'light-panel', 'profile-panel', 'help-panel'];
-    const PANE_BTN = { 'filter-panel': '#btn-key', 'light-panel': '#btn-light',
+    const PANES = ['search-panel', 'data-panel', 'filter-panel', 'light-panel',
+                   'profile-panel', 'help-panel'];
+    const PANE_BTN = { 'search-panel': '#btn-search', 'data-panel': '#btn-menu',
+                       'filter-panel': '#btn-key', 'light-panel': '#btn-light',
                        'profile-panel': '#btn-profile', 'help-panel': '#btn-help' };
+    // One pane at a time, and the drawer is only there while one is open.
     function openPane(id) {
         const was = $(id).classList.contains('open');
         PANES.forEach(p => {
             const on = p === id && !was;
             $(p).classList.toggle('open', on);
             const b = document.querySelector(PANE_BTN[p]);
-            if (b) b.setAttribute('aria-expanded', String(on));
+            if (b) { b.setAttribute('aria-expanded', String(on)); b.classList.toggle('on', on); }
         });
-        if (!was && $('bar').classList.contains('folded')) setFolded(false);
+        $('bar').classList.toggle('open', !was);
+        document.body.classList.toggle('drawer-open', !was);
+        if (!was) setFolded(false);
+        if (!was && id === 'search-panel') { const i = $('search-input'); if (i) i.focus(); }
         syncToolButtons();
         return !was;
     }
+    function closePanes() {
+        PANES.forEach(p => {
+            $(p).classList.remove('open');
+            const b = document.querySelector(PANE_BTN[p]);
+            if (b) { b.setAttribute('aria-expanded', 'false'); b.classList.remove('on'); }
+        });
+        $('bar').classList.remove('open');
+        document.body.classList.remove('drawer-open');
+        syncToolButtons();
+    }
+    window.__closePanes = closePanes;
+    window.__openPane = openPane;
     function syncToolButtons() {
         const set = (sel, on) => {
             const b = document.querySelector(sel); if (!b) return;
@@ -2726,12 +2926,15 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         set('#btn-key', $('filter-panel').classList.contains('open'));
         set('#btn-help', $('help-panel').classList.contains('open'));
+        set('#btn-search', $('search-panel').classList.contains('open'));
+        set('#btn-menu', $('data-panel').classList.contains('open'));
         set('#btn-light', hsOn);
         set('#btn-profile', profileMode);
     }
     window.toggleFilter = () => openPane('filter-panel');
     $('btn-key').onclick = () => openPane('filter-panel');
     $('btn-help').onclick = () => openPane('help-panel');
+    $('btn-search').onclick = () => openPane('search-panel');
 
     // ── LIGHT: a hillshade on the same DEM, usable flat ──
     let hsOn = false, hsSource = null;
