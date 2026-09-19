@@ -367,6 +367,32 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
              chips: document.querySelectorAll('#deck-chips .chip').length };
   });
   ok(shut.closed && shut.h < 40, 'the table starts closed (' + shut.h + 'px)');
+  // Opened to the whole page it must still clear the site header, or the
+  // control that shuts it is behind one and the table is a trap.
+  const deckFull = await p.evaluate(async () => {
+    const d = document.getElementById('deck');
+    const size = document.getElementById('deck-size');
+    size.click(); await new Promise(r => setTimeout(r, 350));   // half
+    size.click(); await new Promise(r => setTimeout(r, 400));   // full
+    const ft = parseFloat(getComputedStyle(document.documentElement)
+                .getPropertyValue('--frame-top')) || 0;
+    return { isFull: d.classList.contains('full'), ft,
+             top: Math.round(d.getBoundingClientRect().top),
+             head: Math.round(document.querySelector('.deck-head').getBoundingClientRect().top),
+             btn: Math.round(size.getBoundingClientRect().top) };
+  });
+  ok(deckFull.isFull && deckFull.top >= deckFull.ft && deckFull.head >= deckFull.ft && deckFull.btn >= deckFull.ft,
+     'the whole-page table clears the header (top ' + deckFull.top + ', its button '
+     + deckFull.btn + ', header ' + deckFull.ft + 'px)');
+  const esc = await p.evaluate(async () => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise(r => setTimeout(r, 400));
+    const d = document.getElementById('deck');
+    const half = d.classList.contains('half');
+    if (half) { document.querySelector('.deck-head').click(); await new Promise(r => setTimeout(r, 350)); }
+    return half;
+  });
+  ok(esc, 'and Esc brings it back down');
   ok(shut.chips >= 3, 'with the colour key in its header even when closed (' + shut.chips + ' chips)');
   const headToggle = await p.evaluate(async () => {
     const d = document.getElementById('deck'), head = document.querySelector('.deck-head');

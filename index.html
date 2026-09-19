@@ -320,7 +320,7 @@ iframe{border:0}
 #deck{flex:0 0 30px;display:flex;flex-direction:column;overflow:hidden;background:#fff;
   transition:flex-basis .24s var(--ease)}
 #deck.half{flex-basis:280px}        /* 30 head + 25 header + 9 rows */
-#deck.full{position:absolute;left:0;right:0;top:0;bottom:24px;z-index:60;flex-basis:auto}
+#deck.full{position:absolute;left:0;right:0;top:var(--frame-top);bottom:24px;z-index:60;flex-basis:auto}
 #deck:not(.half):not(.full) .deck-scroll{display:none}
 .deck-head{height:30px;flex:0 0 30px;display:flex;align-items:stretch;gap:12px;
   padding:0 var(--gut) 0 0;border-bottom:.5px solid var(--frame);font-size:10px;overflow:hidden;
@@ -3767,6 +3767,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (selectMode) { setSelectMode(false); return; }
             const open = PANES.find(p => $(p).classList.contains('open'));
             if (open) { openPane(open); if (open === 'light-panel' && hsOn) { setLightOn(false); syncToolButtons(); } return; }
+            // The whole-page table covers everything, including the record
+            // under it, so it is the next thing to give way.
+            if (deckSize === 'full') { setDeckSize('half'); return; }
             if ($('sidebar').classList.contains('active')) { closeSidebar(); return; }
             if (deckSelection) clearSelection();
         }
