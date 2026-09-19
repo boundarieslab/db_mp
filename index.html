@@ -402,22 +402,70 @@ iframe{border:0}
   max-width:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .share-notification.show{opacity:1;transform:translate(-50%,0)}
 
-/* ---------- narrow ---------- */
+/* ---------- narrow: one surface, one thing at a time ----------------------
+   The desktop is a stage with windows floating over it. A phone has no room
+   for two windows and no cursor for the tools that need one, so below 760px
+   the map becomes the whole page and the record and the table share a single
+   sheet along the bottom. Whichever is open owns the sheet; the other is not
+   there. Nothing in this block is read above 760px.
+   ---------------------------------------------------------------------- */
 @media (max-width:760px){
-  :root{--bar:calc(100vw - 20px)}
-  #tabstrip{margin-right:6px}
+  :root{--bar:calc(100vw - 20px);--row:30px;--sheet:56svh}
+
+  /* ---- the map is the page ---- */
+  #stage{border-bottom:0}
+
+  /* ---- the toolbar: only what a finger can work ----
+     PROFILE wants a click along a line and SELECT a dragged box. Both fight
+     the map for the same gesture on touch, so they stay on the desktop. */
+  #btn-profile,#btn-select{display:none}
+  .btn{width:30px;height:30px;flex:0 0 30px}
+  .toolbar{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .toolbar::-webkit-scrollbar{display:none}
+  .toolbar .btn.txt{width:30px}
+  .toolbar .lang{position:sticky;right:0;background:#fff}
+
+  /* ---- the sheet ----
+     Pinned to the bottom of the stage, which ends at the status line once
+     the table is out of the way. It slides rather than fades: on a phone the
+     movement is what says where it came from. */
+  #sidebar{left:0;right:0;top:auto;bottom:0;width:auto;
+    height:var(--sheet);max-height:none;border-width:.5px 0 0;z-index:70}
+  #sidebar:not(.active){opacity:1;transform:translateY(100%)}
+  .sb-header{height:32px;flex:0 0 32px;padding:0 8px}
+  .share-btn{padding:4px 8px}
+  .close-btn{width:22px;height:22px;flex:0 0 22px}
+  .close-btn::before,.close-btn::after{left:4px;top:10.75px;width:14px}
+
+  /* The map behind the sheet is already showing this site at this zoom, so
+     the aerial thumbnail in the record is the same picture twice. Photographs
+     stay: they are the one thing the map cannot show. With neither, the media
+     block goes altogether rather than holding 140px of grey. */
+  #sb-minimap,.media-note{display:none}
+  .sb-media{height:140px}
+  .sb-media:has(.no-images){display:none}
+
+  /* The record and the table are the same surface. Opening a record puts the
+     table away; closing it brings the table back in the state it was left. */
+  #shell:has(#sidebar.active) #deck{display:none}
+
+  /* ---- the table ---- */
+  #deck.half{flex-basis:46svh}
+  .deck-head{height:32px;flex:0 0 32px;gap:8px;padding:0 8px}
+  .deck-head .count,#deck-dir,#deck-csv{display:none}
+  #tabstrip{margin-right:6px;overflow-x:auto;scrollbar-width:none}
+  #tabstrip::-webkit-scrollbar{display:none}
   .tab{padding:0 7px}
   .tab .tl{font-size:8px}
-  #sidebar{right:0;left:0;top:auto;bottom:0;width:auto;max-height:62%;border-width:.5px 0 0}
-  #sidebar:not(.active){transform:translateY(24px)}
-  .sb-media{height:150px}
-  #deck.half{flex-basis:205px}
   #site-table{min-width:0}
   #site-table .c-op,#site-table .c-mat,#site-table .c-plan,#site-table .c-cap,#site-table .c-uid,#site-table .c-kom,#site-table .c-area{display:none}
-  .status-strip .right{display:none}
+
+  /* ---- the status line ----
+     A live coordinate readout, and a projection to switch it between, under
+     a cursor that is not there. The count stays; it is the only live number
+     on the page that a reader acts on. */
+  #coord-readout,#btn-crs,.status-strip .right{display:none}
   #hover-card{display:none}
-  .deck-head{gap:8px;padding:0 8px}
-  .deck-head .count,#deck-dir,#deck-csv{display:none}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:0s!important;animation-duration:0s!important;animation-delay:0s!important}
@@ -1555,7 +1603,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!keepMedia) mediaMode = currentImages.length ? 'photo' : 'aerial';
         const lat = num(site.Latitude), lon = num(site.Longitude);
         const hasCoords = Number.isFinite(lat) && Number.isFinite(lon);
-        const canAerial = !!siteBox(site);
+        // On a phone the map behind the sheet is already showing this site,
+        // so the aerial thumbnail would be the same picture twice.
+        const canAerial = !!siteBox(site) && !narrow();
 
         let media = '';
         if (mediaMode === 'photo' && currentImages.length) {
