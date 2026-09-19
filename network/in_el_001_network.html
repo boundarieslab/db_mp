@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Norsk Gjenvinning AS avd. ØGAS - Ownership Network</title>
+    <title>Deponitomta industrideponi (Sperre Støperi) - Ownership Network</title>
     
     <style>
         /* Same typeface as dirtybusiness.no and the map, served from the same
@@ -63,24 +63,12 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Norsk Gjenvinning Norge AS", type:"p"},
-        {id:"Norsk Gjenvinning AS avd. ØGAS", type:"receiving", l:"(Øra, Gamle Fredrikstad)", active:true},
-        {id:"Norsk Gjenvinning AS", type:"div_ent"},
-        {id:"Norsk Gjenvinning AS avd. Larvik", type:"div_ind"},
-        {id:"Norsk Gjenvinning AS avd. Kongsvinger", type:"div_ind"},
-        {id:"Norsk Gjenvinning avfallsanlegg Grinda", type:"s"},
-        {id:"Korperud fyllplass", type:"s"},
-        {id:"FREVAR KF", type:"div_ent", l:"(same site)"}
+        {id:"Deponitomta AS", type:"p", l:"(permit holder)"},
+        {id:"Deponitomta industrideponi (Sperre Støperi)", type:"receiving", l:"(Industrigata 22, Elverum)", active:true}
     ];
     
     var LINKS = [
-        ["FREVAR KF", "Norsk Gjenvinning AS avd. ØGAS"],
-        ["Norsk Gjenvinning AS", "Norsk Gjenvinning Norge AS"],
-        ["Norsk Gjenvinning AS avd. ØGAS", "Norsk Gjenvinning AS"],
-        ["Norsk Gjenvinning AS avd. Larvik", "Norsk Gjenvinning AS"],
-        ["Norsk Gjenvinning AS avd. Kongsvinger", "Norsk Gjenvinning AS"],
-        ["Norsk Gjenvinning avfallsanlegg Grinda", "Norsk Gjenvinning AS avd. Larvik"],
-        ["Korperud fyllplass", "Norsk Gjenvinning AS avd. Kongsvinger"]
+        ["Deponitomta industrideponi (Sperre Støperi)", "Deponitomta AS"]
     ];
 
     var el = document.getElementById(containerID);

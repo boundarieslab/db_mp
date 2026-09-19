@@ -63,12 +63,24 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Gilhusbukta Sjøgrunn AS", type:"p", l:"(operator)"},
-        {id:"Gilhusbukta - sjøutfylling", type:"receiving", l:"(Gilhusbukta, indre Drammensfjord (gbnr 15/390))", active:true}
+        {id:"Gilhusbukta Sjøgrunn AS", type:"div_ent", l:"(operator)"},
+        {id:"Gilhusbukta - sjøutfylling", type:"receiving", l:"(Gilhusbukta, indre Drammensfjord (gbnr 15/390))", active:true},
+        {id:"Eidos Eiendomsutvikling AS", type:"div_ent"},
+        {id:"Gilhusbukta Eiendom AS", type:"div_ent"},
+        {id:"Lier kommune", type:"p"},
+        {id:"Bane NOR Eiendom AS", type:"p"},
+        {id:"Fabritius Gruppen AS", type:"p"},
+        {id:"IAT Holding AS", type:"p"}
     ];
     
     var LINKS = [
-        ["Gilhusbukta - sjøutfylling", "Gilhusbukta Sjøgrunn AS"]
+        ["Gilhusbukta - sjøutfylling", "Gilhusbukta Sjøgrunn AS"],
+        ["Gilhusbukta Sjøgrunn AS", "Eidos Eiendomsutvikling AS"],
+        ["Gilhusbukta Sjøgrunn AS", "Gilhusbukta Eiendom AS"],
+        ["Eidos Eiendomsutvikling AS", "Lier kommune"],
+        ["Eidos Eiendomsutvikling AS", "Bane NOR Eiendom AS"],
+        ["Eidos Eiendomsutvikling AS", "Fabritius Gruppen AS"],
+        ["Gilhusbukta Eiendom AS", "IAT Holding AS"]
     ];
 
     var el = document.getElementById(containerID);
@@ -301,16 +313,21 @@
             // Full name, wrapped onto a second line if it does not fit. Cutting
             // it with an ellipsis hid which facility a node actually was.
             var _full = n.id + (n.l ? " " + n.l : "");
-            var _maxCh = Math.max(10, Math.floor(_labelRoom / 5.4));
-            var _lines = [];
-            if (_full.length <= _maxCh) {
-                _lines = [_full];
-            } else {
-                var _cut = _full.lastIndexOf(" ", _maxCh);
-                if (_cut <= 0) _cut = _maxCh;
-                _lines.push(_full.slice(0, _cut));
-                var _rest = _full.slice(_cut + 1);
-                _lines.push(_rest.length > _maxCh ? _rest.slice(0, _maxCh - 1) + "\u2026" : _rest);
+            var _cw = n.active ? 6.1 : 5.4;   // the facility label is bold 10px, the rest 9px
+            var _maxCh = Math.max(10, Math.floor((_labelRoom - 14) / _cw));
+            // Wrap onto as many as three lines. Registered company names are long
+            // ("Feiring Bruk AS avd. Hadeland Pukkverk"), and two lines used to cut
+            // the end off the very names this graph exists to show.
+            var _lines = [], _cur = "";
+            _full.split(" ").forEach(function (w) {
+                var t = _cur ? _cur + " " + w : w;
+                if (t.length <= _maxCh || !_cur) { _cur = t; }
+                else { _lines.push(_cur); _cur = w; }
+            });
+            if (_cur) _lines.push(_cur);
+            if (_lines.length > 3) {
+                _lines = _lines.slice(0, 3);
+                _lines[2] = _lines[2].slice(0, Math.max(1, _maxCh - 1)) + "\u2026";
             }
             n.tLines = _lines.length;
             _lines.forEach(function (ln, li) {
@@ -323,7 +340,7 @@
             var _tip = document.createElementNS(ns, "title");
             _tip.textContent = _full;
             txt.appendChild(_tip);
-            txt.setAttribute("x", 12); txt.setAttribute("y", (_lines.length > 1 ? -2 : 3));  // _yTop
+            txt.setAttribute("x", 12); txt.setAttribute("y", (_lines.length > 2 ? -7 : (_lines.length > 1 ? -2 : 3)));  // _yTop
             txt.setAttribute("fill", n.active ? "#000" : "#666"); 
             txt.style.font = n.active ? "600 10px 'Diatype Mono', 'Courier New', monospace" : "400 9px 'Diatype Mono', 'Courier New', monospace"; 
             txt.style.pointerEvents = "none";

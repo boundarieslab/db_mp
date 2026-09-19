@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Mr. Pukk Furuset - Master Network</title>
+    <title>Mr. Pukk AS avd. Micheletveien (Furuset) - Ownership Network</title>
     
     <style>
         /* Same typeface as dirtybusiness.no and the map, served from the same
@@ -63,48 +63,36 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        // PARENT GROUP
         {id:"Heffalompen Holding AS", type:"p"},
-        
-        // DIVISIONS
-        {id:"Mr. Pukk AS", type:"div_ind"},
+        {id:"Mr. Pukk AS", type:"div_ent"},
         {id:"Mr. Pukk Eiendom AS", type:"div_ent"},
         {id:"Mr. Pukk Gjenvinning AS", type:"div_ent"},
-        
-        // SØSTERAVDELINGER
-        {id:"Mysen Asfalt AS", type:"s"},
-        {id:"Maur Tipp og Slep AS", type:"s", l:"(Transport)"},
-        {id:"Bokerøya AS", type:"s"},
-        {id:"Mr. Pukk Eiendom 10 AS", type:"s"},
-        {id:"Ramnes Næringseiendom AS", type:"s"},
-        {id:"Mr. Pukk Høland AS", type:"s"},
-        {id:"Mr. Pukk Øst AS", type:"s"},
-        {id:"Torperåsen AS", type:"s"},
-        
-        // ACTIVE SITE
-        {id:"Mr. Pukk Furuset AS", type:"receiving", active:true}
+        {id:"Mysen Asfalt AS", type:"div_ent"},
+        {id:"Maur Tipp og Slep AS", type:"div_ent", l:"(Transport)"},
+        {id:"Bokerøya AS", type:"div_ent"},
+        {id:"Mr. Pukk Eiendom 10 AS", type:"div_ent"},
+        {id:"Ramnes Næringseiendom AS", type:"div_ent"},
+        {id:"Mr. Pukk Høland AS", type:"div_ent"},
+        {id:"Mr. Pukk Øst AS", type:"div_ent"},
+        {id:"Torperåsen AS", type:"div_ent"},
+        {id:"Mr. Pukk AS avd. Micheletveien (Furuset)", type:"receiving", active:true},
+        {id:"Mr. Pukk Furuset AS", type:"div_ent"}
     ];
     
     var LINKS = [
-        // Main hierarchy under Heffalompen
         ["Mr. Pukk AS", "Heffalompen Holding AS"],
         ["Mr. Pukk Eiendom AS", "Heffalompen Holding AS"],
         ["Mr. Pukk Gjenvinning AS", "Heffalompen Holding AS"],
         ["Maur Tipp og Slep AS", "Heffalompen Holding AS"],
         ["Mysen Asfalt AS", "Heffalompen Holding AS"],
-        
-        // Active chain (Furuset owned by Gjenvinning)
-        ["Mr. Pukk Furuset AS", "Mr. Pukk Gjenvinning AS"],
-        
-        // Property branch
         ["Bokerøya AS", "Mr. Pukk Eiendom AS"],
         ["Mr. Pukk Eiendom 10 AS", "Mr. Pukk Eiendom AS"],
         ["Ramnes Næringseiendom AS", "Mr. Pukk Eiendom AS"],
-        
-        // Other sites under Mr. Pukk AS
         ["Mr. Pukk Høland AS", "Mr. Pukk AS"],
         ["Mr. Pukk Øst AS", "Mr. Pukk AS"],
-        ["Torperåsen AS", "Mr. Pukk AS"]
+        ["Torperåsen AS", "Mr. Pukk AS"],
+        ["Mr. Pukk AS avd. Micheletveien (Furuset)", "Mr. Pukk Furuset AS"],
+        ["Mr. Pukk Furuset AS", "Mr. Pukk Gjenvinning AS"]
     ];
 
     var el = document.getElementById(containerID);
@@ -337,16 +325,21 @@
             // Full name, wrapped onto a second line if it does not fit. Cutting
             // it with an ellipsis hid which facility a node actually was.
             var _full = n.id + (n.l ? " " + n.l : "");
-            var _maxCh = Math.max(10, Math.floor(_labelRoom / 5.4));
-            var _lines = [];
-            if (_full.length <= _maxCh) {
-                _lines = [_full];
-            } else {
-                var _cut = _full.lastIndexOf(" ", _maxCh);
-                if (_cut <= 0) _cut = _maxCh;
-                _lines.push(_full.slice(0, _cut));
-                var _rest = _full.slice(_cut + 1);
-                _lines.push(_rest.length > _maxCh ? _rest.slice(0, _maxCh - 1) + "\u2026" : _rest);
+            var _cw = n.active ? 6.1 : 5.4;   // the facility label is bold 10px, the rest 9px
+            var _maxCh = Math.max(10, Math.floor((_labelRoom - 14) / _cw));
+            // Wrap onto as many as three lines. Registered company names are long
+            // ("Feiring Bruk AS avd. Hadeland Pukkverk"), and two lines used to cut
+            // the end off the very names this graph exists to show.
+            var _lines = [], _cur = "";
+            _full.split(" ").forEach(function (w) {
+                var t = _cur ? _cur + " " + w : w;
+                if (t.length <= _maxCh || !_cur) { _cur = t; }
+                else { _lines.push(_cur); _cur = w; }
+            });
+            if (_cur) _lines.push(_cur);
+            if (_lines.length > 3) {
+                _lines = _lines.slice(0, 3);
+                _lines[2] = _lines[2].slice(0, Math.max(1, _maxCh - 1)) + "\u2026";
             }
             n.tLines = _lines.length;
             _lines.forEach(function (ln, li) {
@@ -359,7 +352,7 @@
             var _tip = document.createElementNS(ns, "title");
             _tip.textContent = _full;
             txt.appendChild(_tip);
-            txt.setAttribute("x", 12); txt.setAttribute("y", (_lines.length > 1 ? -2 : 3));  // _yTop
+            txt.setAttribute("x", 12); txt.setAttribute("y", (_lines.length > 2 ? -7 : (_lines.length > 1 ? -2 : 3)));  // _yTop
             txt.setAttribute("fill", n.active ? "#000" : "#666"); 
             txt.style.font = n.active ? "600 10px 'Diatype Mono', 'Courier New', monospace" : "400 9px 'Diatype Mono', 'Courier New', monospace"; 
             txt.style.pointerEvents = "none";

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Feiring Network - Spatial Agency Style</title>
+    <title>Feiring Bruk AS avd. Heier Pukkverk (Enebakk) - Ownership Network</title>
     <style>
         /* Same typeface as dirtybusiness.no and the map, served from the same
            place, so the graphs are typographically part of the site. */
@@ -64,18 +64,18 @@
     const DATA = {
         nodes: [
             {id:"Ollendorff Holding AS", type:"p"},
-            {id:"Feiring AS", type:"p"},
-            {id:"Feiring Bruk AS", type:"p"},
-            {id:"Feiring Bruk Enebakk", type:"facility", active:true},
-            {id:"Bjønndalen Pukkverk", type:"facility"},
-            {id:"Lørenskog Pukkverk", type:"facility"},
-            {id:"Feiring Miljø AS", type:"p"},
-            {id:"Feiring Asfalt AS", type:"p"}
+            {id:"Feiring AS", type:"div_ent"},
+            {id:"Feiring Bruk AS", type:"div_ent"},
+            {id:"Feiring Bruk AS avd. Heier Pukkverk (Enebakk)", type:"receiving", active:true},
+            {id:"Bjønndalen Pukkverk", type:"s"},
+            {id:"Lørenskog Pukkverk", type:"s"},
+            {id:"Feiring Miljø AS", type:"div_ent"},
+            {id:"Feiring Asfalt AS", type:"div_ent"}
         ],
         links: [
             {s:"Feiring AS", t:"Ollendorff Holding AS"},
             {s:"Feiring Bruk AS", t:"Feiring AS"},
-            {s:"Feiring Bruk Enebakk", t:"Feiring Bruk AS"},
+            {s:"Feiring Bruk AS avd. Heier Pukkverk (Enebakk)", t:"Feiring Bruk AS"},
             {s:"Bjønndalen Pukkverk", t:"Feiring Bruk AS"},
             {s:"Lørenskog Pukkverk", t:"Feiring Bruk AS"},
             {s:"Feiring Miljø AS", t:"Feiring AS"},
@@ -253,16 +253,21 @@
             
             const txt = document.createElementNS(ns, "text");
             var _full = n.id;
-            var _maxCh = Math.max(10, Math.floor(_labelRoom / 5.4));
-            var _lines = [];
-            if (_full.length <= _maxCh) {
-                _lines = [_full];
-            } else {
-                var _cut = _full.lastIndexOf(" ", _maxCh);
-                if (_cut <= 0) _cut = _maxCh;
-                _lines.push(_full.slice(0, _cut));
-                var _rest = _full.slice(_cut + 1);
-                _lines.push(_rest.length > _maxCh ? _rest.slice(0, _maxCh - 1) + "\u2026" : _rest);
+            var _cw = n.active ? 6.1 : 5.4;   // the facility label is bold 10px, the rest 9px
+            var _maxCh = Math.max(10, Math.floor((_labelRoom - 14) / _cw));
+            // Wrap onto as many as three lines. Registered company names are long
+            // ("Feiring Bruk AS avd. Hadeland Pukkverk"), and two lines used to cut
+            // the end off the very names this graph exists to show.
+            var _lines = [], _cur = "";
+            _full.split(" ").forEach(function (w) {
+                var t = _cur ? _cur + " " + w : w;
+                if (t.length <= _maxCh || !_cur) { _cur = t; }
+                else { _lines.push(_cur); _cur = w; }
+            });
+            if (_cur) _lines.push(_cur);
+            if (_lines.length > 3) {
+                _lines = _lines.slice(0, 3);
+                _lines[2] = _lines[2].slice(0, Math.max(1, _maxCh - 1)) + "\u2026";
             }
             n.tLines = _lines.length;
             _lines.forEach(function (ln, li) {
