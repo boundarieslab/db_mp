@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Dal Skog ØRAS - Master Network</title>
+    <title>ØRAS Miljøstasjon Dal Skog - Ownership Network</title>
     
     <style>
         /* Same typeface as dirtybusiness.no and the map, served from the same
@@ -62,25 +62,20 @@
 <script>
 (function(){
     var NODES = [
-        // EIERE (Sorte firkanter)
-        {id:"Eidsvoll Kommune", type:"p"},
-        {id:"Hurdal Kommune", type:"p"},
-        {id:"Nannestad Kommune", type:"p"},
-        {id:"Ullensaker Kommune", type:"p"},
-
-        // IKS (Grå trekant)
-        {id:"Øvre Romerike Avfallsselskap IKS", type:"div_ind", l:"(ØRAS)"},
-        
-        // SITES
-        {id:"Miljøstasjon Dal Skog", type:"facility", active:true}
+        {id:"Eidsvoll kommune", type:"p"},
+        {id:"Hurdal kommune", type:"p"},
+        {id:"Nannestad kommune", type:"p"},
+        {id:"Ullensaker kommune", type:"p"},
+        {id:"Øvre Romerike Avfallsselskap IKS", type:"div_ent", l:"(ØRAS)"},
+        {id:"ØRAS Miljøstasjon Dal Skog", type:"receiving", active:true}
     ];
     
     var LINKS = [
-        ["Øvre Romerike Avfallsselskap IKS", "Eidsvoll Kommune"],
-        ["Øvre Romerike Avfallsselskap IKS", "Hurdal Kommune"],
-        ["Øvre Romerike Avfallsselskap IKS", "Nannestad Kommune"],
-        ["Øvre Romerike Avfallsselskap IKS", "Ullensaker Kommune"],
-        ["Miljøstasjon Dal Skog", "Øvre Romerike Avfallsselskap IKS"]
+        ["Øvre Romerike Avfallsselskap IKS", "Eidsvoll kommune"],
+        ["Øvre Romerike Avfallsselskap IKS", "Hurdal kommune"],
+        ["Øvre Romerike Avfallsselskap IKS", "Nannestad kommune"],
+        ["Øvre Romerike Avfallsselskap IKS", "Ullensaker kommune"],
+        ["ØRAS Miljøstasjon Dal Skog", "Øvre Romerike Avfallsselskap IKS"]
     ];
 
     var el = document.getElementById("network-container");
@@ -273,16 +268,21 @@
             g.appendChild(icon); n.shapeEl = icon;
             var txt = document.createElementNS(ns, "text");
             var _full = n.id;
-            var _maxCh = Math.max(10, Math.floor(_labelRoom / 5.4));
-            var _lines = [];
-            if (_full.length <= _maxCh) {
-                _lines = [_full];
-            } else {
-                var _cut = _full.lastIndexOf(" ", _maxCh);
-                if (_cut <= 0) _cut = _maxCh;
-                _lines.push(_full.slice(0, _cut));
-                var _rest = _full.slice(_cut + 1);
-                _lines.push(_rest.length > _maxCh ? _rest.slice(0, _maxCh - 1) + "\u2026" : _rest);
+            var _cw = n.active ? 6.1 : 5.4;   // the facility label is bold 10px, the rest 9px
+            var _maxCh = Math.max(10, Math.floor((_labelRoom - 14) / _cw));
+            // Wrap onto as many as three lines. Registered company names are long
+            // ("Feiring Bruk AS avd. Hadeland Pukkverk"), and two lines used to cut
+            // the end off the very names this graph exists to show.
+            var _lines = [], _cur = "";
+            _full.split(" ").forEach(function (w) {
+                var t = _cur ? _cur + " " + w : w;
+                if (t.length <= _maxCh || !_cur) { _cur = t; }
+                else { _lines.push(_cur); _cur = w; }
+            });
+            if (_cur) _lines.push(_cur);
+            if (_lines.length > 3) {
+                _lines = _lines.slice(0, 3);
+                _lines[2] = _lines[2].slice(0, Math.max(1, _maxCh - 1)) + "\u2026";
             }
             n.tLines = _lines.length;
             _lines.forEach(function (ln, li) {

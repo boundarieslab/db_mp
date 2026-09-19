@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Elvestad Massemottak - Master Network</title>
+    <title>Veidekke Elvestad - Ownership Network</title>
     
     <style>
         /* Same typeface as dirtybusiness.no and the map, served from the same
@@ -63,19 +63,18 @@
 (function(){
     var NODES = [
         {id:"Veidekke ASA", type:"p"},
-        {id:"Veidekke Industri AS", type:"div_ind"},
+        {id:"Veidekke Industri AS", type:"div_ent"},
         {id:"Veidekke Entreprenør AS", type:"div_ent", l:"(Building)"},
-        {id:"Geomaterialer", type:"s", l:"(Division)"}, 
+        {id:"Geomaterialer", type:"s", l:"(Division)"},
         {id:"Asfalt", type:"s"},
         {id:"Pukk og Grus", type:"s"},
-        {id:"Elvestad Massemottak", type:"facility", active:true},
-        {id:"Veidekke Gardermoen", type:"receiving"},
-        {id:"Alnabru Massemottak", type:"receiving"},
-        {id:"Gran Pukkverk", type:"facility"},
-        {id:"Rambydalen Pukkverk", type:"facility"},
-        {id:"Veidekke Sirkulær AS", type:"facility", l:"(Waste)"},
-        {id:"Amrock AS", type:"construction", l:"(Stone)"},
-        {id:"Kystmiljø AS", type:"construction"}
+        {id:"Veidekke Elvestad", type:"receiving", active:true},
+        {id:"Veidekke Gardermoen", type:"s"},
+        {id:"Alnabru Massemottak", type:"s"},
+        {id:"Gran Pukkverk", type:"s"},
+        {id:"Rambydalen Pukkverk", type:"s"},
+        {id:"Veidekke Sirkulær", type:"div_ind", l:"(Waste)"},
+        {id:"Kystmiljø AS", type:"div_ent"}
     ];
     
     var LINKS = [
@@ -84,14 +83,13 @@
         ["Pukk og Grus", "Veidekke Industri AS"],
         ["Veidekke Industri AS", "Veidekke ASA"],
         ["Veidekke Entreprenør AS", "Veidekke ASA"],
-        ["Elvestad Massemottak", "Geomaterialer"], 
+        ["Veidekke Elvestad", "Geomaterialer"],
         ["Veidekke Gardermoen", "Geomaterialer"],
         ["Alnabru Massemottak", "Geomaterialer"],
         ["Gran Pukkverk", "Geomaterialer"],
         ["Rambydalen Pukkverk", "Geomaterialer"],
-        ["Veidekke Sirkulær AS", "Veidekke Entreprenør AS"],
-        ["Amrock AS", "Veidekke ASA"], 
-        ["Kystmiljø AS", "Veidekke ASA"] 
+        ["Kystmiljø AS", "Veidekke ASA"],
+        ["Veidekke Sirkulær", "Veidekke Industri AS"]
     ];
 
     var el = document.getElementById("network-container");
@@ -301,16 +299,21 @@
             g.appendChild(icon); n.shapeEl = icon;
             var txt = document.createElementNS(ns, "text");
             var _full = n.id;
-            var _maxCh = Math.max(10, Math.floor(_labelRoom / 5.4));
-            var _lines = [];
-            if (_full.length <= _maxCh) {
-                _lines = [_full];
-            } else {
-                var _cut = _full.lastIndexOf(" ", _maxCh);
-                if (_cut <= 0) _cut = _maxCh;
-                _lines.push(_full.slice(0, _cut));
-                var _rest = _full.slice(_cut + 1);
-                _lines.push(_rest.length > _maxCh ? _rest.slice(0, _maxCh - 1) + "\u2026" : _rest);
+            var _cw = n.active ? 6.1 : 5.4;   // the facility label is bold 10px, the rest 9px
+            var _maxCh = Math.max(10, Math.floor((_labelRoom - 14) / _cw));
+            // Wrap onto as many as three lines. Registered company names are long
+            // ("Feiring Bruk AS avd. Hadeland Pukkverk"), and two lines used to cut
+            // the end off the very names this graph exists to show.
+            var _lines = [], _cur = "";
+            _full.split(" ").forEach(function (w) {
+                var t = _cur ? _cur + " " + w : w;
+                if (t.length <= _maxCh || !_cur) { _cur = t; }
+                else { _lines.push(_cur); _cur = w; }
+            });
+            if (_cur) _lines.push(_cur);
+            if (_lines.length > 3) {
+                _lines = _lines.slice(0, 3);
+                _lines[2] = _lines[2].slice(0, Math.max(1, _maxCh - 1)) + "\u2026";
             }
             n.tLines = _lines.length;
             _lines.forEach(function (ln, li) {
