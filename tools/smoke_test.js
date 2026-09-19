@@ -139,6 +139,26 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   });
   ok(mod.tw === mod.dw && mod.tx === mod.dx,
      'a pane is exactly as wide as the tool bar (' + mod.tw + ' vs ' + mod.dw + 'px)');
+  // The map runs full-bleed under the site's own header, so everything
+  // of ours starts below it — and the map itself still does not.
+  const inset = await p.evaluate(() => {
+    const ft = parseFloat(getComputedStyle(document.documentElement)
+                .getPropertyValue('--frame-top')) || 0;
+    return { ft,
+             bar: Math.round(document.getElementById('bar').getBoundingClientRect().top),
+             map: Math.round(document.getElementById('map').getBoundingClientRect().top) };
+  });
+  ok(inset.ft > 0 && inset.bar >= inset.ft && inset.map === 0,
+     'the chrome clears the site header, the map does not (bar ' + inset.bar
+     + ', map ' + inset.map + ', header ' + inset.ft + 'px)');
+  const tuned = await p.evaluate(async () => {
+    document.documentElement.style.setProperty('--frame-top', '60px');
+    await new Promise(r => setTimeout(r, 120));
+    const b = Math.round(document.getElementById('bar').getBoundingClientRect().top);
+    document.documentElement.style.removeProperty('--frame-top');
+    return b;
+  });
+  ok(tuned === 70, 'and follows --frame-top when the embed changes it (' + tuned + 'px)');
   // They used to be pushed sideways by the bar's width. Now the offset is the
   // rail and nothing else, so opening the drawer must not move them a pixel.
   const nudge = await p.evaluate(async () => {
@@ -292,7 +312,12 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   });
   ok(sb.mini && sb.mini[1] > 150 && sb.mini[0] > 380, 'the picture band spans the window (' + (sb.mini||[]) + ')');
   ok(sb.tiles > 0 && sb.outline > 0, 'it shows the aerial with the footprint drawn on it (' + sb.tiles + ' tiles)');
-  ok(sb.top <= 12 && sb.right <= 12, 'the site window sits in the top right corner (' + sb.top + ',' + sb.right + ')');
+  // Ten in from the right edge, and ten below the site header the map
+  // runs under — not ten from the top of a map that starts behind it.
+  const ftop = await p.evaluate(() => parseFloat(getComputedStyle(document.documentElement)
+                 .getPropertyValue('--frame-top')) || 0);
+  ok(sb.top >= ftop && sb.top <= ftop + 12 && sb.right <= 12,
+     'the site window sits below the header, on the right (' + sb.top + ',' + sb.right + ')');
   ok(!sb.overlap, 'SHARE and the close button do not overlap');
   const zoomed = await p.evaluate(() => {
     const m = window.__M, b = m.getBounds();
