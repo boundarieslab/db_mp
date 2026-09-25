@@ -683,7 +683,15 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
              fill: JSON.stringify(m.getPaintProperty('fp-fill', 'fill-opacity')) };
   });
   ok(fp.all, 'footprints draw without being asked');
-  ok(fp.n === 19, 'all 19 footprints are in the source (got ' + fp.n + ')');
+  // Only footprints of published sites are drawn: the fixtures publish four
+  // facilities, three of which have a footprint in data/facility_polygons.geojson.
+  const fpWant = JSON.parse(fs.readFileSync(__dirname + '/../data/facility_polygons.geojson', 'utf8')).features
+    .filter(f => ['AK_AH_001', 'OS_OS_001', 'AK_LI_002', 'VF_HM_001', 'AK_XX_001'].includes(f.properties.uid)).length;
+  ok(fp.n === fpWant, 'only published sites\' footprints are in the source (' + fp.n + ' of ' + fpWant + ')');
+  const unpub = await p.evaluate(() => ({ site: (window.__M.getSource('sites')._data.features || []).some(f => f.properties.uid === 'AK_ZZ_999')
+                                            || document.body.innerText.includes('Unconfirmed test site'),
+    fp: (window.__M.getSource('fp')._data.features || []).some(f => f.properties.uid === 'AK_ZZ_999') }));
+  ok(!unpub.site && !unpub.fp, 'a row not marked Published stays off the map');
   ok(fp.col === '#FF0000' && /col/.test(fp.lineCol), 'they are coloured by status, not black (' + fp.col + ')');
   ok(/0\.14/.test(fp.fill) && /match/.test(fp.fill),
      'with a see-through fill whose weight follows the status, and no glow');
@@ -696,7 +704,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     let w = 180, so = 90, e = -180, n = -90;
     (function walk(c) { if (typeof c[0] === 'number') { w = Math.min(w, c[0]); e = Math.max(e, c[0]); so = Math.min(so, c[1]); n = Math.max(n, c[1]); } else c.forEach(walk); })(f.geometry.coordinates);
     return { inside: b.getWest() <= w && b.getEast() >= e && b.getSouth() <= so && b.getNorth() >= n,
-             hit: m.queryRenderedFeatures({ layers: ['fp-fill'] }).length };
+             hit: m.queryRenderedFeatures({ layers: ['fp-fill', 'fp-line', 'fp-soft'].filter(id => m.getLayer(id)) }).length };
   });
   ok(frame.inside, 'opening a site frames its whole footprint');
   ok(frame.hit > 0, 'and the footprint is actually painted (' + frame.hit + ')');
