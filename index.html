@@ -2911,7 +2911,15 @@ document.addEventListener('DOMContentLoaded', function() {
     Promise.all([parseCsv(FACILITIES_CSV), parseCsv(PROJECTS_CSV)])
       .then(([fRes, pRes]) => {
         [fRes, pRes].forEach(r => { if (r.errors && r.errors.length) console.warn('CSV parse issues:', r.errors.slice(0, 5)); });
-        const tag = cat => r => { r.__cat = cat; r.__cls = statusClass(r); return r; };
+        // Several rows carry their position only in GoogleMapsLink (?q=lat,lon) and leave
+        // Latitude/Longitude empty. Read it back rather than lose the site off the map.
+        const fromMapsLink = r => {
+            if (hasXY(r)) return;
+            const m = /[?&]q=(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/.exec(r.GoogleMapsLink || '');
+            if (!m) return;
+            r.Latitude = m[1]; r.Longitude = m[2]; r.__geoFromLink = true;
+        };
+        const tag = cat => r => { r.__cat = cat; r.__cls = statusClass(r); fromMapsLink(r); return r; };
         const facilities = fRes.data.filter(r => uidOf(r) || r.Name).map(tag('facility'));
         const projects   = pRes.data.filter(r => uidOf(r) || r.Name).map(tag('project'));
         allSites = [...facilities, ...projects];
