@@ -1,2 +1,2 @@
-UID,Name,Type,Status,Municipality,County,Latitude,Longitude,Company,Operator,Area_m2,CargoType,Description
-CP_001,Fornebubanen,Infrastructure,Active,Bærum,Akershus,59.8950,10.6200,Sporveien,Sporveien,50000,producing,Metro line producing excavated rock.
+UID,Name,Type,Status,Municipality,County,Latitude,Longitude,Company,Operator,Area_m2,CargoType,Description,Published,GraphPublished
+CP_001,Fornebubanen,Infrastructure,Active,Bærum,Akershus,59.8950,10.6200,Sporveien,Sporveien,50000,producing,Metro line producing excavated rock.,TRUE,TRUE

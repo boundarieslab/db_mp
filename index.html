@@ -1624,7 +1624,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         let graphHtml = `<div id="graph-container" style="height:44px;display:flex;align-items:center;justify-content:center;color:#8a8a8a;font-size:9px;letter-spacing:.06em">${t('nograph')}</div>`;
-        let graphSrc = resolveGraphURL(site.GraphURL);
+        // The ownership diagram is verified separately from its row: a confirmed
+        // site can still have an unconfirmed diagram, and then none is shown.
+        let graphSrc = /^(true|yes|1)$/i.test(String(site.GraphPublished || '').trim()) ? resolveGraphURL(site.GraphURL) : '';
         if (graphSrc && cat === 'facility') graphSrc += (graphSrc.includes('?') ? '&' : '?') + 'fc=' + ci.col.slice(1);
         if (graphSrc) graphHtml = `<div id="graph-container"><iframe src="${esc(graphSrc)}" title="${esc(site.Name || '')} ownership network" sandbox="allow-scripts" referrerpolicy="no-referrer" loading="lazy"></iframe></div>`;
 
@@ -1938,7 +1940,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function fpFeatures() {
         if (!fpData) return { type: 'FeatureCollection', features: [] };
         const byUid = new Map(allSites.map(s => [uidOf(s), s]));
-        return { type: 'FeatureCollection', features: fpData.features.map(f => {
+        // A footprint is drawn only for a site that is itself on the map.
+        return { type: 'FeatureCollection', features: fpData.features.filter(f => byUid.has(f.properties.uid)).map(f => {
             const s = byUid.get(f.properties.uid);
             const cat = s ? s.__cat : 'facility';
             const cls = s ? s.__cls : 'unknown';
@@ -2902,6 +2905,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─────────────────────────────────────────────────────────────────────
     // LOAD
     // ─────────────────────────────────────────────────────────────────────
+    const isPublished = r => /^(true|yes|1)$/i.test(String(r.Published == null ? '' : r.Published).trim());
+
     const parseCsv = url => new Promise((res, rej) => Papa.parse(url, {
         download: true, header: true, skipEmptyLines: true,
         transformHeader: h => h.trim(),
@@ -2922,8 +2927,11 @@ document.addEventListener('DOMContentLoaded', function() {
             r.Latitude = m[1]; r.Longitude = m[2]; r.__geoFromLink = true;
         };
         const tag = cat => r => { r.__cat = cat; r.__cls = statusClass(r); fromMapsLink(r); return r; };
-        const facilities = fRes.data.filter(r => uidOf(r) || r.Name).map(tag('facility'));
-        const projects   = pRes.data.filter(r => uidOf(r) || r.Name).map(tag('project'));
+        // Only rows whose every field has been confirmed against a source go live.
+        // The Published column is set per row in the sheet; a row without it, or a
+        // sheet without the column at all, stays off the site.
+        const facilities = fRes.data.filter(r => (uidOf(r) || r.Name) && isPublished(r)).map(tag('facility'));
+        const projects   = pRes.data.filter(r => (uidOf(r) || r.Name) && isPublished(r)).map(tag('project'));
         allSites = [...facilities, ...projects];
         // A revoked "publish to web" returns an HTML page with status 200.
         if (!allSites.length || !allSites.some(s => 'Name' in s || 'UID' in s)) { updateStatus(t('loadfail')); return; }
@@ -3510,7 +3518,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function tagFlows(rows) {
         const byUid = new Map(allSites.map(s => [uidOf(s), s]));
-        return rows.filter(r => r.FlowUID || r.FromUID || r.ToUID).map((r, i) => {
+        // A flow goes live only when it is confirmed itself and both of its ends are.
+        return rows.filter(r => (r.FlowUID || r.FromUID || r.ToUID) && isPublished(r)
+                             && byUid.has(String(r.FromUID || '').trim()) && byUid.has(String(r.ToUID || '').trim())).map((r, i) => {
             const from = byUid.get(String(r.FromUID || '').trim());
             const to   = byUid.get(String(r.ToUID   || '').trim());
             r.__cat = 'flow';
