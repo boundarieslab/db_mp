@@ -34,7 +34,8 @@ span('/* ---------- deck: the database as a table, and the map\'s legend -------
 
 # ── 3. markup: find box, the key under the table, the filter list ────────
 rep('''            <button type="button" id="deck-dir" data-en="all flows"''',
-    '''            <input type="search" id="deck-find" class="find" autocomplete="off" spellcheck="false"
+    '''            <button type="button" id="deck-cols" data-en="columns" data-no="kolonner">columns</button>
+            <input type="search" id="deck-find" class="find" autocomplete="off" spellcheck="false"
                    placeholder="find" data-ph-en="find" data-ph-no="finn" aria-label="Find in sheet">
             <button type="button" id="deck-dir" data-en="all flows"''')
 rep('''        <table id="site-table"><thead><tr></tr></thead><tbody></tbody></table>
@@ -56,6 +57,15 @@ rep('''        <table id="site-table"><thead><tr></tr></thead><tbody></tbody></t
 rep('''        flows_none_t: { en: "No flows published yet.",''',
     '''        th_m3: { en: "m³", no: "m³" },
         th_cap_s: { en: "CAP.", no: "KAP." },
+        th_auth: { en: "AUTHORITY", no: "MYNDIGHET" },
+        th_county: { en: "COUNTY", no: "FYLKE" },
+        th_parent: { en: "PARENT COMPANY", no: "MORSELSKAP" },
+        th_org: { en: "ORG. NO.", no: "ORG.NR." },
+        th_sub: { en: "SUBTYPE", no: "UNDERTYPE" },
+        th_cont: { en: "CONTAMINANTS", no: "FORURENSNING" },
+        th_water: { en: "WATER RECIPIENT", no: "RESIPIENT" },
+        th_start: { en: "SINCE", no: "SIDEN" },
+        cols_t: { en: "Show these columns", no: "Vis disse kolonnene" },
         th_vol_s: { en: "VOL.", no: "VOL." },
         rows: { en: "rows", no: "rader" },
         picked: { en: "picked", no: "markert" },
@@ -159,6 +169,10 @@ span("    $('deck-csv').onclick = () => {", '    // ─────────�
                ['Direction', s => getMarkerInfo(s).direction],
                ['Capacity', s => { const c = capOf(s); return c ? c.v : ''; }],
                ['CapacityUnit', s => (capOf(s) || {}).unit || ''],
+               ['MassesAccepted', s => s.MassesAccepted], ['Area_m2', s => { const v = qty(s.Area_m2); return Number.isFinite(v) ? v : ''; }],
+               ['PermitRef', s => s.PermitRef], ['PermitAuthority', s => s.PermitAuthority], ['County', s => s.County],
+               ['ParentCompany', s => s.ParentCompany], ['OrgNr', s => s.OrgNr], ['Subtype', s => s.Subtype],
+               ['Contaminants', s => s.Contaminants], ['WaterRecipient', s => s.WaterRecipient], ['StartYear', s => s.StartYear],
                ['Latitude', s => hasXY(s) ? num(s.Latitude) : ''], ['Longitude', s => hasXY(s) ? num(s.Longitude) : '']];
         const cell = v => { v = String(v == null ? '' : v); return /[",\\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
         const body = rows.map(r => F.map(([, g]) => cell(g(r))).join(',')).join('\\n');

@@ -124,7 +124,9 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 #af-pop label i{font-style:normal;color:var(--sub);margin-left:auto;padding-left:12px}
 #af-pop input{margin:0;accent-color:#000}
 #af-pop .af-all{border-bottom:var(--hl,.5px) solid var(--grid,#c4c4c4)}
-#af-pop .af-list{max-height:280px;overflow:auto;padding:2px 0 6px}
+#af-pop .af-list{max-height:320px;overflow:auto;padding:2px 0 6px}
+#af-pop .af-t{display:block;padding:6px 10px;color:var(--sub)}
+#af-pop label.off{color:var(--sub);cursor:default}
 
 /* the phone's bar at the top of the open sheet: hidden on a desktop */
 .sheet-bar{display:none}
@@ -139,7 +141,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
   #deck .deck-head{height:34px;flex:0 0 34px;gap:4px;padding:0 4px 0 2px}
   #deck{flex-basis:34px}
   .deck-head::after{left:4px;right:4px}
-  .deck-head .chips,.deck-head .find,.deck-head .count,#deck-dir,#deck-csv{display:none}
+  .deck-head .chips,.deck-head .find,.deck-head .count,#deck-dir,#deck-csv,#deck-cols{display:none}
   #tabstrip{flex:1 1 auto;min-width:0;padding-left:2px;padding-right:8px;overflow-x:auto;scroll-behavior:smooth}
   #tabstrip .tab{padding:17px 14px 0;margin-right:-11px;font-size:9.5px;gap:4px}
   #tabstrip{padding-right:0;padding-left:0}

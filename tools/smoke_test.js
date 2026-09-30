@@ -900,6 +900,19 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(/q=langoya/.test(fd.hash), 'and is in the address too');
   await p.fill('#deck-find', ''); await p.waitForTimeout(250);
 
+  // COLUMNS: switch a field of the record on, then off again
+  await p.click('#deck-cols'); await p.waitForTimeout(250);
+  const colList = await p.evaluate(() => [...document.querySelectorAll('#af-pop .af-list input')].map(i => i.dataset.k));
+  ok(colList.includes('County') && colList.includes('PermitRef') && colList.includes('MassesAccepted'),
+     'the COLUMNS list offers every field of the record (' + colList.length + ')');
+  await p.click('#af-pop input[data-k="County"]'); await p.waitForTimeout(300);
+  const withCounty = await p.evaluate(() => !!document.querySelector('#site-table th[data-key="County"]'));
+  await p.click('#af-pop input[data-k="County"]'); await p.waitForTimeout(300);
+  const without = await p.evaluate(() => !document.querySelector('#site-table th[data-key="County"]'));
+  ok(withCounty && without, 'and ticking one adds its column to the sheet, unticking takes it away');
+  await p.keyboard.press('Escape');
+  await p.evaluate(() => localStorage.removeItem('db_cols'));
+
   // resize a column
   const rz = await p.evaluate(() => {
     const th = document.querySelector('#site-table th[data-key="Operator"]');
