@@ -11,7 +11,7 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
 const HERE = __dirname + '/fixtures';
-const csv = u => fs.readFileSync(HERE + (u.includes('gid=529338597') ? '/projects.csv' : '/facilities.csv'), 'utf8');
+const csv = u => fs.readFileSync(HERE + (u.includes('2PACX-1vS1KaV') ? '/facilities.csv' : '/projects.csv'), 'utf8');
 const PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64');
 let fail = 0;
 const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
@@ -835,7 +835,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(/^5 rows/.test(tot.foot[0]) && tot.foot.some(t => /^Σ 9 470 000$/.test(t)),
      'a totals line counts the rows and sums the stated m³ (' + tot.foot.filter(Boolean).join(' | ') + ')');
   ok(tot.foot.some(t => /stated for 3 of 5/.test(t)), 'and says how many rows state a capacity');
-  ok(/TYPE/.test(tot.key) && /CAPACITY/.test(tot.key) && /5 published · 1 held back/.test(tot.key),
+  ok(/receives masses/.test(tot.key) && /100 000 m³/.test(tot.key) && /5 published · 1 held back/.test(tot.key),
      'the key sits in the sheet and says what is held back (' + tot.key.replace(/\s+/g, ' ').slice(0, 90) + ')');
   ok(tot.frozen === 'sticky' && tot.frozenHead === 'sticky', 'the first column stays put when the sheet scrolls sideways');
 

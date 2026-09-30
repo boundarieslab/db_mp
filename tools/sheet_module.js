@@ -380,31 +380,32 @@
     }
 
     // ── the key inside the sheet, under the table ───────────────────────
+    // The key is one quiet line under the table, as in the mockups: the
+    // symbols in this sheet, the stroke, and what is held back.
     function renderSheetKey(base) {
         const box = $('sheet-key');
         if (!box) return;
         if (isFlowSheet() && !allFlows.length) { box.innerHTML = ''; return; }
         const flow = isFlowSheet();
-        let h = '';
-        if (!flow) {
-            const dirs = ['receiving', 'producing', 'mixed'].filter(d => base.some(s => getMarkerInfo(s).direction === d));
-            if (dirs.length) h += `<div class="kr"><span class="kl">${esc(t('th_type'))}</span>` +
-                dirs.map(d => `<span class="it">${facilitySymbol(d, '#555')}${esc(t('kdir_' + d))}</span>`).join('') + '</div>';
+        const parts = [];
+        if (!flow) ['receiving', 'producing', 'mixed']
+            .filter(d => base.some(s => getMarkerInfo(s).direction === d))
+            .forEach(d => parts.push(`<span class="it dir">${facilitySymbol(d, '#555')}${esc(t('kdir_' + d))}</span>`));
+        if (base.length) {
+            parts.push(`<span class="it unit">${strokes(1, '#555')} = ${fmt(strokeUnit)} m³</span>`);
+            parts.push(`<span class="it note">${esc(t(flow ? 'key_vol' : 'key_cap'))}</span>`);
         }
-        if (base.length) h += `<div class="kr"><span class="kl">${esc(t(flow ? 'th_vol' : 'th_cap'))}</span>` +
-             `<span class="it">${strokes(1, '#555')} = ${fmt(strokeUnit)} m³</span>` +
-             `<span class="it">${strokes(10, '#555')} = ${fmt(strokeUnit * 10)} m³</span>` +
-             `<span class="it nd">${esc(t(flow ? 'key_vol' : 'key_cap'))}</span></div>`;
         const cat = flow ? 'flow' : deckSelection ? null : deckScope;
-        let cov = '';
         if (cat && cat !== 'all') {
             const pub = flow ? allFlows.length : allSites.filter(s => s.__cat === cat).length;
             const held = Math.max(0, (rawCounts[cat] || 0) - pub);
-            cov = t('cov').replace('{p}', pub) + (held ? ' · ' + t('cov_held').replace('{h}', held) : '');
+            parts.push(`<span class="it">${esc(t('cov').replace('{p}', pub) + (held ? ' · ' + t('cov_held').replace('{h}', held) : ''))}</span>`);
         }
-        h += `<div class="kr nd"><span class="kl"></span>${cov ? esc(cov) + ' · ' : ''}${esc(t('cov_read'))} ${dateNo(loadedAt)}</div>`;
-        box.innerHTML = h;
+        parts.push(`<span class="it">${dateNo(loadedAt)}</span>`);
+        // a separator takes the class of the item after it, so hiding an item hides its dot
+        box.innerHTML = `<div class="kr">${parts.map((p, i) => i ? `<span class="sep ${(/class="it ?(\w*)/.exec(p) || [])[1] || ''}">·</span>${p}` : p).join('')}</div>`;
     }
+
 
     // ── the legend chips in the head: the map's ring, the word, the count ─
     // On a phone the head holds only the tabs; the legend moves into the top
