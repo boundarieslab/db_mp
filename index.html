@@ -33,6 +33,7 @@
   --r-old:#FFD400; --r-active:#FF0000; --r-future:#FF8000; --r-cont:#B300FF;
   --c-done:#00B218; --c-active:#00FF00; --c-planned:#95FF00;
   --terrain:#007FFF;   /* terrain change: the third tab */
+  --hl:.5px;           /* one device pixel; set exactly from script */
   --unknown:#FFFFFF;
   --row:25px;
   --gut:10px;        /* one gutter, and the page's left edge         */
@@ -316,56 +317,179 @@ iframe{border:0}
 .aerial .tl{position:absolute;width:256px;height:256px;background-size:256px 256px}
 .aerial svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 
-/* ---------- deck: the database as a table, and the map's legend ---------- */
-#deck{flex:0 0 30px;display:flex;flex-direction:column;overflow:hidden;background:#fff;
-  transition:flex-basis .24s var(--ease)}
-#deck.half{flex-basis:280px}        /* 30 head + 25 header + 9 rows */
-#deck.full{position:absolute;left:0;right:0;top:var(--frame-top);bottom:24px;z-index:60;flex-basis:auto}
+/* ---------- deck: the database as sheets, and the map's legend ----------
+   The table is a stack of sheets. Behind them is the grey of the stack; the
+   sheet in front is white and its edge is drawn all the way round, its tab
+   included. Tabs are cut at 45°. One face, Cutive Mono, in its one weight. Every rule is the
+   thinnest line the screen can draw (--hl, one device pixel). */
+@font-face{font-family:"Cutive Mono";src:url(assets/fonts/cutive-mono-400.woff2) format('woff2');font-weight:400;font-display:swap;
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Cutive Mono";src:url(assets/fonts/cutive-mono-ext-400.woff2) format('woff2');font-weight:400;font-display:swap;
+  unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+#deck{--stack:#ececec;--stack-tab:#e2e2e2;--grid:#c4c4c4;
+  flex:0 0 32px;display:flex;flex-direction:column;overflow:hidden;background:var(--stack);
+  font-family:"Cutive Mono","Courier New",monospace;font-synthesis:none;transition:flex-basis .24s var(--ease)}
+#deck.half{flex-basis:330px;padding-bottom:8px}
+#deck.full{position:absolute;left:0;right:0;top:var(--frame-top);bottom:24px;z-index:60;flex-basis:auto;padding-bottom:8px}
 #deck:not(.half):not(.full) .deck-scroll{display:none}
-.deck-head{height:30px;flex:0 0 30px;display:flex;align-items:stretch;gap:12px;
-  padding:0 var(--gut) 0 0;border-bottom:.5px solid var(--frame);font-size:10px;overflow:hidden;
-  background:var(--tab);cursor:pointer}
+.deck-head{height:32px;flex:0 0 32px;display:flex;align-items:stretch;gap:12px;position:relative;
+  padding:0 var(--gut) 0 8px;font-size:12px;overflow:hidden;background:transparent;cursor:pointer}
+.deck-head::after{content:"";position:absolute;left:8px;right:8px;bottom:0;border-bottom:var(--hl,.5px) solid var(--frame);z-index:2;pointer-events:none}
 .deck-head > :not(#tabstrip){align-self:center}
 .deck-head .ttl{display:none}
-.deck-head .count{color:var(--sub);font-family:PlexMono,monospace;white-space:nowrap}
-.chips{display:flex;gap:4px;align-items:center;flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}
+.deck-head .count{color:var(--sub);white-space:nowrap}
+.chips{display:flex;gap:4px;align-items:center;flex:0 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;margin-left:auto}
 .chips::-webkit-scrollbar{display:none}
-.chip{display:inline-flex;align-items:center;gap:5px;height:18px;padding:0 6px 0 4px;border:.5px solid var(--frame);
-  background:#fff;cursor:pointer;white-space:nowrap;font-size:10px;transition:background-color .15s,opacity .15s}
-.chip .ct{font-family:PlexMono,monospace;color:var(--sub)}
-.chip[aria-pressed="false"]{opacity:.45;background:#fff}
-.chip[aria-pressed="false"] .swatch{background:#fff!important}
-.chip:hover{background:#f6f6f6}
+.chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 6px;border:var(--hl,.5px) solid var(--frame);
+  background:#fff;cursor:pointer;white-space:nowrap;font:12px "Cutive Mono","Courier New",monospace;transition:opacity .15s}
+.chip .ring{flex:0 0 11px}
+.chip .ct{color:var(--sub)}
+.chip[aria-pressed="false"]{opacity:.4}
+.chip:hover{background:#fafafa}
 .chip.clear{border-style:dashed}
-.deck-head .actions{margin-left:auto;display:flex;gap:14px;align-items:center;color:var(--sub);white-space:nowrap;flex:0 0 auto}
+.deck-head.tight .chips{gap:3px}
+.deck-head.tight .chip{font-size:11px;padding:0 5px;gap:4px}
+.deck-head.tight .find{width:64px}
+.deck-head.tight .actions{gap:9px}
+.deck-head .actions{display:flex;gap:12px;align-items:center;color:var(--sub);white-space:nowrap;flex:0 0 auto}
 .deck-head .actions button{background:none;border:0;color:var(--sub);cursor:pointer;padding:0;
-  height:24px;display:flex;align-items:center}
+  height:24px;display:flex;align-items:center;font:12px "Cutive Mono","Courier New",monospace}
 .deck-head .actions #deck-size{width:24px;justify-content:center}
 .deck-head .actions #deck-size .px{fill:var(--sub);transition:transform .2s var(--ease)}
 .deck-head .actions #deck-size[aria-expanded="true"] .px{transform:rotate(180deg)}
 .deck-head .actions button:hover .px{fill:#000}
 .deck-head .actions button:hover{color:#000}
-.deck-scroll{flex:1 1 auto;min-height:0;overflow:auto}
-#site-table{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed;min-width:980px}
-#site-table th{height:var(--row);text-align:left;font-weight:400;color:var(--sub);padding:0 var(--gut);line-height:24px;
-  border-bottom:.5px solid var(--frame);letter-spacing:.04em;white-space:nowrap;font-size:10px;cursor:pointer;
-  position:sticky;top:0;background:#fff;z-index:2;overflow:hidden;text-overflow:ellipsis}
-#site-table th:hover{color:#000}
+.deck-head .find{width:84px;height:22px;border:var(--hl,.5px) solid var(--frame);background:#fff;padding:0 6px;
+  font:12px "Cutive Mono","Courier New",monospace;color:#000;border-radius:0;outline:0}
+.deck-head .find::placeholder{color:var(--sub)}
+.deck-head .find:focus{border-color:#000}
+
+/* the sheet tabs */
+#tabstrip{display:flex;align-self:stretch;flex:0 0 auto;min-width:0;margin:0;padding-left:6px;padding-right:12px;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;border-right:0}
+#tabstrip .tab{position:relative;z-index:1;flex:0 0 auto;height:100%;border:0;background:transparent;
+  padding:9px 21px 0;margin-right:-11px;display:flex;align-items:center;gap:8px;cursor:pointer;
+  font:12px "Cutive Mono","Courier New",monospace;color:var(--sub)}
+#tabstrip .tab::before{display:none}
+#tabstrip .tab:hover{background:transparent;--stack-tab:#ebebeb;color:#000}
+#tabstrip .tab .shape{position:absolute;left:0;top:0;z-index:0;overflow:visible;pointer-events:none}
+#tabstrip .tab .tl,#tabstrip .tab .tc{position:relative;z-index:1;font:inherit;letter-spacing:0;color:inherit}
+#tabstrip .tab .tc{color:var(--sub);font-weight:400}
+#tabstrip .tab[aria-selected="true"]{z-index:3;color:#000;font-weight:400;background:transparent}
+
+/* the sheet in front */
+.deck-scroll{flex:1 1 auto;min-height:0;overflow:auto;background:#fff;margin:0 8px;
+  border:var(--hl,.5px) solid var(--frame);border-top:0;outline:0;position:relative}
+#site-table{border-collapse:separate;border-spacing:0;table-layout:fixed;min-width:0;
+  font:12px "Cutive Mono","Courier New",monospace;color:#000}
+#site-table th{height:34px;text-align:left;font-weight:400;color:#000;padding:0 10px;
+  border-bottom:var(--hl,.5px) solid var(--grid);border-right:var(--hl,.5px) solid var(--grid);
+  white-space:nowrap;cursor:pointer;position:sticky;top:0;background:#fff;z-index:2;overflow:hidden;text-overflow:ellipsis}
+#site-table th:hover .lab{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:var(--hl,.5px)}
 #site-table th.num{text-align:right}
-#site-table td{height:var(--row);padding:0 var(--gut);line-height:24px;border-bottom:.5px solid var(--hair);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background-color .12s}
-#site-table td.num{text-align:right;font-family:PlexMono,monospace}
-#site-table td.uid{font-family:PlexMono,monospace}
-#site-table td.sym{padding:0;text-align:center}
-#site-table td.sym svg{vertical-align:middle}
-#site-table td.st{display:table-cell}
-#site-table td.st .swatch{display:inline-block;vertical-align:-1px;margin-right:6px}
+#site-table th .unit{font-weight:400;color:var(--sub);margin-left:10px}
+#site-table th .unit svg{display:inline-block;vertical-align:-2px}
+#site-table th .ar{font-weight:400}
+#site-table th .af{border:0;background:none;padding:0 0 0 2px;margin-left:6px;cursor:pointer;vertical-align:-1px;opacity:.3}
+#site-table th .af svg{fill:#000;display:inline-block}
+#site-table th .af.on,#site-table th .af:hover{opacity:1}
+#site-table th .rz{position:absolute;right:-3px;top:0;width:7px;height:100%;cursor:col-resize;z-index:4}
+body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:none}
+#site-table td{height:30px;padding:0 10px;border-bottom:var(--hl,.5px) solid var(--grid);border-right:var(--hl,.5px) solid var(--grid);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#fff;position:relative}
+#site-table td.num{text-align:right}
+#site-table td.uid,#site-table .nd{color:var(--sub)}
+#site-table td svg{vertical-align:middle;display:inline-block}
+#site-table td .tyw{margin-left:8px}
+#site-table td .ring{margin-right:8px}
+#site-table td .stw{color:#000}
+#site-table td.bar{text-overflow:clip;text-align:left}
+#site-table th.bar{text-align:left}
+#site-table th:first-child,#site-table td:first-child{position:sticky;left:0;z-index:1}
+/* a name is never cut: the first column wraps instead */
+#site-table tbody td:first-child{white-space:normal;text-overflow:clip;line-height:1.35;padding-top:6px;padding-bottom:6px}
+#site-table thead th:first-child{z-index:3}
+#site-table tfoot td{position:sticky;bottom:0;z-index:2;border-top:var(--hl,.5px) solid var(--grid);border-bottom:0;color:#000}
+#site-table tfoot td:first-child{z-index:3}
+#site-table tfoot .sig{font-weight:400}
 #site-table tbody tr{cursor:pointer}
 #site-table tbody tr:hover td,#site-table tbody tr.hot td{background:#fafafa}
+#site-table tbody tr.pick td{background:#e9e9e9}
 #site-table tbody tr.sel td{background:var(--sel)}
-#site-table tbody tr.sel td:nth-child(2){font-weight:500}
-#site-table tbody tr.nogeo td:nth-child(2)::after{content:" ·";color:var(--sub)}
-.deck-empty{padding:10px var(--gut);color:var(--sub)}
+#site-table tbody tr.sel td:first-child{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:var(--hl,.5px)}
+#site-table tbody td.cur{outline:2px solid #000;outline-offset:-2px}
+#site-table tbody tr.nogeo td:first-child::after{content:" ·";color:var(--sub)}
+.deck-empty{padding:14px 10px;color:var(--sub);max-width:80ch;line-height:1.55}
+.deck-empty b{font-weight:400;color:#000;display:block;margin-bottom:3px}
+
+/* the key, inside the sheet under the table */
+.sheet-key{padding:16px 10px 22px;font-size:12px;color:#000}
+.sheet-key:empty{display:none}
+.sheet-key .kr{display:flex;align-items:center;flex-wrap:wrap;gap:6px 18px;min-height:26px}
+.sheet-key .kl{flex:0 0 110px}
+.sheet-key .it{display:inline-flex;align-items:center;gap:8px}
+.sheet-key .it svg{display:inline-block}
+.sheet-key .nd{color:var(--sub)}
+
+/* AutoFilter */
+#af-pop{position:fixed;z-index:140;background:#fff;border:var(--hl,.5px) solid var(--frame);
+  font:12px "Cutive Mono","Courier New",monospace;min-width:230px;max-width:360px}
+#af-pop .af-sort{display:flex;flex-direction:column;border-bottom:var(--hl,.5px) solid var(--grid,#c4c4c4)}
+#af-pop .af-sort button{background:none;border:0;text-align:left;padding:6px 10px;cursor:pointer;font:inherit}
+#af-pop .af-sort button:hover{background:#f3f3f3}
+#af-pop label{display:flex;align-items:center;gap:8px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+#af-pop label:hover{background:#f6f6f6}
+#af-pop label span{overflow:hidden;text-overflow:ellipsis}
+#af-pop label i{font-style:normal;color:var(--sub);margin-left:auto;padding-left:12px}
+#af-pop input{margin:0;accent-color:#000}
+#af-pop .af-all{border-bottom:var(--hl,.5px) solid var(--grid,#c4c4c4)}
+#af-pop .af-list{max-height:280px;overflow:auto;padding:2px 0 6px}
+
+/* the phone's bar at the top of the open sheet: hidden on a desktop */
+.sheet-bar{display:none}
+
+/* ---------- phone: the same sheets, cut to what a thumb needs ----------
+   The head keeps only the tabs and the size button; the legend and find sit
+   in one thin bar at the top of the open sheet; the table keeps three
+   columns: the name with its symbol, the drawn capacity and the number. */
+@media (max-width:760px){
+  #deck.half{flex-basis:46svh;padding-bottom:0}
+  #deck.full{padding-bottom:0}
+  #deck .deck-head{height:34px;flex:0 0 34px;gap:4px;padding:0 4px 0 2px}
+  #deck{flex-basis:34px}
+  .deck-head::after{left:4px;right:4px}
+  .deck-head .chips,.deck-head .find,.deck-head .count,#deck-dir,#deck-csv{display:none}
+  #tabstrip{flex:1 1 auto;min-width:0;padding-left:2px;padding-right:8px;overflow-x:auto;scroll-behavior:smooth}
+  #tabstrip .tab{padding:17px 14px 0;margin-right:-11px;font-size:9.5px;gap:4px}
+  #tabstrip{padding-right:0;padding-left:0}
+  .deck-head .actions #deck-size{display:none}
+  .sheet-bar .size{flex:0 0 24px;height:24px;margin-left:auto;background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .sheet-bar .size .px{fill:#000}
+  #tabstrip .tab:not([aria-selected="true"]) .tc{display:none}
+  .deck-scroll{margin:0 4px}
+  .sheet-bar{display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:var(--hl,.5px) solid var(--grid)}
+  .sheet-bar .find{flex:0 0 72px;width:72px;height:24px;border:var(--hl,.5px) solid var(--frame);background:#fff;padding:0 7px;
+    font:12px "Cutive Mono","Courier New",monospace;border-radius:0;outline:0;-webkit-appearance:none;appearance:none}
+  .sheet-bar .chips{margin-left:0;gap:4px;flex:1 1 auto;overflow-x:auto}
+  .sheet-bar .chip{height:24px;padding:0 6px;gap:5px;font-size:11px}
+  .sheet-bar .chip .w{display:none}
+  #site-table{font-size:11px}
+  #site-table th{height:28px;padding:0 8px}
+  #site-table td{height:30px;padding:0 8px;line-height:1.3}
+  #site-table tbody td:first-child{padding-top:5px;padding-bottom:5px}
+  #site-table th .af,#site-table th .rz,#site-table th .unit{display:none}
+  #site-table td .nmc{display:flex;align-items:flex-start;gap:6px}
+  #site-table td .nmc svg{flex:0 0 13px;margin-top:0}
+  #site-table td .nmw{flex:1 1 auto;min-width:0;white-space:normal}
+  #site-table tbody tr.nogeo td:first-child::after{content:none}
+  #site-table tfoot td{height:30px}
+  #site-table td.bar{padding:0 6px}
+  #site-table td.num,#site-table tfoot td{padding:0 8px;text-overflow:clip}
+  #site-table tbody td.num{white-space:normal;line-height:1.3}
+  .sheet-key{padding:10px 8px 14px;font-size:11px;line-height:1.4}
+  .sheet-key .kr{gap:3px 12px;min-height:20px}
+  .sheet-key .kl{flex:0 0 100%;margin-top:6px}
+}
 
 /* hover preview */
 #hover-card{position:fixed;z-index:120;background:#fff;border:.5px solid var(--frame);padding:4px;
@@ -784,15 +908,25 @@ iframe{border:0}
         <span class="count" id="deck-count"></span>
         <span class="chips" id="deck-chips" role="group" aria-label="Show on the map"></span>
         <span class="actions">
+            <input type="search" id="deck-find" class="find" autocomplete="off" spellcheck="false"
+                   placeholder="find" data-ph-en="find" data-ph-no="finn" aria-label="Find in sheet">
             <button type="button" id="deck-dir" data-en="all flows" data-no="alle strømmer">all flows</button>
             <button type="button" id="deck-csv">csv</button>
             <button type="button" id="deck-size" data-title-en="Half screen, whole page, closed" data-title-no="Halv skjerm, hel side, lukket" title="Half screen, whole page, closed" aria-label="Table size"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 4h2v1h-2zM5 5h2v1h-2zM9 5h2v1h-2zM3 6h2v1h-2zM11 6h2v1h-2zM1 7h2v1h-2zM13 7h2v1h-2z"/></svg></button>
         </span>
     </div>
     <div class="deck-scroll">
+        <div class="sheet-bar" id="sheet-bar">
+            <input type="search" id="sheet-find" class="find" autocomplete="off" spellcheck="false"
+                   placeholder="find" data-ph-en="find" data-ph-no="finn" aria-label="Find in sheet">
+            <div class="chips" id="sheet-chips" role="group" aria-label="Show on the map"></div>
+            <button type="button" class="size" id="sheet-size" aria-label="Table size" title="Half screen, whole page, closed"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 4h2v1h-2zM5 5h2v1h-2zM9 5h2v1h-2zM3 6h2v1h-2zM11 6h2v1h-2zM1 7h2v1h-2zM13 7h2v1h-2z"/></svg></button>
+        </div>
         <table id="site-table"><thead><tr></tr></thead><tbody></tbody></table>
+        <div class="sheet-key" id="sheet-key"></div>
     </div>
 </div>
+<div id="af-pop" hidden></div>
 
 <div class="status-strip">
     <span id="status-strip" role="status" aria-live="polite">LOADING DATA…</span>
@@ -837,7 +971,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const hasXY = s => Number.isFinite(num(s.Latitude)) && Number.isFinite(num(s.Longitude));
 
     const FACILITIES_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?output=csv';
-    const PROJECTS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR8NceaLhnLslv2TKIReqCnB1q0UON_yEef-vs7zfKxnQc8LaxiNfSKTTp8528mKG882T3XlxF59437/pub?output=csv';
+    const PROJECTS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?gid=529338597&single=true&output=csv';
     // The fourth sheet. Publish the database's Flows tab to the web and
     // paste its CSV address here: the table, the counts, the key and the
     // arcs on the map all fill themselves. Left empty, the sheet says so.
@@ -1559,6 +1693,41 @@ document.addEventListener('DOMContentLoaded', function() {
         ev_evidenced: { en: "documented", no: "dokumentert" },
         ev_structural: { en: "shared ownership", no: "felles eierskap" },
         ev_modelled: { en: "modelled", no: "modellert" },
+        th_m3: { en: "m³", no: "m³" },
+        th_cap_s: { en: "CAP.", no: "KAP." },
+        th_vol_s: { en: "VOL.", no: "VOL." },
+        rows: { en: "rows", no: "rader" },
+        picked: { en: "picked", no: "markert" },
+        stated: { en: "stated for {n} of {m}", no: "oppgitt for {n} av {m}" },
+        nosum_mix: { en: "two kinds, not added", no: "to slag, ikke summert" },
+        nosum_unit: { en: "mixed units, not added", no: "ulike enheter, ikke summert" },
+        kdir_receiving: { en: "receives masses", no: "tar imot masser" },
+        kdir_producing: { en: "produces masses", no: "produserer masser" },
+        kdir_mixed: { en: "both", no: "begge" },
+        key_cap: { en: "total volume in the permit or stated by the operator · t and t/yr are listed, not drawn · n.d. = not disclosed",
+                   no: "samlet volum i tillatelsen eller oppgitt av operatøren · t og t/år står oppført, men tegnes ikke · n.d. = ikke oppgitt" },
+        key_vol: { en: "volume moved, in the unit of its source · n.d. = not disclosed",
+                   no: "volum flyttet, i kildens enhet · n.d. = ikke oppgitt" },
+        cov: { en: "{p} published", no: "{p} publisert" },
+        cov_held: { en: "{h} held back until every field has a source", no: "{h} holdt tilbake til hvert felt har en kilde" },
+        cov_read: { en: "read from the database", no: "lest fra databasen" },
+        n_facility: { en: "reception sites", no: "mottaksanlegg" },
+        n_project: { en: "construction projects", no: "byggeprosjekter" },
+        n_flow: { en: "flows", no: "strømmer" },
+        held_t: { en: "{n} {what} in the database, none published yet.", no: "{n} {what} i databasen, ingen publisert ennå." },
+        none_t: { en: "No {what} published yet.", no: "Ingen {what} publisert ennå." },
+        held_b: { en: "A record goes live when every field in it has a source. Until then it stays in the database and off the map.",
+                  no: "En post publiseres når hvert felt i den har en kilde. Til da blir den i databasen og utenfor kartet." },
+        nomatch_t: { en: "Nothing in this sheet matches.", no: "Ingenting i arket passer." },
+        nomatch_b: { en: "A column filter or the find box is narrowing it. Clear them to see every row.",
+                     no: "Et kolonnefilter eller søkefeltet snevrer det inn. Fjern dem for å se alle radene." },
+        af_title: { en: "Filter this column", no: "Filtrer denne kolonnen" },
+        af_az: { en: "Sort A → Z", no: "Sorter A → Å" },
+        af_za: { en: "Sort Z → A", no: "Sorter Å → A" },
+        af_all: { en: "(all)", no: "(alle)" },
+        af_blank: { en: "(blank)", no: "(tom)" },
+        rows_copied: { en: "ROWS COPIED", no: "RADER KOPIERT" },
+        cell_copied: { en: "CELL COPIED", no: "CELLE KOPIERT" },
         flows_none_t: { en: "No flows published yet.",
                         no: "Ingen strømmer publisert ennå." },
         flows_none_b: { en: "This sheet draws the line between a construction project and the site that received its mass. It fills itself from the Flows tab of the database: publish that tab to the web and paste its CSV address into FLOWS_CSV in index.html.",
@@ -2199,6 +2368,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const shown = mapped.filter(passes).length;
         let s = shown === total ? `${total} ${t('sites')}` : `${shown} ${t('of')} ${total} ${t('shown')}`;
         if (deckSelection) s += ` · ${deckSelection.size} ${t('selected')}`;
+        s += pickLine();
         statusStrip.textContent = s;
     }
 
@@ -2214,148 +2384,432 @@ document.addEventListener('DOMContentLoaded', function() {
     let deckScope  = 'facility';           // 'facility' | 'project' | 'all'
     let scopeBeforeSelection = 'facility';
     let deckSize   = 'closed';
-    let deckSort   = { key: 'TotalCapacity', dir: -1 };
+    // ─────────────────────────────────────────────────────────────────────
+    // THE SHEETS. One grid for every tab, built like a spreadsheet: an active
+    // cell the keyboard moves, rows picked with shift and ctrl, a totals line,
+    // a filter on every column that has categories, find-in-sheet, a frozen
+    // first column, columns that resize, and the whole view in the address.
+    //
+    // A column is { key, th, pth?, w, num?, filter?, text(r), html?(r),
+    // sort?(r), raw?(r), keep? }. text() is what is copied, found, filtered
+    // and exported; html() is what is drawn. A column that is empty for every
+    // record of the sheet in view is not drawn, so a sort can never point at
+    // a column with nothing in it.
+    // ─────────────────────────────────────────────────────────────────────
+    const rawCounts = { facility: 0, project: 0, flow: 0 };
+    function isPicked(id) { try { return picked.has(id); } catch (err) { return false; } }
+    function pickLine() { try { return pickSummary(); } catch (err) { return ''; } }
+    const loadedAt = new Date();
+    const pad2 = n => String(n).padStart(2, '0');
+    const dateNo = d => pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + '.' + d.getFullYear();
+    const dateIso = d => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
 
-    const COLS = [
-        { key:'UID',          th:'th_uid',  w:'104px', cls:'uid c-uid', get: s => uidOf(s) },
-        { key:'Name',         th:'th_name', pth:'th_pname', w:'',    get: s => s.Name || t('untitled') },
-        { key:'Operator',     th:'th_op',   pth:'th_dev', w:'180px', cls:'c-op', get: s => s.Operator || s.Company || '' },
-        { key:'Municipality', th:'th_kom',  w:'110px', cls:'c-kom', get: s => s.Municipality || '' },
-        { key:'MassesAccepted', th:'th_mat', w:'150px', cls:'c-mat', get: s => s.MassesAccepted || s.Type || '' },
-        { key:'__dir',        th:'th_type', w:'52px', cls:'sym', sym:true,
-          get: s => getMarkerInfo(s).direction, sort: s => getMarkerInfo(s).direction },
-        { key:'Area_m2',      th:'th_area', w:'96px', num:true, cls:'c-area', get: s => fmt(qty(s.Area_m2)) },
-        { key:'TotalCapacity',th:'th_cap',  w:'112px', num:true, cls:'c-cap', get: s => fmt(qty(s.TotalCapacity)) },
-        { key:'PermitRef',    th:'th_plan', w:'150px', cls:'c-plan', get: s => s.PermitRef || s.PolygonSource || '' },
-        { key:'__cls',        th:'th_st',   w:'150px', cls:'st',
-          get: s => { const ci = classInfo(s.__cat, s.__cls), r = rawStatus(s, ci); return ci[currentLang] + (r ? ' · ' + r : ''); },
-          sort: s => ['active', 'future', 'contaminated', 'old', 'unknown'].indexOf(s.__cls) }
+    // Capacity is only drawn when it is a volume in m³. Tonnes, and yearly
+    // figures, are written in the number column and never drawn on the same
+    // scale as a volume.
+    function capOf(s) {
+        const unit = String(s.CapacityUnit || '').toLowerCase();
+        const tonnes = /t(onn|onne)?s?\b|tonn/.test(unit) && !/m3|m³/.test(unit);
+        const yearly = /yr|year|år|\/a\b/.test(unit);
+        const tot = qty(s.TotalCapacity), ann = qty(s.AnnualCapacity);
+        if (Number.isFinite(tot) && !tonnes && !yearly) return { v: tot, unit: 'm³', drawn: true };
+        if (Number.isFinite(tot)) return { v: tot, unit: tonnes ? (yearly ? 't/yr' : 't') : 'm³/yr', drawn: false };
+        if (Number.isFinite(ann)) return { v: ann, unit: /m3|m³/.test(unit) ? 'm³/yr' : 't/yr', drawn: false };
+        return null;
+    }
+    function volOf(f) {
+        const v = qty(f.Volume_m3);
+        if (!Number.isFinite(v)) return null;
+        const u = String(f.VolumeUnit || 'm³').trim() || 'm³';
+        return { v, unit: u, drawn: true };
+    }
+    const qtyText = c => c ? fmt(c.v) + (c.unit === 'm³' ? '' : ' ' + c.unit) : '';
+
+    // One stroke is a round quantity chosen per sheet, so the longest bar
+    // in the sheet stays under a hundred strokes.
+    const STEPS = [100000, 250000, 500000, 1000000, 2500000, 5000000, 10000000];
+    let strokeUnit = 100000;
+    // A phone gets the same sheet, cut down: the name (with its symbol), the
+    // drawn capacity and the number. Everything else is one tap away in the record.
+    const PHONE = window.matchMedia('(max-width: 760px)');
+    const phone = () => PHONE.matches;
+    function pickStroke(values) {
+        const max = Math.max(0, ...values), most = phone() ? 24 : 100;
+        strokeUnit = STEPS.find(s => max / s <= most) || STEPS[STEPS.length - 1];
+    }
+    function strokes(n, col) {
+        const H = 13, W = 1.5, ADV = 2.5;
+        if (n < 1) return '';
+        let r = '';
+        for (let i = 0; i < n; i++) r += `<rect x="${(i * ADV).toFixed(1)}" y="0" width="${W}" height="${H}"/>`;
+        return `<svg class="strk" width="${(n * ADV).toFixed(1)}" height="${H}" fill="${col}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
+    }
+    const inkOf = s => { const c = colourOf(s); return c === '#FFFFFF' ? '#8a8a8a' : c; };
+    const ring = col => `<svg class="ring" width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="#fff" stroke="${col === '#FFFFFF' ? '#4A4A4A' : col}" stroke-width="2.2"/></svg>`;
+
+    const SITE_COLS = [
+        { key: 'Name', th: 'th_name', pth: 'th_pname', w: 230, pw: 0, keep: true,
+          text: s => s.Name || t('untitled'),
+          html: s => phone() ? `<span class="nmc">${symbolFor(s)}<span class="nmw">${esc(s.Name || t('untitled'))}</span></span>` : esc(s.Name || t('untitled')) },
+        { key: 'Municipality', nophone: true, th: 'th_kom', w: 130, filter: true,
+          text: s => s.Municipality || '' },
+        { key: 'Operator', nophone: true, th: 'th_op', pth: 'th_dev', w: 210, filter: true,
+          text: s => s.Operator || s.Company || '' },
+        { key: '__cls', nophone: true, th: 'th_st', w: 140, filter: true, keep: true,
+          text: s => classInfo(s.__cat, s.__cls)[currentLang],
+          // The colour is carried by the ring, at full strength; the word stays
+          // black, so pure yellow never has to be read as text on white.
+          html: s => `${ring(classInfo(s.__cat, s.__cls).col)}<span class="stw">${esc(classInfo(s.__cat, s.__cls)[currentLang])}</span>`,
+          sort: s => ['active', 'future', 'contaminated', 'old', 'unknown'].indexOf(s.__cls) },
+        { key: '__type', nophone: true, th: 'th_type', w: 170, filter: true, keep: true,
+          text: s => s.Type || '',
+          html: s => `${symbolFor(s)}<span class="tyw">${esc(s.Type || '')}</span>`,
+          title: s => t('dir_' + getMarkerInfo(s).direction) },
+        { key: '__cap', th: 'th_cap', w: 280, pw: 72, sth: 'th_cap_s', bar: true,
+          text: s => { const c = capOf(s); return c && c.drawn ? String(c.v) : ''; },
+          html: s => { const c = capOf(s); return c && c.drawn ? strokes(Math.floor(c.v / strokeUnit), inkOf(s)) : ''; },
+          sort: s => { const c = capOf(s); return c ? c.v : NaN; }, num: true, nosum: true },
+        { key: '__qty', th: 'th_m3', w: 140, pw: 118, num: true,
+          text: s => qtyText(capOf(s)),
+          html: s => { const c = capOf(s); if (!c) return '<span class="nd">n.d.</span>';
+                       return c.drawn ? fmt(c.v) : `<span class="nd">${fmt(c.v)} ${esc(c.unit)}</span>`; },
+          sort: s => { const c = capOf(s); return c ? c.v : NaN; },
+          sum: s => { const c = capOf(s); return c && c.drawn ? c.v : NaN; },
+          present: s => !!capOf(s) },
+        { key: 'UID', nophone: true, th: 'th_uid', w: 110, cls: 'uid', keep: true, text: s => uidOf(s) }
     ];
-
-    // A flow is an edge, not a place, so the FLOWS sheet gets its own
-    // columns rather than empty cells in the site table.
     const FLOW_COLS = [
-        { key:'FlowUID',     th:'th_flow',   w:'104px', cls:'uid c-uid', get: f => f.FlowUID || '' },
-        { key:'__from',      th:'th_from',   w:'',      get: f => f.__fromName },
-        { key:'__to',        th:'th_to',     w:'',      get: f => f.__toName },
-        { key:'MassType',    th:'th_mat',    w:'150px', cls:'c-mat', get: f => f.MassType || '' },
-        { key:'Volume_m3',   th:'th_vol',    w:'112px', num:true, cls:'c-cap', get: f => fmt(qty(f.Volume_m3)) },
-        { key:'VolumeUnit',  th:'th_unit',   w:'64px',  cls:'c-area', get: f => f.VolumeUnit || '' },
-        { key:'__period',    th:'th_period', w:'104px', cls:'c-kom',
-          get: f => [f.PeriodStart, f.PeriodEnd].filter(Boolean).join('\u2013'),
-          sort: f => String(f.PeriodStart || '') },
-        { key:'__ev',        th:'th_ev',     w:'150px', cls:'ev-cell',
-          get: f => t('ev_' + f.__ev),
+        { key: '__from', th: 'th_from', w: 230, pw: 0, keep: true, text: f => f.__fromName },
+        { key: '__to', th: 'th_to', w: 230, nophone: true, keep: true, text: f => f.__toName },
+        { key: 'MassType', nophone: true, th: 'th_mat', w: 150, filter: true, text: f => f.MassType || '' },
+        { key: '__ev', nophone: true, th: 'th_ev', w: 170, filter: true, keep: true,
+          text: f => t('ev_' + f.__ev),
+          html: f => `<span class="ev ${f.__ev}"></span>${esc(t('ev_' + f.__ev))}`,
           sort: f => ['evidenced', 'structural', 'modelled'].indexOf(f.__ev) },
-        { key:'Confidence',  th:'th_conf',   w:'72px',  num:true, cls:'c-plan', get: f => f.Confidence || '' },
-        { key:'SourceURL',   th:'th_src',    w:'150px', cls:'c-op', get: f => f.SourceURL || '' }
+        { key: '__vbar', th: 'th_vol', w: 280, pw: 72, sth: 'th_vol_s', bar: true, num: true, nosum: true,
+          text: f => { const c = volOf(f); return c ? String(c.v) : ''; },
+          html: f => { const c = volOf(f); return c ? strokes(Math.floor(c.v / strokeUnit), '#111') : ''; },
+          sort: f => { const c = volOf(f); return c ? c.v : NaN; } },
+        { key: '__vol', th: 'th_m3', w: 150, pw: 110, num: true,
+          text: f => { const c = volOf(f); return c ? fmt(c.v) + ' ' + c.unit : ''; },
+          html: f => { const c = volOf(f); return c ? fmt(c.v) + ' <span class="nd">' + esc(c.unit) + '</span>' : '<span class="nd">n.d.</span>'; },
+          sort: f => { const c = volOf(f); return c ? c.v : NaN; },
+          sum: f => { const c = volOf(f); return c ? c.v : NaN; }, unitOf: f => (volOf(f) || {}).unit,
+          present: f => !!volOf(f) },
+        { key: '__period', nophone: true, th: 'th_period', w: 120, text: f => [f.PeriodStart, f.PeriodEnd].filter(Boolean).join('–'),
+          sort: f => String(f.PeriodStart || '') },
+        { key: 'SourceURL', nophone: true, th: 'th_src', w: 200,
+          text: f => f.SourceURL || '',
+          html: f => safeUrl(f.SourceURL) ? '<a href="' + esc(safeUrl(f.SourceURL)) + '" target="_blank" rel="noopener">'
+                     + esc(String(f.SourceURL).replace(/^https?:\/\//, '')) + '</a>' : '' },
+        { key: 'FlowUID', nophone: true, th: 'th_flow', w: 110, cls: 'uid', keep: true, text: f => f.FlowUID || '' }
     ];
-    const activeCols = () => deckScope === 'flow' ? FLOW_COLS : COLS;
 
-    function deckRows(){
-        if (deckScope === 'flow') return flowRows();
-        const rows = allSites.filter(s =>
-            (deckSelection ? deckSelection.has(uidOf(s)) : (deckScope === 'all' || s.__cat === deckScope)) &&
-            passes(s));
-        const k = deckSort.key, d = deckSort.dir;
-        const col = COLS.find(c => c.key === k);
-        return rows.sort((a, b) => {
-            if (col && col.num) {
-                const av = qty(a[k]), bv = qty(b[k]);
-                const an = Number.isFinite(av), bn = Number.isFinite(bv);
-                if (!an && !bn) return 0;
-                if (!an) return 1;
-                if (!bn) return -1;
-                return (av - bv) * d;
+    // Per-sheet state. The sheet key is the scope, or 'sel' for a box drawn on the map.
+    const sheetKey = () => deckSelection ? 'sel' : deckScope;
+    const SORT0 = { facility: { key: '__qty', dir: -1 }, project: { key: '__qty', dir: -1 },
+                    all: { key: '__qty', dir: -1 }, sel: { key: '__qty', dir: -1 }, flow: { key: '__vol', dir: -1 } };
+    const sheetSort = JSON.parse(JSON.stringify(SORT0));
+    const colFilter = { facility: {}, project: {}, all: {}, sel: {}, flow: {} };   // key -> Set of values left out
+    const findQ = { facility: '', project: '', all: '', sel: '', flow: '' };
+    let colW = {};
+    try { colW = JSON.parse(localStorage.getItem('db_colw') || '{}') || {}; } catch (err) { colW = {}; }
+    let deckSort = sheetSort.facility;          // kept for anything that still reads it
+    let flowSortKey = null;
+    const picked = new Set();                   // rows picked with shift / ctrl
+    let anchorIx = -1;                          // where a shift range starts
+    let cur = { id: null, key: null };          // the active cell
+    let viewRows = [], viewCols = [];
+
+    const isFlowSheet = () => deckScope === 'flow' && !deckSelection;
+    const rowId = r => r.__cat === 'flow' ? r.FlowUID : uidOf(r);
+    const fold2 = v => String(v == null ? '' : v).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/å/g, 'a');
+
+    function baseRows() {
+        if (isFlowSheet()) return allFlows.filter(flowPasses);
+        return allSites.filter(s =>
+            (deckSelection ? deckSelection.has(uidOf(s)) : (deckScope === 'all' || s.__cat === deckScope)) && passes(s));
+    }
+    function visibleCols(rows) {
+        const all = isFlowSheet() ? FLOW_COLS : SITE_COLS;
+        return all.filter(c => !(phone() && c.nophone)).filter(c => c.keep || rows.some(r => c.present ? c.present(r) : String(c.text(r) || '').trim() !== ''));
+    }
+    function applyColFilters(rows, cols, skipKey) {
+        const f = colFilter[sheetKey()];
+        const q = fold2(findQ[sheetKey()]).trim();
+        return rows.filter(r => {
+            for (const k in f) {
+                if (k === skipKey || !f[k] || !f[k].size) continue;
+                const c = cols.find(x => x.key === k);
+                if (c && f[k].has(String(c.text(r) || '').trim())) return false;
             }
-            if (col && col.sort) {
-                const av = col.sort(a), bv = col.sort(b);
-                return (av < bv ? -1 : av > bv ? 1 : 0) * d;
-            }
-            return String(a[k] || '').localeCompare(String(b[k] || ''), 'nb') * d;
+            if (q) return cols.some(c => fold2(c.text(r)).includes(q));
+            return true;
         });
     }
+    function sortRows(rows, cols) {
+        const sk = sheetKey();
+        let s = sheetSort[sk];
+        let col = cols.find(c => c.key === s.key);
+        if (!col) { s = sheetSort[sk] = { key: cols[0].key, dir: 1 }; col = cols[0]; }
+        deckSort = s;
+        const d = s.dir;
+        return rows.slice().sort((a, b) => {
+            if (col.num || col.sort) {
+                const av = col.sort ? col.sort(a) : qty(col.text(a)), bv = col.sort ? col.sort(b) : qty(col.text(b));
+                if (typeof av === 'number' || typeof bv === 'number') {
+                    const an = Number.isFinite(av), bn = Number.isFinite(bv);
+                    if (!an && !bn) return 0;
+                    if (!an) return 1;
+                    if (!bn) return -1;
+                    return (av - bv) * d;
+                }
+                return (av < bv ? -1 : av > bv ? 1 : 0) * d;
+            }
+            const at = String(col.text(a) || ''), bt = String(col.text(b) || '');
+            if (!at && bt) return 1;
+            if (at && !bt) return -1;
+            return at.localeCompare(bt, 'nb') * d;
+        });
+    }
+    function deckRows() {
+        const base = baseRows();
+        const cols = visibleCols(base);
+        return sortRows(applyColFilters(base, cols), cols);
+    }
+    const activeCols = () => visibleCols(baseRows());
 
-    function renderDeckHead(){
-        deckHeadRow.innerHTML = '';
+    // ── drawing the sheet ────────────────────────────────────────────────
+    function clearDeckEmpty() {
+        document.querySelectorAll('#deck .deck-empty').forEach(e => e.remove());
+        $('site-table').hidden = false;
+    }
+    function sayInDeck(title, body) {
+        const d = document.createElement('div');
+        d.className = 'deck-empty';
+        d.innerHTML = '<b>' + esc(title) + '</b>' + esc(body);
+        $('site-table').after(d);
+    }
+    const FILTER_ICON = '<svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true"><path d="M0 1h9L5.5 5v4h-2V5z"/></svg>';
+
+    function renderDeck() {
+        clearDeckEmpty();
+        const sk = sheetKey();
+        const table = $('site-table');
+        const base = baseRows();
+        const cols = visibleCols(base);
+        const rows = sortRows(applyColFilters(base, cols), cols);
+        viewRows = rows; viewCols = cols;
+        pickStroke(base.map(r => { const c = isFlowSheet() ? volOf(r) : capOf(r); return c && c.drawn ? c.v : 0; }));
+        [...picked].forEach(id => { if (!rows.some(r => rowId(r) === id)) picked.delete(id); });
+
+        // colgroup
+        const oldCg = table.querySelector('colgroup'); if (oldCg) oldCg.remove();
         const cg = document.createElement('colgroup');
-        const proj = deckScope === 'project';
-        activeCols().forEach(c => {
+        const proj = deckScope === 'project' && !deckSelection;
+        cols.forEach(c => {
             const col = document.createElement('col');
-            if (c.w) col.style.width = c.w;
-            if (c.cls) col.className = c.cls.split(' ').filter(x => x.startsWith('c-')).join(' ');
+            if (phone()) { if (c.pw) col.style.width = c.pw + 'px'; }
+            else col.style.width = ((colW[sk] && colW[sk][c.key]) || (colW._ && colW._[c.key]) || c.w) + 'px';
+            col.dataset.key = c.key;
             cg.appendChild(col);
+        });
+        table.insertBefore(cg, table.firstChild);
+        table.style.width = phone() ? '100%'
+            : cols.reduce((a, c) => a + ((colW[sk] && colW[sk][c.key]) || (colW._ && colW._[c.key]) || c.w), 0) + 'px';
+
+        // header
+        deckHeadRow.innerHTML = '';
+        cols.forEach((c, i) => {
             const th = document.createElement('th');
-            const key = proj && c.pth ? c.pth : c.th;
-            th.textContent = t(key);
-            if (c.num) th.className = 'num';
-            if (c.cls) th.className += ' ' + c.cls.split(' ').filter(x => x.startsWith('c-')).join(' ');
-            if (deckSort.key === c.key) th.textContent += deckSort.dir < 0 ? ' ↓' : ' ↑';
-            th.setAttribute('aria-sort', deckSort.key === c.key ? (deckSort.dir < 0 ? 'descending' : 'ascending') : 'none');
+            th.dataset.key = c.key;
+            th.className = [c.num ? 'num' : '', c.bar ? 'bar' : ''].join(' ').trim();
+            const lab = document.createElement('span');
+            lab.className = 'lab';
+            lab.textContent = t(phone() && c.sth ? c.sth : proj && c.pth ? c.pth : c.th);
+            th.appendChild(lab);
+            if (c.bar) {
+                const u = document.createElement('span');
+                u.className = 'unit';
+                u.innerHTML = strokes(1, '#000') + ' = ' + fmt(strokeUnit) + ' m³';
+                th.appendChild(u);
+            }
+            const s = sheetSort[sk];
+            const sorted = s.key === c.key;
+            if (sorted) { const a = document.createElement('span'); a.className = 'ar'; a.textContent = s.dir < 0 ? ' ↓' : ' ↑'; lab.appendChild(a); }
+            th.setAttribute('aria-sort', sorted ? (s.dir < 0 ? 'descending' : 'ascending') : 'none');
+            if (c.filter) {
+                const b = document.createElement('button');
+                b.type = 'button'; b.className = 'af';
+                const on = colFilter[sk][c.key] && colFilter[sk][c.key].size;
+                b.classList.toggle('on', !!on);
+                b.title = t('af_title'); b.setAttribute('aria-label', t('af_title'));
+                b.innerHTML = FILTER_ICON;
+                b.onclick = e => { e.stopPropagation(); openAutoFilter(c, th); };
+                th.appendChild(b);
+            }
+            const rz = document.createElement('span');
+            rz.className = 'rz';
+            rz.onpointerdown = e => startResize(e, c, i);
+            rz.ondblclick = e => { e.stopPropagation(); autofit(c, i); };
+            rz.onclick = e => e.stopPropagation();
+            th.appendChild(rz);
             th.onclick = () => {
-                deckSort = deckSort.key === c.key ? { key: c.key, dir: -deckSort.dir } : { key: c.key, dir: c.num ? -1 : 1 };
-                renderDeck();
+                const s0 = sheetSort[sk];
+                sheetSort[sk] = s0.key === c.key ? { key: c.key, dir: -s0.dir } : { key: c.key, dir: c.num ? -1 : 1 };
+                renderDeck(); saveSheetHash();
             };
             deckHeadRow.appendChild(th);
         });
-        const table = $('site-table');
-        const old = table.querySelector('colgroup');
-        if (old) old.remove();
-        table.insertBefore(cg, table.firstChild);
-    }
 
-    function renderDeck(){
-        if (deckScope === 'flow') { renderFlowDeck(); return; }
-        clearDeckEmpty();
-        renderDeckHead();
-        const rows = deckRows();
+        // body
         deckBody.innerHTML = '';
         const frag = document.createDocumentFragment();
-        rows.forEach(site => {
+        rows.forEach((r, ri) => {
             const tr = document.createElement('tr');
-            tr.dataset.uid = uidOf(site);
-            if (!hasXY(site)) tr.classList.add('nogeo');
-            if (currentSite === site) tr.classList.add('sel');
-            COLS.forEach(c => {
+            const id = rowId(r);
+            if (r.__cat === 'flow') { tr.dataset.flow = id; if (!r.__xy) tr.classList.add('nogeo'); }
+            else { tr.dataset.uid = id; if (!hasXY(r)) tr.classList.add('nogeo'); if (currentSite === r) tr.classList.add('sel'); }
+            if (picked.has(id)) tr.classList.add('pick');
+            tr.dataset.ix = ri;
+            cols.forEach(c => {
                 const td = document.createElement('td');
-                if (c.sym) {
-                    td.innerHTML = symbolFor(site);
-                    td.title = t('dir_' + c.get(site));
-                } else if (c.key === '__cls') {
-                    td.innerHTML = `<span class="swatch" style="background:${colourOf(site)}"></span>${esc(c.get(site))}`;
-                    td.title = c.get(site);
-                } else {
-                    td.textContent = c.get(site);
-                    td.title = td.textContent;
-                }
-                td.className = [c.num ? 'num' : '', c.cls || ''].join(' ').trim();
+                td.dataset.key = c.key;
+                if (c.html) td.innerHTML = c.html(r); else td.textContent = c.text(r);
+                const tip = c.title ? c.title(r) : c.text(r);
+                if (tip && !c.bar) td.title = tip;
+                td.className = [c.num ? 'num' : '', c.cls || '', c.bar ? 'bar' : ''].join(' ').trim();
+                if (cur.id === id && cur.key === c.key) td.classList.add('cur');
                 tr.appendChild(td);
             });
-            tr.onclick = () => openSite(site, true);
-            tr.onmouseenter = e => showHover(site, e);
-            tr.onmousemove = e => { if (hoverUid === uidOf(site)) placeHover(e); };
-            tr.onmouseleave = hideHover;
+            if (r.__cat === 'flow') {
+                tr.onmouseenter = () => hotFlow(r.FlowUID);
+                tr.onmouseleave = () => hotFlow(null);
+            } else {
+                tr.onmouseenter = e => showHover(r, e);
+                tr.onmousemove = e => { if (hoverUid === uidOf(r)) placeHover(e); };
+                tr.onmouseleave = hideHover;
+            }
             frag.appendChild(tr);
         });
         deckBody.appendChild(frag);
-        deckCount.textContent = rows.length + ' ' + t('records');
+        renderTotals(base, rows, cols);
+
+        // an empty sheet says why
+        if (!base.length) {
+            const cat = isFlowSheet() ? 'flow' : deckScope;
+            if (!deckSelection && (cat === 'project' || cat === 'flow' || cat === 'facility')) {
+                const held = rawCounts[cat] || 0;
+                const noun = t('n_' + cat);
+                if (cat === 'flow' && !allFlows.length) { table.hidden = true; }
+                sayInDeck(held ? t('held_t').replace('{n}', held).replace('{what}', noun) : t('none_t').replace('{what}', noun),
+                          t('held_b'));
+            }
+        } else if (!rows.length) {
+            sayInDeck(t('nomatch_t'), t('nomatch_b'));
+        }
+        if (isFlowSheet() && !allFlows.length) {
+            deckHeadRow.innerHTML = ''; deckBody.innerHTML = ''; $('site-table').tFoot && $('site-table').tFoot.remove();
+            const cgx = table.querySelector('colgroup'); if (cgx) cgx.remove();
+            table.hidden = true;
+        }
+
+        // count, title, chips, key, tabs
+        const nf = rows.length, nb = base.length;
+        deckCount.textContent = nf < nb ? nf + ' ' + t('of') + ' ' + nb : '';
         const title = $('deck-title');
         const key = deckSelection ? 'selection' : deckScope === 'project' ? 'projects' :
                     deckScope === 'flow' ? 'flows' : deckScope === 'all' ? 'selection' : 'recep';
         title.setAttribute('data-en', t2(key, 'en')); title.setAttribute('data-no', t2(key, 'no'));
         title.textContent = t(key);
+        const fi = $('deck-find');
+        if (fi && document.activeElement !== fi) fi.value = findQ[sk] || '';
+        const sf = $('sheet-find');
+        if (sf && document.activeElement !== sf) sf.value = findQ[sk] || '';
         renderChips();
+        renderSheetKey(base);
         markDeckSelection(true);
+        paintTabs();
+        fitHead();
+        updateStatus();
+    }
+    const renderDeckHead = () => renderDeck();
+    const renderFlowDeck = () => renderDeck();
+
+    // ── totals line: what a spreadsheet puts under the last row ─────────
+    function renderTotals(base, rows, cols) {
+        const table = $('site-table');
+        if (table.tFoot) table.tFoot.remove();
+        if (!rows.length) return;
+        const tf = table.createTFoot();
+        const tr = tf.insertRow();
+        const mixed = !isFlowSheet() && new Set(rows.map(r => r.__cat)).size > 1;
+        cols.forEach((c, i) => {
+            const td = tr.insertCell();
+            td.className = c.num ? 'num' : '';
+            if (i === 0) td.textContent = rows.length + ' ' + t('rows') + (rows.length < base.length ? ' ' + t('of') + ' ' + base.length : '');
+            else if (c.bar) {
+                const q = cols.find(x => x.sum);
+                const n = q ? rows.filter(r => q.present(r)).length : 0;
+                if (phone()) {
+                    tr.cells[0].innerHTML += ' <span class="nd">· ' + n + '/' + rows.length + '</span>';
+                } else td.innerHTML = '<span class="nd">' + t('stated').replace('{n}', n).replace('{m}', rows.length) + '</span>';
+            } else if (c.sum) {
+                const vals = rows.map(c.sum).filter(Number.isFinite);
+                const units = c.unitOf ? new Set(rows.filter(r => Number.isFinite(c.sum(r))).map(c.unitOf)) : new Set(['m³']);
+                if (mixed) td.innerHTML = '<span class="nd">' + t('nosum_mix') + '</span>';
+                else if (units.size > 1) td.innerHTML = '<span class="nd">' + t('nosum_unit') + '</span>';
+                else if (vals.length) td.innerHTML = '<span class="sig">Σ</span> ' + fmt(vals.reduce((a, b) => a + b, 0)) + (units.size && [...units][0] !== 'm³' ? ' ' + esc([...units][0]) : '');
+            }
+        });
     }
 
-    // The legend chips. Counted from the records in scope, so a colour with
-    // nothing behind it says 0 rather than pretending.
+    // ── the key inside the sheet, under the table ───────────────────────
+    function renderSheetKey(base) {
+        const box = $('sheet-key');
+        if (!box) return;
+        if (isFlowSheet() && !allFlows.length) { box.innerHTML = ''; return; }
+        const flow = isFlowSheet();
+        let h = '';
+        if (!flow) {
+            const dirs = ['receiving', 'producing', 'mixed'].filter(d => base.some(s => getMarkerInfo(s).direction === d));
+            if (dirs.length) h += `<div class="kr"><span class="kl">${esc(t('th_type'))}</span>` +
+                dirs.map(d => `<span class="it">${facilitySymbol(d, '#555')}${esc(t('kdir_' + d))}</span>`).join('') + '</div>';
+        }
+        if (base.length) h += `<div class="kr"><span class="kl">${esc(t(flow ? 'th_vol' : 'th_cap'))}</span>` +
+             `<span class="it">${strokes(1, '#555')} = ${fmt(strokeUnit)} m³</span>` +
+             `<span class="it">${strokes(10, '#555')} = ${fmt(strokeUnit * 10)} m³</span>` +
+             `<span class="it nd">${esc(t(flow ? 'key_vol' : 'key_cap'))}</span></div>`;
+        const cat = flow ? 'flow' : deckSelection ? null : deckScope;
+        let cov = '';
+        if (cat && cat !== 'all') {
+            const pub = flow ? allFlows.length : allSites.filter(s => s.__cat === cat).length;
+            const held = Math.max(0, (rawCounts[cat] || 0) - pub);
+            cov = t('cov').replace('{p}', pub) + (held ? ' · ' + t('cov_held').replace('{h}', held) : '');
+        }
+        h += `<div class="kr nd"><span class="kl"></span>${cov ? esc(cov) + ' · ' : ''}${esc(t('cov_read'))} ${dateNo(loadedAt)}</div>`;
+        box.innerHTML = h;
+    }
+
+    // ── the legend chips in the head: the map's ring, the word, the count ─
+    // On a phone the head holds only the tabs; the legend moves into the top
+    // of the open sheet as rings and counts, each still a switch.
+    function mirrorChips() {
+        const bar = $('sheet-chips'); if (!bar) return;
+        bar.innerHTML = '';
+        $('deck-chips').querySelectorAll('.chip').forEach(c => {
+            const k = c.cloneNode(true);
+            k.removeAttribute('id');
+            k.setAttribute('aria-label', c.title || c.textContent.trim());
+            k.onclick = e => { e.stopPropagation(); c.click(); };
+            bar.appendChild(k);
+        });
+    }
     function renderChips() {
         const box = $('deck-chips');
         box.innerHTML = '';
-        if (deckScope === 'flow' && !deckSelection) { renderFlowChips(box); return; }
-        // On the ALL sheet both families get their colours, so everything can
-        // be switched on the map from one place.
+        if (isFlowSheet()) { renderFlowChips(box); mirrorChips(); return; }
         const cats = (deckSelection || deckScope === 'all') ? ['facility', 'project']
                                                             : [deckScope === 'project' ? 'project' : 'facility'];
         cats.forEach(cat => {
@@ -2370,12 +2824,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 b.dataset.cat = cat; b.dataset.cls = ci.k;
                 const on = show[cat].on && show[cat].cls.has(ci.k);
                 b.setAttribute('aria-pressed', String(on));
-                b.title = (on ? '' : '') + ci[currentLang];
-                b.innerHTML = `<span class="swatch" style="background:${ci.col}"></span>${esc(ci[currentLang])} <span class="ct">${n}</span>`;
+                b.title = ci[currentLang];
+                b.innerHTML = `${ring(ci.col)}<span class="w">${esc(ci[currentLang])}</span> <span class="ct">${n}</span>`;
                 b.onclick = e => {
                     e.stopPropagation();
                     const set = show[cat].cls;
-                    // Alt-click, or clicking the only one lit, shows just that colour.
                     if (e.altKey) { set.clear(); set.add(ci.k); }
                     else if (set.has(ci.k)) set.delete(ci.k); else set.add(ci.k);
                     if (!show[cat].on) { show[cat].on = true; $(cat === 'project' ? 'filter-projects' : 'filter-facilities').checked = true; }
@@ -2392,6 +2845,369 @@ document.addEventListener('DOMContentLoaded', function() {
             c.onclick = e => { e.stopPropagation(); clearSelection(); };
             box.appendChild(c);
         }
+    }
+
+    // ── sheet tabs at 45°: drawn, so the slant and the hairline are exact ─
+    const SHORT = { en: { all: 'ALL', facility: 'RECEP.', project: 'CONSTR.', dod: 'TERRAIN', flow: 'FLOWS' },
+                    no: { all: 'ALLE', facility: 'MOTTAK', project: 'BYGG', dod: 'TERRENG', flow: 'STRØM' } };
+    function paintTabs() {
+        const strip = $('tabstrip');
+        if (!strip) return;
+        strip.querySelectorAll('.tab').forEach(tb => {
+            const l = tb.querySelector('.tl'); if (!l) return;
+            l.textContent = l.getAttribute('data-' + currentLang);   // names are never shortened
+        });
+        const hl = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hl')) || 0.5;
+        strip.querySelectorAll('.tab').forEach(tb => {
+            let svg = tb.querySelector('svg.shape');
+            if (phone() && tb.getAttribute('aria-selected') === 'true') {
+                const l = tb.offsetLeft, r = l + tb.offsetWidth;
+                if (l < strip.scrollLeft) strip.scrollLeft = Math.max(0, l - 8);
+                else if (r > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = r - strip.clientWidth + 8;
+            }
+            if (!svg) {
+                svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('class', 'shape'); svg.setAttribute('aria-hidden', 'true');
+                tb.insertBefore(svg, tb.firstChild);
+            }
+            const w = tb.offsetWidth, h = tb.offsetHeight;
+            if (!w || !h) return;
+            const on = tb.getAttribute('aria-selected') === 'true';
+            // Every edge sits on the device-pixel grid and is drawn without
+            // smoothing, so the slants, the top and the rule below are one
+            // and the same line: one pixel, full black of the frame.
+            // The label sits in the middle of the trapezoid: the tab's top padding
+            // equals its top edge, so the letters never touch the line above them.
+            const hh = hl / 2, top = (phone() ? h - 17 : 9) + hh, bot = h - hh;
+            const s = bot - top;                        // 45°: the slant runs as far as it rises
+            const pts = `${hh},${bot} ${hh + s},${top} ${w - hh - s},${top} ${w - hh},${bot}`;
+            svg.setAttribute('width', w); svg.setAttribute('height', h + 1);
+            svg.setAttribute('viewBox', `0 0 ${w} ${h + 1}`);
+            svg.innerHTML = `<polygon points="${pts} ${w - hh},${h} ${hh},${h}" style="fill:${on ? '#fff' : 'var(--stack-tab)'}"/>` +
+                `<polyline points="${pts}" shape-rendering="crispEdges" style="fill:none;stroke:var(--frame);stroke-width:${hl}px"/>` +
+                (on ? `<rect x="${hl}" y="${h - hl}" width="${Math.max(0, w - 2 * hl)}" height="${1 + hl}" fill="#fff"/>` : '');
+        });
+        mirrorChips();
+    }
+    // When the legend does not fit beside the tabs, it closes up before it scrolls.
+    function fitHead() {
+        const head = document.querySelector('.deck-head'), chips = $('deck-chips');
+        if (!head || !chips) return;
+        head.classList.remove('tight');
+        if (chips.scrollWidth > chips.clientWidth + 1) head.classList.add('tight');
+    }
+    PHONE.addEventListener('change', () => { if (allSites.length) renderDeck(); });
+    if (window.ResizeObserver) {
+        new ResizeObserver(() => paintTabs()).observe($('tabstrip'));
+        new ResizeObserver(() => fitHead()).observe(document.querySelector('.deck-head'));
+    }
+    // The thinnest line a screen can draw is one device pixel.
+    (function hairline() {
+        const set = () => document.documentElement.style.setProperty('--hl', (1 / (window.devicePixelRatio || 1)) + 'px');
+        set();
+        try { matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener('change', () => { set(); paintTabs(); }); } catch (err) {}
+    })();
+
+    // ── picking rows, the active cell, the keyboard ──────────────────────
+    const sheetEl = document.querySelector('#deck .deck-scroll');
+    sheetEl.tabIndex = 0;
+    function syncPickState(prev) {
+        if (!sitesReady || isFlowSheet()) return;
+        const now = new Set(picked);
+        prev.forEach(id => { if (!now.has(id) && id !== hotUid) {
+            map.setFeatureState({ source: 'sites', id }, { hot: false });
+            map.setFeatureState({ source: 'fp', id }, { hot: false }); } });
+        now.forEach(id => { map.setFeatureState({ source: 'sites', id }, { hot: true });
+                            map.setFeatureState({ source: 'fp', id }, { hot: true }); });
+    }
+    function setPicked(ids) {
+        const prev = new Set(picked);
+        picked.clear(); ids.forEach(id => picked.add(id));
+        deckBody.querySelectorAll('tr').forEach(tr => tr.classList.toggle('pick', picked.has(tr.dataset.uid || tr.dataset.flow)));
+        syncPickState(prev);
+        updateStatus();
+    }
+    function setCur(ix, key, scroll) {
+        if (!viewRows.length || !viewCols.length) return;
+        ix = Math.max(0, Math.min(viewRows.length - 1, ix));
+        if (!viewCols.some(c => c.key === key)) key = viewCols[0].key;
+        cur = { id: rowId(viewRows[ix]), key };
+        deckBody.querySelectorAll('td.cur').forEach(td => td.classList.remove('cur'));
+        const tr = deckBody.children[ix];
+        const td = tr && tr.querySelector(`td[data-key="${CSS.escape(key)}"]`);
+        if (td) {
+            td.classList.add('cur');
+            if (scroll) {
+                const sc = sheetEl, first = tr.children[0];
+                const fw = first && first !== td ? first.offsetWidth : 0;
+                const top = tr.offsetTop - (sc.querySelector('thead').offsetHeight || 0);
+                const bottom = tr.offsetTop + tr.offsetHeight + ((sc.querySelector('tfoot') || {}).offsetHeight || 0);
+                if (top < sc.scrollTop) sc.scrollTop = top;
+                else if (bottom > sc.scrollTop + sc.clientHeight) sc.scrollTop = bottom - sc.clientHeight;
+                if (td.offsetLeft - fw < sc.scrollLeft) sc.scrollLeft = td.offsetLeft - fw;
+                else if (td.offsetLeft + td.offsetWidth > sc.scrollLeft + sc.clientWidth) sc.scrollLeft = td.offsetLeft + td.offsetWidth - sc.clientWidth;
+            }
+        }
+    }
+    const curIx = () => viewRows.findIndex(r => rowId(r) === cur.id);
+    function openRow(r) {
+        if (r.__cat === 'flow') frameFlow(r, true); else openSite(r, true);
+    }
+    deckBody.addEventListener('click', e => {
+        const td = e.target.closest('td'); const tr = e.target.closest('tr');
+        if (!tr || e.target.closest('a')) return;
+        const ix = +tr.dataset.ix, r = viewRows[ix];
+        if (!r) return;
+        setCur(ix, td ? td.dataset.key : cur.key);
+        const id = rowId(r);
+        if (e.shiftKey && anchorIx >= 0) {
+            const [a, b] = [Math.min(anchorIx, ix), Math.max(anchorIx, ix)];
+            setPicked(viewRows.slice(a, b + 1).map(rowId));
+            window.getSelection && window.getSelection().removeAllRanges();
+            return;
+        }
+        if (e.ctrlKey || e.metaKey) {
+            const next = new Set(picked);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            setPicked([...next]); anchorIx = ix;
+            return;
+        }
+        anchorIx = ix;
+        if (picked.size) setPicked([]);
+        openRow(r);
+    });
+    deckBody.addEventListener('mousedown', e => { if (e.shiftKey) e.preventDefault(); });
+
+    function copyText(s, note) {
+        const done = () => updateStatus(note);
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(s).then(done, fallback);
+        else fallback();
+        function fallback() {
+            const ta = document.createElement('textarea');
+            ta.value = s; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch (err) {}
+            ta.remove(); done();
+        }
+    }
+    const tsvCell = v => String(v == null ? '' : v).replace(/[\t\n\r]+/g, ' ');
+    function copySheet() {
+        if (picked.size) {
+            const rows = viewRows.filter(r => picked.has(rowId(r)));
+            const head = viewCols.filter(c => !c.bar).map(c => t(c.th)).join('\t');
+            const body = rows.map(r => viewCols.filter(c => !c.bar).map(c => tsvCell(c.text(r))).join('\t')).join('\n');
+            copyText(head + '\n' + body, rows.length + ' ' + t('rows_copied'));
+            return;
+        }
+        const ix = curIx(); const c = viewCols.find(x => x.key === cur.key);
+        if (ix < 0 || !c) return;
+        copyText(tsvCell(c.text(viewRows[ix])), t('cell_copied'));
+    }
+    sheetEl.addEventListener('keydown', e => {
+        if (e.target.closest('input,button,a')) return;
+        const mod = e.ctrlKey || e.metaKey;
+        let ix = curIx(); if (ix < 0) ix = 0;
+        let ci = Math.max(0, viewCols.findIndex(c => c.key === cur.key));
+        const page = Math.max(1, Math.floor(sheetEl.clientHeight / 30) - 2);
+        const move = (nix, nci) => {
+            nix = Math.max(0, Math.min(viewRows.length - 1, nix));
+            nci = Math.max(0, Math.min(viewCols.length - 1, nci));
+            if (e.shiftKey && nix !== ix) {
+                if (anchorIx < 0) anchorIx = ix;
+                const [a, b] = [Math.min(anchorIx, nix), Math.max(anchorIx, nix)];
+                setPicked(viewRows.slice(a, b + 1).map(rowId));
+            } else if (!e.shiftKey) anchorIx = nix;
+            setCur(nix, viewCols[nci].key, true);
+            const r = viewRows[nix];
+            if (r && r.__cat !== 'flow') setHot(r);
+            e.preventDefault();
+        };
+        switch (e.key) {
+            case 'ArrowDown': return move(mod ? viewRows.length - 1 : ix + 1, ci);
+            case 'ArrowUp': return move(mod ? 0 : ix - 1, ci);
+            case 'ArrowRight': return move(ix, mod ? viewCols.length - 1 : ci + 1);
+            case 'ArrowLeft': return move(ix, mod ? 0 : ci - 1);
+            case 'PageDown': return move(ix + page, ci);
+            case 'PageUp': return move(ix - page, ci);
+            case 'Home': return move(mod ? 0 : ix, 0);
+            case 'End': return move(mod ? viewRows.length - 1 : ix, viewCols.length - 1);
+            case 'Enter': if (viewRows[ix]) { openRow(viewRows[ix]); e.preventDefault(); } return;
+            case ' ': {
+                const id = viewRows[ix] && rowId(viewRows[ix]); if (!id) return;
+                const next = new Set(picked); if (next.has(id)) next.delete(id); else next.add(id);
+                setPicked([...next]); anchorIx = ix; e.preventDefault(); return;
+            }
+            case 'Escape':
+                if (picked.size) { setPicked([]); e.preventDefault(); e.stopPropagation(); }
+                return;
+        }
+        if (mod && (e.key === 'c' || e.key === 'C')) { copySheet(); e.preventDefault(); }
+        else if (mod && (e.key === 'a' || e.key === 'A')) { setPicked(viewRows.map(rowId)); e.preventDefault(); }
+        else if (mod && (e.key === 'f' || e.key === 'F')) { const fi = $('deck-find'); if (fi) { fi.focus(); fi.select(); e.preventDefault(); } }
+    });
+    sheetEl.addEventListener('focus', () => { if (!cur.id && viewRows.length) setCur(0, viewCols[0].key); });
+
+    // What the status line adds while rows are picked: count and, where it
+    // is honest to add them up, the sum.
+    function pickSummary() {
+        if (!picked.size) return '';
+        const rows = viewRows.filter(r => picked.has(rowId(r)));
+        const c = viewCols.find(x => x.sum);
+        let s = ' · ' + rows.length + ' ' + t('picked');
+        if (!c) return s;
+        const vals = rows.map(c.sum).filter(Number.isFinite);
+        const mixed = new Set(rows.map(r => r.__cat)).size > 1;
+        const units = c.unitOf ? new Set(rows.filter(r => Number.isFinite(c.sum(r))).map(c.unitOf)) : new Set(['m³']);
+        if (!vals.length || mixed || units.size > 1) return s;
+        return s + ' · Σ ' + fmt(vals.reduce((a, b) => a + b, 0)) + ' ' + [...units][0] +
+               ' (' + t('stated').replace('{n}', vals.length).replace('{m}', rows.length) + ')';
+    }
+
+    // ── AutoFilter: the list of values under a column head ──────────────
+    const afPop = $('af-pop');
+    let afCol = null;
+    function openAutoFilter(c, th) {
+        if (afCol === c.key && !afPop.hidden) { closeAutoFilter(); return; }
+        afCol = c.key;
+        const sk = sheetKey();
+        const base = baseRows();
+        const cols = visibleCols(base);
+        const pool = applyColFilters(base, cols, c.key);
+        const counts = new Map();
+        pool.forEach(r => { const v = String(c.text(r) || '').trim(); counts.set(v, (counts.get(v) || 0) + 1); });
+        (colFilter[sk][c.key] || new Set()).forEach(v => { if (!counts.has(v)) counts.set(v, 0); });
+        const vals = [...counts.keys()].sort((a, b) => !a ? 1 : !b ? -1 : a.localeCompare(b, 'nb'));
+        const out = colFilter[sk][c.key] || new Set();
+        let h = `<div class="af-sort"><button type="button" data-dir="1">${esc(t('af_az'))}</button><button type="button" data-dir="-1">${esc(t('af_za'))}</button></div>`;
+        h += `<label class="af-all"><input type="checkbox" ${out.size ? '' : 'checked'}> ${esc(t('af_all'))}</label><div class="af-list">`;
+        vals.forEach(v => {
+            h += `<label><input type="checkbox" data-v="${esc(v)}" ${out.has(v) ? '' : 'checked'}> <span>${esc(v || t('af_blank'))}</span><i>${counts.get(v)}</i></label>`;
+        });
+        h += '</div>';
+        afPop.innerHTML = h;
+        afPop.hidden = false;
+        const r = th.getBoundingClientRect();
+        const w = afPop.offsetWidth, hh = afPop.offsetHeight;
+        let left = Math.min(r.left, innerWidth - w - 8), top = r.bottom;
+        if (top + hh > innerHeight - 8) top = Math.max(8, r.top - hh);
+        afPop.style.left = Math.max(8, left) + 'px'; afPop.style.top = top + 'px';
+        const apply = () => {
+            const set = new Set();
+            afPop.querySelectorAll('.af-list input').forEach(i => { if (!i.checked) set.add(i.dataset.v); });
+            if (set.size) colFilter[sk][c.key] = set; else delete colFilter[sk][c.key];
+            afPop.querySelector('.af-all input').checked = !set.size;
+            renderDeck(); saveSheetHash();
+        };
+        afPop.querySelectorAll('.af-list input').forEach(i => i.onchange = apply);
+        afPop.querySelector('.af-all input').onchange = e => {
+            afPop.querySelectorAll('.af-list input').forEach(i => { i.checked = e.target.checked; });
+            apply();
+        };
+        afPop.querySelectorAll('.af-sort button').forEach(b => b.onclick = () => {
+            sheetSort[sk] = { key: c.key, dir: +b.dataset.dir }; renderDeck(); saveSheetHash(); closeAutoFilter();
+        });
+    }
+    function closeAutoFilter() { afPop.hidden = true; afCol = null; }
+    document.addEventListener('mousedown', e => {
+        if (!afPop.hidden && !e.target.closest('#af-pop') && !e.target.closest('th .af')) closeAutoFilter();
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !afPop.hidden) { closeAutoFilter(); e.stopImmediatePropagation(); }
+    }, true);
+
+    // ── find in sheet ────────────────────────────────────────────────────
+    (function () {
+        const fi = $('deck-find');
+        if (!fi) return;
+        fi.addEventListener('click', e => e.stopPropagation());
+        fi.addEventListener('input', () => { findQ[sheetKey()] = fi.value; renderDeck(); saveSheetHash(); });
+        fi.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { fi.value = ''; findQ[sheetKey()] = ''; renderDeck(); saveSheetHash(); sheetEl.focus(); e.stopPropagation(); }
+            if (e.key === 'Enter' || e.key === 'ArrowDown') { sheetEl.focus(); if (viewRows.length) setCur(0, viewCols[0].key, true); e.preventDefault(); }
+        });
+    })();
+
+    // On a phone the size control lives in the sheet's own bar, so the head
+    // is all tabs. It is the same control: it presses the head's button.
+    (function () {
+        const b = $('sheet-size');
+        if (b) b.onclick = e => { e.stopPropagation(); $('deck-size').click();
+            b.querySelector('svg').style.transform = deckSize === 'full' ? 'rotate(180deg)' : ''; };
+    })();
+
+    // The phone's find box, in the sheet's own top bar. Same query as the head's.
+    (function () {
+        const fi = $('sheet-find');
+        if (!fi) return;
+        fi.addEventListener('click', e => e.stopPropagation());
+        fi.addEventListener('input', () => { findQ[sheetKey()] = fi.value; const h = $('deck-find'); if (h) h.value = fi.value; renderDeck(); saveSheetHash(); });
+    })();
+
+    // ── column widths: drag the edge, double-click to fit ────────────────
+    function setColW(key, w) {
+        const sk = sheetKey();
+        colW[sk] = colW[sk] || {};
+        colW[sk][key] = Math.round(Math.max(40, Math.min(900, w)));
+        try { localStorage.setItem('db_colw', JSON.stringify(colW)); } catch (err) {}
+    }
+    function startResize(e, c, i) {
+        e.preventDefault(); e.stopPropagation();
+        const table = $('site-table');
+        const col = table.querySelector(`colgroup col[data-key="${CSS.escape(c.key)}"]`);
+        const x0 = e.clientX, w0 = col ? col.getBoundingClientRect().width || parseFloat(col.style.width) : c.w;
+        const tw0 = table.offsetWidth;
+        document.body.classList.add('col-resizing');
+        const mv = ev => {
+            const w = Math.max(40, w0 + ev.clientX - x0);
+            if (col) col.style.width = w + 'px';
+            table.style.width = (tw0 + (w - w0)) + 'px';
+        };
+        const up = ev => {
+            window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up);
+            document.body.classList.remove('col-resizing');
+            setColW(c.key, Math.max(40, w0 + ev.clientX - x0));
+        };
+        window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+    }
+    function autofit(c, i) {
+        let w = 0;
+        const th = deckHeadRow.children[i];
+        if (th) { const l = th.querySelector('.lab'); w = (l ? l.scrollWidth : 0) + 44; }
+        deckBody.querySelectorAll(`td[data-key="${CSS.escape(c.key)}"]`).forEach(td => {
+            const k = td.firstElementChild && td.children.length === 1 && td.firstChild === td.firstElementChild
+                ? td.firstElementChild.getBoundingClientRect().width : 0;
+            const range = document.createRange(); range.selectNodeContents(td);
+            const rw = range.getBoundingClientRect().width;
+            w = Math.max(w, Math.ceil(Math.max(rw, k)) + 24);
+        });
+        setColW(c.key, w);
+        renderDeck();
+    }
+
+    // ── the view in the address: #sheet=, &sort=, &af=, &q= ─────────────
+    function saveSheetHash() {
+        if (deckSelection) return;
+        const sk = deckScope, s = sheetSort[sk], d = SORT0[sk] || {};
+        const f = colFilter[sk];
+        const af = Object.keys(f).filter(k => f[k] && f[k].size)
+            .map(k => k + ':' + [...f[k]].map(v => v.replace(/[|;:]/g, ' ')).join('|')).join(';');
+        writeHash({
+            sheet: sk === 'facility' ? null : sk,
+            sort: s && (s.key !== d.key || s.dir !== d.dir) ? s.key + (s.dir < 0 ? '-' : '+') : null,
+            af: af || null,
+            q: findQ[sk] || null
+        });
+    }
+    function applySheetHash(h) {
+        const sk = ['facility', 'project', 'all', 'flow'].includes(h.sheet) ? h.sheet : 'facility';
+        if (h.sort) { const m = /^(.+?)([+-])$/.exec(h.sort); if (m) sheetSort[sk] = { key: m[1], dir: m[2] === '-' ? -1 : 1 }; }
+        if (h.af) h.af.split(';').forEach(p => {
+            const i = p.indexOf(':'); if (i < 1) return;
+            colFilter[sk][p.slice(0, i)] = new Set(p.slice(i + 1).split('|'));
+        });
+        if (h.q) findQ[sk] = h.q;
+        if (sk !== 'facility') { deckScope = sk; selectTab(sk, true); }
+        return !!(h.sheet || h.sort || h.af || h.q);
     }
 
     function setDeckSize(next){
@@ -2411,7 +3227,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (scope === deckScope && !deckSelection) return;
         deckSelection = null;
         deckScope = scope;
+        cur = { id: null, key: null }; anchorIx = -1;
+        if (picked.size) setPicked([]);
         renderDeck();
+        saveSheetHash();
         updateStatus();
     }
     function openDeck(scope){
@@ -2454,7 +3273,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const want = uid || hotPinned;
         if (want === hotUid) return;
         if (sitesReady) {
-            if (hotUid) { map.setFeatureState({ source: 'fp', id: hotUid }, { hot: false });
+            if (hotUid && !isPicked(hotUid)) { map.setFeatureState({ source: 'fp', id: hotUid }, { hot: false });
                           map.setFeatureState({ source: 'sites', id: hotUid }, { hot: false }); }
             if (want)   { map.setFeatureState({ source: 'fp', id: want }, { hot: true });
                           map.setFeatureState({ source: 'sites', id: want }, { hot: true }); }
@@ -2545,24 +3364,38 @@ document.addEventListener('DOMContentLoaded', function() {
     // One handler on the head, so a click anywhere on the bar that is not a
     // button toggles the table open and shut.
     document.querySelector('.deck-head').addEventListener('click', e => {
-        if (e.target.closest('button')) return;
+        if (e.target.closest('button,input')) return;
         setDeckSize(deckSize === 'closed' ? 'half' : 'closed');
     });
     // The rows in the bar are a way into the table too.
     document.querySelector('label[for="filter-facilities"]').addEventListener('click', () => openDeck('facility'));
     document.querySelector('label[for="filter-projects"]').addEventListener('click', () => openDeck('project'));
-    $('deck-csv').onclick = () => {
-        const rows = deckRows();
-        const cols = activeCols();
-        const head = cols.map(c => t2(c.th, 'en')).join(',');
-        const body = rows.map(s => cols.map(c => {
-            const v = String(c.get(s)).replace(/"/g, '""');
-            return /[",\n]/.test(v) ? `"${v}"` : v;
-        }).join(',')).join('\n');
-        const blob = new Blob(['﻿' + head + '\n' + body], { type: 'text/csv;charset=utf-8' });
+    // The CSV carries values, not what the cell shows: plain numbers, the
+    // unit in its own column, field names as they are in the database. It
+    // exports the rows in view, or only the picked ones.
+    $('deck-csv').onclick = e => {
+        if (e) e.stopPropagation();
+        const rows = picked.size ? viewRows.filter(r => picked.has(rowId(r))) : viewRows;
+        const flow = isFlowSheet();
+        const F = flow
+            ? [['FlowUID', f => f.FlowUID], ['FromUID', f => f.FromUID], ['FromName', f => f.__fromName],
+               ['ToUID', f => f.ToUID], ['ToName', f => f.__toName], ['MassType', f => f.MassType],
+               ['Volume', f => { const c = volOf(f); return c ? c.v : ''; }], ['VolumeUnit', f => (volOf(f) || {}).unit || ''],
+               ['PeriodStart', f => f.PeriodStart], ['PeriodEnd', f => f.PeriodEnd],
+               ['EvidenceClass', f => f.__ev], ['Confidence', f => f.Confidence], ['SourceURL', f => f.SourceURL]]
+            : [['UID', s => uidOf(s)], ['Name', s => s.Name], ['Category', s => s.__cat],
+               ['Municipality', s => s.Municipality], ['Operator', s => s.Operator || s.Company],
+               ['Status', s => classInfo(s.__cat, s.__cls).en], ['Type', s => s.Type],
+               ['Direction', s => getMarkerInfo(s).direction],
+               ['Capacity', s => { const c = capOf(s); return c ? c.v : ''; }],
+               ['CapacityUnit', s => (capOf(s) || {}).unit || ''],
+               ['Latitude', s => hasXY(s) ? num(s.Latitude) : ''], ['Longitude', s => hasXY(s) ? num(s.Longitude) : '']];
+        const cell = v => { v = String(v == null ? '' : v); return /[",\n;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+        const body = rows.map(r => F.map(([, g]) => cell(g(r))).join(',')).join('\n');
+        const blob = new Blob(['\ufeff' + F.map(x => x[0]).join(',') + '\n' + body], { type: 'text/csv;charset=utf-8' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'dirtybusiness_' + (deckSelection ? 'selection' : deckScope) + '.csv';
+        a.download = 'dirtybusiness_' + (deckSelection ? 'selection' : deckScope) + (picked.size ? '_picked' : '') + '_' + dateIso(new Date()) + '.csv';
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     };
@@ -2932,6 +3765,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // sheet without the column at all, stays off the site.
         const facilities = fRes.data.filter(r => (uidOf(r) || r.Name) && isPublished(r)).map(tag('facility'));
         const projects   = pRes.data.filter(r => (uidOf(r) || r.Name) && isPublished(r)).map(tag('project'));
+        rawCounts.facility = fRes.data.filter(r => uidOf(r) || r.Name).length;
+        rawCounts.project  = pRes.data.filter(r => uidOf(r) || r.Name).length;
         allSites = [...facilities, ...projects];
         // A revoked "publish to web" returns an HTML page with status 200.
         if (!allSites.length || !allSites.some(s => 'Name' in s || 'UID' in s)) { updateStatus(t('loadfail')); return; }
@@ -2939,7 +3774,9 @@ document.addEventListener('DOMContentLoaded', function() {
         allSites.forEach(s => { const id = uidOf(s); if (id && seen.has(id)) console.warn('Duplicate UID in sheet:', id); if (id) seen.add(id); });
 
         updateCounts();
+        const sheetInHash = applySheetHash(readHash());
         renderDeck();
+        if (sheetInHash) setDeckSize('half');
         whenStyleReady(() => { ensureSiteLayers(); refreshSiteData(); });
         loadFlows();
         updateStatus();
@@ -3537,119 +4374,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const flowPasses = f => show.flow.on && show.flow.cls.has(f.__ev);
 
-    function flowRows() {
-        const col = FLOW_COLS.find(c => c.key === flowSort.key);
-        const d = flowSort.dir;
-        return allFlows.filter(flowPasses).sort((a, b) => {
-            if (col && col.num) {
-                const av = qty(a[flowSort.key]), bv = qty(b[flowSort.key]);
-                const an = Number.isFinite(av), bn = Number.isFinite(bv);
-                if (!an && !bn) return 0;
-                if (!an) return 1;
-                if (!bn) return -1;
-                return (av - bv) * d;
-            }
-            if (col && col.sort) {
-                const av = col.sort(a), bv = col.sort(b);
-                return (av < bv ? -1 : av > bv ? 1 : 0) * d;
-            }
-            if (!col) return 0;
-            return String(col.get(a) || '').localeCompare(String(col.get(b) || ''), 'nb') * d;
-        });
-    }
-
-    function clearDeckEmpty() {
-        const wrap = document.querySelector('#deck .deck-scroll');
-        if (!wrap) return;
-        const e = wrap.querySelector('.deck-empty');
-        if (e) e.remove();
-        $('site-table').hidden = false;
-    }
-
-    function sayInDeck(title, body) {
-        const wrap = document.querySelector('#deck .deck-scroll');
-        const d = document.createElement('div');
-        d.className = 'deck-empty';
-        d.innerHTML = '<b>' + esc(title) + '</b>' + esc(body);
-        wrap.appendChild(d);
-    }
-
-    function renderFlowDeck() {
-        clearDeckEmpty();
-        deckHeadRow.innerHTML = '';
-        deckBody.innerHTML = '';
-        const table = $('site-table');
-        const oldCg = table.querySelector('colgroup');
-        if (oldCg) oldCg.remove();
-
-        const title = $('deck-title');
-        title.setAttribute('data-en', t2('flows', 'en'));
-        title.setAttribute('data-no', t2('flows', 'no'));
-        title.textContent = t('flows');
-
-        if (!allFlows.length) {
-            table.hidden = true;
-            sayInDeck(t('flows_none_t'), t('flows_none_b'));
-            deckCount.textContent = '0 ' + t('records');
-            renderChips();
-            return;
-        }
-
-        const cg = document.createElement('colgroup');
-        FLOW_COLS.forEach(c => {
-            const col = document.createElement('col');
-            if (c.w) col.style.width = c.w;
-            const cc = c.cls ? c.cls.split(' ').filter(x => x.startsWith('c-')).join(' ') : '';
-            if (cc) col.className = cc;
-            cg.appendChild(col);
-            const th = document.createElement('th');
-            th.textContent = t(c.th);
-            th.className = [c.num ? 'num' : '', cc].join(' ').trim();
-            if (flowSort.key === c.key) th.textContent += flowSort.dir < 0 ? ' \u2193' : ' \u2191';
-            th.setAttribute('aria-sort', flowSort.key === c.key
-                ? (flowSort.dir < 0 ? 'descending' : 'ascending') : 'none');
-            th.onclick = () => {
-                flowSort = flowSort.key === c.key
-                    ? { key: c.key, dir: -flowSort.dir }
-                    : { key: c.key, dir: c.num ? -1 : 1 };
-                renderFlowDeck();
-            };
-            deckHeadRow.appendChild(th);
-        });
-        table.insertBefore(cg, table.firstChild);
-
-        const rows = flowRows();
-        const frag = document.createDocumentFragment();
-        rows.forEach(f => {
-            const tr = document.createElement('tr');
-            tr.dataset.flow = f.FlowUID;
-            if (!f.__xy) tr.classList.add('nogeo');
-            FLOW_COLS.forEach(c => {
-                const td = document.createElement('td');
-                const v = c.get(f);
-                if (c.key === '__ev') {
-                    td.innerHTML = '<span class="ev ' + f.__ev + '"></span>' + esc(v);
-                } else if (c.key === 'SourceURL' && safeUrl(v)) {
-                    td.innerHTML = '<a href="' + esc(safeUrl(v)) + '" target="_blank" rel="noopener">'
-                                 + esc(String(v).replace(/^https?:\/\//, '')) + '</a>';
-                } else {
-                    td.textContent = v;
-                }
-                td.title = String(v == null ? '' : v);
-                td.className = [c.num ? 'num' : '', c.cls || ''].join(' ').trim();
-                tr.appendChild(td);
-            });
-            tr.onclick = () => frameFlow(f, true);
-            tr.onmouseenter = () => hotFlow(f.FlowUID);
-            tr.onmouseleave = () => hotFlow(null);
-            frag.appendChild(tr);
-        });
-        deckBody.appendChild(frag);
-        if (!rows.length) sayInDeck(t('flows_empty'), '');
-        deckCount.textContent = rows.length + ' ' + t('records');
-        renderChips();
-    }
-
     function renderFlowChips(box) {
         FLOW_CLASSES.forEach(ci => {
             const n = allFlows.filter(f => f.__ev === ci.k).length;
@@ -3674,14 +4398,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Straight, hard-ended, stepped: a flow is a statement that two places are
-    // connected, not a drawing of a route. Nothing is rounded and nothing is
-    // smoothed, so the layer reads as a network diagram. Weight comes from the
-    // volume in fixed classes, and emphasis comes from the click, not the ink.
-    function arc(a, b) { return [a, b]; }
+    // Every arc humps toward the top of the frame, whichever way the mass is
+    // travelling, so the hollow of every curve faces the same way and the field
+    // reads as one web rather than a tangle of opposing bows.
+    //
+    // At rest the whole field is one weight: a white hairline says only that two
+    // places are connected. Weight is what the click buys. Open a site and its
+    // own flows take their width from the volume and grow a head, while
+    // everything else falls back.
+    const DEG_LAT = 110540, DEG_LON = 111320;
+    let flowFocus = null, flowBound = false, flowMaxV = 1;
 
-    // Material carries the colour; evidence stays a treatment of the line, so a
-    // modelled flow still cannot pass for a receipt.
     const FLOW_MAT = { rock: '#2a6fd6', soil: '#a06a2c', contam: '#B300FF', other: '#8b8a84' };
     const matOf = f => {
         const m = String(f.MassType || '').toLowerCase();
@@ -3691,50 +4418,114 @@ document.addEventListener('DOMContentLoaded', function() {
         return 'other';
     };
 
-    // Five classes, not a continuous ramp: 50k, 200k, 600k, 1.5M cubic metres.
-    const FLOW_W = ['step', ['get', 'v'], 0.8, 50000, 1.4, 200000, 2.2, 600000, 3.4, 1500000, 5.2];
-    const FLOW_SPEC = {
-        'flow-modelled':   { ev: 'modelled',   col: '#e6e6df', op: 0.34, k: 0.85, dash: [2, 2] },
-        'flow-structural': { ev: 'structural', col: null,      op: 0.62, k: 1.0,  dash: [1, 3] },
-        'flow-evidenced':  { ev: 'evidenced',  col: null,      op: 0.95, k: 1.25, dash: null }
-    };
-    let flowFocus = null;
+    function mPerPx(lat) {
+        return 40075016.686 * Math.abs(Math.cos(lat * Math.PI / 180)) /
+               (512 * Math.pow(2, map.getZoom()));
+    }
+    function frame(lat0) {
+        const kx = DEG_LON * Math.cos(lat0 * Math.PI / 180) || DEG_LON;
+        return { to: p => [p[0] * kx, p[1] * DEG_LAT],
+                 back: p => [p[0] / kx, p[1] / DEG_LAT] };
+    }
+    function arcPts(a, b, N) {
+        const f = frame((a[1] + b[1]) / 2), A = f.to(a), B = f.to(b);
+        const dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy) || 1;
+        let nx = -dy / L, ny = dx / L;
+        if (ny < 0) { nx = -nx; ny = -ny; }
+        if (Math.abs(ny) < 0.15) nx = Math.abs(nx) || 1;
+        const off = L * 0.20;
+        const cx = (A[0] + B[0]) / 2 + nx * off, cy = (A[1] + B[1]) / 2 + ny * off;
+        const pts = [];
+        for (let i = 0; i <= N; i++) {
+            const s = i / N, u = 1 - s;
+            pts.push([u*u*A[0] + 2*u*s*cx + s*s*B[0], u*u*A[1] + 2*u*s*cy + s*s*B[1]]);
+        }
+        return { pts: pts, back: f.back };
+    }
+    function arc(a, b) { const g = arcPts(a, b, 34); return g.pts.map(g.back); }
 
     function flowFeatures() {
         const drawn = allFlows.filter(f => f.__xy);
-        return { type: 'FeatureCollection', features: drawn.map(f => {
-            const v = qty(f.Volume_m3);
-            return {
-                type: 'Feature',
-                id: f.FlowUID,
-                geometry: { type: 'LineString', coordinates: arc(
-                    [num(f.__from.Longitude), num(f.__from.Latitude)],
-                    [num(f.__to.Longitude),   num(f.__to.Latitude)]) },
-                properties: { fid: f.FlowUID, ev: f.__ev, mat: matOf(f),
-                              v: Number.isFinite(v) && v > 0 ? v : 0,
-                              from: f.FromUID, to: f.ToUID,
-                              lbl: f.__fromName + ' → ' + f.__toName }
-            };
+        flowMaxV = drawn.reduce((m, f) => Math.max(m, qty(f.Volume_m3) || 0), 1);
+        return { type: 'FeatureCollection', features: drawn.map(f => ({
+            type: 'Feature', id: f.FlowUID,
+            geometry: { type: 'LineString', coordinates: arc(
+                [num(f.__from.Longitude), num(f.__from.Latitude)],
+                [num(f.__to.Longitude),   num(f.__to.Latitude)]) },
+            properties: { fid: f.FlowUID, ev: f.__ev, mat: matOf(f),
+                          v: qty(f.Volume_m3) || 0, from: f.FromUID, to: f.ToUID,
+                          lbl: f.__fromName + ' → ' + f.__toName } })) };
+    }
+
+    // Heads belong to the opened site alone. Drawn for the whole field they
+    // collide into a smear at every busy receiver.
+    function headFeatures() {
+        if (!flowFocus) return { type: 'FeatureCollection', features: [] };
+        const mine = allFlows.filter(f => f.__xy &&
+            (f.FromUID === flowFocus || f.ToUID === flowFocus));
+        return { type: 'FeatureCollection', features: mine.map(f => {
+            const a = [num(f.__from.Longitude), num(f.__from.Latitude)];
+            const b = [num(f.__to.Longitude),   num(f.__to.Latitude)];
+            const g = arcPts(a, b, 34), pts = g.pts;
+            const q = pts[pts.length - 1], o = pts[pts.length - 2];
+            let tx = q[0] - o[0], ty = q[1] - o[1];
+            const t = Math.hypot(tx, ty) || 1; tx /= t; ty /= t;
+            const v = qty(f.Volume_m3) || 0;
+            const px = Math.max(7, Math.min(22, 6 + 16 * Math.sqrt(v / (flowMaxV || 1))));
+            const sz = px * mPerPx(b[1]), hw = sz * 0.55;
+            const ring = [
+                g.back([q[0] - tx*sz - ty*hw, q[1] - ty*sz + tx*hw]),
+                g.back([q[0], q[1]]),
+                g.back([q[0] - tx*sz + ty*hw, q[1] - ty*sz - tx*hw])
+            ];
+            ring.push(ring[0]);
+            return { type: 'Feature', id: f.FlowUID,
+                geometry: { type: 'Polygon', coordinates: [ring] },
+                properties: { fid: f.FlowUID, ev: f.__ev, mat: matOf(f), v: v } };
         }) };
     }
 
-    // Clicking a site is what brings its own flows forward; everything else
-    // drops back to a trace so the site's give and take can be read at once.
+    // Five classes: 50k, 200k, 600k, 1.5M cubic metres.
+    const W_STEP = ['step', ['get', 'v'], 1.8, 50000, 3.2, 200000, 5.4, 600000, 8.4, 1500000, 13.0];
+    const V_STEP = ['step', ['get', 'v'],
+                    '#93a0ac', 50000, '#bcc8d2', 200000, '#dde5eb',
+                    600000, '#f2f6f8', 1500000, '#ffffff'];
+    const V_COL  = ['case', ['==', ['get', 'mat'], 'contam'], FLOW_MAT.contam, V_STEP];
+    const REST_W = 0.9, REST_CASE = 2.2;
+    const FLOW_SPEC = {
+        'flow-modelled':   { ev: 'modelled'   },
+        'flow-structural': { ev: 'structural' },
+        'flow-evidenced':  { ev: 'evidenced'  }
+    };
+    const isMine = () => ['any', ['==', ['get', 'from'], flowFocus],
+                                 ['==', ['get', 'to'], flowFocus]];
+
+    function paintFlows() {
+        const on = !!flowFocus;
+        FLOW_LAYERS.forEach(id => {
+            if (!map.getLayer(id)) return;
+            const m = on ? isMine() : null;
+            map.setPaintProperty(id, 'line-width',
+                on ? ['case', m, W_STEP, 0.7] : REST_W);
+            map.setPaintProperty(id, 'line-color',
+                on ? ['case', m, V_COL, '#ffffff'] : '#ffffff');
+            map.setPaintProperty(id, 'line-opacity',
+                on ? ['case', m, 1, 0.12] : 0.62);
+            const c = id + '-cas';
+            if (!map.getLayer(c)) return;
+            map.setPaintProperty(c, 'line-width',
+                on ? ['case', m, ['+', W_STEP, 2.6], 0.7] : REST_CASE);
+            map.setPaintProperty(c, 'line-opacity',
+                on ? ['case', m, 0.55, 0.06] : 0.40);
+        });
+    }
+
     function focusFlows(uid) {
         flowFocus = uid || null;
         if (!flowsReady) return;
-        const on = flowFocus
-            ? ['any', ['==', ['get', 'from'], flowFocus], ['==', ['get', 'to'], flowFocus]]
-            : null;
-        FLOW_LAYERS.forEach(id => {
-            if (!map.getLayer(id)) return;
-            const s = FLOW_SPEC[id];
-            const w = ['*', FLOW_W, s.k];
-            map.setPaintProperty(id, 'line-width',
-                on ? ['case', on, ['*', w, 2.4], w] : w);
-            map.setPaintProperty(id, 'line-opacity',
-                on ? ['case', on, 1, 0.08] : s.op);
-        });
+        paintFlows();
+        const src = map.getSource('flowheads');
+        if (src) src.setData(headFeatures());
     }
 
     function ensureFlowLayers() {
@@ -3743,23 +4534,22 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             map.getSource('flows').setData(flowFeatures());
         }
+        if (!map.getSource('flowheads')) {
+            map.addSource('flowheads', { type: 'geojson', data: headFeatures(), promoteId: 'fid' });
+        }
         const before = under(['site-hot', 'site-sym', 'prof-line']);
-        const COL = ['match', ['get', 'mat'],
-                     'rock',   FLOW_MAT.rock,
-                     'soil',   FLOW_MAT.soil,
-                     'contam', FLOW_MAT.contam,
-                     FLOW_MAT.other];
         FLOW_LAYERS.forEach(id => {
             if (map.getLayer(id)) return;
             const s = FLOW_SPEC[id];
-            const paint = { 'line-color': s.col || COL,
-                            'line-width': ['*', FLOW_W, s.k],
-                            'line-opacity': s.op };
-            if (s.dash) paint['line-dasharray'] = s.dash;
+            const lay = () => ({ 'line-join': 'round', 'line-cap': 'butt' });
+            map.addLayer({ id: id + '-cas', type: 'line', source: 'flows',
+                filter: ['==', ['get', 'ev'], s.ev], layout: lay(),
+                paint: { 'line-color': '#0e0e0b', 'line-opacity': 0.40,
+                         'line-width': REST_CASE } }, before);
             map.addLayer({ id: id, type: 'line', source: 'flows',
-                filter: ['==', ['get', 'ev'], s.ev],
-                layout: { 'line-join': 'miter', 'line-cap': 'butt' },
-                paint: paint }, before);
+                filter: ['==', ['get', 'ev'], s.ev], layout: lay(),
+                paint: { 'line-color': '#ffffff', 'line-opacity': 0.62,
+                         'line-width': REST_W } }, before);
             map.on('mousemove', id, e => {
                 if (toolBusy() || !e.features || !e.features.length) return;
                 map.getCanvas().style.cursor = 'pointer';
@@ -3779,8 +4569,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 frameFlow(f);
             });
         });
+        if (!map.getLayer('flow-head')) {
+            map.addLayer({ id: 'flow-head', type: 'fill', source: 'flowheads',
+                paint: { 'fill-color': V_COL, 'fill-opacity': 0.98,
+                         'fill-outline-color': 'rgba(14,14,11,0.55)' } }, before);
+        }
+        if (!flowBound) {
+            flowBound = true;
+            let t = null;
+            map.on('zoomend', () => {
+                clearTimeout(t);
+                t = setTimeout(() => {
+                    const src = flowsReady && map.getSource('flowheads');
+                    if (src) src.setData(headFeatures());
+                }, 90);
+            });
+        }
         flowsReady = true;
-        if (flowFocus) focusFlows(flowFocus);
+        paintFlows();
         applyFlowFilter();
     }
 
@@ -3822,11 +4628,16 @@ document.addEventListener('DOMContentLoaded', function() {
         show.flow.on = $('filter-flows').checked;
         if (flowsReady) {
             FLOW_LAYERS.forEach(id => {
-                if (!map.getLayer(id)) return;
                 const ev = id.replace('flow-', '');
                 const on = show.flow.on && show.flow.cls.has(ev);
-                map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
+                [id, id + '-cas'].forEach(k => {
+                    if (map.getLayer(k)) map.setLayoutProperty(k, 'visibility', on ? 'visible' : 'none');
+                });
             });
+            if (map.getLayer('flow-head')) {
+                map.setLayoutProperty('flow-head', 'visibility',
+                                      show.flow.on ? 'visible' : 'none');
+            }
         }
         updateFlowCounts();
     }
@@ -3849,10 +4660,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadFlows() {
         if (!FLOWS_CSV) { updateFlowCounts(); return; }
         parseCsv(FLOWS_CSV).then(r => {
+            rawCounts.flow = (r.data || []).filter(x => x.FlowUID || x.FromUID || x.ToUID).length;
             allFlows = tagFlows(r.data || []);
             updateFlowCounts();
             whenStyleReady(ensureFlowLayers);
-            if (deckScope === 'flow') renderFlowDeck();
+            if (deckScope === 'flow') renderFlowDeck(); else renderSheetKey(baseRows());
         }).catch(err => {
             console.error('Flows load failed:', err);
             updateFlowCounts();
