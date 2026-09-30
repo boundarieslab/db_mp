@@ -90,6 +90,21 @@
           sort: s => { const c = capOf(s); return c ? c.v : NaN; },
           sum: s => { const c = capOf(s); return c && c.drawn ? c.v : NaN; },
           present: s => !!capOf(s) },
+        // The record's other fields. The first three show by default; the rest
+        // are one tick away in the COLUMNS list, as in a spreadsheet.
+        { key: 'MassesAccepted', nophone: true, th: 'th_mat', w: 260, filter: true, text: s => s.MassesAccepted || '' },
+        { key: 'Area_m2', nophone: true, th: 'th_area', w: 120, num: true,
+          text: s => fmt(qty(s.Area_m2)), sort: s => qty(s.Area_m2), present: s => Number.isFinite(qty(s.Area_m2)), nosum: true },
+        { key: 'PermitRef', nophone: true, th: 'th_plan', w: 220, text: s => s.PermitRef || '' },
+        { key: 'PermitAuthority', nophone: true, opt: true, th: 'th_auth', w: 220, filter: true, text: s => s.PermitAuthority || '' },
+        { key: 'County', nophone: true, opt: true, th: 'th_county', w: 110, filter: true, text: s => s.County || '' },
+        { key: 'ParentCompany', nophone: true, opt: true, th: 'th_parent', w: 180, filter: true, text: s => s.ParentCompany || '' },
+        { key: 'OrgNr', nophone: true, opt: true, th: 'th_org', w: 120, text: s => s.OrgNr || '' },
+        { key: 'Subtype', nophone: true, opt: true, th: 'th_sub', w: 180, filter: true, text: s => s.Subtype || '' },
+        { key: 'Contaminants', nophone: true, opt: true, th: 'th_cont', w: 240, text: s => s.Contaminants || '' },
+        { key: 'WaterRecipient', nophone: true, opt: true, th: 'th_water', w: 180, text: s => s.WaterRecipient || '' },
+        { key: 'StartYear', nophone: true, opt: true, th: 'th_start', w: 90, num: true, nosum: true,
+          text: s => String(s.StartYear || '').replace(/\.0$/, ''), sort: s => qty(s.StartYear) },
         { key: 'UID', nophone: true, th: 'th_uid', w: 110, cls: 'uid', keep: true, text: s => uidOf(s) }
     ];
     const FLOW_COLS = [
@@ -145,9 +160,13 @@
         return allSites.filter(s =>
             (deckSelection ? deckSelection.has(uidOf(s)) : (deckScope === 'all' || s.__cat === deckScope)) && passes(s));
     }
+    // Which columns a viewer has switched on or off, per sheet (COLUMNS list).
+    let colOn = {};
+    try { colOn = JSON.parse(localStorage.getItem('db_cols') || '{}') || {}; } catch (err) { colOn = {}; }
+    const isOn = c => { const m = colOn[isFlowSheet() ? 'flow' : 'site']; return m && c.key in m ? m[c.key] : !c.opt; };
     function visibleCols(rows) {
         const all = isFlowSheet() ? FLOW_COLS : SITE_COLS;
-        return all.filter(c => !(phone() && c.nophone)).filter(c => c.keep || rows.some(r => c.present ? c.present(r) : String(c.text(r) || '').trim() !== ''));
+        return all.filter(c => !(phone() && c.nophone)).filter(c => c.keep || isOn(c)).filter(c => c.keep || rows.some(r => c.present ? c.present(r) : String(c.text(r) || '').trim() !== ''));
     }
     function applyColFilters(rows, cols, skipKey) {
         const f = colFilter[sheetKey()];
@@ -678,6 +697,35 @@
                ' (' + t('stated').replace('{n}', vals.length).replace('{m}', rows.length) + ')';
     }
 
+    // ── COLUMNS: switch any field of the record on or off ────────────────
+    function openColumns(btn) {
+        if (afCol === '__cols' && !afPop.hidden) { closeAutoFilter(); return; }
+        afCol = '__cols';
+        const all = isFlowSheet() ? FLOW_COLS : SITE_COLS;
+        const base = baseRows();
+        const n = c => base.filter(r => c.present ? c.present(r) : String(c.text(r) || '').trim() !== '').length;
+        let h = `<div class="af-sort"><span class="af-t">${esc(t('cols_t'))}</span></div><div class="af-list">`;
+        all.filter(c => !c.bar).forEach(c => {
+            h += `<label${c.keep ? ' class="off"' : ''}><input type="checkbox" data-k="${esc(c.key)}" ${c.keep || isOn(c) ? 'checked' : ''} ${c.keep ? 'disabled' : ''}> <span>${esc(t(c.th))}</span><i>${n(c)}/${base.length}</i></label>`;
+        });
+        h += '</div>';
+        afPop.innerHTML = h; afPop.hidden = false;
+        const r = btn.getBoundingClientRect();
+        afPop.style.left = Math.max(8, Math.min(r.right - afPop.offsetWidth, innerWidth - afPop.offsetWidth - 8)) + 'px';
+        afPop.style.top = (r.bottom + 4) + 'px';
+        afPop.querySelectorAll('.af-list input').forEach(i => i.onchange = () => {
+            const k = isFlowSheet() ? 'flow' : 'site';
+            colOn[k] = colOn[k] || {};
+            colOn[k][i.dataset.k] = i.checked;
+            try { localStorage.setItem('db_cols', JSON.stringify(colOn)); } catch (err) {}
+            renderDeck();
+        });
+    }
+    (function () {
+        const b = $('deck-cols');
+        if (b) b.onclick = e => { e.stopPropagation(); openColumns(b); };
+    })();
+
     // ── AutoFilter: the list of values under a column head ──────────────
     const afPop = $('af-pop');
     let afCol = null;
@@ -724,7 +772,7 @@
     }
     function closeAutoFilter() { afPop.hidden = true; afCol = null; }
     document.addEventListener('mousedown', e => {
-        if (!afPop.hidden && !e.target.closest('#af-pop') && !e.target.closest('th .af')) closeAutoFilter();
+        if (!afPop.hidden && !e.target.closest('#af-pop') && !e.target.closest('th .af') && !e.target.closest('#deck-cols')) closeAutoFilter();
     });
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && !afPop.hidden) { closeAutoFilter(); e.stopImmediatePropagation(); }
