@@ -406,7 +406,8 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 #site-table td.bar{text-overflow:clip;text-align:left}
 #site-table th.bar{text-align:left}
 #site-table th:first-child,#site-table td:first-child{position:sticky;left:0;z-index:1}
-/* a name is never cut: the first column wraps instead */
+/* a name is never cut: text cells wrap instead of ending in … */
+#site-table tbody td:not(.bar):not(.num):not(.uid){white-space:normal;text-overflow:clip}
 #site-table tbody td:first-child{white-space:normal;text-overflow:clip;line-height:1.35;padding-top:6px;padding-bottom:6px}
 #site-table thead th:first-child{z-index:3}
 #site-table tfoot td{position:sticky;bottom:0;z-index:2;border-top:var(--hl,.5px) solid var(--grid);border-bottom:0;color:#000}
@@ -422,14 +423,13 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 .deck-empty{padding:14px 10px;color:var(--sub);max-width:80ch;line-height:1.55}
 .deck-empty b{font-weight:400;color:#000;display:block;margin-bottom:3px}
 
-/* the key, inside the sheet under the table */
-.sheet-key{padding:16px 10px 22px;font-size:12px;color:#000}
+/* the key, inside the sheet under the table: one quiet line */
+.sheet-key{padding:10px 10px 12px;font-size:11px;color:var(--sub);line-height:1.5}
 .sheet-key:empty{display:none}
-.sheet-key .kr{display:flex;align-items:center;flex-wrap:wrap;gap:6px 18px;min-height:26px}
-.sheet-key .kl{flex:0 0 110px}
-.sheet-key .it{display:inline-flex;align-items:center;gap:8px}
+.sheet-key .kr{display:flex;align-items:center;flex-wrap:wrap;gap:2px 8px}
+.sheet-key .it{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .sheet-key .it svg{display:inline-block}
-.sheet-key .nd{color:var(--sub)}
+.sheet-key .sep{color:var(--grid)}
 
 /* AutoFilter */
 #af-pop{position:fixed;z-index:140;background:#fff;border:var(--hl,.5px) solid var(--frame);
@@ -486,9 +486,8 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
   #site-table td.bar{padding:0 6px}
   #site-table td.num,#site-table tfoot td{padding:0 8px;text-overflow:clip}
   #site-table tbody td.num{white-space:normal;line-height:1.3}
-  .sheet-key{padding:10px 8px 14px;font-size:11px;line-height:1.4}
-  .sheet-key .kr{gap:3px 12px;min-height:20px}
-  .sheet-key .kl{flex:0 0 100%;margin-top:6px}
+  .sheet-key{padding:8px 8px 10px;font-size:10px}
+  .sheet-key .it.dir,.sheet-key .it.note,.sheet-key .sep.dir,.sheet-key .sep.note,.sheet-key .sep.unit{display:none}
 }
 
 /* hover preview */
@@ -971,7 +970,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const hasXY = s => Number.isFinite(num(s.Latitude)) && Number.isFinite(num(s.Longitude));
 
     const FACILITIES_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?output=csv';
-    const PROJECTS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?gid=529338597&single=true&output=csv';
+    const PROJECTS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR8NceaLhnLslv2TKIReqCnB1q0UON_yEef-vs7zfKxnQc8LaxiNfSKTTp8528mKG882T3XlxF59437/pub?output=csv';
     // The fourth sheet. Publish the database's Flows tab to the web and
     // paste its CSV address here: the table, the counts, the key and the
     // arcs on the map all fill themselves. Left empty, the sheet says so.
@@ -1704,12 +1703,12 @@ document.addEventListener('DOMContentLoaded', function() {
         kdir_receiving: { en: "receives masses", no: "tar imot masser" },
         kdir_producing: { en: "produces masses", no: "produserer masser" },
         kdir_mixed: { en: "both", no: "begge" },
-        key_cap: { en: "total volume in the permit or stated by the operator · t and t/yr are listed, not drawn · n.d. = not disclosed",
-                   no: "samlet volum i tillatelsen eller oppgitt av operatøren · t og t/år står oppført, men tegnes ikke · n.d. = ikke oppgitt" },
-        key_vol: { en: "volume moved, in the unit of its source · n.d. = not disclosed",
-                   no: "volum flyttet, i kildens enhet · n.d. = ikke oppgitt" },
+        key_cap: { en: "permit total; t/yr not drawn; n.d. = not disclosed",
+                   no: "totalt i tillatelsen; t/år tegnes ikke; n.d. = ikke oppgitt" },
+        key_vol: { en: "volume moved; n.d. = not disclosed",
+                   no: "volum flyttet; n.d. = ikke oppgitt" },
         cov: { en: "{p} published", no: "{p} publisert" },
-        cov_held: { en: "{h} held back until every field has a source", no: "{h} holdt tilbake til hvert felt har en kilde" },
+        cov_held: { en: "{h} held back", no: "{h} holdt tilbake" },
         cov_read: { en: "read from the database", no: "lest fra databasen" },
         n_facility: { en: "reception sites", no: "mottaksanlegg" },
         n_project: { en: "construction projects", no: "byggeprosjekter" },
@@ -2766,31 +2765,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ── the key inside the sheet, under the table ───────────────────────
+    // The key is one quiet line under the table, as in the mockups: the
+    // symbols in this sheet, the stroke, and what is held back.
     function renderSheetKey(base) {
         const box = $('sheet-key');
         if (!box) return;
         if (isFlowSheet() && !allFlows.length) { box.innerHTML = ''; return; }
         const flow = isFlowSheet();
-        let h = '';
-        if (!flow) {
-            const dirs = ['receiving', 'producing', 'mixed'].filter(d => base.some(s => getMarkerInfo(s).direction === d));
-            if (dirs.length) h += `<div class="kr"><span class="kl">${esc(t('th_type'))}</span>` +
-                dirs.map(d => `<span class="it">${facilitySymbol(d, '#555')}${esc(t('kdir_' + d))}</span>`).join('') + '</div>';
+        const parts = [];
+        if (!flow) ['receiving', 'producing', 'mixed']
+            .filter(d => base.some(s => getMarkerInfo(s).direction === d))
+            .forEach(d => parts.push(`<span class="it dir">${facilitySymbol(d, '#555')}${esc(t('kdir_' + d))}</span>`));
+        if (base.length) {
+            parts.push(`<span class="it unit">${strokes(1, '#555')} = ${fmt(strokeUnit)} m³</span>`);
+            parts.push(`<span class="it note">${esc(t(flow ? 'key_vol' : 'key_cap'))}</span>`);
         }
-        if (base.length) h += `<div class="kr"><span class="kl">${esc(t(flow ? 'th_vol' : 'th_cap'))}</span>` +
-             `<span class="it">${strokes(1, '#555')} = ${fmt(strokeUnit)} m³</span>` +
-             `<span class="it">${strokes(10, '#555')} = ${fmt(strokeUnit * 10)} m³</span>` +
-             `<span class="it nd">${esc(t(flow ? 'key_vol' : 'key_cap'))}</span></div>`;
         const cat = flow ? 'flow' : deckSelection ? null : deckScope;
-        let cov = '';
         if (cat && cat !== 'all') {
             const pub = flow ? allFlows.length : allSites.filter(s => s.__cat === cat).length;
             const held = Math.max(0, (rawCounts[cat] || 0) - pub);
-            cov = t('cov').replace('{p}', pub) + (held ? ' · ' + t('cov_held').replace('{h}', held) : '');
+            parts.push(`<span class="it">${esc(t('cov').replace('{p}', pub) + (held ? ' · ' + t('cov_held').replace('{h}', held) : ''))}</span>`);
         }
-        h += `<div class="kr nd"><span class="kl"></span>${cov ? esc(cov) + ' · ' : ''}${esc(t('cov_read'))} ${dateNo(loadedAt)}</div>`;
-        box.innerHTML = h;
+        parts.push(`<span class="it">${dateNo(loadedAt)}</span>`);
+        // a separator takes the class of the item after it, so hiding an item hides its dot
+        box.innerHTML = `<div class="kr">${parts.map((p, i) => i ? `<span class="sep ${(/class="it ?(\w*)/.exec(p) || [])[1] || ''}">·</span>${p}` : p).join('')}</div>`;
     }
+
 
     // ── the legend chips in the head: the map's ring, the word, the count ─
     // On a phone the head holds only the tabs; the legend moves into the top
