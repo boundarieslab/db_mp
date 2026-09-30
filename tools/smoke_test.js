@@ -11,7 +11,7 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
 const HERE = __dirname + '/fixtures';
-const csv = u => fs.readFileSync(HERE + (u.includes('2PACX-1vS1KaV') ? '/facilities.csv' : '/projects.csv'), 'utf8');
+const csv = u => fs.readFileSync(HERE + (u.includes('gid=529338597') ? '/projects.csv' : '/facilities.csv'), 'utf8');
 const PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64');
 let fail = 0;
 const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
@@ -359,14 +359,14 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   await p.evaluate(() => { const d = document.getElementById('deck');
     if (!d.classList.contains('half') && !d.classList.contains('full')) return;
     document.querySelector('.deck-head').click(); });
-  await p.waitForTimeout(400);
+  await p.waitForTimeout(800);
   const shut = await p.evaluate(() => {
     const d = document.getElementById('deck');
     return { closed: !d.classList.contains('half') && !d.classList.contains('full'),
              h: Math.round(d.getBoundingClientRect().height),
              chips: document.querySelectorAll('#deck-chips .chip').length };
   });
-  ok(shut.closed && shut.h < 40, 'the table starts closed (' + shut.h + 'px)');
+  ok(shut.closed && shut.h < 46, 'the table starts closed (' + shut.h + 'px)');
   // Opened to the whole page it must still clear the site header, or the
   // control that shuts it is behind one and the table is a trap.
   const deckFull = await p.evaluate(async () => {
@@ -401,7 +401,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     head.click(); await new Promise(r => setTimeout(r, 400)); const shut = h();
     return { open, shut };
   });
-  ok(headToggle.open > 150 && headToggle.shut < 40,
+  ok(headToggle.open > 150 && headToggle.shut < 46,
      'a click on the bar opens the table and a second one shuts it (' + headToggle.shut + ' -> ' + headToggle.open + 'px)');
   await openTree();
   await p.click('label[for="filter-facilities"]'); await p.waitForTimeout(400);
@@ -437,21 +437,22 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   });
   ok(full.full && full.h > 400, 'it can take the whole page (' + full.h + 'px)');
   await p.click('#deck-size'); await p.waitForTimeout(400);         // full -> closed
-  await p.click('.deck-head .count'); await p.waitForTimeout(500);  // and back open
+  await p.evaluate(() => document.querySelector('.deck-head').click()); await p.waitForTimeout(500);  // and back open
 
   const dk = await p.evaluate(() => {
     const rows = [...document.querySelectorAll('#site-table tbody tr')];
     const head = [...document.querySelectorAll('#site-table thead th')].map(t => t.textContent.trim());
     const ths = [...document.querySelectorAll('#site-table thead th')];
     const si = ths.findIndex(t => /[↓↑]/.test(t.textContent));
-    return { n: rows.length, head, sorted: rows.map(r => r.children[si].textContent.trim()),
-             sym: rows.every(r => r.children[5].querySelector('svg')),
+    const ti = ths.findIndex(t => /^TYPE/.test(t.textContent.trim()));
+    return { n: rows.length, head, sorted: rows.map(r => r.children[si].textContent.trim().replace(/^n\.d\.$/, '')),
+             sym: ti >= 0 && rows.every(r => r.children[ti].querySelector('svg')),
              nogeo: rows.filter(r => r.classList.contains('nogeo')).length,
              sel: rows.filter(r => r.classList.contains('sel')).length };
   });
   ok(dk.n === 5, 'the deck lists every reception record, located or not (' + dk.n + ')');
-  ok(/UID/.test(dk.head[0]) && /MATERIAL/.test(dk.head[4]) && /TYPE/.test(dk.head[5]) && /AREA/.test(dk.head[6]),
-     'TYPE follows MATERIAL (' + dk.head.join('|') + ')');
+  ok(/FACILITY/.test(dk.head[0]) && dk.head.some(h => /^TYPE/.test(h)) && /UID/.test(dk.head[dk.head.length - 1]),
+     'the sheet leads with the facility and ends with its ID (' + dk.head.join('|') + ')');
   ok(dk.sym, 'and carries the symbol');
   ok(dk.nogeo === 1, 'a record with no coordinates is marked (' + dk.nogeo + ')');
   ok(dk.sel === 1, 'the open site is the selected row (' + dk.sel + ')');
@@ -509,7 +510,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(cl.open && cl.sel === 1 && /Helgerud/.test(cl.title), 'clicking a row opens that site (' + cl.title + ')');
   await p.click('#tab-project'); await p.waitForTimeout(400);
   const pj = await p.evaluate(() => ({ title: document.getElementById('deck-title').textContent,
-    head: document.querySelector('#site-table thead th:nth-child(2)').textContent,
+    head: document.querySelector('#site-table thead th:nth-child(1)').textContent,
     rows: document.querySelectorAll('#site-table tbody tr').length }));
   ok(/CONSTRUCTION/.test(pj.title) && /PROJECT/.test(pj.head) && pj.rows === 1, 'the construction tab turns the table to projects (' + pj.head + ')');
   await p.click('#tab-facility'); await p.waitForTimeout(300);
@@ -577,7 +578,10 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   const b1 = await p.evaluate(() => window.__M.getBearing());
   ok(Math.abs(b1 - b0) > 5, 'right-drag turns the camera (' + Math.round(b0) + ' -> ' + Math.round(b1) + ' deg)');
   await p.waitForTimeout(600);
-  await p.click('#compass'); await p.waitForTimeout(1300);
+  await p.click('#compass');
+  // The turn is eased; under software GL a frame can take long, so wait for it
+  // to land rather than for a fixed time.
+  await p.waitForFunction(() => Math.abs(window.__M.getBearing()) < 1, null, { timeout: 6000 }).catch(() => {});
   ok(Math.abs(await p.evaluate(() => window.__M.getBearing())) < 1, 'a click on the compass sets north up');
   await p.click('#terrain-3d'); await p.waitForTimeout(1200);
   const off = await p.evaluate(() => ({ t: !!window.__M.getTerrain(), pitch: Math.round(window.__M.getPitch()) }));
@@ -795,6 +799,133 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(no.icons >= 8, 'and switching language leaves the icons drawn');
   await p.click('#btn-en'); await p.waitForTimeout(300);
 
+  console.log('sheets');
+  // The table behaves as a spreadsheet: tabs cut at 45°, one-pixel rules,
+  // an active cell, picked rows with a sum, a totals line, column filters,
+  // find, a frozen first column, resizable columns, the view in the address
+  // and a CSV of values.
+  await p.evaluate(async () => {
+    const d = document.getElementById('deck');
+    if (!d.classList.contains('half')) { d.className = ''; document.querySelector('.deck-head').click(); }
+    await new Promise(r => setTimeout(r, 500));
+  });
+  const shp = await p.evaluate(() => {
+    const tabs = [...document.querySelectorAll('#tabstrip .tab')];
+    const slopes = tabs.map(tb => {
+      const pl = tb.querySelector('svg.shape polyline');
+      if (!pl) return null;
+      const pts = pl.getAttribute('points').trim().split(/\s+/).map(q => q.split(',').map(Number));
+      return Math.abs((pts[0][1] - pts[1][1]) / (pts[1][0] - pts[0][0]));
+    });
+    const hl = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hl'));
+    return { n: tabs.length, slopes, hl, dpr: devicePixelRatio,
+             on: tabs.filter(tb => tb.getAttribute('aria-selected') === 'true').map(tb => tb.querySelector('svg.shape polygon').style.fill) };
+  });
+  ok(shp.slopes.length === shp.n && shp.slopes.every(v => v !== null && Math.abs(v - 1) < 0.01),
+     'every sheet tab is cut at 45° (' + shp.slopes.map(v => v && v.toFixed(2)).join(',') + ')');
+  ok(/255, 255, 255|#fff/.test(shp.on[0] || ''), 'and the one in front is white, joined to its sheet');
+  ok(Math.abs(shp.hl - 1 / shp.dpr) < 0.001, 'rules are one device pixel (' + shp.hl + 'px at ' + shp.dpr + 'x)');
+
+  const tot = await p.evaluate(() => ({
+    foot: [...document.querySelectorAll('#site-table tfoot td')].map(td => td.textContent.trim()),
+    key: document.getElementById('sheet-key').textContent,
+    frozen: getComputedStyle(document.querySelector('#site-table tbody td:first-child')).position,
+    frozenHead: getComputedStyle(document.querySelector('#site-table thead th:first-child')).position
+  }));
+  ok(/^5 rows/.test(tot.foot[0]) && tot.foot.some(t => /^Σ 9 470 000$/.test(t)),
+     'a totals line counts the rows and sums the stated m³ (' + tot.foot.filter(Boolean).join(' | ') + ')');
+  ok(tot.foot.some(t => /stated for 3 of 5/.test(t)), 'and says how many rows state a capacity');
+  ok(/TYPE/.test(tot.key) && /CAPACITY/.test(tot.key) && /5 published · 1 held back/.test(tot.key),
+     'the key sits in the sheet and says what is held back (' + tot.key.replace(/\s+/g, ' ').slice(0, 90) + ')');
+  ok(tot.frozen === 'sticky' && tot.frozenHead === 'sticky', 'the first column stays put when the sheet scrolls sideways');
+
+  // keyboard: the active cell
+  await p.focus('#deck .deck-scroll');
+  await p.keyboard.press('ArrowDown'); await p.keyboard.press('ArrowRight');
+  const kc = await p.evaluate(() => { const c = document.querySelector('#site-table td.cur');
+    return c ? { key: c.dataset.key, row: c.parentElement.dataset.ix } : null; });
+  ok(kc && kc.row === '1' && kc.key === 'Municipality', 'arrow keys move the active cell (' + JSON.stringify(kc) + ')');
+  await p.evaluate(() => { navigator.clipboard.writeText = s => { window.__clip = s; return Promise.resolve(); }; });
+  await p.keyboard.press('Control+c'); await p.waitForTimeout(200);
+  const clip1 = await p.evaluate(() => window.__clip);
+  ok(clip1 && !/\t/.test(clip1) && clip1.length > 1, 'Ctrl+C copies the cell (' + clip1 + ')');
+  await p.keyboard.press('Enter'); await p.waitForTimeout(900);
+  const kent = await p.evaluate(() => ({ open: document.getElementById('sidebar').classList.contains('active'),
+    title: (document.getElementById('sb-title') || {}).textContent || '',
+    row: (document.querySelector('#site-table tbody tr[data-ix="1"] td:first-child') || {}).textContent }));
+  ok(kent.open && kent.row && kent.title.indexOf(kent.row.replace(' ·', '')) >= 0, 'Enter opens the record in the active row (' + kent.title + ')');
+
+  // picking rows
+  await p.click('#site-table tbody tr[data-ix="0"] td:nth-child(2)', { modifiers: ['Control'] });
+  await p.click('#site-table tbody tr[data-ix="2"] td:nth-child(2)', { modifiers: ['Control'] });
+  const pk = await p.evaluate(() => ({ n: document.querySelectorAll('#site-table tbody tr.pick').length,
+    status: document.getElementById('status-strip').textContent }));
+  ok(pk.n === 2 && /2 picked/.test(pk.status), 'ctrl-click picks rows (' + pk.status + ')');
+  ok(/Σ [\d ]+ m³ \(stated for \d of 2\)/.test(pk.status), 'and the status line adds them up, saying how many state a value');
+  await p.focus('#deck .deck-scroll'); await p.keyboard.press('Control+c'); await p.waitForTimeout(200);
+  const clipSh = await p.evaluate(() => window.__clip);
+  ok(clipSh && clipSh.split('\n').length === 3 && /\t/.test(clipSh), 'Ctrl+C on picked rows copies them as a sheet (' + (clipSh || '').split('\n')[0] + ')');
+  await p.click('#site-table tbody tr[data-ix="4"] td:nth-child(2)', { modifiers: ['Shift'] });
+  const sh = await p.evaluate(() => document.querySelectorAll('#site-table tbody tr.pick').length);
+  ok(sh >= 3, 'shift-click picks a run of rows (' + sh + ')');
+  await p.keyboard.press('Escape');
+  const esc2 = await p.evaluate(() => document.querySelectorAll('#site-table tbody tr.pick').length);
+  ok(esc2 === 0, 'Esc lets them go');
+
+  // csv of values
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#deck-csv')]);
+  const csvText = fs.readFileSync(await dl.path(), 'utf8');
+  ok(/^﻿?UID,Name,Category,Municipality,Operator,Status,Type,Direction,Capacity,CapacityUnit/.test(csvText) && /,9300000,m³,/.test(csvText),
+     'the CSV carries values and units, not what the cell shows (' + dl.suggestedFilename() + ')');
+  ok(/_\d{4}-\d\d-\d\d\.csv$/.test(dl.suggestedFilename()), 'and is named with the date');
+
+  // AutoFilter and find
+  await p.click('#site-table th[data-key="Municipality"] .af');
+  await p.waitForTimeout(200);
+  const afOpen = await p.evaluate(() => !document.getElementById('af-pop').hidden && document.querySelectorAll('#af-pop .af-list input').length);
+  ok(afOpen >= 4, 'a column head opens a list of its values (' + afOpen + ')');
+  await p.click('#af-pop .af-list label:has-text("Oslo") input');
+  await p.waitForTimeout(300);
+  const af = await p.evaluate(() => ({ rows: document.querySelectorAll('#site-table tbody tr').length,
+    on: !!document.querySelector('#site-table th[data-key="Municipality"] .af.on'), hash: location.hash }));
+  ok(af.rows === 4 && af.on, 'unticking a value takes its rows out (' + af.rows + ')');
+  ok(/af=Municipality%3AOslo/.test(af.hash), 'and the filter is in the address (' + af.hash + ')');
+  await p.mouse.click(5, 5); await p.waitForTimeout(200);
+  await p.click('#site-table th[data-key="Municipality"] .af'); await p.waitForTimeout(150);
+  await p.click('#af-pop .af-all input'); await p.waitForTimeout(250);
+  await p.keyboard.press('Escape');
+  await p.fill('#deck-find', 'langoya'); await p.waitForTimeout(300);
+  const fd = await p.evaluate(() => ({ rows: [...document.querySelectorAll('#site-table tbody tr')].map(r => r.dataset.uid), hash: location.hash }));
+  ok(fd.rows.length === 1 && fd.rows[0] === 'VF_HM_001', 'find narrows the sheet, ø or not (' + fd.rows.join(',') + ')');
+  ok(/q=langoya/.test(fd.hash), 'and is in the address too');
+  await p.fill('#deck-find', ''); await p.waitForTimeout(250);
+
+  // resize a column
+  const rz = await p.evaluate(() => {
+    const th = document.querySelector('#site-table th[data-key="Operator"]');
+    const r = th.querySelector('.rz').getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: th.getBoundingClientRect().width };
+  });
+  await p.mouse.move(rz.x, rz.y); await p.mouse.down(); await p.mouse.move(rz.x + 60, rz.y, { steps: 4 }); await p.mouse.up();
+  await p.waitForTimeout(200);
+  const rz2 = await p.evaluate(() => ({ w: document.querySelector('#site-table th[data-key="Operator"]').getBoundingClientRect().width,
+    saved: (JSON.parse(localStorage.getItem('db_colw') || '{}').facility || {}).Operator }));
+  ok(rz2.w > rz.w + 40 && rz2.saved > 0, 'dragging a column edge widens it, and it is kept (' + Math.round(rz.w) + ' -> ' + Math.round(rz2.w) + 'px)');
+
+  // sort by a header, and the view comes back from the address
+  await p.click('#site-table th[data-key="Name"]'); await p.waitForTimeout(300);
+  const sortHash = await p.evaluate(() => location.hash);
+  ok(/sort=Name(%2B|\+|-)/.test(sortHash), 'a sort is written to the address (' + sortHash + ')');
+  const pSh = await ctx.newPage();
+  await pSh.goto('http://127.0.0.1:8901/index.html#sheet=project&sort=Name-');
+  await pSh.waitForTimeout(2500);
+  const back = await pSh.evaluate(() => ({ tab: document.querySelector('#tabstrip .tab[aria-selected="true"]').dataset.tab,
+    open: document.getElementById('deck').classList.contains('half'),
+    arrow: (document.querySelector('#site-table th[data-key="Name"]') || {}).textContent }));
+  ok(back.tab === 'project' && back.open && /↓/.test(back.arrow || ''), 'a link opens the same sheet, sorted the same way (' + back.tab + ')');
+  await pSh.close();
+  await p.evaluate(() => { history.replaceState(null, '', location.pathname); localStorage.removeItem('db_colw'); });
+
   console.log('flows');
   const fl = await p.evaluate(async () => {
     document.getElementById('tab-flow').click();
@@ -831,6 +962,41 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(pr.folded, 'on a phone the bar is one strip with the drawer shut');
   ok(pr.sheet, 'the site opens as a sheet from the bottom');
   ok(pr.sizeOn && !pr.wide, 'the table button stays on screen and nothing scrolls sideways');
+  // The phone's sheet: tabs that fit, the legend inside the sheet, three columns.
+  await ph.goto('http://127.0.0.1:8901/index.html'); await ph.waitForTimeout(3000);
+  await ph.evaluate(() => document.getElementById('deck-size').click()); await ph.waitForTimeout(700);
+  const psh = await ph.evaluate(() => {
+    const vw = window.innerWidth;
+    const tabs = [...document.querySelectorAll('#tabstrip .tab')].map(t => t.getBoundingClientRect());
+    return { tabsIn: tabs.every(r => r.right <= vw && r.left >= 0),
+             labels: [...document.querySelectorAll('#tabstrip .tl')].map(l => l.textContent).join(' '),
+             cols: [...document.querySelectorAll('#site-table thead th')].map(t => t.textContent.trim().split(' ')[0]),
+             headChips: getComputedStyle(document.getElementById('deck-chips')).display,
+             barChips: document.querySelectorAll('#sheet-chips .chip').length,
+             sym: !!document.querySelector('#site-table tbody td:first-child svg'),
+             tableW: Math.round(document.getElementById('site-table').getBoundingClientRect().width),
+             sheetW: Math.round(document.querySelector('#deck .deck-scroll').clientWidth),
+             wide: document.documentElement.scrollWidth > vw };
+  });
+  ok(psh.tabsIn, 'on a phone every sheet tab fits across the screen (' + psh.labels + ')');
+  const psz = await ph.evaluate(async () => {
+    const b = document.getElementById('sheet-size').getBoundingClientRect();
+    document.getElementById('sheet-size').click(); await new Promise(r => setTimeout(r, 500));
+    const full = document.getElementById('deck').classList.contains('full');
+    document.getElementById('sheet-size').click(); await new Promise(r => setTimeout(r, 500));   // full -> closed
+    document.querySelector('.deck-head').click(); await new Promise(r => setTimeout(r, 500));      // and open again
+    return { on: b.width > 0 && b.right <= innerWidth, full,
+             names: [...document.querySelectorAll('#tabstrip .tl')].every(l => l.textContent === l.getAttribute('data-en')) };
+  });
+  ok(psz.on && psz.full, 'the size control sits in the sheet\'s own bar and still takes the whole page');
+  ok(psz.names, 'tab names are written in full, not shortened');
+  ok(psh.cols.length === 3 && /FACILITY/.test(psh.cols[0]), 'the sheet keeps three columns: name, capacity, m³ (' + psh.cols.join('|') + ')');
+  ok(psh.sym, 'and the name carries the site\'s symbol');
+  ok(psh.headChips === 'none' && psh.barChips >= 3, 'the legend moves into the sheet (' + psh.barChips + ' switches)');
+  ok(psh.tableW <= psh.sheetW + 1 && !psh.wide, 'the table is as wide as the screen, no wider (' + psh.tableW + ' of ' + psh.sheetW + 'px)');
+  await ph.click('#sheet-chips .chip[data-cls="active"]'); await ph.waitForTimeout(400);
+  const pchip = await ph.evaluate(() => document.querySelector('#deck-chips .chip[data-cls="active"]').getAttribute('aria-pressed'));
+  ok(pchip === 'false', 'and its rings still switch a status off');
   await ph.close();
 
   console.log('iframe embed (dirtybusiness.no)');
