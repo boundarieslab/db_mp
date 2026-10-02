@@ -107,7 +107,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     open: document.getElementById('bar').classList.contains('open'),
     icons: [...document.querySelectorAll('#bar .toolbar .btn:not(.txt)')].every(b => b.querySelector('svg.px') && !b.textContent.trim())
   }));
-  ok(bar0.tabs === 'all,facility,project,dod,flow' && bar0.tabsOnTable,
+  ok(bar0.tabs === 'all,facility,extract,project,dod,flow' && bar0.tabsOnTable,
      'the sheets of the table sit on top of it, ALL first (' + bar0.tabs + ')');
   ok(bar0.tools >= 10 && !bar0.right, 'every tool is on one bar, and there is no second window on the right (' + bar0.tools + ')');
   ok(bar0.icons, 'every tool is a pixel icon with no text on it');
@@ -834,7 +834,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   }));
   ok(/^5 rows/.test(tot.foot[0]) && tot.foot.some(t => /^Σ 9 470 000$/.test(t)),
      'a totals line counts the rows and sums the stated m³ (' + tot.foot.filter(Boolean).join(' | ') + ')');
-  ok(tot.foot.some(t => /stated for 3 of 5/.test(t)), 'and says how many rows state a capacity');
+  ok(tot.foot.some(t => /stated for 4 of 5/.test(t)), 'and says how many rows state a capacity');
   ok(/receives masses/.test(tot.key) && /100 000 m³/.test(tot.key) && /5 published · 1 held back/.test(tot.key),
      'the key sits in the sheet and says what is held back (' + tot.key.replace(/\s+/g, ' ').slice(0, 90) + ')');
   ok(tot.frozen === 'sticky' && tot.frozenHead === 'sticky', 'the first column stays put when the sheet scrolls sideways');
@@ -957,6 +957,34 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(fl.key === 3, 'and the key carries the same three lines (' + fl.key + ')');
   await p.evaluate(() => document.getElementById('tab-facility').click());
   await p.waitForTimeout(300);
+
+  console.log('reception, extraction, construction');
+  const fam = await p.evaluate(async () => {
+    const cell = (uid, key) => { const td = document.querySelector('#site-table tbody tr[data-uid="' + uid + '"] td[data-key="' + key + '"]'); return td ? td.textContent.replace(/\s+/g, ' ').trim() : null; };
+    const rec = { n: document.getElementById('count-facilities').textContent, x: document.getElementById('count-extract').textContent,
+                  tonnes: cell('OS_OS_001', '__qty'), na: cell('AK_XX_001', '__qty'), area: cell('AK_AH_001', 'Area_m2'),
+                  head: [...document.querySelectorAll('#site-table thead th .lab')].map(l => l.textContent.trim().split(' ')[0]).join('|') };
+    document.getElementById('tab-extract').click();
+    await new Promise(r => setTimeout(r, 450));
+    const ext = { title: document.getElementById('deck-title').textContent,
+                  rows: [...document.querySelectorAll('#site-table tbody tr')].map(r => r.dataset.uid).join(','),
+                  qty: cell('VF_HM_001', '__qty'), hash: location.hash,
+                  head: [...document.querySelectorAll('#site-table thead th .lab')].map(l => l.textContent.trim().split(' ')[0]).join('|'),
+                  drawer: !document.getElementById('tb-facility').hidden };
+    document.getElementById('tab-facility').click();
+    await new Promise(r => setTimeout(r, 300));
+    return { rec, ext, back: cell('VF_HM_001', '__qty') };
+  });
+  ok(fam.rec.x === '1' && fam.ext.rows === 'VF_HM_001' && /EXTRACTION|UTTAK/.test(fam.ext.title),
+     'EXTRACTION is its own sheet and holds the sites that take rock out (' + fam.ext.rows + ', ' + fam.ext.title + ')');
+  ok(/EXTRACTION/.test(fam.ext.head) && !/EXTRACTION/.test(fam.rec.head) && /CAPACITY/.test(fam.rec.head),
+     'its bar is headed EXTRACTION, the reception sheet\'s CAPACITY');
+  ok(/500.000/.test(fam.ext.qty) && /9.300.000/.test(fam.back),
+     'one site shows what it takes out in one sheet and what it may take in in the other (' + fam.ext.qty + ' / ' + fam.back + ')');
+  ok(/sheet=extract/.test(fam.ext.hash) && fam.ext.drawer, 'the sheet is in the address and keeps the reception switches');
+  ok(/100.000 t\/yr/.test(fam.rec.tonnes), 'a yearly intake carries its own unit (' + fam.rec.tonnes + ')');
+  ok(fam.rec.na === '–', 'a dash in the sheet is drawn as a dash, not as n.d. (' + fam.rec.na + ')');
+  ok(/53.091 plan/.test(fam.rec.area), 'area is read from the outline and says which kind it is (' + fam.rec.area + ')');
 
   console.log('phone');
   const ph = await ctx.newPage();

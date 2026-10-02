@@ -462,7 +462,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
   .deck-head::after{left:4px;right:4px}
   .deck-head .chips,.deck-head .find,.deck-head .count,#deck-dir,#deck-csv,#deck-cols{display:none}
   #tabstrip{flex:1 1 auto;min-width:0;padding-left:2px;padding-right:8px;overflow-x:auto;scroll-behavior:smooth}
-  #tabstrip .tab{padding:17px 14px 0;margin-right:-11px;font-size:9.5px;gap:4px}
+  #tabstrip .tab{padding:17px 12px 0;margin-right:-10px;font-size:8.5px;gap:4px}
   #tabstrip{padding-right:0;padding-left:0}
   .deck-head .actions #deck-size{display:none}
   .sheet-bar .size{flex:0 0 24px;height:24px;margin-left:auto;background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
@@ -898,6 +898,8 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                     <span class="tl" data-en="ALL" data-no="ALLE">ALL</span><span class="tc" id="count-all">–</span></button>
                 <button type="button" class="tab" id="tab-facility" role="tab" aria-selected="true" data-tab="facility" aria-controls="tb-facility">
                     <span class="tl" data-en="RECEPTION" data-no="MOTTAK">RECEPTION</span><span class="tc" id="count-facilities">–</span></button>
+                <button type="button" class="tab" id="tab-extract" role="tab" aria-selected="false" data-tab="extract" aria-controls="tb-facility">
+                    <span class="tl" data-en="EXTRACTION" data-no="UTTAK">EXTRACTION</span><span class="tc" id="count-extract">–</span></button>
                 <button type="button" class="tab" id="tab-project" role="tab" aria-selected="false" data-tab="project" aria-controls="tb-project">
                     <span class="tl" data-en="CONSTRUCTION" data-no="BYGGEPROSJEKT">CONSTRUCTION</span><span class="tc" id="count-projects">–</span></button>
                 <button type="button" class="tab" id="tab-dod" role="tab" aria-selected="false" data-tab="dod" aria-controls="tb-dod">
@@ -1594,6 +1596,16 @@ document.addEventListener('DOMContentLoaded', function() {
         cap: { en: "CAPACITY & MATERIALS", no: "KAPASITET OG MASSER" },
         capyr: { en: "Capacity / year", no: "Kapasitet / år" },
         tot: { en: "Total capacity", no: "Total kapasitet" },
+        extyr: { en: "Extraction / year", no: "Uttak / år" },
+        exttot: { en: "Total extraction", no: "Totalt uttak" },
+        extract_t: { en: "EXTRACTION SITES", no: "UTTAK" },
+        th_ext: { en: "EXTRACTION", no: "UTTAK" }, th_ext_s: { en: "EXT.", no: "UTT." },
+        key_ext: { en: "planned extraction, total; yearly figures not drawn; n.d. = not disclosed",
+                   no: "planlagt uttak, totalt; årlige tall tegnes ikke; n.d. = ikke oppgitt" },
+        n_extract: { en: "extraction sites", no: "uttak" },
+        pc_observed: { en: "worked", no: "drift" }, pc_permitted: { en: "permitted", no: "tillatt" },
+        pc_plan: { en: "plan", no: "plan" }, pc_register: { en: "register", no: "register" },
+        pc_property: { en: "property", no: "eiendom" }, pc_resource: { en: "resource", no: "ressurs" },
         mat: { en: "Materials", no: "Masser" },
         prod: { en: "Produced", no: "Produsert" },
         env: { en: "ENVIRONMENT & RISKS", no: "MILJØ OG RISIKO" },
@@ -1822,6 +1834,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return val ? `<div class="column-set"><div class="col-0">${t(k)}</div><div class="col-1">${esc(val)}</div></div>` : '';
         };
         const section = (k, body) => `<b>${t(k)}</b>` + (body || `<div class="column-set no-data">${t('nodata')}</div>`);
+        const withUnit = (v, u) => { v = String(v == null ? '' : v).trim(); u = String(u || '').trim(); return v && u && !isNA(v) ? v + ' ' + u : v; };
         const coords = hasCoords ? lat.toFixed(5) + ', ' + lon.toFixed(5) : '';
         const place = [site.Municipality, site.County].map(x => String(x || '').trim()).filter(Boolean).join(', ');
         const area = qty(site.Area_m2);
@@ -1836,8 +1849,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="sb-desc">${esc(desc || '')}</div>
             ${section('prop', row('comp', site.Company) + row('op', site.Operator) + row('org', site.OrgNr) + row('par', site.ParentCompany))}
             <div class="graph-head"><b>${t('net')}</b>${graphSrc ? `<a class="graph-open" href="${esc(graphSrc)}" target="_blank" rel="noopener noreferrer">${t('openGraph')}</a>` : ''}</div>${graphHtml}
-            ${section('loc', row('coord', coords) + row('mun', site.Municipality) + row('area', Number.isFinite(area) ? fmt(area) + ' m²' : '') + row('wat', site.WaterRecipient))}
-            ${section('cap', row('capyr', site.AnnualCapacity ? site.AnnualCapacity + (site.CapacityUnit ? ' ' + site.CapacityUnit : '') : '') + row('tot', site.TotalCapacity) + row('mat', site.MassesAccepted) + row('prod', site.MassesProduced))}
+            ${section('loc', row('coord', coords) + row('mun', site.Municipality) + row('area', areaOf(site) ? fmt(areaOf(site).v) + ' m² · ' + pclsWord(areaOf(site).cls) : '') + row('wat', site.WaterRecipient))}
+            ${section('cap', row('capyr', withUnit(site.AnnualCapacity, site.AnnualCapacityUnit || site.CapacityUnit)) + row('tot', withUnit(site.TotalCapacity, site.TotalCapacityUnit)) + row('extyr', withUnit(site.ExtractionAnnual, site.ExtractionAnnualUnit)) + row('exttot', withUnit(site.ExtractionTotal, site.ExtractionTotalUnit)) + row('mat', site.MassesAccepted) + row('prod', site.MassesProduced))}
             ${section('env', row('code', site.WasteCodes) + row('cont', site.Contaminants || site.Contamination) + row('risk', site.EnvironmentalRisk))}
             ${section('perm', row('ref', site.PermitRef) + row('start', site.StartYear) + row('auth', site.PermitAuthority || site.Authority))}
             ${section('link', linksHtml)}
@@ -2418,16 +2431,62 @@ document.addEventListener('DOMContentLoaded', function() {
     // Capacity is only drawn when it is a volume in m³. Tonnes, and yearly
     // figures, are written in the number column and never drawn on the same
     // scale as a volume.
-    function capOf(s) {
-        const unit = String(s.CapacityUnit || '').toLowerCase();
-        const tonnes = /t(onn|onne)?s?\b|tonn/.test(unit) && !/m3|m³/.test(unit);
-        const yearly = /yr|year|år|\/a\b/.test(unit);
-        const tot = qty(s.TotalCapacity), ann = qty(s.AnnualCapacity);
-        if (Number.isFinite(tot) && !tonnes && !yearly) return { v: tot, unit: 'm³', drawn: true };
-        if (Number.isFinite(tot)) return { v: tot, unit: tonnes ? (yearly ? 't/yr' : 't') : 'm³/yr', drawn: false };
-        if (Number.isFinite(ann)) return { v: ann, unit: /m3|m³/.test(unit) ? 'm³/yr' : 't/yr', drawn: false };
+    // A dash in a cell says the field does not apply to this site. An empty
+    // cell says nobody has verified it yet. The two are never drawn alike.
+    const isNA = v => /^[–—-]$/.test(String(v == null ? '' : v).trim());
+    // Each figure carries its own unit: a yearly intake in tonnes and a total
+    // in m³ are both true of the same site.
+    function quant(tot, totU, ann, annU) {
+        const lu = u => String(u || '').toLowerCase();
+        const tonnes = u => /t(onn|onne)?s?\b|tonn/.test(u) && !/m3|m³/.test(u);
+        const yearly = u => /yr|year|år|\/a\b|season|sesong/.test(u);
+        const T = qty(tot), A = qty(ann);
+        if (Number.isFinite(T)) {
+            const u = lu(totU);
+            if (!tonnes(u) && !yearly(u)) return { v: T, unit: 'm³', drawn: true };
+            return { v: T, unit: tonnes(u) ? (yearly(u) ? 't/yr' : 't') : 'm³/yr', drawn: false };
+        }
+        if (Number.isFinite(A)) { const u = lu(annU); return { v: A, unit: /m3|m³/.test(u) ? 'm³/yr' : 't/yr', drawn: false }; }
         return null;
     }
+    // Capacity is what a permit lets a site take in. What a quarry takes out
+    // is a different quantity and has its own columns and its own sheet.
+    const capOf = s => quant(s.TotalCapacity, s.TotalCapacityUnit || s.CapacityUnit,
+                             s.AnnualCapacity, s.AnnualCapacityUnit || s.CapacityUnit);
+    const extOf = s => quant(s.ExtractionTotal, s.ExtractionTotalUnit, s.ExtractionAnnual, s.ExtractionAnnualUnit);
+    // What a site does. The sheet says so in Activities; without that column a
+    // facility receives, and extracts when its type or its figures say it does.
+    function actsOf(s) {
+        const a = String(s.Activities || '').toLowerCase();
+        if (a.trim()) return { rec: /recep|mottak/.test(a), ext: /extract|uttak/.test(a) };
+        const ty = (String(s.Type || '') + ' ' + String(s.Subtype || '')).toLowerCase();
+        return { rec: true, ext: /pukkverk|grustak|massetak|steinbrudd/.test(ty) || !!extOf(s) };
+    }
+    const inScope = (s, scope) => scope === 'all' ? true
+        : scope === 'extract' ? s.__cat === 'facility' && actsOf(s).ext
+        : scope === 'facility' ? s.__cat === 'facility' && actsOf(s).rec
+        : s.__cat === scope;
+    const extScope = () => deckScope === 'extract' && !deckSelection;
+    const capNow = s => extScope() ? extOf(s) : capOf(s);
+    const capNA = s => {
+        const cells = extScope() ? [s.ExtractionAnnual, s.ExtractionTotal] : [s.AnnualCapacity, s.TotalCapacity];
+        return cells.some(isNA) && cells.every(v => isNA(v) || !String(v == null ? '' : v).trim());
+    };
+    // The area of a site is the area of its outline, and an outline is one of
+    // six kinds. The table names the kind beside the number.
+    const PCLS = ['observed', 'permitted', 'plan', 'register', 'property', 'resource'];
+    function areaOf(s) {
+        if (!fpData) return null;
+        const uid = uidOf(s), by = {};
+        fpData.features.forEach(f => {
+            const p = f.properties || {};
+            if (p.uid !== uid || !Number.isFinite(+p.a)) return;
+            by[p.pcls || ''] = (by[p.pcls || ''] || 0) + (+p.a);
+        });
+        const cls = PCLS.find(c => c in by) || Object.keys(by)[0];
+        return cls === undefined ? null : { v: by[cls], cls };
+    }
+    const pclsWord = c => PCLS.includes(c) ? t('pc_' + c) : (c || '');
     function volOf(f) {
         const v = qty(f.Volume_m3);
         if (!Number.isFinite(v)) return null;
@@ -2476,22 +2535,25 @@ document.addEventListener('DOMContentLoaded', function() {
           text: s => s.Type || '',
           html: s => `${symbolFor(s)}<span class="tyw">${esc(s.Type || '')}</span>`,
           title: s => t('dir_' + getMarkerInfo(s).direction) },
-        { key: '__cap', th: 'th_cap', w: 280, pw: 72, sth: 'th_cap_s', bar: true,
-          text: s => { const c = capOf(s); return c && c.drawn ? String(c.v) : ''; },
-          html: s => { const c = capOf(s); return c && c.drawn ? strokes(Math.floor(c.v / strokeUnit), inkOf(s)) : ''; },
-          sort: s => { const c = capOf(s); return c ? c.v : NaN; }, num: true, nosum: true },
+        { key: '__cap', th: 'th_cap', eth: 'th_ext', w: 280, pw: 72, sth: 'th_cap_s', esth: 'th_ext_s', bar: true,
+          text: s => { const c = capNow(s); return c && c.drawn ? String(c.v) : ''; },
+          html: s => { const c = capNow(s); return c && c.drawn ? strokes(Math.floor(c.v / strokeUnit), inkOf(s)) : ''; },
+          sort: s => { const c = capNow(s); return c ? c.v : NaN; }, num: true, nosum: true },
         { key: '__qty', th: 'th_m3', w: 140, pw: 118, num: true,
-          text: s => qtyText(capOf(s)),
-          html: s => { const c = capOf(s); if (!c) return '<span class="nd">n.d.</span>';
+          text: s => qtyText(capNow(s)),
+          html: s => { const c = capNow(s); if (!c) return capNA(s) ? '<span class="nd na">–</span>' : '<span class="nd">n.d.</span>';
                        return c.drawn ? fmt(c.v) : `<span class="nd">${fmt(c.v)} ${esc(c.unit)}</span>`; },
-          sort: s => { const c = capOf(s); return c ? c.v : NaN; },
-          sum: s => { const c = capOf(s); return c && c.drawn ? c.v : NaN; },
-          present: s => !!capOf(s) },
+          sort: s => { const c = capNow(s); return c ? c.v : NaN; },
+          sum: s => { const c = capNow(s); return c && c.drawn ? c.v : NaN; },
+          present: s => !!capNow(s) },
         // The record's other fields. The first three show by default; the rest
         // are one tick away in the COLUMNS list, as in a spreadsheet.
         { key: 'MassesAccepted', nophone: true, th: 'th_mat', w: 260, filter: true, text: s => s.MassesAccepted || '' },
-        { key: 'Area_m2', nophone: true, th: 'th_area', w: 120, num: true,
-          text: s => fmt(qty(s.Area_m2)), sort: s => qty(s.Area_m2), present: s => Number.isFinite(qty(s.Area_m2)), nosum: true },
+        { key: 'Area_m2', nophone: true, th: 'th_area', w: 160, num: true,
+          text: s => { const a = areaOf(s); return a ? fmt(a.v) : ''; },
+          html: s => { const a = areaOf(s); return a ? fmt(a.v) + ' <span class="nd">' + esc(pclsWord(a.cls)) + '</span>' : ''; },
+          title: s => { const a = areaOf(s); return a ? fmt(a.v) + ' m² · ' + pclsWord(a.cls) : ''; },
+          sort: s => { const a = areaOf(s); return a ? a.v : NaN; }, present: s => !!areaOf(s), nosum: true },
         { key: 'PermitRef', nophone: true, th: 'th_plan', w: 220, text: s => s.PermitRef || '' },
         { key: 'PermitAuthority', nophone: true, opt: true, th: 'th_auth', w: 220, filter: true, text: s => s.PermitAuthority || '' },
         { key: 'County', nophone: true, opt: true, th: 'th_county', w: 110, filter: true, text: s => s.County || '' },
@@ -2533,11 +2595,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Per-sheet state. The sheet key is the scope, or 'sel' for a box drawn on the map.
     const sheetKey = () => deckSelection ? 'sel' : deckScope;
-    const SORT0 = { facility: { key: '__qty', dir: -1 }, project: { key: '__qty', dir: -1 },
+    const SORT0 = { facility: { key: '__qty', dir: -1 }, extract: { key: '__qty', dir: -1 }, project: { key: '__qty', dir: -1 },
                     all: { key: '__qty', dir: -1 }, sel: { key: '__qty', dir: -1 }, flow: { key: '__vol', dir: -1 } };
     const sheetSort = JSON.parse(JSON.stringify(SORT0));
-    const colFilter = { facility: {}, project: {}, all: {}, sel: {}, flow: {} };   // key -> Set of values left out
-    const findQ = { facility: '', project: '', all: '', sel: '', flow: '' };
+    const colFilter = { facility: {}, extract: {}, project: {}, all: {}, sel: {}, flow: {} };   // key -> Set of values left out
+    const findQ = { facility: '', extract: '', project: '', all: '', sel: '', flow: '' };
     let colW = {};
     try { colW = JSON.parse(localStorage.getItem('db_colw') || '{}') || {}; } catch (err) { colW = {}; }
     let deckSort = sheetSort.facility;          // kept for anything that still reads it
@@ -2555,7 +2617,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function baseRows() {
         if (isFlowSheet()) return allFlows.filter(flowPasses);
         return allSites.filter(s =>
-            (deckSelection ? deckSelection.has(uidOf(s)) : (deckScope === 'all' || s.__cat === deckScope)) && passes(s));
+            (deckSelection ? deckSelection.has(uidOf(s)) : inScope(s, deckScope)) && passes(s));
     }
     // Which columns a viewer has switched on or off, per sheet (COLUMNS list).
     let colOn = {};
@@ -2563,7 +2625,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const isOn = c => { const m = colOn[isFlowSheet() ? 'flow' : 'site']; return m && c.key in m ? m[c.key] : !c.opt; };
     function visibleCols(rows) {
         const all = isFlowSheet() ? FLOW_COLS : SITE_COLS;
-        return all.filter(c => !(phone() && c.nophone)).filter(c => c.keep || isOn(c)).filter(c => c.keep || rows.some(r => c.present ? c.present(r) : String(c.text(r) || '').trim() !== ''));
+        return all.filter(c => !(phone() && c.nophone)).filter(c => c.keep || isOn(c)).filter(c => c.keep || rows.some(r => c.present ? c.present(r) : (String(c.text(r) || '').trim() !== '' && !isNA(c.text(r)))));
     }
     function applyColFilters(rows, cols, skipKey) {
         const f = colFilter[sheetKey()];
@@ -2631,7 +2693,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const cols = visibleCols(base);
         const rows = sortRows(applyColFilters(base, cols), cols);
         viewRows = rows; viewCols = cols;
-        pickStroke(base.map(r => { const c = isFlowSheet() ? volOf(r) : capOf(r); return c && c.drawn ? c.v : 0; }));
+        pickStroke(base.map(r => { const c = isFlowSheet() ? volOf(r) : capNow(r); return c && c.drawn ? c.v : 0; }));
         [...picked].forEach(id => { if (!rows.some(r => rowId(r) === id)) picked.delete(id); });
 
         // colgroup
@@ -2657,7 +2719,8 @@ document.addEventListener('DOMContentLoaded', function() {
             th.className = [c.num ? 'num' : '', c.bar ? 'bar' : ''].join(' ').trim();
             const lab = document.createElement('span');
             lab.className = 'lab';
-            lab.textContent = t(phone() && c.sth ? c.sth : proj && c.pth ? c.pth : c.th);
+            lab.textContent = t(extScope() && c.eth ? (phone() && c.esth ? c.esth : c.eth)
+                                : phone() && c.sth ? c.sth : proj && c.pth ? c.pth : c.th);
             th.appendChild(lab);
             if (c.bar) {
                 const u = document.createElement('span');
@@ -2729,7 +2792,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // an empty sheet says why
         if (!base.length) {
             const cat = isFlowSheet() ? 'flow' : deckScope;
-            if (!deckSelection && (cat === 'project' || cat === 'flow' || cat === 'facility')) {
+            if (!deckSelection && (cat === 'project' || cat === 'flow' || cat === 'facility' || cat === 'extract')) {
                 const held = rawCounts[cat] || 0;
                 const noun = t('n_' + cat);
                 if (cat === 'flow' && !allFlows.length) { table.hidden = true; }
@@ -2750,7 +2813,8 @@ document.addEventListener('DOMContentLoaded', function() {
         deckCount.textContent = nf < nb ? nf + ' ' + t('of') + ' ' + nb : '';
         const title = $('deck-title');
         const key = deckSelection ? 'selection' : deckScope === 'project' ? 'projects' :
-                    deckScope === 'flow' ? 'flows' : deckScope === 'all' ? 'selection' : 'recep';
+                    deckScope === 'flow' ? 'flows' : deckScope === 'all' ? 'selection' :
+                    deckScope === 'extract' ? 'extract_t' : 'recep';
         title.setAttribute('data-en', t2(key, 'en')); title.setAttribute('data-no', t2(key, 'no'));
         title.textContent = t(key);
         const fi = $('deck-find');
@@ -2809,12 +2873,14 @@ document.addEventListener('DOMContentLoaded', function() {
             .forEach(d => parts.push(`<span class="it dir">${facilitySymbol(d, '#555')}${esc(t('kdir_' + d))}</span>`));
         if (base.length) {
             parts.push(`<span class="it unit">${strokes(1, '#555')} = ${fmt(strokeUnit)} m³</span>`);
-            parts.push(`<span class="it note">${esc(t(flow ? 'key_vol' : 'key_cap'))}</span>`);
+            parts.push(`<span class="it note">${esc(t(flow ? 'key_vol' : extScope() ? 'key_ext' : 'key_cap'))}</span>`);
         }
         const cat = flow ? 'flow' : deckSelection ? null : deckScope;
         if (cat && cat !== 'all') {
-            const pub = flow ? allFlows.length : allSites.filter(s => s.__cat === cat).length;
-            const held = Math.max(0, (rawCounts[cat] || 0) - pub);
+            const fam = cat === 'extract' ? 'facility' : cat;
+            const pub = flow ? allFlows.length : allSites.filter(s => inScope(s, cat)).length;
+            const live = flow ? allFlows.length : allSites.filter(s => s.__cat === fam).length;
+            const held = cat === 'extract' ? 0 : Math.max(0, (rawCounts[cat] || 0) - live);
             parts.push(`<span class="it">${esc(t('cov').replace('{p}', pub) + (held ? ' · ' + t('cov_held').replace('{h}', held) : ''))}</span>`);
         }
         parts.push(`<span class="it">${dateNo(loadedAt)}</span>`);
@@ -2879,8 +2945,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ── sheet tabs at 45°: drawn, so the slant and the hairline are exact ─
-    const SHORT = { en: { all: 'ALL', facility: 'RECEP.', project: 'CONSTR.', dod: 'TERRAIN', flow: 'FLOWS' },
-                    no: { all: 'ALLE', facility: 'MOTTAK', project: 'BYGG', dod: 'TERRENG', flow: 'STRØM' } };
+    const SHORT = { en: { all: 'ALL', facility: 'RECEP.', extract: 'EXTR.', project: 'CONSTR.', dod: 'TERRAIN', flow: 'FLOWS' },
+                    no: { all: 'ALLE', facility: 'MOTTAK', extract: 'UTTAK', project: 'BYGG', dod: 'TERRENG', flow: 'STRØM' } };
     function paintTabs() {
         const strip = $('tabstrip');
         if (!strip) return;
@@ -3259,7 +3325,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     function applySheetHash(h) {
-        const sk = ['facility', 'project', 'all', 'flow'].includes(h.sheet) ? h.sheet : 'facility';
+        const sk = ['facility', 'extract', 'project', 'all', 'flow'].includes(h.sheet) ? h.sheet : 'facility';
         if (h.sort) { const m = /^(.+?)([+-])$/.exec(h.sort); if (m) sheetSort[sk] = { key: m[1], dir: m[2] === '-' ? -1 : 1 }; }
         if (h.af) h.af.split(';').forEach(p => {
             const i = p.indexOf(':'); if (i < 1) return;
@@ -3316,7 +3382,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Open a record from anywhere: the row, the map, search, a link.
     function openSite(site, frame) {
         currentSite = site;
-        if (site.__cat !== deckScope && !deckSelection && site.__cat) { selectTab(site.__cat, true); }
+        if (!deckSelection && site.__cat && !inScope(site, deckScope)) {
+            selectTab(site.__cat === 'facility' && !actsOf(site).rec ? 'extract' : site.__cat, true);
+        }
         openSidebar(site);
         if (frame === 'auto') frameSite(site, 'auto');
         else if (frame !== false) frameSite(site);
@@ -3449,7 +3517,10 @@ document.addEventListener('DOMContentLoaded', function() {
                ['Direction', s => getMarkerInfo(s).direction],
                ['Capacity', s => { const c = capOf(s); return c ? c.v : ''; }],
                ['CapacityUnit', s => (capOf(s) || {}).unit || ''],
-               ['MassesAccepted', s => s.MassesAccepted], ['Area_m2', s => { const v = qty(s.Area_m2); return Number.isFinite(v) ? v : ''; }],
+               ['Extraction', s => { const c = extOf(s); return c ? c.v : ''; }],
+               ['ExtractionUnit', s => (extOf(s) || {}).unit || ''],
+               ['MassesAccepted', s => s.MassesAccepted], ['Area_m2', s => { const a = areaOf(s); return a ? a.v : ''; }],
+               ['AreaOf', s => (areaOf(s) || {}).cls || ''],
                ['PermitRef', s => s.PermitRef], ['PermitAuthority', s => s.PermitAuthority], ['County', s => s.County],
                ['ParentCompany', s => s.ParentCompany], ['OrgNr', s => s.OrgNr], ['Subtype', s => s.Subtype],
                ['Contaminants', s => s.Contaminants], ['WaterRecipient', s => s.WaterRecipient], ['StartYear', s => s.StartYear],
@@ -3475,7 +3546,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // ALL keeps both families on the map and both sets of colours in the
         // key; the reception rows stay in the drawer so the counts still read.
         ['facility', 'project', 'dod', 'flow'].forEach(k => {
-            $('tb-' + k).hidden = tab === 'all' ? (k === 'dod' || k === 'flow') : k !== tab;
+            $('tb-' + k).hidden = tab === 'all' ? (k === 'dod' || k === 'flow') : k !== (tab === 'extract' ? 'facility' : tab);
         });
         if (tab === 'dod') {
             if (!quiet && !$('filter-dod').checked) { $('filter-dod').checked = true; toggleDod(true); }
@@ -3498,7 +3569,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateCounts(){
         const f = allSites.filter(s => s.__cat === 'facility');
         const p = allSites.filter(s => s.__cat === 'project');
-        $('count-facilities').textContent = f.length;
+        $('count-facilities').textContent = f.filter(s => actsOf(s).rec).length;
+        $('count-extract').textContent = f.filter(s => actsOf(s).ext).length;
         $('count-projects').textContent = p.length;
         $('count-all').textContent = f.length + p.length;
         $('count-runs').textContent = DOD_RUNS.length;
