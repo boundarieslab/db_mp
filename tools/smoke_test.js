@@ -50,6 +50,14 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     r.fulfill({ status:200, contentType: f.endsWith('.css') ? 'text/css' : 'application/javascript',
                 body: fs.readFileSync(f,'utf8') });
   });
+  // One invented line for the fixture project, so the test does not depend on
+  // which real projects have a geometry.
+  await ctx.route(/\/data\/project_geometries\.geojson/, r => r.fulfill({ status: 200, contentType: 'application/json',
+    body: JSON.stringify({ type: 'FeatureCollection', features: [
+      { type: 'Feature', properties: { uid: 'CP_001', n: 'Fornebubanen', kind: 'line', firm: 1, basis: 'alignment', pt: [10.62, 59.895] },
+        geometry: { type: 'MultiLineString', coordinates: [[[10.60, 59.890], [10.62, 59.895], [10.66, 59.915]]] } },
+      { type: 'Feature', properties: { uid: 'CP_404', n: 'Not in the sheet', kind: 'perimeter', firm: 1, basis: 'building', a: 100, pt: [10.7, 59.9] },
+        geometry: { type: 'MultiPolygon', coordinates: [[[[10.7, 59.9], [10.701, 59.9], [10.701, 59.901], [10.7, 59.9]]]] } } ] }) }));
   const p = await ctx.newPage();
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   // Ignored: the site's typeface comes from Cargo, which a sandbox need not
@@ -681,12 +689,30 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     const v = id => m.getLayer(id) && m.getLayoutProperty(id, 'visibility') !== 'none';
     const src = m.getSource('fp');
     const f = src ? src._data.features : [];
-    return { all: ['fp-fill', 'fp-line', 'fp-soft'].every(v), n: f.length,
+    return { all: ['fp-fill', 'fp-line', 'fp-soft'].every(v), n: f.filter(x => !x.properties.kind).length,
+             pg: f.filter(x => x.properties.kind).map(x => x.properties.uid + ':' + x.properties.kind + ':' + x.geometry.type + ':' + x.properties.col).join(' '),
+             fillFilter: JSON.stringify(m.getFilter('fp-fill')), lineW: JSON.stringify(m.getPaintProperty('fp-line', 'line-width')),
              col: (f.find(x => x.properties.uid === 'AK_AH_001') || { properties: {} }).properties.col,
              lineCol: JSON.stringify(m.getPaintProperty('fp-line', 'line-color')),
              fill: JSON.stringify(m.getPaintProperty('fp-fill', 'fill-opacity')) };
   });
   ok(fp.all, 'footprints draw without being asked');
+  // A construction project is drawn as its line or its perimeter, from
+  // data/project_geometries.geojson (stubbed above with one line for CP_001).
+  ok(/^CP_001:line:MultiLineString:#00FF00$/.test(fp.pg), 'a project is drawn as its line, in its status colour (' + fp.pg + ')');
+  ok(/"kind"\],"line"/.test(fp.fillFilter) && /"!="/.test(fp.fillFilter), 'a line is never filled as if it were an area');
+  ok(/"kind"\],"line"\],3\.8/.test(fp.lineW) && /2\.4/.test(fp.lineW), 'and is drawn heavier than a site contour');
+  const pgUi = await p.evaluate(async () => {
+    const m = window.__M;
+    const was = { center: m.getCenter(), zoom: m.getZoom() };
+    const idle = () => new Promise(r => { m.once('idle', r); setTimeout(r, 4000); });
+    m.jumpTo({ center: [10.63, 59.90], zoom: 11.5 }); await idle();
+    const hit = m.queryRenderedFeatures({ layers: ['fp-line'] }).filter(f => f.properties.uid === 'CP_001').length;
+    const filled = m.queryRenderedFeatures({ layers: ['fp-fill'] }).filter(f => f.properties.uid === 'CP_001').length;
+    m.jumpTo(was); await idle();
+    return { hit, filled };
+  });
+  ok(pgUi.hit > 0 && pgUi.filled === 0, 'the line is actually painted, and only as a line (' + pgUi.hit + ', ' + pgUi.filled + ')');
   // Only footprints of published sites are drawn: the fixtures publish four
   // facilities, three of which have a footprint in data/facility_polygons.geojson.
   const fpWant = JSON.parse(fs.readFileSync(__dirname + '/../data/facility_polygons.geojson', 'utf8')).features

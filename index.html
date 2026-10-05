@@ -1469,6 +1469,39 @@ document.addEventListener('DOMContentLoaded', function() {
     // uid -> footprint bounds and rings, filled when the footprint file loads.
     const fpBounds = Object.create(null);
     const fpRings = Object.create(null);
+    const fpOpen = Object.create(null);      // uid -> true when the shape is a line, not an outline
+
+    // Take a project's line or perimeter into the same lookups the footprints
+    // use, and give a project that has no point in the sheet a point on its
+    // own shape, so it gets a marker, a row that can be opened and a place in
+    // the flows.
+    function useProjectGeometries(gj) {
+        if (!gj || !Array.isArray(gj.features)) return;
+        const byUid = new Map(allSites.map(s => [uidOf(s), s]));
+        gj.features.forEach(f => {
+            const p = f.properties || {}, uid = p.uid;
+            if (!uid || !f.geometry) return;
+            let w = 180, so = 90, e = -180, n = -90;
+            const rings = fpRings[uid] || (fpRings[uid] = []);
+            const walk = c => {
+                if (typeof c[0][0] === 'number') { rings.push(c); c.forEach(q => {
+                    if (q[0] < w) w = q[0]; if (q[0] > e) e = q[0];
+                    if (q[1] < so) so = q[1]; if (q[1] > n) n = q[1]; }); }
+                else c.forEach(walk);
+            };
+            walk(f.geometry.coordinates);
+            const b = fpBounds[uid];
+            fpBounds[uid] = b ? [Math.min(b[0], w), Math.min(b[1], so), Math.max(b[2], e), Math.max(b[3], n)] : [w, so, e, n];
+            if (p.kind === 'line') fpOpen[uid] = true;
+            const s = byUid.get(uid);
+            if (!s) return;
+            s.__geom = p;
+            if (!hasXY(s) && Array.isArray(p.pt) && Number.isFinite(+p.pt[0]) && Number.isFinite(+p.pt[1])) {
+                s.Longitude = String(p.pt[0]); s.Latitude = String(p.pt[1]); s.__geoFromShape = true;
+            }
+        });
+        pgData = gj;
+    }
 
     function siteBox(site) {
         const uid = uidOf(site);
@@ -1566,8 +1599,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const rings = fpRings[uidOf(site)];
         let svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
         if (rings && rings.length) {
-            const d = rings.map(r => 'M' + r.map(c => (lonX(c[0], z) - left).toFixed(1) + ' ' + (latY(c[1], z) - top).toFixed(1)).join('L') + 'Z').join('');
-            svg += `<path d="${d}" fill="${col}" fill-opacity=".18" stroke="${col}" stroke-width="5" stroke-opacity=".35" fill-rule="evenodd"/>` +
+            const open = !!fpOpen[uidOf(site)];
+            const d = rings.map(r => 'M' + r.map(c => (lonX(c[0], z) - left).toFixed(1) + ' ' + (latY(c[1], z) - top).toFixed(1)).join('L') + (open ? '' : 'Z')).join('');
+            svg += `<path d="${d}" fill="${open ? 'none' : col}" fill-opacity=".18" stroke="${col}" stroke-width="5" stroke-opacity=".35" fill-rule="evenodd"/>` +
                    `<path d="${d}" fill="none" stroke="${col}" stroke-width="1.6" fill-rule="evenodd"/>`;
         } else if (hasXY(site)) {
             const px = lonX(num(site.Longitude), z) - left, py = latY(num(site.Latitude), z) - top;
@@ -1592,6 +1626,10 @@ document.addEventListener('DOMContentLoaded', function() {
         coord: { en: "Coordinates", no: "Koordinater" },
         mun: { en: "Municipality", no: "Kommune" },
         area: { en: "Area", no: "Areal" },
+        geom: { en: "Drawn as", no: "Tegnet som" },
+        g_line: { en: "line", no: "linje" }, g_perimeter: { en: "perimeter", no: "omriss" },
+        gb_alignment: { en: "alignment", no: "trasé" }, gb_building: { en: "building", no: "bygning" },
+        gb_site: { en: "construction site", no: "byggeplass" }, gb_sites: { en: "construction sites", no: "byggeplasser" },
         wat: { en: "Water recipient", no: "Vannresipient" },
         cap: { en: "CAPACITY & MATERIALS", no: "KAPASITET OG MASSER" },
         capyr: { en: "Capacity / year", no: "Kapasitet / år" },
@@ -1834,6 +1872,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return val ? `<div class="column-set"><div class="col-0">${t(k)}</div><div class="col-1">${esc(val)}</div></div>` : '';
         };
         const section = (k, body) => `<b>${t(k)}</b>` + (body || `<div class="column-set no-data">${t('nodata')}</div>`);
+        const geomText = s => {
+            const g = s.__geom;
+            if (!g) return '';
+            const w = { 'alignment': 'gb_alignment', 'building': 'gb_building', 'construction site': 'gb_site', 'construction sites': 'gb_sites' }[g.basis];
+            return [t(g.kind === 'line' ? 'g_line' : 'g_perimeter'),
+                    g.kind !== 'line' && Number.isFinite(+g.a) ? fmt(+g.a) + ' m²' : '',
+                    w ? t(w) : (g.basis || ''), 'OpenStreetMap'].filter(Boolean).join(' · ');
+        };
         const withUnit = (v, u) => { v = String(v == null ? '' : v).trim(); u = String(u || '').trim(); return v && u && !isNA(v) ? v + ' ' + u : v; };
         const coords = hasCoords ? lat.toFixed(5) + ', ' + lon.toFixed(5) : '';
         const place = [site.Municipality, site.County].map(x => String(x || '').trim()).filter(Boolean).join(', ');
@@ -1849,7 +1895,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="sb-desc">${esc(desc || '')}</div>
             ${section('prop', row('comp', site.Company) + row('op', site.Operator) + row('org', site.OrgNr) + row('par', site.ParentCompany))}
             <div class="graph-head"><b>${t('net')}</b>${graphSrc ? `<a class="graph-open" href="${esc(graphSrc)}" target="_blank" rel="noopener noreferrer">${t('openGraph')}</a>` : ''}</div>${graphHtml}
-            ${section('loc', row('coord', coords) + row('mun', site.Municipality) + row('area', areaOf(site) ? fmt(areaOf(site).v) + ' m² · ' + pclsWord(areaOf(site).cls) : '') + row('wat', site.WaterRecipient))}
+            ${section('loc', row('coord', coords) + row('mun', site.Municipality) + row('area', areaOf(site) ? fmt(areaOf(site).v) + ' m² · ' + pclsWord(areaOf(site).cls) : '') + row('geom', geomText(site)) + row('wat', site.WaterRecipient))}
             ${section('cap', row('capyr', withUnit(site.AnnualCapacity, site.AnnualCapacityUnit || site.CapacityUnit)) + row('tot', withUnit(site.TotalCapacity, site.TotalCapacityUnit)) + row('extyr', withUnit(site.ExtractionAnnual, site.ExtractionAnnualUnit)) + row('exttot', withUnit(site.ExtractionTotal, site.ExtractionTotalUnit)) + row('mat', site.MassesAccepted) + row('prod', site.MassesProduced))}
             ${section('env', row('code', site.WasteCodes) + row('cont', site.Contaminants || site.Contamination) + row('risk', site.EnvironmentalRisk))}
             ${section('perm', row('ref', site.PermitRef) + row('start', site.StartYear) + row('auth', site.PermitAuthority || site.Authority))}
@@ -2104,6 +2150,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─────────────────────────────────────────────────────────────────────
     const FOOTPRINTS_GEOJSON = 'data/facility_polygons.geojson';
     const COVERAGE_GEOJSON = 'data/plan_coverage.geojson';
+    // The line (tunnel, road, railway) or the perimeter (site, building) of a
+    // construction project. Built by tools/make_project_geometries.py.
+    const PROJECT_GEOJSON = 'data/project_geometries.geojson';
     const FP_LAYERS = ['fp-fill', 'fp-line', 'fp-soft'];
     const PT_LAYERS = ['site-hot', 'site-sym'];
     const SITE_LAYERS = FP_LAYERS.concat(PT_LAYERS);
@@ -2120,6 +2169,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .concat(...Object.keys(table).map(k => [k, table[k]])).concat([fallback]);
     const LINE_W   = byClass({ active: 1.2, contaminated: 1.2, future: 1, old: 1, unknown: 0.8 }, 1);
     const LINE_W_H = byClass({ active: 2, contaminated: 2, future: 1.8, old: 1.8, unknown: 1.5 }, 1.8);
+    const IS_LINE  = ['==', ['get', 'kind'], 'line'];
+    const NOT_LINE = ['!=', ['get', 'kind'], 'line'];
     const FILL_A   = byClass({ active: 0.14, contaminated: 0.14, future: 0.08, old: 0.10, unknown: 0 }, 0.12);
     const FILL_A_H = byClass({ active: 0.30, contaminated: 0.30, future: 0.20, old: 0.22, unknown: 0.08 }, 0.26);
     // A white mark needs a dark ring or it disappears on snow and concrete.
@@ -2128,13 +2179,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const SYM_SIZE = ['interpolate', ['linear'], ['zoom'], 6, 0.40, 15, 0.66];
 
     let fpData = null, fpState = 0, sitesReady = false;
+    let pgData = null;
+    const LINE_W_ALL   = ['case', IS_LINE, 2.4, LINE_W];
+    const LINE_W_H_ALL = ['case', IS_LINE, 3.8, LINE_W_H];
     let covState = 0;
 
     function fpFeatures() {
-        if (!fpData) return { type: 'FeatureCollection', features: [] };
+        const shapes = (fpData ? fpData.features : []).concat(pgData ? pgData.features : []);
         const byUid = new Map(allSites.map(s => [uidOf(s), s]));
         // A footprint is drawn only for a site that is itself on the map.
-        return { type: 'FeatureCollection', features: fpData.features.filter(f => byUid.has(f.properties.uid)).map(f => {
+        return { type: 'FeatureCollection', features: shapes.filter(f => byUid.has(f.properties.uid)).map(f => {
             const s = byUid.get(f.properties.uid);
             const cat = s ? s.__cat : 'facility';
             const cls = s ? s.__cls : 'unknown';
@@ -2198,25 +2252,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if (map.getSource('sites')) return;
         const before = under(['prof-line', 'prof-pt', 'prof-cur']);
         map.addSource('fp', { type: 'geojson', data: fpFeatures(), promoteId: 'uid',
-            attribution: 'Footprints: Kartverket plan and cadastre · NGU · LUB' });
+            attribution: 'Footprints: Kartverket plan and cadastre · NGU · LUB · Project lines and perimeters © OpenStreetMap contributors' });
         map.addSource('sites', { type: 'geojson', data: siteFeatures(), promoteId: 'uid' });
 
         // Footprints draw at every zoom. A shape a few pixels wide still says
         // where the ground is taken, and the marker on top says what it is.
         // No glow: a flat contour in pure colour and a thin fill, nothing else.
         map.addLayer({ id: 'fp-fill', type: 'fill', source: 'fp',
-            filter: ['==', ['get', 'firm'], 1],
+            filter: ['all', ['==', ['get', 'firm'], 1], NOT_LINE],
             paint: { 'fill-color': ['get', 'col'], 'fill-opacity': ['case', HOVER, FILL_A_H, FILL_A] } }, before);
         map.addLayer({ id: 'fp-line', type: 'line', source: 'fp',
             filter: ['all', ['==', ['get', 'firm'], 1], ['!=', ['get', 'cls'], 'future']],
             layout: { 'line-join': 'round' },
-            paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, LINE_W_H, LINE_W] } }, before);
+            paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, LINE_W_H_ALL, LINE_W_ALL] } }, before);
         // Dashed: still to come, and the NGU resource areas that are not a
         // measured operating extent.
         map.addLayer({ id: 'fp-soft', type: 'line', source: 'fp',
             layout: { 'line-join': 'round' },
             filter: ['any', ['==', ['get', 'firm'], 0], ['==', ['get', 'cls'], 'future']],
-            paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, LINE_W_H, LINE_W],
+            paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, LINE_W_H_ALL, LINE_W_ALL],
                      'line-dasharray': [3, 2], 'line-opacity': 0.95 } }, before);
 
         // Hover is a ring, not a glow: it appears only under the marker the
@@ -2368,7 +2422,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (sitesReady) {
             const f = mapFilter();
             const fpOn = $('filter-footprints').checked;
-            map.setFilter('fp-fill', ['all', ['==', ['get', 'firm'], 1], f]);
+            map.setFilter('fp-fill', ['all', ['==', ['get', 'firm'], 1], NOT_LINE, f]);
             map.setFilter('fp-line', ['all', ['==', ['get', 'firm'], 1], ['!=', ['get', 'cls'], 'future'], f]);
             map.setFilter('fp-soft', ['all', ['any', ['==', ['get', 'firm'], 0], ['==', ['get', 'cls'], 'future']], f]);
             FP_LAYERS.forEach(id => setVis(id, fpOn));
@@ -3884,8 +3938,9 @@ document.addEventListener('DOMContentLoaded', function() {
     updateStatus(t('loading'));
     renderRuns();
 
-    Promise.all([parseCsv(FACILITIES_CSV), parseCsv(PROJECTS_CSV)])
-      .then(([fRes, pRes]) => {
+    Promise.all([parseCsv(FACILITIES_CSV), parseCsv(PROJECTS_CSV),
+                 fetch(PROJECT_GEOJSON).then(r => r.ok ? r.json() : null).catch(() => null)])
+      .then(([fRes, pRes, pgRes]) => {
         [fRes, pRes].forEach(r => { if (r.errors && r.errors.length) console.warn('CSV parse issues:', r.errors.slice(0, 5)); });
         // Several rows carry their position only in GoogleMapsLink (?q=lat,lon) and leave
         // Latitude/Longitude empty. Read it back rather than lose the site off the map.
@@ -3904,6 +3959,7 @@ document.addEventListener('DOMContentLoaded', function() {
         rawCounts.facility = fRes.data.filter(r => uidOf(r) || r.Name).length;
         rawCounts.project  = pRes.data.filter(r => uidOf(r) || r.Name).length;
         allSites = [...facilities, ...projects];
+        useProjectGeometries(pgRes);
         // A revoked "publish to web" returns an HTML page with status 200.
         if (!allSites.length || !allSites.some(s => 'Name' in s || 'UID' in s)) { updateStatus(t('loadfail')); return; }
         const seen = new Set();
