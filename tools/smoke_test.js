@@ -1012,6 +1012,39 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(fam.rec.na === '–', 'a dash in the sheet is drawn as a dash, not as n.d. (' + fam.rec.na + ')');
   ok(/53.091 plan/.test(fam.rec.area), 'area is read from the outline and says which kind it is (' + fam.rec.area + ')');
 
+  console.log('a number is a link to its source');
+  const sl = await p.evaluate(async () => {
+    const a = (uid, key) => { const e = document.querySelector('#site-table tbody tr[data-uid="' + uid + '"] td[data-key="' + key + '"] a.src');
+                              return e ? e.getAttribute('href') + '|' + e.target + '|' + e.textContent.replace(/\s+/g, ' ').trim() : null; };
+    const rec = { cap: a('OS_OS_001', '__qty'), tot: a('VF_HM_001', '__qty'), none: a('AK_AH_001', '__qty') };
+    document.getElementById('tab-extract').click();
+    await new Promise(r => setTimeout(r, 450));
+    const ext = a('VF_HM_001', '__qty');
+    document.getElementById('tab-facility').click();
+    await new Promise(r => setTimeout(r, 300));
+    if (document.getElementById('sidebar').classList.contains('active')) closeSidebar();
+    await new Promise(r => setTimeout(r, 300));
+    const link = document.querySelector('#site-table tbody tr[data-uid="OS_OS_001"] td[data-key="__qty"] a.src');
+    if (link) { link.addEventListener('click', e => e.preventDefault(), { once: true }); link.click(); }
+    await new Promise(r => setTimeout(r, 300));
+    const stay = !document.getElementById('sidebar').classList.contains('active');
+    document.querySelector('#site-table tbody tr[data-uid="OS_OS_001"] td[data-key="Name"]').click();
+    await new Promise(r => setTimeout(r, 600));
+    const side = [...document.querySelectorAll('#sb-dynamic-content .col-1 a.src')].map(x => x.getAttribute('href') + '|' + x.textContent.trim());
+    const plain = [...document.querySelectorAll('#sb-dynamic-content .col-1')].filter(x => !x.querySelector('a.src')).length;
+    closeSidebar();
+    await new Promise(r => setTimeout(r, 300));
+    return { rec, ext, stay, side, plain };
+  });
+  ok(/^https:\/\/example\.org\/alnabru-permit\.pdf\|_blank\|100.000 t\/yr$/.test(sl.rec.cap || ''),
+     'a figure with a source in the sheet is a link to it, in a new tab (' + sl.rec.cap + ')');
+  ok(/langoya-permit/.test(sl.rec.tot || '') && /langoya-dmf/.test(sl.ext || ''),
+     'the link follows the figure: capacity in one sheet, extraction in the other (' + sl.rec.tot + ' / ' + sl.ext + ')');
+  ok(sl.rec.none === null, 'a figure with no source in the sheet stays plain text');
+  ok(sl.stay, 'following the link does not open the record');
+  ok(sl.side.length === 1 && /alnabru-permit\.pdf\|100000 tonnes\/year/.test(sl.side[0]) && sl.plain > 3,
+     'the record links the same figure and nothing else (' + sl.side.join(', ') + ')');
+
   console.log('phone');
   const ph = await ctx.newPage();
   await ph.setViewportSize({ width: 390, height: 844 });
