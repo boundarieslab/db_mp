@@ -5,8 +5,8 @@ construction project in the Projects tab.
     python3 tools/make_project_geometries.py <raw_dir>
 
 <raw_dir> holds the Overpass answers saved on the day of the run
-(osm_lines_raw.json, osm_sites_raw.json, osm_sites2_raw.json and, when the
-query got through, osm_nasjonalmuseet_raw.json). Nothing is drawn by hand and
+(osm_lines_raw.json, osm_sites_raw.json, osm_sites2_raw.json,
+osm_nasjonalmuseet_raw.json and osm_nasjonalmuseet_rel_raw.json). Nothing is drawn by hand and
 nothing is guessed: a project gets a geometry only when OpenStreetMap carries
 an object that names it, or road and rail objects tagged as that project's
 alignment. A project with no such object stays a point on the map.
@@ -184,7 +184,8 @@ def find(elements, wid):
 s1 = load('osm_sites_raw.json') or {}
 s2 = load('osm_sites2_raw.json') or {}
 s3 = (load('osm_nasjonalmuseet_raw.json') or {}).get('elements', [])
-pool = [e for v in list(s1.values()) + list(s2.values()) if isinstance(v, list) for e in v] + s3 + lines_raw['elements']
+s4 = (load('osm_nasjonalmuseet_rel_raw.json') or {}).get('elements', [])
+pool = [e for v in list(s1.values()) + list(s2.values()) if isinstance(v, list) for e in v] + s4 + s3 + lines_raw['elements']
 
 # uid, sheet name, [(way id, name the object must carry in OSM)], basis, note
 SITES = [
@@ -201,7 +202,11 @@ SITES = [
     ('SRC_OS_003', 'Livsvitenskapsbygget', [(1055397248, 'UiO Livsvitenskapsbygget')], 'building', 'Building outline.'),
     ('SRC_OS_013', 'Bjørvika Skole', [(1561095447, 'Bjørvika skole')], 'building',
      'Building outline as mapped while under construction (building=construction).'),
-    ('SRC_HIS_003', 'Nasjonalmuseet', [(None, 'Nasjonalmuseet')], 'building', 'Building outline.'),
+]
+# A building mapped as a multipolygon relation: uid, sheet name, relation id, name in OSM.
+RELATIONS = [
+    ('SRC_HIS_003', 'Nasjonalmuseet', 13920125, 'Nasjonalmuseet', 'building',
+     'Building outline (outer ring of the multipolygon; courtyards are not cut out).'),
 ]
 for uid, name, wanted, basis, note in SITES:
     polys, ids, tg = [], [], set()
@@ -230,6 +235,23 @@ for uid, name, wanted, basis, note in SITES:
     if not inside(c, big): c = big[0]
     add(uid, name, 'perimeter', {'type': 'MultiPolygon', 'coordinates': polys}, basis,
         ', '.join(sorted(tg)) + ', name as in OSM', ','.join('w%d' % i for i in ids), note, c,
+        a=sum(area(p[0]) for p in polys))
+
+for uid, name, rid, oname, basis, note in RELATIONS:
+    rel = next((e for e in pool if e['type'] == 'relation' and e['id'] == rid and e.get('members')), None)
+    if not rel or T(rel, 'name') != oname or not T(rel, 'building'):
+        print('-- no outline for', uid, name); continue
+    outer = [[[q['lon'], q['lat']] for q in m['geometry']] for m in rel.get('members', [])
+             if m.get('type') == 'way' and m.get('role') == 'outer' and m.get('geometry')]
+    rings = [r for r in chain(outer) if len(r) > 3 and r[0] == r[-1]]
+    if not rings:
+        print('!! no closed outer ring', uid); continue
+    polys = [[rnd(dp(r, 0.5))] for r in rings]
+    big = max(polys, key=lambda p: area(p[0]))[0]
+    c = centroid(big)
+    if not inside(c, big): c = big[0]
+    add(uid, name, 'perimeter', {'type': 'MultiPolygon', 'coordinates': polys}, basis,
+        'type=multipolygon, building=' + T(rel, 'building') + ', name as in OSM', 'r%d' % rid, note, c,
         a=sum(area(p[0]) for p in polys))
 
 json.dump({'type': 'FeatureCollection', 'features': feats}, open(OUT, 'w', encoding='utf-8'),
