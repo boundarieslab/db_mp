@@ -11,7 +11,9 @@ kind of outline. Idempotent: a file already patched is left alone.
 """
 import sys, os, io
 P = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "index.html")
-s = io.open(P, encoding="utf-8").read()
+raw = io.open(P, encoding="utf-8", newline="").read()
+CRLF = "\r\n" in raw
+s = raw.replace("\r\n", "\n")
 if "fp-lic" in s:
     print("already patched"); sys.exit(0)
 def sub(a, b, n=1):
@@ -102,5 +104,5 @@ sub("""    const PCLS = ['observed', 'permitted', 'plan', 'register', 'property'
         return PCLS.filter(c => c in by).map(c => pclsWord(c) + ' ' + fmt(by[c]) + ' m²').join(' · ');
     }""")
 sub("""+ row('geom', geomText(site)) + row('wat',""", """+ row('outl', outlinesOf(site)) + row('geom', geomText(site)) + row('wat',""")
-io.open(P, "w", encoding="utf-8", newline="").write(s)
+io.open(P, "w", encoding="utf-8", newline="").write(s.replace("\n", "\r\n") if CRLF else s)
 print("patched", P)
