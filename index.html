@@ -251,6 +251,65 @@ button,input,select{font:inherit;color:inherit}
 .maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:var(--frame)}
 .popup-title{font-weight:500;display:block}
 .popup-type,.popup-loc{color:var(--sub);font-size:10px;display:block}
+.popup-sep{display:block;border-top:.5px solid var(--frame);margin:5px 0 4px}
+/* The label of a terrain cluster stands off the site, on a hairline that leads to it. */
+/* The label of a chosen cluster: a drawing annotation. One oblique leader runs from the
+   perimeter of the change out to a shelf, well clear of the cluster; the name stands on
+   the shelf and the rest hangs under it, in the face of the table. */
+.tag{position:absolute;left:0;top:0;width:0;height:0;z-index:3;pointer-events:none}
+.tag-lead{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
+.tag-lead polyline{fill:none;stroke:#000;stroke-width:.4}
+.tag-txt{position:absolute;left:0;top:0;width:300px;background:#fff;pointer-events:auto;
+  font:12px/17px "Cutive Mono","Courier New",monospace;font-synthesis:none;color:#000;cursor:default}
+.tag-h{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:6px 10px 6px}
+.tag-body{padding:7px 10px 8px}
+.tag-id{color:var(--sub);white-space:nowrap}
+.tag-x{border:0;background:none;font:inherit;color:var(--sub);cursor:pointer;padding:0 0 0 12px}
+.tag-x:hover{color:#000}
+.tag-s{color:var(--sub)}
+.tag-n{display:grid;grid-template-columns:max-content 1fr;column-gap:14px;margin:7px 0 6px}
+.tag-n .v{text-align:right;white-space:nowrap}
+.tag-n .k{color:var(--sub)}
+.tag-sep{border-top:.5px solid var(--frame);margin:8px 0 7px}
+@media (max-width:760px){.tag-txt{width:220px}}
+/* The terrain layers, on the map itself. */
+/* The terrain panel is the Legend window of insar.ngu.no, which is a desk accessory of
+   an early Macintosh: a grey title bar with the close box at its left and the name in
+   bold at its right, one line saying what the scale is, the scale, a rule, then a row
+   to a control led by a small bitmap sign. Sliders are a pill with a round knob,
+   switches a box with a cross in it. Set in the face of the table and the label. No rule
+   between the parts, only air. Grey and black, and the sliders in pure blue. */
+#dod-panel{position:absolute;top:10px;right:10px;width:236px;z-index:6;background:#fff;border:1px solid #777;font:11px "Cutive Mono","Courier New",monospace;font-synthesis:none;color:#000}
+#dod-panel[hidden]{display:none}
+#dod-panel .dp-head{display:flex;align-items:center;justify-content:space-between;height:20px;padding:0 6px 0 3px;background:#bbb;font-size:12px;cursor:move;user-select:none}
+#dod-panel .dp-head button{width:16px;height:16px;border:0;background:none;font:400 17px/14px "Cutive Mono","Courier New",monospace;color:#000;cursor:pointer;padding:0}
+#dod-panel .dp-body{padding:9px 12px 9px}
+#dod-panel.folded .dp-body{display:none}
+#dod-panel .dp-cap{text-align:center;margin:0 0 6px}
+#dod-panel .ramp{height:14px;border:0}
+#dod-panel .ramp-scale{margin-top:4px;font:11px "Cutive Mono","Courier New",monospace;color:#000}
+#dod-panel .dp-ends{display:flex;justify-content:space-between;color:var(--sub);font-size:10px;margin-top:1px}
+#dod-panel .dp-rule{height:0;margin:10px 0 0}
+#dod-panel .dp-row{display:flex;align-items:center;gap:9px;height:26px}
+#dod-panel .dp-row svg{flex:0 0 16px;width:16px;height:16px;fill:#000;shape-rendering:crispEdges}
+#dod-panel .dp-row .val{flex:0 0 30px;font-size:11px}
+#dod-panel .slider{-webkit-appearance:none;appearance:none;flex:1 1 auto;min-width:0;width:auto;height:16px;border:0;background:none;margin:0;cursor:pointer;--v:50%}
+#dod-panel .slider::-webkit-slider-runnable-track{height:8px;border:1px solid #777;border-radius:5px;background:linear-gradient(to right,#00f var(--v),#ececec var(--v))}
+#dod-panel .slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#00f;border:0;margin-top:-4px}
+#dod-panel .slider::-moz-range-track{height:8px;border:1px solid #777;border-radius:5px;background:#ececec}
+#dod-panel .slider::-moz-range-progress{height:8px;border-radius:5px 0 0 5px;background:#00f}
+#dod-panel .slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#00f;border:0}
+#dod-panel .dp-opt{display:flex;align-items:center;gap:8px;height:24px;margin:0;cursor:pointer}
+#dod-panel .dp-opt input{-webkit-appearance:none;appearance:none;flex:0 0 12px;width:12px;height:12px;margin:0 2px;border:1px solid #000;background:#fff;cursor:pointer}
+#dod-panel .dp-opt input[type=checkbox]:checked{background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M0 0L10 10M10 0L0 10' stroke='black' stroke-width='1.1'/%3E%3C/svg%3E") center/100% 100%}
+#dod-panel .dp-opt input[type=radio]{border-radius:50%}
+#dod-panel .dp-opt input[type=radio]:checked{background:radial-gradient(circle,#000 0 2.4px,#fff 3px)}
+#dod-panel .dp-two{display:flex;gap:16px;flex:1 1 auto}
+#dod-panel .dp-two .dp-opt{gap:6px}
+#dod-panel .dp-two .dp-opt input{margin:0}
+#dod-panel .dp-opt span{white-space:nowrap}
+#dod-panel .dp-state{margin-left:auto;color:var(--sub);font-size:10px}
+@media (max-width:760px){#dod-panel{top:auto;bottom:56px;right:10px;width:214px}}
 .pin{width:13px;height:13px;border:.5px solid #000;background:#fff;position:relative}
 .pin::before,.pin::after{content:"";position:absolute;background:#000}
 .pin::before{left:6px;top:1px;width:.5px;height:10px}
@@ -605,6 +664,36 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 
 <div id="map" role="application" aria-label="Map of mass reception sites, construction projects and terrain change in the Oslo region"></div>
 <div id="sel-box"></div>
+<!-- The layers of the terrain-change view, handled on the map. Shown with terrain change. -->
+<div id="dod-panel" hidden>
+    <div class="dp-head"><button type="button" id="dp-fold" aria-expanded="true" aria-label="Fold">–</button>
+        <span data-en="Terrain change" data-no="Terrengendring">Terrain change</span></div>
+    <div class="dp-body">
+        <div class="dp-cap" data-en="Change in height, in metres." data-no="Endring i høyde, i meter.">Change in height, in metres.</div>
+        <div class="ramp"></div>
+        <div class="ramp-scale"><span>−12.1</span><span>+12.1</span></div>
+        <div class="dp-ends"><span data-en="excavation / erosion" data-no="utgravd / erodert">excavation / erosion</span><span data-en="deposit" data-no="deponert">deposit</span></div>
+        <div class="dp-rule"></div>
+        <div class="dp-row" data-title-en="Strength of the change colours" data-title-no="Styrken på endringsfargene" title="Strength of the change colours">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2h3v1h-3zM8 2h3v1h-3zM2 3h3v1h-3zM8 3h3v1h-3zM2 4h3v1h-3zM8 4h3v1h-3zM5 5h3v1h-3zM11 5h3v1h-3zM5 6h3v1h-3zM11 6h3v1h-3zM5 7h3v1h-3zM11 7h3v1h-3zM2 8h3v1h-3zM8 8h3v1h-3zM2 9h3v1h-3zM8 9h3v1h-3zM2 10h3v1h-3zM8 10h3v1h-3zM5 11h3v1h-3zM11 11h3v1h-3zM5 12h3v1h-3zM11 12h3v1h-3zM5 13h3v1h-3zM11 13h3v1h-3z"/></svg>
+            <input type="range" class="slider" id="dod-opacity" min="0" max="100" value="90" aria-label="Terrain change opacity">
+            <span class="val" id="dod-opacity-val">90%</span></div>
+        <div class="dp-row" data-title-en="Strength of the aerial photograph over the relief" data-title-no="Styrken på flyfotoet over relieffet" title="Strength of the aerial photograph over the relief">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M0 2h16v1h-16zM0 3h1v1h-1zM15 3h1v1h-1zM0 4h1v1h-1zM11 4h2v1h-2zM15 4h1v1h-1zM0 5h1v1h-1zM11 5h2v1h-2zM15 5h1v1h-1zM0 6h1v1h-1zM5 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM4 7h3v1h-3zM15 7h1v1h-1zM0 8h1v1h-1zM3 8h5v1h-5zM11 8h1v1h-1zM15 8h1v1h-1zM0 9h1v1h-1zM2 9h7v1h-7zM10 9h3v1h-3zM15 9h1v1h-1zM0 10h9v1h-9zM10 10h4v1h-4zM15 10h1v1h-1zM0 11h1v1h-1zM15 11h1v1h-1zM0 12h16v1h-16z"/></svg>
+            <input type="range" class="slider" id="dod-photo" min="0" max="100" value="30" aria-label="Aerial photo opacity">
+            <span class="val" id="dod-photo-val">30%</span></div>
+        <div class="dp-row" id="dod-dtm-note" data-title-en="Which survey the relief shows. The older one is drawn from zoom 11, inside the studied areas." data-title-no="Hvilken skanning relieffet viser. Den eldre tegnes fra zoom 11, innenfor de undersøkte områdene." title="Which survey the relief shows. The older one is drawn from zoom 11, inside the studied areas.">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h2v1h-2zM3 3h1v1h-1zM6 3h1v1h-1zM12 3h2v1h-2zM2 4h1v1h-1zM7 4h1v1h-1zM11 4h1v1h-1zM14 4h1v1h-1zM1 5h1v1h-1zM8 5h1v1h-1zM10 5h1v1h-1zM15 5h1v1h-1zM0 6h1v1h-1zM9 6h1v1h-1zM4 8h2v1h-2zM3 9h1v1h-1zM6 9h1v1h-1zM12 9h2v1h-2zM2 10h1v1h-1zM7 10h1v1h-1zM11 10h1v1h-1zM14 10h1v1h-1zM1 11h1v1h-1zM8 11h1v1h-1zM10 11h1v1h-1zM15 11h1v1h-1zM0 12h1v1h-1zM9 12h1v1h-1z"/></svg>
+            <span class="dp-two">
+            <label class="dp-opt"><input type="radio" name="dod-dtm" id="dod-dtm-new" value="new" checked><span data-en="newer" data-no="nyere">newer</span></label>
+            <label class="dp-opt"><input type="radio" name="dod-dtm" id="dod-dtm-old" value="old"><span data-en="older" data-no="eldre">older</span></label>
+            </span></div>
+        <div class="dp-rule"></div>
+        <label class="dp-opt" data-title-en="The edge of every change and a line at every metre of change, from zoom 14" data-title-no="Kanten av hver endring og en linje for hver meter endring, fra zoom 14" title="The edge of every change and a line at every metre of change, from zoom 14"><input type="checkbox" id="dod-iso" checked><span data-en="Change contours, 1 m" data-no="Endringskoter, 1 m">Change contours, 1 m</span></label>
+        <label class="dp-opt" data-title-en="Every metre from zoom 14, read from Kartverket's 1 m model as you move" data-title-no="Hver meter fra zoom 14, lest fra Kartverkets 1 m-modell mens du flytter kartet" title="Every metre from zoom 14, read from Kartverket's 1 m model as you move"><input type="checkbox" id="dod-contours"><span data-en="Terrain contours, 1 m" data-no="Høydekurver, 1 m">Terrain contours, 1 m</span><span class="dp-state" id="dod-ct-state"></span></label>
+        <label class="dp-opt"><input type="checkbox" id="dod-zones" checked><span data-en="Studied areas" data-no="Undersøkte områder">Studied areas</span></label>
+    </div>
+</div>
 
 <!-- ================================ BAR ================================ -->
 <!-- One horizontal strip of tools, top left, and a drawer that drops under
@@ -708,12 +797,12 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                   </div>
 
                   <div class="tab-body" id="tb-dod" role="tabpanel" hidden>
-                      <div class="note" data-en="DEM of Difference runs, by kommune. Tick one to draw it; the name flies you there."
-                           data-no="DEM-differanse-kjøringer, per kommune. Kryss av for å tegne; navnet tar deg dit.">DEM of Difference runs, by kommune. Tick one to draw it; the name flies you there.</div>
+                      <div class="note" data-en="Where the ground rose or sank between two laser surveys. The white dashed line is the ground that was studied; outside it nothing was measured. Click a change to go to its cluster."
+                           data-no="Der bakken har hevet eller senket seg mellom to laserskanninger. Den hvite stiplede linjen er området som er undersøkt; utenfor er ingenting målt. Klikk på en endring for å gå til klyngen.">Where the ground rose or sank between two laser surveys. The white dashed line is the ground that was studied; outside it nothing was measured. Click a change to go to its cluster.</div>
                       <div id="run-list"></div>
                       <div style="margin-top:6px">
                           <div class="ramp"></div>
-                          <div class="ramp-scale"><span>−12.1 m</span><span data-en="excavated · deposited" data-no="utgravd · deponert">excavated · deposited</span><span>+12.1 m</span></div>
+                          <div class="ramp-scale"><span>−12.1 m</span><span data-en="excavated / eroded · deposited" data-no="utgravd / erodert · deponert">excavated / eroded · deposited</span><span>+12.1 m</span></div>
                       </div>
                   </div>
 
@@ -744,6 +833,9 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                               <label class="row" for="base-gray">
                                   <span class="nm"><b data-en="Map, grey" data-no="Kart, grått">Map, grey</b><span class="src">Kartverket topograatone</span></span>
                                   <input type="radio" name="basemap" id="base-gray" value="graytone"></label>
+                              <label class="row" for="base-relief">
+                                  <span class="nm"><b data-en="Relief" data-no="Relieff">Relief</b><span class="src" data-en="Kartverket, shaded terrain 1 m, with the aerial photo faint over it" data-no="Kartverket, skyggerelieff 1 m, med flyfoto svakt over">Kartverket, shaded terrain 1 m, with the aerial photo faint over it</span></span>
+                                  <input type="radio" name="basemap" id="base-relief" value="relief"></label>
                               <label class="row" for="base-bym">
                                   <span class="nm"><b data-en="Oslo aerial survey" data-no="Oslo flyfoto">Oslo aerial survey</b>
                                       <span class="src" data-en="Bymiljøetaten. Sharper, but stops at the city boundary" data-no="Bymiljøetaten. Skarpere, men stopper ved bygrensen">Bymiljøetaten. Sharper, but stops at the city boundary</span></span>
@@ -940,7 +1032,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
     <span id="status-strip" role="status" aria-live="polite">LOADING DATA…</span>
     <span id="coord-readout" class="mono"></span>
     <button type="button" class="crs" id="btn-crs" data-title-en="Switch coordinates between WGS84 and UTM 33N" data-title-no="Bytt koordinater mellom WGS84 og UTM 33N" title="Switch coordinates between WGS84 and UTM 33N">WGS84</button>
-    <span class="right">Kartverket · Esri · Geonorge · Tilezen · DoD: Kartverket DTM1 2007/2020 · LUB</span>
+    <span class="right">Kartverket · Esri · Geonorge · Tilezen · DoD: Kartverket DTM1 · LUB</span>
 </div>
 </div><!-- /shell -->
 
@@ -1208,7 +1300,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSlideIndex = 0;
     let currentImages = [];
     let suppressHash = false;
-    let dodTiles = false, dodShapes = false, dodLoading = false;
     const statusStrip = $('status-strip');
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const dur = ms => reduceMotion ? 0 : ms;
@@ -1250,6 +1341,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 tiles: ['https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png'],
                 attribution: '© <a href="https://kartverket.no">Kartverket</a>'
             },
+            // Shaded relief of the national 1 m terrain model (the newer survey of
+            // every terrain-change run), drawn by Kartverket on request.
+            // Kartverket draws these on request and drops requests when there are
+            // many, so the service is asked only close in, in large tiles (a quarter
+            // of the requests). Further out the relief is shaded here, from the DEM.
+            relief: {
+                type: 'raster', tileSize: 512, minzoom: 12, maxzoom: 17,
+                tiles: ['https://wms.geonorge.no/skwms1/wms.hoyde-dtm-nhm-25833?service=WMS&version=1.3.0&request=GetMap'
+                        + '&layers=NHM_DTM_25833%3Askyggerelieff&styles=&format=image%2Fpng&crs=EPSG%3A3857'
+                        + '&width=512&height=512&bbox={bbox-epsg-3857}'],
+                attribution: '© <a href="https://kartverket.no">Kartverket</a>'
+            },
+            // Kartverket's national 10 m model as Terrarium tiles (Tilezen, AWS Open Data).
+            'relief-dem': {
+                type: 'raster-dem', encoding: 'terrarium', tileSize: 256, maxzoom: 15,
+                tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+                attribution: 'Elevation: Kartverket / Tilezen terrain tiles'
+            },
             satellite: {
                 type: 'raster', tileSize: T, maxzoom: 19, tiles: [ESRI],
                 attribution: '© <a href="https://www.esri.com">Esri</a>'
@@ -1272,6 +1381,16 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         layers: [
             { id: 'graytone',   type: 'raster', source: 'graytone',   layout: { visibility: 'none' } },
+            // The relief background, bottom to top: a grey ground (so a tile that has
+            // not come is never a black hole), the relief shaded here from the 10 m
+            // model at every zoom, and Kartverket's 1 m shading over it close in.
+            { id: 'relief-ground', type: 'background', layout: { visibility: 'none' }, paint: { 'background-color': '#c4c4c4' } },
+            { id: 'relief-shade', type: 'hillshade', source: 'relief-dem', layout: { visibility: 'none' },
+              paint: { 'hillshade-illumination-direction': 315, 'hillshade-illumination-anchor': 'map', 'hillshade-exaggeration': 0.8,
+                       'hillshade-shadow-color': '#000000', 'hillshade-highlight-color': '#ffffff', 'hillshade-accent-color': '#000000' } },
+            { id: 'relief',     type: 'raster', source: 'relief',     minzoom: 12, layout: { visibility: 'none' },
+              paint: { 'raster-contrast': 0.45, 'raster-fade-duration': dur(200),
+                       'raster-opacity': ['interpolate', ['linear'], ['zoom'], 12, 0, 13, 1] } },
             { id: 'satellite',  type: 'raster', source: 'satellite',  layout: { visibility: 'visible' },
               paint: { 'raster-fade-duration': dur(200) } },
             { id: 'bym',        type: 'raster', source: 'bym',        layout: { visibility: 'none' } },
@@ -1342,6 +1461,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     map.addControl(new CompassControl(), 'bottom-left');
 
+    // A handle on the map for looking at it from a console: only with ?debug.
+    if (new URLSearchParams(window.location.search).has('debug')) window.__M = map;
     let styleReady = false;
     map.on('load', () => { styleReady = true; });
     const whenStyle = fn => { styleReady ? fn() : map.once('load', fn); };
@@ -1350,9 +1471,15 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     // addSource throws while a style is still loading. Poll rather than wait
     // on an event that may already have fired.
+    // A layer can be added as soon as the style itself is in, while tiles and
+    // outlines of other sources are still on their way.
+    function whenStyleIn(fn) { if (map.style && map.style._loaded) fn(); else whenStyleReady(fn); }
     function whenStyleReady(fn, tries) {
         if (map.isStyleLoaded()) { fn(); return; }
-        if ((tries || 0) > 100) return;
+        // A page opened in a background tab does not draw, and its style stays
+        // unfinished for as long as it is hidden: after a while stop polling and
+        // wait for the map to come to rest instead of giving up.
+        if ((tries || 0) > 100) { map.once('idle', () => whenStyleReady(fn, 0)); return; }
         setTimeout(() => whenStyleReady(fn, (tries || 0) + 1), 120);
     }
 
@@ -1370,10 +1497,29 @@ document.addEventListener('DOMContentLoaded', function() {
         r.addEventListener('change', e => {
             const v = e.target.value;
             setVis('graytone', v === 'graytone');
-            setVis('satellite', v === 'satellite');
+            // Relief: the shaded terrain carries the picture, and the photograph lies
+            // over it in black and white, faint, so the colours of the change read.
+            ['relief-ground', 'relief-shade', 'relief'].forEach(id => setVis(id, v === 'relief'));
+            setVis('satellite', v === 'satellite' || v === 'relief');
+            map.setPaintProperty('satellite', 'raster-saturation', v === 'relief' ? -1 : 0);
+            map.setPaintProperty('satellite', 'raster-opacity', v === 'relief' ? photoOpacity / 100 : 1);
             setVis('bym', v === 'bym');
         });
     });
+    let photoOpacity = 30;      // the photograph over the relief, set from the terrain panel
+    // The terrain tab brings the relief with it, and gives the earlier background back.
+    let baseBeforeRelief = null;
+    function setBase(v) {
+        const r = document.querySelector('input[name="basemap"][value="' + v + '"]');
+        if (!r || r.checked) return;
+        r.checked = true;
+        whenStyle(() => r.dispatchEvent(new Event('change')));
+    }
+    function reliefForTab(tab) {
+        const now = (document.querySelector('input[name="basemap"]:checked') || {}).value;
+        if (tab === 'dod') { if (now !== 'relief') { baseBeforeRelief = now; setBase('relief'); } }
+        else if (baseBeforeRelief) { if (now === 'relief') setBase(baseBeforeRelief); baseBeforeRelief = null; }
+    }
 
     // Historical imagery
     const timelineSlider = $('timeline-slider');
@@ -1688,14 +1834,20 @@ document.addEventListener('DOMContentLoaded', function() {
         goto: { en: "Go to", no: "Gå til" },
         hidden: { en: "hidden by a filter", no: "skjult av et filter" },
         dh: { en: "Mean change", no: "Snittendring" },
-        pl0: { en: "no plan on record", no: "ingen plan registrert" },
-        pl1: { en: "plan in force during 2007–2020", no: "plan gjeldende i 2007–2020" },
-        pl2: { en: "plan adopted after 2020", no: "plan vedtatt etter 2020" },
-        pl3: { en: "plan of unknown date", no: "plan med ukjent dato" },
+        pl0: { en: "no reguleringsplan", no: "ingen reguleringsplan" },
+        shallow: { en: "small and under 1 m on average: barely over the threshold, may be survey noise",
+                   no: "liten og under 1 m i snitt: så vidt over terskelen, kan være målestøy" },
+        forest: { en: "small and under forest: the two surveys see the ground differently through trees, may be the survey and not the ground",
+                  no: "liten og under skog: de to målingene ser bakken ulikt gjennom trærne, kan være målingen og ikke bakken" },
+        steep: { en: "small and on steep ground: may be an offset between the two surveys, not digging",
+                 no: "liten og i bratt terreng: kan være forskyvning mellom de to målingene, ikke graving" },
+        pl1: { en: "reguleringsplan in force during {y}", no: "reguleringsplan gjeldende i {y}" },
+        pl2: { en: "reguleringsplan in force only after {y}", no: "reguleringsplan gjeldende først etter {y}" },
+        pl3: { en: "reguleringsplan of unknown date", no: "reguleringsplan med ukjent dato" },
         slide: { en: "Gjerdrum quick-clay slide, 30 Dec 2020. Mass moved downslope, not dug or dumped.",
                  no: "Kvikkleireskredet i Gjerdrum, 30. des. 2020. Masse flyttet nedover, ikke gravd eller fylt." },
         deposit: { en: "Deposit", no: "Deponert" },
-        excav: { en: "Excavation", no: "Utgravd" },
+        excav: { en: "Excavation / erosion", no: "Utgravd / erodert" },
         records: { en: "records", no: "poster" },
         aerialshort: { en: "aerial", no: "flyfoto" },
         dtm1: { en: "1 m LiDAR (this run)", no: "1 m LiDAR (denne kjøringen)" },
@@ -1726,6 +1878,22 @@ document.addEventListener('DOMContentLoaded', function() {
         proj: { en: "CONSTRUCTION PROJECT", no: "BYGGEPROSJEKT" },
         changes: { en: "changes", no: "endringer" },
         zoomto: { en: "zoom to", no: "zoom til" },
+        dod_on: { en: "Terrain change on the map", no: "Terrengendring på kartet" },
+        dod_area: { en: "studied area", no: "undersøkt område" },
+        dod_areas: { en: "studied areas", no: "undersøkte områder" },
+        dod_nochange: { en: "No change over the threshold here.", no: "Ingen endring over terskelen her." },
+        t_small: { en: "A smaller group, not in the table", no: "En mindre gruppe, ikke i tabellen" },
+        tg_this: { en: "The change you clicked", no: "Endringen du klikket på" },
+        tg_area: { en: "area", no: "areal" },
+        tg_close: { en: "Let go of this cluster (Esc)", no: "Slipp denne klyngen (Esc)" },
+        ct_wait: { en: "loading", no: "laster" },
+        ct_fail: { en: "failed", no: "feilet" },
+        tb_beside: { en: "beside", no: "ved siden av" },
+        t_plans: { en: "reguleringsplaner", no: "reguleringsplaner" },
+        analysed: { en: "analysed", no: "analysert" },
+        ofkom: { en: "of the kommune", no: "av kommunen" },
+        draft: { en: "in review", no: "til gjennomgang" },
+        plna: { en: "reguleringsplan not checked yet", no: "reguleringsplan ikke kontrollert ennå" },
         opacity: { en: "opacity", no: "dekkevne" },
         nofp: { en: "no footprint yet", no: "uten omriss ennå" },
         fpfirm: { en: "sites with worked ground traced", no: "anlegg med tolket driftsområde" },
@@ -1739,6 +1907,51 @@ document.addEventListener('DOMContentLoaded', function() {
         th_cap: { en: "CAPACITY", no: "KAPASITET" }, th_plan: { en: "PERMIT", no: "TILLATELSE" },
         th_st: { en: "STATUS", no: "STATUS" },
         flows: { en: "MASS FLOWS", no: "MASSESTRØMMER" },
+        terrain_t: { en: "TERRAIN CHANGE · LARGEST CLUSTERS", no: "TERRENGENDRING · STØRSTE KLYNGER" },
+        th_ttype: { en: "TYPOLOGY", no: "TYPOLOGI" },
+        ty_mining: { en: "mining and quarrying (montanogenic)", no: "uttak av stein og masser (montanogen)" },
+        ty_spoil: { en: "waste and spoil deposit (industrogenic)", no: "deponi og massemottak (industrogen)" },
+        ty_industry: { en: "industry and commerce (industrogenic)", no: "industri og næring (industrogen)" },
+        ty_urban: { en: "settlement (urbanogenic)", no: "bebyggelse (urbanogen)" },
+        ty_traffic: { en: "transport infrastructure (traffic)", no: "samferdsel (trafikk)" },
+        ty_water: { en: "water management", no: "vannforvaltning" },
+        ty_agro: { en: "agriculture (agrogenic)", no: "landbruk (agrogen)" },
+        ty_sport: { en: "tourism and sports", no: "idrett og friluftsliv" },
+        ty_slide: { en: "landslide, not an intervention", no: "skred, ikke et inngrep" },
+        ty_forest: { en: "forest ground, cause not established", no: "skogsmark, årsak ikke fastslått" },
+        ty_other: { en: "not classified", no: "ikke klassifisert" },
+        fm_acc: { en: "accumulation", no: "oppfylling" },
+        fm_exc: { en: "excavation", no: "uttak" },
+        fm_cf: { en: "cut and fill", no: "skjæring og fylling" },
+        th_tsite: { en: "NEAREST PLACE NAME", no: "NÆRMESTE STEDSNAVN" },
+        th_tkom: { en: "KOMMUNE", no: "KOMMUNE" },
+        th_twhat: { en: "PROBABLE ORIGIN", no: "SANNSYNLIG OPPHAV" },
+        th_tdep: { en: "DEPOSIT ≈ m³", no: "DEPONERT ≈ m³" },
+        th_texc: { en: "EXCAVATION / EROSION ≈ m³", no: "UTGRAVD / ERODERT ≈ m³" },
+        th_tmoved: { en: "MOVED ≈ m³", no: "FLYTTET ≈ m³" },
+        th_tha: { en: "CHANGED ≈ ha", no: "ENDRET ≈ ha" },
+        th_tplan: { en: "REGULERINGSPLAN", no: "REGULERINGSPLAN" },
+        th_tyears: { en: "YEARS", no: "ÅR" },
+        th_tid: { en: "ID", no: "ID" },
+        t_noname: { en: "no name on the map", no: "uten navn på kartet" },
+        tb_fac: { en: "facility in the database", no: "anlegg i databasen" },
+        tb_proj: { en: "construction project in the database", no: "byggeprosjekt i databasen" },
+        tb_plan: { en: "name of the reguleringsplan", no: "navn på reguleringsplanen" },
+        tb_cover: { en: "land cover on the map (N50)", no: "arealdekke på kartet (N50)" },
+        cv_quarry: { en: "quarry or pit", no: "steinbrudd eller massetak" },
+        cv_ind: { en: "industrial ground", no: "industriområde" },
+        cv_built: { en: "built-up ground", no: "bebygd område" },
+        cv_farm: { en: "farmland", no: "dyrket mark" },
+        cv_forest: { en: "forest", no: "skog" },
+        cv_open: { en: "open ground", no: "åpent område" },
+        cv_bog: { en: "bog", no: "myr" },
+        cv_golf: { en: "golf course", no: "golfbane" },
+        cv_ski: { en: "ski slope", no: "alpinbakke" },
+        cv_sport: { en: "sports ground", no: "idrettsplass" },
+        cv_air: { en: "airport", no: "lufthavn" },
+        cv_other: { en: "not classified on the map", no: "ikke klassifisert på kartet" },
+        key_terrain: { en: "A cluster is the change polygons that lie within 50 m of each other under the same reguleringsplan, or all under none. NEAREST PLACE NAME only says where it is. Every figure is approximate: two laser surveys, a 0.70 m threshold. TYPOLOGY follows Szabó, Dávid and Lóczy (2010) and, like PROBABLE ORIGIN, is read from the database, the reguleringsplan and the map: a lead, not a finding. No reguleringsplan means none in force in the national plan register today.",
+                       no: "En klynge er endringspolygonene som ligger innen 50 m fra hverandre under samme reguleringsplan, eller alle uten. NÆRMESTE STEDSNAVN sier bare hvor den ligger. Alle tall er omtrentlige: to laserskanninger, terskel 0,70 m. TYPOLOGI følger Szabó, Dávid og Lóczy (2010) og er, som SANNSYNLIG OPPHAV, lest ut av databasen, reguleringsplanen og kartet: et spor, ikke et funn. Ingen reguleringsplan betyr at ingen er gjeldende i det nasjonale planregisteret i dag." },
         th_flow: { en: "FLOW", no: "STRØM" },
         th_from: { en: "FROM", no: "FRA" },
         th_to: { en: "TO", no: "TIL" },
@@ -2003,9 +2216,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function applyView(h) {
         if (h.l) {
             const l = h.l.split(',');
-            const radio = l.find(x => x === 'graytone' || x === 'bym');
-            if (radio) { const r = $('base-' + (radio === 'graytone' ? 'gray' : 'bym')); r.checked = true; r.dispatchEvent(new Event('change')); }
-            if (l.includes('dod') && !$('filter-dod').checked) { $('filter-dod').checked = true; toggleDod(true, true); }
+            const radio = l.find(x => x === 'graytone' || x === 'bym' || x === 'relief');
+            if (radio) { const r = $('base-' + (radio === 'graytone' ? 'gray' : radio)); r.checked = true; r.dispatchEvent(new Event('change')); }
+            // Older links name single runs (dod-<id>); every run is drawn together now.
+            if (l.some(x => x === 'dod' || x.indexOf('dod-') === 0) && !dodOn()) {
+                try { if (currentTab !== 'dod' && currentTab !== 'all') selectTab('all', true); } catch (err) {}
+                toggleDod(true, true);
+            }
             ['old', 'current', 'future'].forEach(k => {
                 if (l.includes('plan-' + k)) { const b = $('filter-plan-' + k); b.checked = true; b.dispatchEvent(new Event('change')); }
             });
@@ -2032,115 +2249,390 @@ document.addEventListener('DOMContentLoaded', function() {
     // One run exists today. The list is written so the next kommune is one
     // more entry, not more code.
     // ─────────────────────────────────────────────────────────────────────
+    // A run marked draft is computed but not yet reviewed. It stays off the
+    // public map and shows only when the address carries ?review, which is how
+    // a new kommune is looked at before it is published.
+    const DOD_REVIEW = new URLSearchParams(window.location.search).has('review');
     const DOD_RUNS = [
-        { id: 'gjerdrum_2007_2020', kommune: 'Gjerdrum', years: '2007–2020',
+        { id: 'gjerdrum_2007_2020', kommune: 'Gjerdrum', years: '2007–2020', old: 'Romerike 07pkt 2007',
           tiles: 'data/dod/gjerdrum_2007_2020/{z}/{x}/{y}.png',
           geojson: 'data/dod_gjerdrum_2007_2020.geojson',
-          bounds: [10.95226, 60.02233, 11.13133, 60.13268], count: 1320, ha: 127.6,
-          src: 'DoDetector, DTM1' }
-    ];
+          bounds: [10.95226, 60.02233, 11.13133, 60.13268], count: 1121, ha: 122.3,
+          area: 5508.6, land: 8315.0, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'asker_2010_2020', kommune: 'Asker', years: '2010–2020', old: 'Asker 2010', tiles: 'data/dod/asker_2010_2020/{z}/{x}/{y}.png', geojson: 'data/dod_asker_2010_2020.geojson', bounds: [10.32647, 59.77039, 10.56176, 59.88694], count: 3259, ha: 170.6, area: 9814.5, land: 37637.0, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'as_2014_2020', kommune: 'Ås', years: '2014–2020', old: 'Follo 2014', tiles: 'data/dod/as_2014_2020/{z}/{x}/{y}.png', geojson: 'data/dod_as_2014_2020.geojson', bounds: [10.67213, 59.59129, 10.89369, 59.76697], count: 1314, ha: 135.7, area: 10257.1, land: 10262.4, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'baerum_2013_2020', kommune: 'Bærum', years: '2013–2020', old: 'Bærum 2013', tiles: 'data/dod/baerum_2013_2020/{z}/{x}/{y}.png', geojson: 'data/dod_baerum_2013_2020.geojson', bounds: [10.4788, 59.84756, 10.65003, 59.96631], count: 1945, ha: 143.8, area: 4104.1, land: 19216.5, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'eidsvoll_2007_2020', kommune: 'Eidsvoll', years: '2007–2020', old: 'Eidsvoll 2007', tiles: 'data/dod/eidsvoll_2007_2020/{z}/{x}/{y}.png', geojson: 'data/dod_eidsvoll_2007_2020.geojson', bounds: [11.07019, 60.22503, 11.42376, 60.59796], count: 6690, ha: 611.2, area: 40509.3, land: 45630.1, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'frogn_2014_2020', kommune: 'Frogn', years: '2014–2020', old: 'Follo 2014', tiles: 'data/dod/frogn_2014_2020/{z}/{x}/{y}.png', geojson: 'data/dod_frogn_2014_2020.geojson', bounds: [10.54606, 59.61168, 10.75313, 59.77803], count: 857, ha: 46.3, area: 8532.9, land: 8564.8, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'hurdal_2007_2020', kommune: 'Hurdal', years: '2007–2020', old: 'Hurdal 2007', tiles: 'data/dod/hurdal_2007_2020/{z}/{x}/{y}.png', geojson: 'data/dod_hurdal_2007_2020.geojson', bounds: [10.69045, 60.33138, 11.14127, 60.52518], count: 962, ha: 41.0, area: 27420.0, land: 28480.7, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'lillestrom_2007_2020', kommune: 'Lillestrøm', years: '2007–2020', old: 'Romerike 07pkt 2007', tiles: 'data/dod/lillestrom_2007_2020/{z}/{x}/{y}.png', geojson: 'data/dod_lillestrom_2007_2020.geojson', bounds: [11.03611, 59.87504, 11.44135, 60.07821], count: 5978, ha: 423.9, area: 27087.6, land: 45640.9, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'lorenskog_2008_2020', kommune: 'Lørenskog', years: '2008–2020', old: 'Lørenskog 2008', tiles: 'data/dod/lorenskog_2008_2020/{z}/{x}/{y}.png', geojson: 'data/dod_lorenskog_2008_2020.geojson', bounds: [10.94995, 59.90494, 10.99633, 59.95135], count: 403, ha: 39.7, area: 695.6, land: 7051.1, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'nannestad_2007_2020', kommune: 'Nannestad', years: '2007–2020', old: 'Nannestad 2007', tiles: 'data/dod/nannestad_2007_2020/{z}/{x}/{y}.png', geojson: 'data/dod_nannestad_2007_2020.geojson', bounds: [10.82456, 60.23313, 11.13112, 60.34766], count: 703, ha: 52.2, area: 12791.1, land: 34081.1, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'nesodden_2014_2020', kommune: 'Nesodden', years: '2014–2020', old: 'Follo 2014', tiles: 'data/dod/nesodden_2014_2020/{z}/{x}/{y}.png', geojson: 'data/dod_nesodden_2014_2020.geojson', bounds: [10.57828, 59.72114, 10.73425, 59.87588], count: 854, ha: 47.8, area: 6140.0, land: 6142.5, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'nes_2010_2020', kommune: 'Nes', years: '2010–2020', old: 'Ullensaker Nes Nannestad 2010', tiles: 'data/dod/nes_2010_2020/{z}/{x}/{y}.png', geojson: 'data/dod_nes_2010_2020.geojson', bounds: [11.25257, 59.98747, 11.82469, 60.35354], count: 6236, ha: 326.9, area: 63866.5, land: 64055.7, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'nittedal_2013_2020', kommune: 'Nittedal', years: '2013–2020', old: 'Romeriksåsene 2013', tiles: 'data/dod/nittedal_2013_2020/{z}/{x}/{y}.png', geojson: 'data/dod_nittedal_2013_2020.geojson', bounds: [10.76524, 59.97239, 10.95458, 60.18896], count: 918, ha: 61.8, area: 6646.4, land: 18612.6, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'nordre_follo_2008_2020', kommune: 'Nordre Follo', years: '2008–2020', old: 'Follo 2008', tiles: 'data/dod/nordre_follo_2008_2020/{z}/{x}/{y}.png', geojson: 'data/dod_nordre_follo_2008_2020.geojson', bounds: [10.72645, 59.61771, 10.99394, 59.83262], count: 3729, ha: 334.6, area: 20271.2, land: 20289.0, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'raelingen_2013_2020', kommune: 'Rælingen', years: '2013–2020', old: 'Romerike 2013', tiles: 'data/dod/raelingen_2013_2020/{z}/{x}/{y}.png', geojson: 'data/dod_raelingen_2013_2020.geojson', bounds: [11.00883, 59.82621, 11.15586, 59.95582], count: 974, ha: 93.5, area: 6787.6, land: 7164.8, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'drammen_2015_2025', kommune: 'Drammen', years: '2015–2025', old: 'Drammen Eiker 2015', tiles: 'data/dod/drammen_2015_2025/{z}/{x}/{y}.png', geojson: 'data/dod_drammen_2015_2025.geojson', bounds: [9.94124, 59.63963, 10.32473, 59.86045], count: 2335, ha: 155.5, area: 25819.6, land: 31739.3, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'hole_2007_2025', kommune: 'Hole', years: '2007–2025', old: 'Ringerike Hole 2007', tiles: 'data/dod/hole_2007_2025/{z}/{x}/{y}.png', geojson: 'data/dod_hole_2007_2025.geojson', bounds: [10.1639, 59.9705, 10.35337, 60.12754], count: 2016, ha: 124.3, area: 7429.9, land: 19255.5, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'jevnaker_2015_2020', kommune: 'Jevnaker', years: '2015–2020', old: 'Hadeland 2015', tiles: 'data/dod/jevnaker_2015_2020/{z}/{x}/{y}.png', geojson: 'data/dod_jevnaker_2015_2020.geojson', bounds: [10.19231, 60.1638, 10.57887, 60.40132], count: 798, ha: 104.2, area: 5777.5, land: 22556.7, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'marker_2009_2020', kommune: 'Marker', years: '2009–2020', old: 'Eidsberg Marker 2009', tiles: 'data/dod/marker_2009_2020/{z}/{x}/{y}.png', geojson: 'data/dod_marker_2009_2020.geojson', bounds: [11.49027, 59.30337, 11.82346, 59.67817], count: 4416, ha: 138.1, area: 41002.1, land: 41279.9, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'moss_2007_2020', kommune: 'Moss', years: '2007–2020', old: 'Moss 2007', tiles: 'data/dod/moss_2007_2020/{z}/{x}/{y}.png', geojson: 'data/dod_moss_2007_2020.geojson', bounds: [10.58493, 59.40664, 10.78828, 59.51697], count: 1535, ha: 158.3, area: 6284.9, land: 13768.6, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'rade_2011_2020', kommune: 'Råde', years: '2011–2020', old: 'Østfold Sør 1pkt 2011', tiles: 'data/dod/rade_2011_2020/{z}/{x}/{y}.png', geojson: 'data/dod_rade_2011_2020.geojson', bounds: [10.65582, 59.27575, 10.9799, 59.41163], count: 1123, ha: 71.6, area: 11769.2, land: 11870.4, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'rakkestad_2015_2020', kommune: 'Rakkestad', years: '2015–2020', old: 'NDH Østfold 2pkt 2015', tiles: 'data/dod/rakkestad_2015_2020/{z}/{x}/{y}.png', geojson: 'data/dod_rakkestad_2015_2020.geojson', bounds: [11.18619, 59.2354, 11.59941, 59.48532], count: 1483, ha: 71.0, area: 43463.6, land: 43472.6, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'sarpsborg_2012_2020', kommune: 'Sarpsborg', years: '2012–2020', old: 'Østfold Syd Sarpsborg 2012', tiles: 'data/dod/sarpsborg_2012_2020/{z}/{x}/{y}.png', geojson: 'data/dod_sarpsborg_2012_2020.geojson', bounds: [10.94579, 59.10895, 11.34823, 59.41823], count: 2947, ha: 190.9, area: 40304.1, land: 40542.9, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'skiptvet_2015_2020', kommune: 'Skiptvet', years: '2015–2020', old: 'NDH Østfold 2pkt 2015', tiles: 'data/dod/skiptvet_2015_2020/{z}/{x}/{y}.png', geojson: 'data/dod_skiptvet_2015_2020.geojson', bounds: [11.05518, 59.39188, 11.24288, 59.55025], count: 413, ha: 25.1, area: 10112.4, land: 10116.0, plan: true, src: 'DoDetector, DTM1' }
+        /*NEXT_RUN*/
+    ].filter(r => !r.draft || DOD_REVIEW);
+    // The ground each run was computed for: where both surveys have data,
+    // inside the kommune. Outside the outline nothing was measured.
+    const DOD_FOOTPRINTS = 'data/dod_footprints.geojson';
+    // The far view: the layer drawn for each zoom out, every change kept at one pixel
+    // or more (tools/make_dod_far.py). And the lines of the layer, the edge of every
+    // change and the contours of the change, as vector tiles (tools/make_dod_lines.py).
+    const DOD_FAR = 'data/dod_far/{z}/{x}/{y}.png';
+    const DOD_LINES = 'data/dod_lines.pmtiles';
     const RUN = DOD_RUNS[0];
-    const DOD_TILES = RUN.tiles, DOD_GEOJSON = RUN.geojson, DOD_BOUNDS = RUN.bounds;
+    // The first run keeps the plain ids, so links and tests written for it hold.
+    const dodLayer = r => r === RUN ? 'dod' : 'dod-' + r.id;
+    const dodHit = r => r === RUN ? 'dod-hit' : 'dod-hit-' + r.id;
+    const DOD_SEL = ['dodsel-line', 'dodsel-edge'];
+    const dodOld = r => 'dodold-' + r.id;
+    const DOD_IDS = () => [].concat(DOD_RUNS.map(dodLayer), ['dodfar', 'dodfp-fill', 'dodfp-line'], DOD_RUNS.map(dodHit), DOD_SEL);
+    const dodState = {};
+    // One switch draws every run: the kommune is how the surveys were delivered,
+    // not what the reader is looking for.
+    let dodWanted = false, dodOpacity = 90, dodBuilt = false, terrainTag = null;
+    const dodOn = () => dodWanted;
+    // Terrain change is one of the families of the table, and is drawn with its
+    // own tab or with ALL.
+    const dodShown = () => { try { return dodWanted && (currentTab === 'dod' || currentTab === 'all'); } catch (e) { return false; } };
+    const TURBO = ['#30123b', '#4145ab', '#4675ed', '#39a2fc', '#1bcfd4', '#24eca6', '#61fc6c', '#a4fc3b', '#d1e935', '#f3c63a', '#fe9b2d', '#f36315', '#d93806', '#b11901', '#7a0403'];
+    const dodShapes = {};
+    const runShapes = run => dodShapes[run.id] || (dodShapes[run.id] = fetch(run.geojson).then(x => x.json()));
 
     function renderRuns() {
         const box = $('run-list');
-        const was = $('filter-dod') ? $('filter-dod').checked : false;
-        box.innerHTML = '';
-        DOD_RUNS.forEach((r, i) => {
-            const on = i === 0 ? was : false;
-            const wrap = document.createElement('div');
-            wrap.innerHTML = `<label class="row${on ? ' sel' : ''}" for="${i === 0 ? 'filter-dod' : 'run-' + r.id}">
-                <span class="nm"><b>${esc(r.kommune)} ${esc(r.years)}</b>
-                <span class="src">${fmt(r.count)} ${t('changes')} · ${String(r.ha).replace('.', currentLang === 'no' ? ',' : '.')} ha · ${esc(r.src)}</span></span>
-                <button type="button" class="linkbtn" data-zoom="${i}">${t('zoomto')}</button>
-                <input type="checkbox" id="${i === 0 ? 'filter-dod' : 'run-' + r.id}"${on ? ' checked' : ''}></label>
-                <div class="run-extra" id="dod-opacity-wrap"${on ? '' : ' hidden'}>
-                    <div class="lrow"><span>${t('opacity')}</span>
-                    <input type="range" class="slider" id="dod-opacity" min="15" max="100" value="${dodOpacity}" aria-label="Terrain change opacity">
-                    <span class="val" id="dod-opacity-val">${dodOpacity}%</span></div>
-                </div>`;
-            box.appendChild(wrap);
-        });
-        const cb = $('filter-dod');
-        cb.addEventListener('change', e => toggleDod(e.target.checked));
-        $('dod-opacity').addEventListener('input', e => {
-            dodOpacity = +e.target.value;
-            $('dod-opacity-val').textContent = dodOpacity + '%';
-            if (dodTiles) map.setPaintProperty('dod', 'raster-opacity', dodOpacity / 100);
-        });
-        box.querySelectorAll('[data-zoom]').forEach(b => b.onclick = e => {
-            e.preventDefault(); e.stopPropagation();
-            const r = DOD_RUNS[+b.dataset.zoom];
-            map.fitBounds(r.bounds, { padding: visiblePadding(), duration: dur(1100),
-                                      bearing: map.getBearing(), pitch: map.getPitch() });
-        });
+        const n = DOD_RUNS.reduce((a, r) => a + (r.count || 0), 0);
+        const drafts = DOD_RUNS.filter(r => r.draft).length;
+        box.innerHTML = `<label class="row${dodWanted ? ' sel' : ''}" for="filter-dod">
+                <span class="nm"><b>${t('dod_on')}</b>
+                <span class="src">${DOD_RUNS.length} ${t(DOD_RUNS.length === 1 ? 'dod_area' : 'dod_areas')} · ${fmt(n)} ${t('changes')}${drafts ? ' · ' + drafts + ' ' + t('draft') : ''}</span></span>
+                <input type="checkbox" id="filter-dod"${dodWanted ? ' checked' : ''}></label>`;
+        $('filter-dod').addEventListener('change', e => toggleDod(e.target.checked));
     }
-    let dodOpacity = 90;
 
-    function dodPopupHTML(p) {
-        const n = v => Number.isFinite(+v) ? Math.round(Math.abs(+v)).toLocaleString('en-US').replace(/,/g, ' ') : '?';
+    function dodPopupHTML(p, r) {
         if (p.ls) {
             return `<span class="popup-title">${t('slide')}</span>` +
-                   `<span class="popup-type">${n(p.a)} m² · ${+p.v > 0 ? '+' : '−'}${n(p.v)} m³</span>`;
+                   `<span class="popup-type">≈ ${approx(p.a)} m² · ≈ ${+p.v > 0 ? '+' : '−'}${approx(p.v)} m³</span>`;
         }
         const kind = +p.v > 0 ? t('deposit') : t('excav');
         const pl = +p.pl || 0;
-        const plan = pl ? `${t('pl' + pl)}: ${esc(p.pn || '')}${p.pd ? ' (' + esc(p.pd) + ')' : ''}` : t('pl0');
+        const yrs = (r || RUN).years;      // each run is judged against its own window
+        // A run with no plan check says so. "No plan on record" is a finding,
+        // and only a run that was checked has earned it.
+        const plan = r && r.plan === false ? t('plna')
+                   : pl ? `${t('pl' + pl).replace('{y}', pl === 1 ? yrs : yrs.split('–').pop())}: ${esc(p.pn || '')}${p.pd ? ' (' + esc(p.pd) + ')' : ''}` : `<b>${t('pl0')}</b>`;
         return `<span class="popup-title">${kind}</span>` +
-               `<span class="popup-type">${n(p.a)} m² · ${n(p.v)} m³ · ${t('dh')} ${esc(p.dh)} m</span>` +
-               `<span class="popup-loc">${plan}</span>`;
+               `<span class="popup-type">≈ ${approx(p.a)} m² · ≈ ${+p.v > 0 ? '+' : '−'}${approx(p.v)} m³ · ${t('dh')} ${+p.v > 0 ? '+' : '−'}${esc(Math.abs(+p.dh))} m</span>` +
+               `<span class="popup-loc">${plan}</span>` +
+               (p.sl ? `<span class="popup-loc">${t('steep')}</span>` : '') +
+               (p.sh ? `<span class="popup-loc">${t('shallow')}</span>` : '') +
+               (p.fo ? `<span class="popup-loc">${t('forest')}</span>` : '');
     }
 
-    function toggleDod(on, quiet) {
-        const wrap = $('dod-opacity-wrap');
-        const lbl = document.querySelector('label[for="filter-dod"]');
-        if (lbl) lbl.classList.toggle('sel', on);
-        if (!on) {
-            setVis('dod', false);
-            setVis('dod-hit', false);
-            if (wrap) wrap.hidden = true;
-            return;
-        }
-        if (wrap) wrap.hidden = false;
-        const fly = () => { if (!quiet) map.fitBounds(DOD_BOUNDS, { padding: visiblePadding(), duration: dur(1100),
-                                                                     bearing: map.getBearing(), pitch: map.getPitch() }); };
-        if (dodTiles) { setVis('dod', true); if (dodShapes) setVis('dod-hit', true); fly(); return; }
-        if (dodLoading) return;
-        dodLoading = true;
-        updateStatus(t('loading'));
-        whenStyleReady(() => {
-            map.addSource('dod', {
-                type: 'raster', tiles: [DOD_TILES], tileSize: 256,
-                minzoom: 11, maxzoom: 16, bounds: DOD_BOUNDS,
-                attribution: 'DoD: Kartverket DTM1 2007/2020 · LUB'
-            });
-            map.addLayer({ id: 'dod', type: 'raster', source: 'dod',
-                paint: { 'raster-opacity': dodOpacity / 100, 'raster-fade-duration': dur(250) } }, under(SITE_LAYERS));
-            dodTiles = true;
-            fly();
-            fetch(DOD_GEOJSON).then(r => r.json()).then(gj => {
-                map.addSource('dod-hit', { type: 'geojson', data: gj });
-                map.addLayer({ id: 'dod-hit', type: 'fill', source: 'dod-hit',
-                    paint: { 'fill-color': '#fff', 'fill-opacity': 0.01 } }, under(SITE_LAYERS));
-                map.on('click', 'dod-hit', e => {
-                    if (toolBusy() || !e.features || !e.features.length) return;
-                    if (map.queryRenderedFeatures(e.point, { layers: SITE_LAYERS.filter(id => map.getLayer(id)) }).length) return;
-                    e.originalEvent.__handled = true;
-                    new maplibregl.Popup({ closeButton: false, maxWidth: '280px' })
-                        .setLngLat(e.lngLat).setHTML(dodPopupHTML(e.features[0].properties)).addTo(map);
-                });
-                map.on('mouseenter', 'dod-hit', () => { if (!toolBusy()) map.getCanvas().style.cursor = 'pointer'; });
-                map.on('mouseleave', 'dod-hit', () => { if (!toolBusy()) map.getCanvas().style.cursor = ''; });
-                dodShapes = true;
-                dodLoading = false;
-                setVis('dod-hit', $('filter-dod').checked);
-                updateStatus();
-            }).catch(err => {
-                console.error('DoD polygons failed:', err);
-                dodLoading = false;
-                updateStatus();
-            });
+    // Everything the terrain layer is made of, added once and in its order:
+    // the change rasters, the marks for far zooms, the studied ground, and the
+    // line that marks a chosen cluster. The click targets of a run come later,
+    // when the map is over it.
+    function buildDod() {
+        if (dodBuilt) return;
+        dodBuilt = true;
+        const before = under(SITE_LAYERS);
+        const empty = { type: 'FeatureCollection', features: [] };
+        // Far out a change is smaller than a pixel and the 1 m picture has nothing to
+        // show. The far view is the same layer drawn for each zoom, every change kept at
+        // one pixel or more, raised and lowered ground in two colours; it gives way to
+        // the 1 m picture on the way in. No symbol stands for a change.
+        const all = DOD_RUNS.reduce((b, r) => [Math.min(b[0], r.bounds[0]), Math.min(b[1], r.bounds[1]),
+                                               Math.max(b[2], r.bounds[2]), Math.max(b[3], r.bounds[3])], [180, 90, -180, -90]);
+        map.addSource('dodfar', { type: 'raster', tiles: [DOD_FAR], tileSize: 256, minzoom: 6, maxzoom: 12, bounds: all,
+                                  attribution: 'DoD: Kartverket DTM1 · LUB' });
+        map.addLayer({ id: 'dodfar', type: 'raster', source: 'dodfar', maxzoom: 12.6,
+            paint: { 'raster-opacity': farOpacity(), 'raster-resampling': 'nearest', 'raster-fade-duration': 0 } }, before);
+        map.addSource('dodfp', { type: 'geojson', data: empty });
+        map.addLayer({ id: 'dodfp-fill', type: 'fill', source: 'dodfp', paint: { 'fill-color': '#fff', 'fill-opacity': 0 } }, before);
+        // The studied ground: white only, a heavy line in short dashes, so it reads as
+        // the edge of the study and not as a feature of the ground.
+        map.addLayer({ id: 'dodfp-line', type: 'line', source: 'dodfp',
+            paint: { 'line-color': '#fff', 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 1.6, 10, 2.4, 14, 3],
+                     'line-dasharray': [1.4, 1.2] } }, before);
+        map.addSource('dodsel', { type: 'geojson', data: empty });
+        // A chosen cluster: one hairline in one colour round its own polygons.
+        map.addLayer({ id: 'dodsel-line', type: 'line', source: 'dodsel',
+            paint: { 'line-color': '#000', 'line-width': 0.7 } }, before);
+        const ids = DOD_RUNS.map(r => r.id);
+        fetch(DOD_FOOTPRINTS).then(r => r.json()).then(gj => {
+            gj.features = gj.features.filter(f => ids.includes(f.properties.id) && f.properties.kind !== 'kommune');
+            map.getSource('dodfp').setData(gj);
+        }).catch(err => console.error('DoD footprints failed:', err));
+        buildDodLines();
+        // A click inside the studied ground, on no change: say which survey pair it is.
+        map.on('click', 'dodfp-fill', e => {
+            if (toolBusy() || e.originalEvent.__handled || !e.features || !e.features.length) return;
+            const over = SITE_LAYERS.concat(DOD_RUNS.map(dodHit)).filter(id => map.getLayer(id));
+            if (map.queryRenderedFeatures(e.point, { layers: over }).length) return;
+            const r = DOD_RUNS.find(x => x.id === e.features[0].properties.id);
+            if (!r) return;
+            e.originalEvent.__handled = true;
+            // From far away a click cannot land on a change of a few metres: it goes to
+            // the cluster whose ground it falls in, or nearer to where it was made.
+            if (map.getZoom() < 12) { goNearer(e.lngLat); return; }
+            new maplibregl.Popup({ closeButton: false, maxWidth: '280px' }).setLngLat(e.lngLat)
+                .setHTML(`<span class="popup-title">${esc(r.kommune)} ${esc(r.years)}${r.draft ? ' · ' + t('draft') : ''}</span>` +
+                         `<span class="popup-type">${r.area ? '≈ ' + approx(r.area) + ' ha ' + t('analysed') + (r.land ? ' (' + Math.min(100, Math.round(100 * r.area / r.land)) + ' % ' + t('ofkom') + ')' : '') + ' · ' : ''}${fmt(r.count)} ${t('changes')}</span>` +
+                         `<span class="popup-loc">${t('dod_nochange')}</span>`).addTo(map);
         });
+    }
+    // The change raster of a run, added when the map first comes over it: two dozen
+    // rasters at once are more than the far view needs, where the marks do the work.
+    function addDodRaster(r) {
+        if (map.getSource(dodLayer(r))) return;
+        map.addSource(dodLayer(r), {
+            type: 'raster', tiles: [r.tiles], tileSize: 256,
+            minzoom: 11, maxzoom: 16, bounds: r.bounds,
+            attribution: 'DoD: Kartverket DTM1 · LUB'
+        });
+        map.addLayer({ id: dodLayer(r), type: 'raster', source: dodLayer(r),
+            layout: { visibility: dodShown() ? 'visible' : 'none' },
+            paint: { 'raster-opacity': dodOpacity / 100, 'raster-fade-duration': dur(250) } }, 'dodfar');
+        // The older of the run's two surveys, shaded the same way by Kartverket's
+        // høydedata service, which keeps every laser project apart. It lies over the
+        // newer relief and under the photograph, and is drawn when the panel asks.
+        if (r.old) {
+            map.addSource(dodOld(r), {
+                type: 'raster', tileSize: 512, minzoom: 11, maxzoom: 17, bounds: r.bounds,
+                tiles: ['https://hoydedata.no/arcgis/rest/services/Prosjekt_DTM/ImageServer/exportImage?bbox={bbox-epsg-3857}'
+                        + '&bboxSR=3857&imageSR=3857&size=512,512&format=png32&transparent=true&f=image'
+                        + '&renderingRule=' + encodeURIComponent(JSON.stringify({ rasterFunction: 'skyggerelieff' }))
+                        + '&mosaicRule=' + encodeURIComponent(JSON.stringify({ mosaicMethod: 'esriMosaicNorthwest',
+                                                                               where: "LAS_PROJECT_NAME = '" + r.old + "'" }))],
+                attribution: 'Older terrain: Kartverket, ' + r.old
+            });
+            map.addLayer({ id: dodOld(r), type: 'raster', source: dodOld(r), minzoom: 11,
+                layout: { visibility: dodShown() && dodDtm === 'old' ? 'visible' : 'none' },
+                paint: { 'raster-contrast': 0.45, 'raster-fade-duration': dur(200) } }, 'satellite');
+        }
+    }
+    // Which survey the relief shows: the newer one (the background) or the older.
+    let dodDtm = 'new', dodZones = true, dodContours = false, contourState = 0, dodIso = true, dodLines = 0, selEdge = null;
+    const farOpacity = () => ['interpolate', ['linear'], ['zoom'], 11.5, dodOpacity / 100, 12.6, 0];
+    function syncDodExtras() {
+        const on = dodShown();
+        DOD_RUNS.forEach(r => setVis(dodOld(r), on && dodDtm === 'old'));
+        if (dodBuilt) ['dodfp-line'].forEach(id => setVis(id, on && dodZones));
+        ['dod-contours', 'dod-contours-far'].forEach(id => setVis(id, on && dodContours));
+        ['dod-iso', 'dod-edge'].forEach(id => setVis(id, on && dodIso));
+        if (on && dodContours && !contourState) buildContours();
+        const p = $('dod-panel');
+        if (p) p.hidden = !on;
+    }
+    const loadScripts = list => list.reduce((q, it) => q.then(() => window[it[0]] ? null : new Promise((res, rej) => {
+        const sc = document.createElement('script');
+        sc.src = it[1]; sc.onload = res; sc.onerror = () => rej(new Error('did not load: ' + it[1]));
+        document.head.appendChild(sc);
+    })), Promise.resolve());
+    // The edge of every change and the contours of the change, every metre, as vector
+    // tiles in one file read by byte range (pmtiles). The edge is the 0.70 m line of
+    // the difference between the surveys, so it runs where the colour ends. Without
+    // the file the map still works: a chosen cluster is outlined from its click targets.
+    const selEdgeFilter = () => selEdge ? ['all', ['==', ['get', 'o'], 1], ['==', ['get', 'r'], selEdge.run], ['==', ['get', 'c'], selEdge.c]]
+                                        : ['==', ['get', 'o'], -1];
+    function buildDodLines() {
+        if (dodLines) return;
+        dodLines = 1;
+        fetch(DOD_LINES, { method: 'HEAD' }).then(r => { if (!r.ok) throw new Error('no line tiles (' + r.status + ')'); })
+            .then(() => loadScripts([['pmtiles', 'https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js']]))
+            .then(() => {
+                maplibregl.addProtocol('pmtiles', new pmtiles.Protocol().tile);
+                whenStyleIn(() => {
+                    const lay = on => ({ visibility: on ? 'visible' : 'none' });
+                    map.addSource('dodlines', { type: 'vector', url: 'pmtiles://' + new URL(DOD_LINES, location.href).href });
+                    map.addLayer({ id: 'dod-iso', type: 'line', source: 'dodlines', 'source-layer': 'lines', minzoom: 14,
+                        filter: ['!=', ['get', 'o'], 1], layout: lay(dodShown() && dodIso),
+                        paint: { 'line-color': '#000', 'line-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0.35, 16, 0.6],
+                                 'line-width': ['case', ['==', ['get', 'm'], 1], 0.8, 0.35] } }, 'dodfp-fill');
+                    map.addLayer({ id: 'dod-edge', type: 'line', source: 'dodlines', 'source-layer': 'lines', minzoom: 13,
+                        filter: ['==', ['get', 'o'], 1], layout: lay(dodShown() && dodIso),
+                        paint: { 'line-color': '#000', 'line-opacity': 0.7, 'line-width': 0.35 } }, 'dodfp-fill');
+                    // A chosen cluster: the same edge, in one hairline a step heavier.
+                    map.addLayer({ id: 'dodsel-edge', type: 'line', source: 'dodlines', 'source-layer': 'lines',
+                        filter: selEdgeFilter(), layout: lay(dodShown()),
+                        paint: { 'line-color': '#000', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 0.45, 13, 0.9] } }, 'dodsel-line');
+                    map.setPaintProperty('dodsel-line', 'line-opacity', 0);
+                    dodLines = 2;
+                });
+            }).catch(err => { console.error('terrain lines:', err); dodLines = 0; });
+    }
+    // Terrain contours. From zoom 14 a line every metre, from Kartverket's national 1 m
+    // model (høydedata, NHM_DTM), read as the map moves and drawn in the browser
+    // (maplibre-contour); every 5 m at zoom 13; further out from the 10 m model.
+    // Nothing is stored, so the lines cover the studied ground and all that is round it.
+    const NHM = 'https://hoydedata.no/arcgis/rest/services/NHM_DTM_25833/ImageServer/exportImage';
+    const MERC = 20037508.342789244;
+    let nhmBusy = 0, nhmFail = 0;
+    const nhmWait = [];
+    const nhmNote = () => { const el = $('dod-ct-state'); if (el) el.textContent = nhmBusy + nhmWait.length ? t('ct_wait') : nhmFail > 3 ? t('ct_fail') : ''; };
+    function nhmTile(url, abort) {
+        const m = /(\d+)\/(\d+)\/(\d+)$/.exec(url), z = +m[1], x = +m[2], y = +m[3], w = 2 * MERC / Math.pow(2, z);
+        const bbox = [-MERC + x * w, MERC - (y + 1) * w, -MERC + (x + 1) * w, MERC - y * w].join(',');
+        const ask = () => fetch(NHM + '?bbox=' + bbox + '&bboxSR=3857&imageSR=3857&size=512,512&format=lerc&pixelType=F32'
+                                + '&interpolation=RSP_BilinearInterpolation&f=image', { signal: abort && abort.signal })
+            .then(r => { if (!r.ok) throw new Error('høydedata ' + r.status); return r.blob(); })
+            .then(b => { nhmFail = 0; return { data: b }; }, err => { if (err.name !== 'AbortError') nhmFail++; throw err; });
+        // The service drops requests when it is asked for many at once: four at a time.
+        return new Promise((res, rej) => {
+            const start = () => { nhmBusy++; nhmNote(); ask().then(res, rej).finally(() => { nhmBusy--; const nx = nhmWait.shift(); if (nx) nx(); nhmNote(); }); };
+            if (nhmBusy < 4) start(); else { nhmWait.push(start); nhmNote(); }
+        });
+    }
+    const nhmDecode = blob => blob.arrayBuffer().then(buf => {
+        const d = Lerc.decode(buf), px = d.pixels[0], mask = d.maskData || d.mask, out = new Float32Array(px.length);
+        for (let i = 0; i < px.length; i++) out[i] = (mask && !mask[i]) || !(px[i] > -500 && px[i] < 9000) ? NaN : px[i];
+        return { width: d.width, height: d.height, data: out };
+    });
+    function buildContours() {
+        contourState = 1;
+        loadScripts([['mlcontour', 'https://unpkg.com/maplibre-contour@0.1.1/dist/index.min.js'],
+                     ['Lerc', 'https://unpkg.com/lerc@3.0.0/LercDecode.js']]).then(() => {
+            const far = new mlcontour.DemSource({ id: 'dem-far', url: 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png',
+                                                  encoding: 'terrarium', maxzoom: 12, worker: true, cacheSize: 100, timeoutMs: 15000 });
+            far.setupMaplibre(maplibregl);
+            // Read and decoded here, not in the library's worker: the tiles are not pictures.
+            const near = new mlcontour.DemSource({ id: 'dem-nhm', url: 'nhm://{z}/{x}/{y}', encoding: 'terrarium', maxzoom: 15,
+                                                   worker: false, cacheSize: 80, timeoutMs: 40000 });
+            near.manager.getTile = nhmTile;
+            near.manager.decodeImage = nhmDecode;
+            near.setupMaplibre(maplibregl);
+            const opts = { multiplier: 1, elevationKey: 'ele', levelKey: 'level', contourLayer: 'contours' };
+            whenStyleIn(() => {
+                const lay = { visibility: dodShown() && dodContours ? 'visible' : 'none' };
+                map.addSource('dod-contours-far', { type: 'vector', maxzoom: 12,
+                    tiles: [far.contourProtocolUrl(Object.assign({ overzoom: 1, thresholds: { 9: [100, 500], 11: [50, 200], 12: [20, 100] } }, opts))] });
+                map.addLayer({ id: 'dod-contours-far', type: 'line', source: 'dod-contours-far', 'source-layer': 'contours', maxzoom: 13, layout: lay,
+                    paint: { 'line-color': '#fff', 'line-opacity': 0.85, 'line-width': ['match', ['get', 'level'], 1, 0.9, 0.35] } }, 'bym');
+                map.addSource('dod-contours', { type: 'vector', minzoom: 13, maxzoom: 15,
+                    tiles: [near.contourProtocolUrl(Object.assign({ overzoom: 0, thresholds: { 13: [5, 25], 14: [1, 5] } }, opts))] });
+                map.addLayer({ id: 'dod-contours', type: 'line', source: 'dod-contours', 'source-layer': 'contours', minzoom: 13, layout: lay,
+                    paint: { 'line-color': '#fff',
+                             'line-opacity': ['interpolate', ['linear'], ['zoom'], 14, ['match', ['get', 'level'], 1, 0.85, 0.4], 16, ['match', ['get', 'level'], 1, 0.9, 0.75]],
+                             'line-width': ['match', ['get', 'level'], 1, 0.9, 0.35] } }, 'bym');
+                contourState = 2;
+            });
+        }).catch(err => { console.error('contours failed:', err); contourState = 0; nhmFail = 9; nhmNote(); });
+    }
+    (function wireDodPanel() {
+        const panel = $('dod-panel');
+        $('dod-opacity').addEventListener('input', e => {
+            dodOpacity = +e.target.value;
+            $('dod-opacity-val').textContent = dodOpacity + '%';
+            DOD_RUNS.forEach(r => { if (map.getLayer(dodLayer(r))) map.setPaintProperty(dodLayer(r), 'raster-opacity', dodOpacity / 100); });
+            if (map.getLayer('dodfar')) map.setPaintProperty('dodfar', 'raster-opacity', farOpacity());
+        });
+        $('dod-photo').addEventListener('input', e => {
+            photoOpacity = +e.target.value;
+            $('dod-photo-val').textContent = photoOpacity + '%';
+            const base = (document.querySelector('input[name="basemap"]:checked') || {}).value;
+            if (base === 'relief') map.setPaintProperty('satellite', 'raster-opacity', photoOpacity / 100);
+        });
+        document.querySelectorAll('input[name="dod-dtm"]').forEach(r => r.addEventListener('change', e => { dodDtm = e.target.value; syncDodExtras(); }));
+        $('dod-contours').addEventListener('change', e => { dodContours = e.target.checked; syncDodExtras(); });
+        $('dod-iso').addEventListener('change', e => { dodIso = e.target.checked; syncDodExtras(); });
+        $('dod-zones').addEventListener('change', e => { dodZones = e.target.checked; syncDodExtras(); });
+        // The dark part of a slider's pill, up to its knob.
+        panel.querySelectorAll('.slider').forEach(sl => { const fill = () => sl.style.setProperty('--v', 100 * (sl.value - sl.min) / (sl.max - sl.min) + '%');
+            sl.addEventListener('input', fill); fill(); });
+        // On a phone the panel opens folded: the map is small and the label needs it.
+        if (window.innerWidth <= 760) { panel.classList.add('folded'); $('dp-fold').textContent = '+'; $('dp-fold').setAttribute('aria-expanded', 'false'); }
+        $('dp-fold').onclick = () => { const f = panel.classList.toggle('folded'); $('dp-fold').textContent = f ? '+' : '–'; $('dp-fold').setAttribute('aria-expanded', String(!f)); };
+        // The panel can be moved out of the way by its head.
+        const head = panel.querySelector('.dp-head');
+        head.addEventListener('pointerdown', e => {
+            if (e.target.closest('button')) return;
+            const st = panel.parentElement.getBoundingClientRect(), b = panel.getBoundingClientRect();
+            const dx = e.clientX - b.left, dy = e.clientY - b.top;
+            head.setPointerCapture(e.pointerId);
+            const mv = ev => {
+                panel.style.right = 'auto'; panel.style.bottom = 'auto';
+                panel.style.left = Math.max(0, Math.min(st.width - b.width, ev.clientX - st.left - dx)) + 'px';
+                panel.style.top = Math.max(0, Math.min(st.height - 24, ev.clientY - st.top - dy)) + 'px';
+            };
+            const up = () => { head.removeEventListener('pointermove', mv); head.removeEventListener('pointerup', up); };
+            head.addEventListener('pointermove', mv);
+            head.addEventListener('pointerup', up);
+        });
+    })();
+    // The click targets of a run: its change polygons, each with its group.
+    function addDodShapes(r) {
+        const st = dodState[r.id] || (dodState[r.id] = {});
+        if (st.shapes || st.loading) return;
+        st.loading = true;
+        const H = dodHit(r);
+        runShapes(r).then(gj => {
+            map.addSource(H, { type: 'geojson', data: gj });
+            map.addLayer({ id: H, type: 'fill', source: H,
+                layout: { visibility: dodShown() ? 'visible' : 'none' },
+                paint: { 'fill-color': '#fff', 'fill-opacity': 0.01 } }, 'dodsel-line');
+            map.on('click', H, e => {
+                if (toolBusy() || !e.features || !e.features.length) return;
+                if (map.queryRenderedFeatures(e.point, { layers: SITE_LAYERS.filter(id => map.getLayer(id)) }).length) return;
+                e.originalEvent.__handled = true;
+                pickTerrain(r, e.features[0].properties, e.lngLat);
+            });
+            map.on('mouseenter', H, () => { if (!toolBusy()) map.getCanvas().style.cursor = 'pointer'; });
+            map.on('mouseleave', H, () => { if (!toolBusy()) map.getCanvas().style.cursor = ''; });
+            st.shapes = true;
+            st.loading = false;
+        }).catch(err => { console.error('DoD polygons failed:', err); st.loading = false; });
+    }
+    function loadDodShapes() {
+        if (!dodBuilt || !dodShown() || map.getZoom() < 9) return;
+        const b = map.getBounds();
+        DOD_RUNS.forEach(r => {
+            if (r.bounds[0] > b.getEast() || r.bounds[2] < b.getWest() || r.bounds[1] > b.getNorth() || r.bounds[3] < b.getSouth()) return;
+            addDodRaster(r);
+            addDodShapes(r);
+        });
+    }
+    map.on('moveend', loadDodShapes);
+
+    function syncDod() {
+        if (!dodShown()) { DOD_IDS().forEach(id => setVis(id, false)); syncDodExtras(); if (terrainTag) terrainTag.remove(); return; }
+        const show = () => {
+            if (!dodShown()) return;
+            buildDod();
+            DOD_IDS().forEach(id => setVis(id, true));
+            syncDodExtras();
+            loadDodShapes();
+        };
+        // Once built it is only a matter of showing it; the first time waits for the style.
+        if (dodBuilt) show(); else whenStyleReady(show);
+    }
+    function toggleDod(on, quiet) {
+        dodWanted = !!on;
+        const box = $('filter-dod');
+        if (box) box.checked = dodWanted;
+        const lbl = document.querySelector('label[for="filter-dod"]');
+        if (lbl) lbl.classList.toggle('sel', dodWanted);
+        if (!dodWanted) { try { if (terrainSel) { markTerrain(null); tagTerrain([], ''); } } catch (err) {} }
+        syncDod();
+        // Opening it from far away goes to where the runs are.
+        if (dodWanted && !quiet && dodShown() && map.getZoom() < 7) {
+            const bb = new maplibregl.LngLatBounds();
+            DOD_RUNS.forEach(r => { bb.extend([r.bounds[0], r.bounds[1]]); bb.extend([r.bounds[2], r.bounds[3]]); });
+            map.fitBounds(bb, { padding: visiblePadding(), duration: dur(1100), bearing: map.getBearing(), pitch: map.getPitch() });
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -2170,6 +2662,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const F_PROP  = ['all', ['==', ['get', 'firm'], 0], IS_PROP];
     const PT_LAYERS = ['site-hot', 'site-sym'];
     const SITE_LAYERS = FP_LAYERS.concat(PT_LAYERS);
+    const tabIsDod = () => { try { return currentTab === 'dod'; } catch (e) { return false; } };
     const COV_LAYERS = {
         'filter-plan-old':     ['cov-old-line'],
         'filter-plan-current': ['cov-current-line'],
@@ -2397,7 +2890,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // everything the database says. The line, not the colour, tells
                 // the three registers apart.
                 const C = '#f4f4f4';
-                const before = under(['hillshade', 'dod', 'dod-hit'].concat(SITE_LAYERS));
+                const before = under(['hillshade'].concat(DOD_IDS(), SITE_LAYERS));
                 const add = (id, kind, paint) => map.addLayer({
                     id, type: 'line', source: 'cov', filter: ['==', ['get', 'k'], kind],
                     paint: Object.assign({ 'line-color': C, 'line-opacity': 0.9 }, paint) }, before);
@@ -2439,6 +2932,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         const f = ['all', ['in', ['concat', ['get', 'cat'], ':', ['get', 'cls']], ['literal', keys]]];
         if (show.dir !== 'all') f.push(['==', ['get', 'dir'], show.dir]);
+        // The tab is a family: its sites are drawn, the others are not.
+        let tab = 'all';
+        try { tab = currentTab; } catch (err) {}
+        if (tab === 'dod') f.push(['==', ['get', 'uid'], '']);
+        else if (tab === 'facility' || tab === 'extract' || tab === 'project')
+            f.push(['in', ['get', 'uid'], ['literal', allSites.filter(x => inScope(x, tab)).map(uidOf)]]);
         return f;
     }
     function applyFilters() {
@@ -2713,13 +3212,303 @@ document.addEventListener('DOMContentLoaded', function() {
         { key: 'FlowUID', nophone: true, th: 'th_flow', w: 110, cls: 'uid', keep: true, text: f => f.FlowUID || '' }
     ];
 
+    // TERRAIN CHANGE sheet: the largest sites of the runs on the map, from
+    // data/dod_sites.json (tools/make_dod_sites.py). A site is a group of change
+    // polygons; its probable origin is the first piece of evidence that exists.
+    const COVER = { Steinbrudd: 'cv_quarry', Industriområde: 'cv_ind', Tettbebyggelse: 'cv_built', BymessigBebyggelse: 'cv_built',
+                    DyrketMark: 'cv_farm', Skog: 'cv_forest', ÅpentOmråde: 'cv_open', Myr: 'cv_bog', Golfbane: 'cv_golf',
+                    Alpinbakke: 'cv_ski', SportIdrettPlass: 'cv_sport', Lufthavn: 'cv_air' };
+    const terrainWhat = d => d.fac ? [d.fac.name, t('tb_fac')] : d.proj ? [d.proj.name, t('tb_proj')]
+        : d.ls ? [t('slide'), d.plan ? d.plan.name : '']
+        : d.plan ? [d.plan.name + (d.plans > 1 ? ' + ' + (d.plans - 1) : ''), t('tb_plan')]
+        // No reguleringsplan of its own: the land cover, and the planned work it lies beside.
+        : [t(COVER[d.cover] || 'cv_other'), t('tb_cover') + (d.beside ? ' · ' + t('tb_beside') + ' ' + d.beside : '')];
+    const terrainPlan = d => {
+        const run = DOD_RUNS.find(x => x.id === d.run);
+        if (!run || run.plan === false || d.planned == null) return t('plna');
+        if (!d.plan) return t('pl0');
+        return t('pl' + d.plan.pl).replace('{y}', d.plan.pl === 1 ? run.years : run.years.split('–').pop())
+               + (d.plans > 1 ? ' · ' + d.plans + ' ' + t('t_plans') : '')
+               + (d.planned < 0.995 ? ' · ≈ ' + Math.round(100 * d.planned) + ' %' : '');
+    };
+    // Published figures are approximate: two significant figures, with the sign.
+    const approx = v => {
+        v = Math.abs(+v);
+        if (!Number.isFinite(v)) return '';
+        if (v < 10) return String(Math.round(v));
+        const p = Math.pow(10, Math.floor(Math.log10(v)) - 1);
+        return fmt(Math.round(v / p) * p);
+    };
+    const DOD_COLS = [
+        { key: '__place', th: 'th_tsite', w: 220, pw: 0, keep: true, text: d => d.place || t('t_noname'),
+          html: d => d.place ? esc(d.place) : '<span class="nd">' + esc(t('t_noname')) + '</span>' },
+        { key: 'kommune', th: 'th_tkom', w: 130, nophone: true, filter: true, keep: true, text: d => d.kommune },
+        { key: '__what', th: 'th_twhat', w: 360, nophone: true, keep: true, text: d => terrainWhat(d)[0],
+          html: d => { const w = terrainWhat(d); return esc(w[0]) + (w[1] ? ' <span class="nd">· ' + esc(w[1]) + '</span>' : ''); },
+          title: d => terrainWhat(d).filter(Boolean).join(' · ') },
+        { key: '__type', th: 'th_ttype', w: 300, nophone: true, filter: true, keep: true, text: d => t('ty_' + d.ty),
+          html: d => esc(t('ty_' + d.ty)) + ' <span class="nd">· ' + esc(t('fm_' + d.fm)) + '</span>',
+          title: d => t('ty_' + d.ty) + ' · ' + t('fm_' + d.fm) },
+        { key: 'dep', th: 'th_tdep', w: 140, pw: 84, num: true, keep: true, approx: '+', text: d => d.dep ? '+' + approx(d.dep) : '0',
+          sort: d => d.dep, sum: d => d.dep, present: () => true },
+        { key: 'exc', th: 'th_texc', w: 220, pw: 84, num: true, keep: true, approx: '−', text: d => d.exc ? '−' + approx(d.exc) : '0',
+          sort: d => d.exc, sum: d => d.exc, present: () => true },
+        { key: '__moved', th: 'th_tmoved', w: 130, nophone: true, num: true, keep: true, approx: '', text: d => approx(d.dep + d.exc),
+          sort: d => d.dep + d.exc, sum: d => d.dep + d.exc, present: () => true },
+        { key: 'ha', th: 'th_tha', w: 120, nophone: true, num: true,
+          text: d => (d.ha >= 10 ? String(Math.round(d.ha)) : String(Math.round(d.ha * 10) / 10)).replace('.', currentLang === 'no' ? ',' : '.'), sort: d => d.ha },
+        { key: '__plan', th: 'th_tplan', w: 360, nophone: true, filter: true, text: terrainPlan,
+          html: d => terrainPlan(d) === t('pl0') ? '<b>' + esc(t('pl0')) + '</b>' : esc(terrainPlan(d)) },
+        { key: 'years', th: 'th_tyears', w: 110, nophone: true, filter: true, text: d => d.years },
+        { key: 'id', nophone: true, th: 'th_tid', w: 80, cls: 'uid', keep: true, text: d => d.id }
+    ];
+    let allTerrain = [];
+    const isDodSheet = () => deckScope === 'dod' && !deckSelection;
+    const colsOfSheet = () => isFlowSheet() ? FLOW_COLS : isDodSheet() ? DOD_COLS : SITE_COLS;
+    const colsKey = () => isFlowSheet() ? 'flow' : isDodSheet() ? 'dod' : 'site';
+    fetch('data/dod_sites.json').then(x => x.ok ? x.json() : { sites: [] }).then(j => {
+        const ids = DOD_RUNS.map(x => x.id);
+        allTerrain = (j.sites || []).filter(d => ids.includes(d.run)).map(d => { d.__cat = 'dod'; return d; });
+        if (isDodSheet()) renderDeck();
+    }).catch(err => console.error('terrain sites failed:', err));
+    // A row of the sheet is a cluster, and so is every change on the map: each
+    // polygon carries the number of its group (c). Choosing one, from the sheet or
+    // by a click on the map, goes to it and draws a line round its own polygons.
+    // Nothing else is hidden: the cluster is a reading aid, the rest of the change
+    // stays in view. The same row again lets go of it.
+    let terrainSel = null;
+    function markTerrain(sel) {            // null, or { run, c, id }
+        terrainSel = sel ? sel.id : null;
+        deckBody.querySelectorAll('tr[data-dod]').forEach(tr => {
+            const on = tr.dataset.dod === terrainSel;
+            tr.classList.toggle('sel', on);
+            if (on) try { tr.scrollIntoView({ block: 'nearest' }); } catch (err) {}
+        });
+        const put = (data, n) => {
+            const src = map.getSource('dodsel');
+            if (src) src.setData(data);
+            else if ((n || 0) < 40) setTimeout(() => put(data, (n || 0) + 1), 150);
+        };
+        selEdge = sel ? { run: sel.run.id, c: sel.c } : null;
+        if (map.getLayer('dodsel-edge')) map.setFilter('dodsel-edge', selEdgeFilter());
+        if (!sel) { put({ type: 'FeatureCollection', features: [] }); return Promise.resolve([]); }
+        return runShapes(sel.run).then(gj => {
+            const mine = gj.features.filter(f => f.properties.c === sel.c);
+            if (terrainSel === sel.id) put({ type: 'FeatureCollection', features: mine });
+            return mine;
+        }).catch(err => { console.error('cluster polygons failed:', err); return []; });
+    }
+    const boundsOf = feats => {
+        const b = new maplibregl.LngLatBounds();
+        const walk = c => { if (typeof c[0] === 'number') b.extend(c); else c.forEach(walk); };
+        feats.forEach(f => walk(f.geometry.coordinates));
+        return b;
+    };
+    // The cluster is framed in the middle of the map that is in view: the same room
+    // left and right, and room above for its label.
+    function fitTerrain(b) {
+        const p = visiblePadding(), box = map.getContainer();
+        const panel = $('dod-panel'), pw = panel && !panel.hidden ? panel.offsetWidth + 20 : 0;
+        let side = Math.max(p.left, p.right, pw, 440) + 20, top = p.top + 70, bottom = p.bottom + 60;
+        if (2 * side > box.clientWidth - 160) side = 40;
+        if (top + bottom > box.clientHeight - 120) { top = 90; bottom = 30; }
+        // On a phone the label is docked under the toolbar, so the cluster goes below it.
+        if (box.clientWidth < TAG_DOCK) { side = 24; top = Math.min(330, Math.round(box.clientHeight * .45)); bottom = 56; }
+        map.fitBounds(b, { padding: { left: side, right: side, top, bottom }, maxZoom: 16, duration: dur(900), essential: true });
+    }
+    // The label of a chosen cluster is a drawing annotation, set in the face of the table.
+    // One oblique leader (45, 60 or 30 degrees) runs from the perimeter of the change out
+    // to a shelf; the name stands on the shelf and the rest hangs under it. The leader
+    // starts on the outline of the polygon the row stands for, or of the one that was
+    // clicked, at the point of that outline furthest out in the leader's own direction,
+    // so it never crosses the polygon it names. The label stands well clear: 260 px or
+    // more from the perimeter when there is room, where it covers nothing of the cluster and is not under
+    // the toolbar or the panel. It is placed again when the map comes to rest.
+    // On a map too narrow for that (a phone) the label is docked: as wide as the map,
+    // under the toolbar, and the leader runs from the top of the outline up to its lower edge.
+    const TAG_DOCK = 620;
+    let tagState = null;
+    function tagTerrain(mine, html, at) {
+        if (terrainTag) terrainTag.remove();
+        terrainTag = null; tagState = null;
+        if (!mine.length || !html) return;
+        const all = boundsOf(mine);
+        const big = mine.reduce((a, f) => Math.abs(+f.properties.v || 0) > Math.abs(+a.properties.v || 0) ? f : a, mine[0]);
+        // The polygon the leader points to: the one the anchor lies in, else the largest.
+        let host = big;
+        if (at && mine.length > 1) {
+            const hit = mine.map(f => { const b = boundsOf([f]); return { f, a: +f.properties.a || 0,
+                                        in: at[0] >= b.getWest() && at[0] <= b.getEast() && at[1] >= b.getSouth() && at[1] <= b.getNorth() }; })
+                            .filter(x => x.in).sort((x, y) => x.a - y.a)[0];
+            if (hit) host = hit.f;
+        }
+        const ring = [];
+        const walk = c => { if (typeof c[0] === 'number') ring.push(c); else c.forEach(walk); };
+        walk(host.geometry.coordinates);
+        const step = Math.max(1, Math.floor(ring.length / 600));
+        const el = document.createElement('div');
+        el.className = 'tag';
+        el.innerHTML = '<div class="tag-txt">' + html + '</div><svg class="tag-lead" aria-hidden="true"><polyline points=""/></svg>';
+        const txt = el.firstChild, body = document.createElement('div');
+        body.className = 'tag-body';
+        while (txt.children.length > 1) body.appendChild(txt.children[1]);
+        txt.appendChild(body);
+        ['click', 'dblclick', 'contextmenu', 'wheel'].forEach(ev => el.addEventListener(ev, e => e.stopPropagation()));
+        const x = el.querySelector('.tag-x');
+        if (x) x.addEventListener('click', () => { markTerrain(null); tagTerrain([], ''); });
+        tagState = { ring: ring.filter((c, i) => i % step === 0),
+                     boxes: mine.map(f => { const b = boundsOf([f]); return [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]; }),
+                     want: boundsOf([host]).getCenter().lng < all.getCenter().lng ? -1 : 1, pick: null };
+        // Placed by left and top in the map's own box, and again whenever the map moves.
+        map.getContainer().appendChild(el);
+        terrainTag = { remove: () => el.remove(), getElement: () => el };
+        placeTag(true);
+    }
+    function placeTag(full) {
+        if (!terrainTag || !tagState) return;
+        const st = tagState, el = terrainTag.getElement(), txt = el.querySelector('.tag-txt'), line = el.querySelector('polyline');
+        const box = map.getContainer().getBoundingClientRect();
+        if (box.width < TAG_DOCK) {
+            const bar = $('bar'), bb = bar && bar.getClientRects().length ? bar.getBoundingClientRect() : null;
+            const top = Math.round(bb && bb.top - box.top < box.height / 2 ? bb.bottom - box.top + 8 : 10);
+            txt.style.width = Math.round(box.width - 20) + 'px';
+            const bottom = top + txt.offsetHeight;
+            // The point of the outline highest on the screen, if it is below the label.
+            let P = null;
+            st.ring.forEach(c => { const q = map.project(c); if (!P || q.y < P.y) P = q; });
+            P.x = Math.round(P.x); P.y = Math.round(P.y);
+            el.style.left = P.x + 'px'; el.style.top = P.y + 'px';
+            el.classList.remove('left');
+            txt.style.left = (10 - P.x) + 'px'; txt.style.top = (top - P.y) + 'px';
+            const rise = P.y - bottom, sx = P.x < box.width / 2 ? 1 : -1;
+            const ex = Math.max(18 - P.x, Math.min(box.width - 18 - P.x, Math.round(sx * rise / Math.tan(Math.PI / 3))));
+            line.setAttribute('points', rise > 10 && P.x > 0 && P.x < box.width ? `0,0 ${ex},${-rise}` : '');
+            st.pick = null;
+            return;
+        }
+        txt.style.width = '';
+        const W = txt.offsetWidth, H = txt.offsetHeight, hH = el.querySelector('.tag-h').offsetHeight;
+        if (full === true || !st.pick) {
+            // Not under the toolbar, the panel, the compass and zoom, or the credits line.
+            const inWay = [$('bar'), $('dod-panel')].concat([...document.querySelectorAll('.maplibregl-ctrl, .compass')])
+                .filter(e => e && e.getClientRects().length).map(e => e.getBoundingClientRect())
+                .map(o => [o.left - box.left - 8, o.top - box.top - 8, o.right - box.left + 8, o.bottom - box.top + 8]);
+            const cl = st.boxes.map(b => { const a = map.project([b[0], b[3]]), c = map.project([b[2], b[1]]); return [a.x - 6, a.y - 6, c.x + 6, c.y + 6]; })
+                .filter(b => b[2] > -300 && b[0] < box.width + 300 && b[3] > -300 && b[1] < box.height + 300);
+            const pts = st.ring.map(c => map.project(c));
+            const over = (r, b) => Math.max(0, Math.min(r[2], b[2]) - Math.max(r[0], b[0])) * Math.max(0, Math.min(r[3], b[3]) - Math.max(r[1], b[1]));
+            let best = null;
+            [45, 60, 30].forEach((deg, di) => [st.want, -st.want].forEach(sx => [1, -1].forEach(sy => {
+                const rad = deg * Math.PI / 180, ux = sx * Math.cos(rad), uy = -sy * Math.sin(rad);
+                // Where the leader leaves the perimeter: the point of the outline furthest out this way.
+                let e = 0, far = -Infinity;
+                pts.forEach((q, i) => { const v = q.x * ux + q.y * uy; if (v > far) { far = v; e = i; } });
+                [260, 320, 390, 210, 160, 110].forEach(L => {
+                    const dx = L * ux, dy = L * uy, x0 = pts[e].x + (sx > 0 ? dx : dx - W), y0 = pts[e].y + dy - hH;
+                    const r = [x0, y0, x0 + W, y0 + H];
+                    // 260 px out when there is room; nearer only when nothing else fits.
+                    let cost = (L >= 260 ? L : 900 + 3 * (260 - L)) + (sx !== st.want ? 60 : 0) + (sy < 0 ? 90 : 0) + di * 40;
+                    if (r[0] < 6 || r[1] < 6 || r[2] > box.width - 6 || r[3] > box.height - 6) cost += 1e7;
+                    inWay.forEach(o => { if (over(r, o) > 0) cost += 1e7; });
+                    cl.forEach(b => { cost += 4 * over(r, b); });
+                    if (!best || cost < best.cost) best = { cost, dx, dy, sx, edge: st.ring[e] };
+                });
+            })));
+            st.pick = best;
+        }
+        const k = st.pick, P = map.project(k.edge);
+        P.x = Math.round(P.x); P.y = Math.round(P.y);
+        el.style.left = P.x + 'px'; el.style.top = P.y + 'px';
+        el.classList.toggle('left', k.sx < 0);
+        const ex = Math.round(k.dx), ey = Math.round(k.dy);
+        txt.style.left = (k.sx < 0 ? ex - W : ex) + 'px'; txt.style.top = (ey - hH) + 'px';
+        line.setAttribute('points', `0,0 ${ex},${ey} ${ex + k.sx * W},${ey}`);
+    }
+    map.on('move', () => placeTag(false));
+    map.on('moveend', () => placeTag(true));
+    // What a label says: the name and the number of the row, what it probably is, the
+    // figures in a column, the reguleringsplan.
+    const tagRows = rows => '<div class="tag-n">' + rows.map(r => `<span class="v">${r[0]}</span><span class="k">${esc(r[1])}</span>`).join('') + '</div>';
+    const tagHTML = (title, id, sub, rows, tail) =>
+        `<div class="tag-h"><span>${esc(title)}</span><span class="tag-id">${esc(id || '')}` +
+        `<button type="button" class="tag-x" aria-label="${esc(t('tg_close'))}" title="${esc(t('tg_close'))}">×</button></span></div>` +
+        (sub ? `<div class="tag-s">${sub}</div>` : '') + tagRows(rows) + (tail || '');
+    const sgn = (v, s) => (v ? '≈ ' : '') + s + approx(v) + ' m³';
+    const terrainHead = d => {
+        const w = terrainWhat(d), plan = terrainPlan(d);
+        return tagHTML(d.place || t('t_noname'), d.id, esc(w[0]) + (w[1] ? ' · ' + esc(w[1]) : ''),
+                       [[sgn(d.dep, '+'), t('deposit').toLowerCase()], [sgn(d.exc, '−'), t('excav').toLowerCase()], [String(d.n), t('changes')]],
+                       `<div class="${plan === t('pl0') ? '' : 'tag-s'}">${esc(plan)}</div>`);
+    };
+    // The one polygon that was clicked, under the cluster it belongs to.
+    const tagPoly = (p, run) => {
+        const up = +p.v > 0, pl = +p.pl || 0, yrs = run.years;
+        const plan = run.plan === false ? t('plna')
+                   : pl ? t('pl' + pl).replace('{y}', pl === 1 ? yrs : yrs.split('–').pop()) + (p.pn ? ': ' + p.pn : '') + (p.pd ? ' (' + p.pd + ')' : '')
+                   : t('pl0');
+        return '<div class="tag-sep"></div>' + `<div class="tag-s">${esc(t('tg_this'))}</div>` +
+               tagRows([[`≈ ${up ? '+' : '−'}${approx(p.v)} m³`, (up ? t('deposit') : t('excav')).toLowerCase()],
+                        [`≈ ${approx(p.a)} m²`, t('tg_area')],
+                        [`${up ? '+' : '−'}${esc(Math.abs(+p.dh))} m`, t('dh').toLowerCase()]]) +
+               (p.ls ? '' : `<div class="${pl || run.plan === false ? 'tag-s' : ''}">${esc(plan)}</div>`) +
+               [['sl', 'steep'], ['sh', 'shallow'], ['fo', 'forest']].filter(k => p[k[0]]).map(k => `<div class="tag-s">${esc(t(k[1]))}</div>`).join('');
+    };
+    // A click from far away: to the cluster whose ground it falls in (the smallest, when
+    // several do), or two steps nearer to where it was made.
+    function goNearer(ll) {
+        const inside = allTerrain.filter(d => ll.lng >= d.bounds[0] && ll.lng <= d.bounds[2] && ll.lat >= d.bounds[1] && ll.lat <= d.bounds[3])
+            .sort((a, b) => (a.bounds[2] - a.bounds[0]) * (a.bounds[3] - a.bounds[1]) - (b.bounds[2] - b.bounds[0]) * (b.bounds[3] - b.bounds[1]));
+        if (inside.length && terrainSel !== inside[0].id) { frameTerrain(inside[0]); return; }
+        map.easeTo({ center: ll, zoom: Math.min(13, map.getZoom() + 2.5), duration: dur(700) });
+    }
+    function frameTerrain(d) {
+        const run = DOD_RUNS.find(x => x.id === d.run);
+        if (!run) return;
+        if (terrainSel === d.id) { markTerrain(null); tagTerrain([], ''); return; }
+        if (!dodOn()) toggleDod(true, true);
+        // Its change polygons are wanted for clicking, however far out the cluster is framed.
+        const shapes = n => { if (dodBuilt) { addDodRaster(run); addDodShapes(run); } else if (n < 40) setTimeout(() => shapes(n + 1), 150); };
+        shapes(0);
+        // On a phone the table gives the map its room: the label is as wide as the screen.
+        const phone = map.getContainer().clientWidth < TAG_DOCK && deckSize !== 'closed';
+        if (phone) setDeckSize('closed');
+        // Framed at once from the cluster's box, then exactly from its own polygons.
+        fitTerrain([[d.bounds[0], d.bounds[1]], [d.bounds[2], d.bounds[3]]]);
+        markTerrain({ run, c: d.c, id: d.id }).then(mine => {
+            if (terrainSel !== d.id || !mine.length) return;
+            fitTerrain(boundsOf(mine));
+            tagTerrain(mine, terrainHead(d), [d.lon, d.lat]);
+            // and framed once more when the map has taken the room the table gave up.
+            if (phone) setTimeout(() => { if (terrainSel === d.id) { map.resize(); fitTerrain(boundsOf(mine)); } }, 650);
+        });
+    }
+    // A click on a change: go to the cluster it belongs to, and say what the
+    // cluster is before what the one polygon is.
+    function pickTerrain(run, p, lngLat) {
+        const d = allTerrain.find(x => x.run === run.id && x.c === p.c);
+        const id = d ? d.id : 'g:' + run.id + ':' + p.c;
+        markTerrain({ run, c: p.c, id }).then(mine => {
+            if (terrainSel !== id || !mine.length) return;
+            let head = d ? terrainHead(d) : '';
+            if (!d) {
+                let dep = 0, exc = 0;
+                mine.forEach(f => { const v = +f.properties.v || 0; if (v > 0) dep += v; else exc -= v; });
+                head = tagHTML(t('t_small'), '', '', [[sgn(dep, '+'), t('deposit').toLowerCase()], [sgn(exc, '−'), t('excav').toLowerCase()],
+                                                      [String(mine.length), t('changes')]]);
+            }
+            fitTerrain(boundsOf(mine));
+            tagTerrain(mine, head + tagPoly(p, run), lngLat ? [lngLat.lng, lngLat.lat] : d ? [d.lon, d.lat] : null);
+        });
+    }
+
     // Per-sheet state. The sheet key is the scope, or 'sel' for a box drawn on the map.
     const sheetKey = () => deckSelection ? 'sel' : deckScope;
     const SORT0 = { facility: { key: '__qty', dir: -1 }, extract: { key: '__qty', dir: -1 }, project: { key: '__qty', dir: -1 },
-                    all: { key: '__qty', dir: -1 }, sel: { key: '__qty', dir: -1 }, flow: { key: '__vol', dir: -1 } };
+                    all: { key: '__qty', dir: -1 }, sel: { key: '__qty', dir: -1 }, flow: { key: '__vol', dir: -1 },
+                    dod: { key: '__moved', dir: -1 } };
     const sheetSort = JSON.parse(JSON.stringify(SORT0));
-    const colFilter = { facility: {}, extract: {}, project: {}, all: {}, sel: {}, flow: {} };   // key -> Set of values left out
-    const findQ = { facility: '', extract: '', project: '', all: '', sel: '', flow: '' };
+    const colFilter = { facility: {}, extract: {}, project: {}, all: {}, sel: {}, flow: {}, dod: {} };   // key -> Set of values left out
+    const findQ = { facility: '', extract: '', project: '', all: '', sel: '', flow: '', dod: '' };
     let colW = {};
     try { colW = JSON.parse(localStorage.getItem('db_colw') || '{}') || {}; } catch (err) { colW = {}; }
     let deckSort = sheetSort.facility;          // kept for anything that still reads it
@@ -2730,21 +3519,22 @@ document.addEventListener('DOMContentLoaded', function() {
     let viewRows = [], viewCols = [];
 
     const isFlowSheet = () => deckScope === 'flow' && !deckSelection;
-    const rowId = r => r.__cat === 'flow' ? r.FlowUID : uidOf(r);
+    const rowId = r => r.__cat === 'flow' ? r.FlowUID : r.__cat === 'dod' ? r.id : uidOf(r);
     const fold2 = v => String(v == null ? '' : v).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
         .replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/å/g, 'a');
 
     function baseRows() {
         if (isFlowSheet()) return allFlows.filter(flowPasses);
+        if (isDodSheet()) return allTerrain;
         return allSites.filter(s =>
             (deckSelection ? deckSelection.has(uidOf(s)) : inScope(s, deckScope)) && passes(s));
     }
     // Which columns a viewer has switched on or off, per sheet (COLUMNS list).
     let colOn = {};
     try { colOn = JSON.parse(localStorage.getItem('db_cols') || '{}') || {}; } catch (err) { colOn = {}; }
-    const isOn = c => { const m = colOn[isFlowSheet() ? 'flow' : 'site']; return m && c.key in m ? m[c.key] : !c.opt; };
+    const isOn = c => { const m = colOn[colsKey()]; return m && c.key in m ? m[c.key] : !c.opt; };
     function visibleCols(rows) {
-        const all = isFlowSheet() ? FLOW_COLS : SITE_COLS;
+        const all = colsOfSheet();
         return all.filter(c => !(phone() && c.nophone)).filter(c => c.keep || isOn(c)).filter(c => c.keep || rows.some(r => c.present ? c.present(r) : (String(c.text(r) || '').trim() !== '' && !isNA(c.text(r)))));
     }
     function applyColFilters(rows, cols, skipKey) {
@@ -2813,7 +3603,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const cols = visibleCols(base);
         const rows = sortRows(applyColFilters(base, cols), cols);
         viewRows = rows; viewCols = cols;
-        pickStroke(base.map(r => { const c = isFlowSheet() ? volOf(r) : capNow(r); return c && c.drawn ? c.v : 0; }));
+        pickStroke(base.map(r => { const c = isFlowSheet() ? volOf(r) : isDodSheet() ? null : capNow(r); return c && c.drawn ? c.v : 0; }));
         [...picked].forEach(id => { if (!rows.some(r => rowId(r) === id)) picked.delete(id); });
 
         // colgroup
@@ -2883,6 +3673,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const tr = document.createElement('tr');
             const id = rowId(r);
             if (r.__cat === 'flow') { tr.dataset.flow = id; if (!r.__xy) tr.classList.add('nogeo'); }
+            else if (r.__cat === 'dod') { tr.dataset.dod = id; tr.dataset.run = r.run; tr.dataset.kind = r.k || 'site'; if (terrainSel === id) tr.classList.add('sel'); }
             else { tr.dataset.uid = id; if (!hasXY(r)) tr.classList.add('nogeo'); if (currentSite === r) tr.classList.add('sel'); }
             if (picked.has(id)) tr.classList.add('pick');
             tr.dataset.ix = ri;
@@ -2899,7 +3690,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (r.__cat === 'flow') {
                 tr.onmouseenter = () => hotFlow(r.FlowUID);
                 tr.onmouseleave = () => hotFlow(null);
-            } else {
+            } else if (r.__cat !== 'dod') {
                 tr.onmouseenter = e => showHover(r, e);
                 tr.onmousemove = e => { if (hoverUid === uidOf(r)) placeHover(e); };
                 tr.onmouseleave = hideHover;
@@ -2933,7 +3724,7 @@ document.addEventListener('DOMContentLoaded', function() {
         deckCount.textContent = nf < nb ? nf + ' ' + t('of') + ' ' + nb : '';
         const title = $('deck-title');
         const key = deckSelection ? 'selection' : deckScope === 'project' ? 'projects' :
-                    deckScope === 'flow' ? 'flows' : deckScope === 'all' ? 'selection' :
+                    deckScope === 'flow' ? 'flows' : deckScope === 'dod' ? 'terrain_t' : deckScope === 'all' ? 'selection' :
                     deckScope === 'extract' ? 'extract_t' : 'recep';
         title.setAttribute('data-en', t2(key, 'en')); title.setAttribute('data-no', t2(key, 'no'));
         title.textContent = t(key);
@@ -2974,6 +3765,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const units = c.unitOf ? new Set(rows.filter(r => Number.isFinite(c.sum(r))).map(c.unitOf)) : new Set(['m³']);
                 if (mixed) td.innerHTML = '<span class="nd">' + t('nosum_mix') + '</span>';
                 else if (units.size > 1) td.innerHTML = '<span class="nd">' + t('nosum_unit') + '</span>';
+                else if (vals.length && c.approx != null) td.innerHTML = '<span class="sig">Σ ≈</span> ' + c.approx + approx(vals.reduce((a, b) => a + b, 0));
                 else if (vals.length) td.innerHTML = '<span class="sig">Σ</span> ' + fmt(vals.reduce((a, b) => a + b, 0)) + (units.size && [...units][0] !== 'm³' ? ' ' + esc([...units][0]) : '');
             }
         });
@@ -2986,6 +3778,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const box = $('sheet-key');
         if (!box) return;
         if (isFlowSheet() && !allFlows.length) { box.innerHTML = ''; return; }
+        if (isDodSheet()) { box.innerHTML = `<div class="kr"><span class="it note">${esc(t('key_terrain'))}</span></div>`; return; }
         const flow = isFlowSheet();
         const parts = [];
         if (!flow) ['receiving', 'producing', 'mixed']
@@ -3027,6 +3820,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const box = $('deck-chips');
         box.innerHTML = '';
         if (isFlowSheet()) { renderFlowChips(box); mirrorChips(); return; }
+        if (isDodSheet()) { mirrorChips(); return; }
         const cats = (deckSelection || deckScope === 'all') ? ['facility', 'project']
                                                             : [deckScope === 'project' ? 'project' : 'facility'];
         cats.forEach(cat => {
@@ -3129,7 +3923,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sheetEl = document.querySelector('#deck .deck-scroll');
     sheetEl.tabIndex = 0;
     function syncPickState(prev) {
-        if (!sitesReady || isFlowSheet()) return;
+        if (!sitesReady || isFlowSheet() || isDodSheet()) return;
         const now = new Set(picked);
         prev.forEach(id => { if (!now.has(id) && id !== hotUid) {
             map.setFeatureState({ source: 'sites', id }, { hot: false });
@@ -3140,7 +3934,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function setPicked(ids) {
         const prev = new Set(picked);
         picked.clear(); ids.forEach(id => picked.add(id));
-        deckBody.querySelectorAll('tr').forEach(tr => tr.classList.toggle('pick', picked.has(tr.dataset.uid || tr.dataset.flow)));
+        deckBody.querySelectorAll('tr').forEach(tr => tr.classList.toggle('pick', picked.has(tr.dataset.uid || tr.dataset.flow || tr.dataset.dod)));
         syncPickState(prev);
         updateStatus();
     }
@@ -3168,7 +3962,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const curIx = () => viewRows.findIndex(r => rowId(r) === cur.id);
     function openRow(r) {
-        if (r.__cat === 'flow') frameFlow(r, true); else openSite(r, true);
+        if (r.__cat === 'flow') frameFlow(r, true); else if (r.__cat === 'dod') frameTerrain(r); else openSite(r, true);
     }
     deckBody.addEventListener('click', e => {
         const td = e.target.closest('td'); const tr = e.target.closest('tr');
@@ -3236,7 +4030,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (!e.shiftKey) anchorIx = nix;
             setCur(nix, viewCols[nci].key, true);
             const r = viewRows[nix];
-            if (r && r.__cat !== 'flow') setHot(r);
+            if (r && r.__cat !== 'flow' && r.__cat !== 'dod') setHot(r);
             e.preventDefault();
         };
         switch (e.key) {
@@ -3284,7 +4078,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function openColumns(btn) {
         if (afCol === '__cols' && !afPop.hidden) { closeAutoFilter(); return; }
         afCol = '__cols';
-        const all = isFlowSheet() ? FLOW_COLS : SITE_COLS;
+        const all = colsOfSheet();
         const base = baseRows();
         const n = c => base.filter(r => c.present ? c.present(r) : String(c.text(r) || '').trim() !== '').length;
         let h = `<div class="af-sort"><span class="af-t">${esc(t('cols_t'))}</span></div><div class="af-list">`;
@@ -3297,7 +4091,7 @@ document.addEventListener('DOMContentLoaded', function() {
         afPop.style.left = Math.max(8, Math.min(r.right - afPop.offsetWidth, innerWidth - afPop.offsetWidth - 8)) + 'px';
         afPop.style.top = (r.bottom + 4) + 'px';
         afPop.querySelectorAll('.af-list input').forEach(i => i.onchange = () => {
-            const k = isFlowSheet() ? 'flow' : 'site';
+            const k = colsKey();
             colOn[k] = colOn[k] || {};
             colOn[k][i.dataset.k] = i.checked;
             try { localStorage.setItem('db_cols', JSON.stringify(colOn)); } catch (err) {}
@@ -3445,7 +4239,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     function applySheetHash(h) {
-        const sk = ['facility', 'extract', 'project', 'all', 'flow'].includes(h.sheet) ? h.sheet : 'facility';
+        const sk = ['facility', 'extract', 'project', 'all', 'flow', 'dod'].includes(h.sheet) ? h.sheet : 'facility';
         if (h.sort) { const m = /^(.+?)([+-])$/.exec(h.sort); if (m) sheetSort[sk] = { key: m[1], dir: m[2] === '-' ? -1 : 1 }; }
         if (h.af) h.af.split(';').forEach(p => {
             const i = p.indexOf(':'); if (i < 1) return;
@@ -3625,7 +4419,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e) e.stopPropagation();
         const rows = picked.size ? viewRows.filter(r => picked.has(rowId(r))) : viewRows;
         const flow = isFlowSheet();
-        const F = flow
+        const F = isDodSheet()
+            ? [['ID', d => d.id], ['Kommune', d => d.kommune], ['Years', d => d.years], ['Place', d => d.place || ''],
+               ['Family', d => d.k || 'site'], ['Typology', d => d.ty], ['Form', d => d.fm], ['ProbableOrigin', d => terrainWhat(d)[0]], ['Basis', d => d.fac ? 'facility' : d.proj ? 'project' : d.ls ? 'landslide' : d.plan ? 'plan' : 'land cover'],
+               ['FacilityUID', d => d.fac ? d.fac.uid : ''], ['Deposit_m3_approx', d => d.dep], ['ExcavationErosion_m3_approx', d => -d.exc],
+               ['Changed_ha_approx', d => d.ha], ['Polygons', d => d.n], ['LandCoverN50', d => d.cover],
+               ['Plan', d => d.plan ? d.plan.name : ''], ['PlanInForce', d => d.plan ? d.plan.date : ''],
+               ['PlanShareOfArea', d => d.planned == null ? '' : d.planned], ['Latitude', d => d.lat], ['Longitude', d => d.lon]]
+            : flow
             ? [['FlowUID', f => f.FlowUID], ['FromUID', f => f.FromUID], ['FromName', f => f.__fromName],
                ['ToUID', f => f.ToUID], ['ToName', f => f.__toName], ['MassType', f => f.MassType],
                ['Volume', f => { const c = volOf(f); return c ? c.v : ''; }], ['VolumeUnit', f => (volOf(f) || {}).unit || ''],
@@ -3663,16 +4464,20 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentTab = 'facility';
     function selectTab(tab, quiet) {
         currentTab = tab;
+        try { if (tab !== 'dod' && tab !== 'all' && terrainSel) { markTerrain(null); tagTerrain([], ''); } } catch (err) {}
         document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
         // ALL keeps both families on the map and both sets of colours in the
         // key; the reception rows stay in the drawer so the counts still read.
         ['facility', 'project', 'dod', 'flow'].forEach(k => {
             $('tb-' + k).hidden = tab === 'all' ? (k === 'dod' || k === 'flow') : k !== (tab === 'extract' ? 'facility' : tab);
         });
-        if (tab === 'dod') {
-            if (!quiet && !$('filter-dod').checked) { $('filter-dod').checked = true; toggleDod(true); }
-            return;
-        }
+        // Each tab draws its own family and takes the others off the map; ALL draws
+        // them all. The flows keep the sites they run between.
+        try { reliefForTab(tab); } catch (err) {}
+        try { applyFilters(); } catch (err) {}
+        try { applyFlowFilter(); } catch (err) {}
+        if (!dodOn() && (tab === 'dod' || (tab === 'all' && !quiet))) toggleDod(true, quiet || tab === 'all');
+        else syncDod();
         setScope(tab);
     }
     document.querySelectorAll('.tab').forEach(b => {
@@ -3986,7 +4791,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     map.on('click', e => {
         if (toolBusy() || e.originalEvent.__handled) return;
-        const hit = map.queryRenderedFeatures(e.point, { layers: SITE_LAYERS.concat(['dod-hit']).filter(id => map.getLayer(id)) });
+        const hit = map.queryRenderedFeatures(e.point, { layers: SITE_LAYERS.concat(DOD_RUNS.map(dodHit), tabIsDod() ? ['dodfp-fill'] : []).filter(id => map.getLayer(id)) });
         if (hit.length) return;
         if (pinAt) { pinAt = null; if (pinMarker) pinMarker.remove(); $('coord-readout').textContent = fmtCoord(e.lngLat.lat, e.lngLat.lng); return; }
         dropPin(e.lngLat.lng, e.lngLat.lat, false);
@@ -4268,7 +5073,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             map.removeLayer('hillshade');
         }
-        const before = under(['cov-old-line', 'cov-current-line', 'cov-future-line', 'dod', 'dod-hit'].concat(SITE_LAYERS));
+        const before = under(['cov-old-line', 'cov-current-line', 'cov-future-line'].concat(DOD_IDS(), SITE_LAYERS));
         map.addLayer({ id: 'hillshade', type: 'hillshade', source: want, paint: hsPaint() }, before);
         hsSource = want;
     }
@@ -4885,17 +5690,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyFlowFilter() {
         show.flow.on = $('filter-flows').checked;
+        // Flows are a family of their own: drawn with their tab, or with ALL.
+        let mine = true;
+        try { mine = currentTab === 'flow' || currentTab === 'all'; } catch (err) {}
         if (flowsReady) {
             FLOW_LAYERS.forEach(id => {
                 const ev = id.replace('flow-', '');
-                const on = show.flow.on && show.flow.cls.has(ev);
+                const on = show.flow.on && mine && show.flow.cls.has(ev);
                 [id, id + '-cas'].forEach(k => {
                     if (map.getLayer(k)) map.setLayoutProperty(k, 'visibility', on ? 'visible' : 'none');
                 });
             });
             if (map.getLayer('flow-head')) {
                 map.setLayoutProperty('flow-head', 'visibility',
-                                      show.flow.on ? 'visible' : 'none');
+                                      show.flow.on && mine ? 'visible' : 'none');
             }
         }
         updateFlowCounts();
@@ -4940,6 +5748,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // under it, so it is the next thing to give way.
             if (deckSize === 'full') { setDeckSize('half'); return; }
             if ($('sidebar').classList.contains('active')) { closeSidebar(); return; }
+            try { if (terrainSel) { markTerrain(null); tagTerrain([], ''); return; } } catch (err) {}
             if (deckSelection) clearSelection();
         }
         if (e.key === 'Enter' && profileMode) runProfile();

@@ -1,5 +1,6 @@
-// Smoke test for index.html. Needs playwright and a static server on 8901:
-//     python3 -m http.server 8901 --bind 127.0.0.1        (from the repo root)
+// Smoke test for index.html. Needs playwright and a static server on 8901 that answers
+// byte ranges (the line tiles are read that way):
+//     python3 tools/serve.py 8901
 //     node tools/smoke_test.js
 // Sheet CSVs and every tile server are stubbed, so it runs offline and the
 // result never depends on Kartverket or Esri being up.
@@ -26,6 +27,12 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     hits.push(r.request().url());
     r.fulfill({status:200,contentType:'image/png',body:PX});
   });
+  // Kartverket's 1 m model, asked for by the terrain contours: one real tile of it
+  // (Ask, Gjerdrum, 128 px) answers every request. The other høydedata layers get a pixel.
+  const NHM = fs.readFileSync(HERE + '/nhm_dtm_128.lerc');
+  await ctx.route(/hoydedata\.no/, r => /NHM_DTM/.test(r.request().url())
+    ? r.fulfill({ status: 200, contentType: 'application/octet-stream', body: NHM })
+    : r.fulfill({ status: 200, contentType: 'image/png', body: PX }));
   // The ownership graphs live on Pages. Serve the repo's own copy when it is
   // there, so the graph box is exercised offline too.
   await ctx.route(/boundarieslab\.github\.io\/db_mp\/network\//, r => {
@@ -64,8 +71,8 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   // reach; pictograms are missing for the fixtures' invented types; and a
   // request aborted because a layer was switched off mid-flight is the browser
   // doing the right thing. A 404 on a DoD tile is the design: only tiles
-  // containing change are stored.
-  const IGNORE = /favicon|freight\.cargo\.site|picto_grammar|data\/dod\//;
+  // containing change are stored, in the far view too.
+  const IGNORE = /favicon|freight\.cargo\.site|picto_grammar|data\/dod(_far)?\//;
   p.on('console', m => { const t = m.text();
     if (m.type() === 'error' && !/Failed to load resource/.test(t)) errs.push('console: ' + t); });
   p.on('requestfailed', r => { const e = (r.failure() || {}).errorText || '';
@@ -199,17 +206,122 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   const z0 = await p.evaluate(()=>window.__M.getMaxZoom());
   ok(z0===19, 'map maxZoom is 19 without the DoD layer (got '+z0+')');
   await p.evaluate(() => window.__closePanes()); await p.waitForTimeout(300);
-  await p.click('#tab-dod'); await p.waitForTimeout(3000);
-  ok(await p.evaluate(() => document.getElementById('filter-dod').checked), 'the terrain tab switches its run on');
+  // Every far tile asked for from here on is counted: with all runs on the map the
+  // first view of the tab already draws them.
+  const farReq = [];
+  p.on('request', r => { if (/\/data\/dod_far\//.test(r.url())) farReq.push(r.url()); });
+  await p.click('#tab-dod'); await p.waitForTimeout(1500);
+  ok(await p.evaluate(() => document.getElementById('filter-dod').checked), 'the terrain tab switches terrain change on');
   const z1 = await p.evaluate(()=>window.__M.getMaxZoom());
   ok(z1===19, 'DoD layer does not raise it (got '+z1+')');
+  const rel = await p.evaluate(() => { const m = window.__M; return { radio: document.getElementById('base-relief').checked,
+    sat: m.getPaintProperty('satellite', 'raster-saturation'), op: m.getPaintProperty('satellite', 'raster-opacity') }; });
+  ok(rel.radio && await vis('relief') && await vis('relief-shade') && await vis('relief-ground') && await vis('satellite') && rel.sat === -1 && rel.op < 0.5,
+     'and brings the shaded relief, with the photograph faint and in grey over it (opacity ' + rel.op + ')');
+  // The click targets of a run load when the map is over it.
+  await p.evaluate(() => window.__M.jumpTo({ center: [11.04, 60.075], zoom: 12 }));
+  for (let i = 0; i < 30 && !(await p.evaluate(() => !!window.__M.getSource('dod-hit'))); i++) await p.waitForTimeout(300);
   const dodData = await p.evaluate(() => {
     const s = window.__M.getSource('dod-hit'); const f = s ? s._data.features : [];
     return { n: f.length, ls: f.filter(x => x.properties.ls).length,
-             none: f.filter(x => x.properties.pl === 0).length, np: f.filter(x => 'np' in x.properties).length };
+             none: f.filter(x => x.properties.pl === 0).length, np: f.filter(x => 'np' in x.properties).length,
+             sl: f.filter(x => x.properties.sl === 1).length,
+             sh: f.filter(x => x.properties.sh === 1).length,
+             shBad: f.filter(x => x.properties.sh === 1 && (x.properties.sl === 1 || x.properties.a >= 500 || Math.abs(x.properties.dh) > 1)).length,
+             slBig: f.filter(x => x.properties.sl === 1 && x.properties.a >= 500).length,
+             fo: f.filter(x => x.properties.fo === 1).length,
+             foBad: f.filter(x => x.properties.fo === 1 && (x.properties.sl === 1 || x.properties.sh === 1 || x.properties.a >= 2000)).length,
+             grouped: f.filter(x => Number.isInteger(x.properties.c) && x.properties.c >= 0).length,
+             // a group never holds ground under a reguleringsplan together with ground under none
+             mixed: (() => { const g = {}; f.forEach(x => { const k = x.properties.c; (g[k] = g[k] || new Set()).add(x.properties.pl ? 1 : 0); });
+                             return Object.values(g).filter(v => v.size > 1).length; })() };
   });
-  ok(dodData.n === 1320 && dodData.np === 0, 'the plan flag is the new one (' + dodData.n + ' polygons, ' + dodData.np + ' old flags)');
-  ok(dodData.none === 1045 && dodData.ls === 2, 'with 1 045 unplanned and the landslide pair marked (' + dodData.none + ', ' + dodData.ls + ')');
+  ok(dodData.n === 1121 && dodData.np === 0, 'Gjerdrum is the protocol run, with the plan flag (' + dodData.n + ' polygons, ' + dodData.np + ' old flags)');
+  ok(dodData.none === 797 && dodData.ls === 2, 'with 797 unplanned and the landslide pair marked (' + dodData.none + ', ' + dodData.ls + ')');
+  ok(dodData.sl === 98 && dodData.slBig === 0, 'and 98 small polygons on steep ground flagged, none of 500 m² or more (' + dodData.sl + ', ' + dodData.slBig + ')');
+  ok(dodData.sh === 195 && dodData.shBad === 0, 'and 195 small shallow ones, none of them steep, large or 1 m deep (' + dodData.sh + ', ' + dodData.shBad + ')');
+  ok(dodData.fo === 327 && dodData.foBad === 0, 'and 327 small ones under forest, none of them steep, shallow or 2,000 m² or more (' + dodData.fo + ', ' + dodData.foBad + ')');
+  ok(dodData.grouped === dodData.n && dodData.mixed === 0, 'every polygon belongs to a group, and no group mixes planned ground with unplanned (' + dodData.grouped + ', ' + dodData.mixed + ' mixed)');
+  // The studied ground: one outline per run, white and dashed, over the change
+  // raster. The kommune is not drawn, and the legend is one switch.
+  const dfp = await p.evaluate(() => {
+    const m = window.__M, s = m.getSource('dodfp'), ids = m.getStyle().layers.map(l => l.id), mk = m.getSource('dodfar');
+    return { n: s ? s._data.features.length : 0, runs: +document.getElementById('count-runs').textContent,
+             rows: document.querySelectorAll('#run-list label.row').length, boxes: document.querySelectorAll('#run-list input[type=checkbox]').length,
+             ha: ((s ? s._data.features : []).find(f => f.properties.id === 'gjerdrum_2007_2020') || { properties: {} }).properties.ha || 0,
+             over: ids.indexOf('dodfp-line') > ids.indexOf('dod') && ids.indexOf('dod') > -1,
+             white: m.getPaintProperty('dodfp-line', 'line-color') === '#fff' && Array.isArray(m.getPaintProperty('dodfp-line', 'line-dasharray')),
+             kom: ids.includes('dodkom-line') || (s ? s._data.features.some(f => f.properties.kind === 'kommune') : false),
+             src: (document.querySelector('#run-list label.row .src') || {}).textContent || '',
+             far: !!mk && mk.type === 'raster',
+             sliders: document.querySelectorAll('#dod-opacity').length };
+  });
+  ok(dfp.n === dfp.runs && dfp.n >= 1, 'every run has the outline of the ground that was studied (' + dfp.n + ' of ' + dfp.runs + ')');
+  ok(await vis('dodfp-line') && dfp.over && dfp.white, 'drawn as a white dashed line over the change raster');
+  ok(dfp.ha > 5000 && dfp.ha < 6000, 'Gjerdrum covers ' + dfp.ha + ' ha, not the whole kommune');
+  ok(!dfp.kom, 'the kommune itself is not drawn');
+  ok(dfp.rows === 1 && dfp.boxes === 1 && /studied area/.test(dfp.src), 'the legend is one switch for every run, not a list of kommuner (' + dfp.src.trim() + ')');
+  ok(dfp.sliders === 1, 'one opacity slider serves every run');
+  // The layers of the terrain view are handled from a panel on the map.
+  const pan = await p.evaluate(() => { const m = window.__M, el = document.getElementById('dod-panel'), O = 'dodold-gjerdrum_2007_2020';
+    document.getElementById('dod-dtm-old').click();
+    const old = !!m.getLayer(O) && m.getLayoutProperty(O, 'visibility') !== 'none';
+    const src = m.getSource(O), url = src ? decodeURIComponent(src.tiles[0]) : '';
+    document.getElementById('dod-dtm-new').click();
+    const back = !!m.getLayer(O) && m.getLayoutProperty(O, 'visibility') === 'none';
+    document.getElementById('dod-zones').click(); const zoff = m.getLayoutProperty('dodfp-line', 'visibility') === 'none';
+    document.getElementById('dod-zones').click();
+    const ph = document.getElementById('dod-photo'); ph.value = 55; ph.dispatchEvent(new Event('input', { bubbles: true }));
+    const photo = m.getPaintProperty('satellite', 'raster-opacity');
+    ph.value = 30; ph.dispatchEvent(new Event('input', { bubbles: true }));
+    return { shown: !el.hidden, old, url, back, zoff, zon: m.getLayoutProperty('dodfp-line', 'visibility') !== 'none', photo,
+             selW: m.getPaintProperty('dodsel-line', 'line-width'), cased: !!m.getLayer('dodsel-case') || !!m.getLayer('dodfp-case') }; });
+  ok(pan.shown && pan.old && /Romerike 07pkt 2007/.test(pan.url) && pan.back, 'a panel on the map handles the terrain layers: the older survey can be put under the change, and taken off again');
+  ok(pan.zoff && pan.zon && pan.photo === 0.55, 'the studied areas and the strength of the photograph are set from it (' + pan.photo + ')');
+  ok(pan.selW < 1 && !pan.cased, 'a chosen cluster is outlined by one hairline, the studied area by one white line');
+  // Far out a change is smaller than a pixel: the far view keeps it on the map, as
+  // the layer itself drawn for that zoom and not as a symbol standing for it.
+  await p.evaluate(() => window.__M.jumpTo({ center: [11.04, 60.075], zoom: 8 })); await p.waitForTimeout(1500);
+  const far = await p.evaluate(() => { const m = window.__M, L = m.getLayer('dodfar'); return { upto: L ? L.maxzoom : 0, from: m.getSource('dod').minzoom,
+    on: !!L && m.getLayoutProperty('dodfar', 'visibility') !== 'none',
+    symbols: m.getStyle().layers.filter(l => /^dod/.test(l.id) && (l.type === 'circle' || l.type === 'symbol')).length }; });
+  const farTiles = fs.existsSync(__dirname + '/../data/dod_far/8') ? fs.readdirSync(__dirname + '/../data/dod_far/8').length : 0;
+  ok(dfp.far && far.on && far.upto >= far.from && farReq.length > 0 && farTiles > 0,
+     'zoomed out, the change stays on the map as the far view of the layer (' + farReq.length + ' far tiles asked for)');
+  ok(far.symbols === 0, 'and no point stands for a change');
+  // The lines of the layer: the edge of every change and the contours of the change,
+  // every metre, from one file of vector tiles.
+  await p.evaluate(() => window.__M.jumpTo({ center: [11.047, 60.057], zoom: 15 }));
+  for (let i = 0; i < 40 && !(await p.evaluate(() => !!window.__M.getLayer('dodsel-edge'))); i++) await p.waitForTimeout(300);
+  await p.waitForTimeout(2500);
+  const ln = await p.evaluate(() => { const m = window.__M, q = id => m.getLayer(id) ? m.queryRenderedFeatures({ layers: [id] }) : [];
+    const iso = q('dod-iso'), edge = q('dod-edge');
+    const box = document.getElementById('dod-iso'); box.click();
+    const off = m.getLayoutProperty('dod-iso', 'visibility') === 'none' && m.getLayoutProperty('dod-edge', 'visibility') === 'none';
+    box.click();
+    return { iso: iso.length, edge: edge.length, off, back: m.getLayoutProperty('dod-iso', 'visibility') !== 'none',
+             whole: iso.length > 0 && iso.every(f => Number.isInteger(f.properties.l) && f.properties.l !== 0),
+             edges: [...new Set(edge.map(f => f.properties.l))].sort().join(' '),
+             grouped: edge.length > 0 && edge.every(f => f.properties.c >= 0 && typeof f.properties.r === 'string') && edge.some(f => f.properties.r === 'gjerdrum_2007_2020'),
+             hidden: m.getPaintProperty('dodsel-line', 'line-opacity') };
+  });
+  ok(ln.edge > 0 && ln.edges === '-0.7 0.7' && ln.grouped, 'every change has its edge, the 0.70 m line of the difference, and each edge knows its cluster (' + ln.edge + ' in view)');
+  ok(ln.iso > 0 && ln.whole, 'and the contours of the change are drawn at every whole metre (' + ln.iso + ' in view)');
+  ok(ln.off && ln.back, 'the panel takes them off and puts them back');
+  // Terrain contours: every metre from zoom 14, from the 1 m model.
+  const ct = await p.evaluate(async () => { const m = window.__M;
+    document.getElementById('dod-contours').click();
+    for (let i = 0; i < 50 && !m.getLayer('dod-contours'); i++) await new Promise(r => setTimeout(r, 200));
+    const src = m.getSource('dod-contours'), url = src && src.tiles ? decodeURIComponent(src.tiles[0]) : '';
+    await new Promise(r => setTimeout(r, 3500));
+    const fs_ = m.getLayer('dod-contours') ? m.queryRenderedFeatures({ layers: ['dod-contours'] }) : [];
+    const ele = [...new Set(fs_.map(f => f.properties.ele))].sort((a, b) => a - b);
+    const out = { url, n: fs_.length, step: ele.length > 1 ? Math.min(...ele.slice(1).map((v, i) => v - ele[i])) : 0,
+                  far: !!m.getLayer('dod-contours-far'), white: m.getPaintProperty('dod-contours', 'line-color') };
+    document.getElementById('dod-contours').click();
+    return out; });
+  ok(/thresholds=.*14\*1\*5/.test(ct.url) && /nhm/.test(ct.url) && ct.far && ct.white === '#fff', 'terrain contours are asked for every metre from zoom 14, from the 1 m model, in white');
+  ok(ct.n > 0 && ct.step === 1, 'and are drawn one metre apart (' + ct.n + ' lines in view, step ' + ct.step + ' m)');
 
   await openTree();
   await p.click('#base-gray'); await p.waitForTimeout(200);
@@ -225,6 +337,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   await p.click('#filter-dod'); await p.waitForTimeout(300);
   await p.click('#base-sat'); await p.evaluate(() => window.__closePanes()); await p.waitForTimeout(300);
   await p.click('#tab-facility'); await p.waitForTimeout(300);
+  ok(!(await vis('dodfp-line')) && !(await vis('dodfar')) && !(await vis('dod')) && await p.evaluate(() => document.getElementById('dod-panel').hidden), 'leaving the terrain tab takes terrain change and its panel off the map');
 
   console.log('key');
   const seenH = () => p.evaluate(() => document.getElementById('filter-panel').offsetHeight);
@@ -588,7 +701,9 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   const b1 = await p.evaluate(() => window.__M.getBearing());
   ok(Math.abs(b1 - b0) > 5, 'right-drag turns the camera (' + Math.round(b0) + ' -> ' + Math.round(b1) + ' deg)');
   await p.waitForTimeout(600);
-  await p.click('#compass');
+  // With every group of the layer tree open the drawer reaches down over the compass,
+  // so the button is pressed directly.
+  await p.evaluate(() => document.getElementById('compass').click());
   // The turn is eased; under software GL a frame can take long, so wait for it
   // to land rather than for a fixed time.
   await p.waitForFunction(() => Math.abs(window.__M.getBearing()) < 1, null, { timeout: 6000 }).catch(() => {});
@@ -704,6 +819,9 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(/^CP_001:line:MultiLineString:#00FF00$/.test(fp.pg), 'a project is drawn as its line, in its status colour (' + fp.pg + ')');
   ok(/"kind"\],"line"/.test(fp.fillFilter) && /"!="/.test(fp.fillFilter), 'a line is never filled as if it were an area');
   ok(/"kind"\],"line"\],3\.8/.test(fp.lineW) && /2\.4/.test(fp.lineW), 'and is drawn heavier than a site contour');
+  // The projects are on the map with their own tab (or with ALL).
+  const tabWas = await p.evaluate(() => document.querySelector('.tab[aria-selected="true"]').dataset.tab);
+  await p.click('#tab-project'); await p.waitForTimeout(500);
   const pgUi = await p.evaluate(async () => {
     const m = window.__M;
     const was = { center: m.getCenter(), zoom: m.getZoom() };
@@ -714,6 +832,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     m.jumpTo(was); await idle();
     return { hit, filled };
   });
+  await p.click('#tab-' + tabWas); await p.waitForTimeout(500);
   ok(pgUi.hit > 0 && pgUi.filled === 0, 'the line is actually painted, and only as a line (' + pgUi.hit + ', ' + pgUi.filled + ')');
   // Only footprints of published sites are drawn: the fixtures publish four
   // facilities, three of which have a footprint in data/facility_polygons.geojson.
@@ -1109,6 +1228,19 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   await ph.click('#sheet-chips .chip[data-cls="active"]'); await ph.waitForTimeout(400);
   const pchip = await ph.evaluate(() => document.querySelector('#deck-chips .chip[data-cls="active"]').getAttribute('aria-pressed'));
   ok(pchip === 'false', 'and its rings still switch a status off');
+  // Terrain change on a phone: the panel folded, the table out of the way, the label
+  // docked under the toolbar as wide as the screen.
+  await ph.goto('http://127.0.0.1:8901/index.html?review&debug#sheet=dod'); await ph.waitForTimeout(6000);
+  const pfold = await ph.evaluate(() => document.getElementById('dod-panel').classList.contains('folded'));
+  await ph.evaluate(() => document.querySelector('#site-table tbody tr[data-dod] td').click()); await ph.waitForTimeout(5000);
+  const pt = await ph.evaluate(() => { const vw = innerWidth, q = s => document.querySelector(s), b = q('.tag-txt') && q('.tag-txt').getBoundingClientRect(),
+      bar = q('#bar').getBoundingClientRect(), m = q('#map').getBoundingClientRect(), pn = q('#dod-panel').getBoundingClientRect();
+    return { tag: !!b, inside: !!b && b.left >= 0 && b.right <= vw && b.top >= bar.bottom && b.bottom < m.bottom, wideTag: !!b && b.width >= vw - 24,
+             clear: !!b && (pn.top >= b.bottom || pn.bottom <= b.top), mapH: Math.round(m.height), wide: document.documentElement.scrollWidth > vw,
+             lead: q('.tag-lead polyline') ? q('.tag-lead polyline').getAttribute('points') : '' }; });
+  ok(pfold, 'on a phone the terrain panel opens folded');
+  ok(pt.tag && pt.inside && pt.wideTag && pt.clear, 'a chosen cluster\'s label is docked under the toolbar, as wide as the screen, clear of the panel');
+  ok(pt.mapH > 600 && !pt.wide, 'the table gives the map its room and nothing scrolls sideways (map ' + pt.mapH + ' px, leader ' + (pt.lead || 'none') + ')');
   await ph.close();
 
   console.log('iframe embed (dirtybusiness.no)');
@@ -1122,6 +1254,184 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     return {c:[Math.round(box.width),Math.round(box.height)], t:[c?c.clientWidth:0, c?c.clientHeight:0]};
   });
   ok(cv.t[0]>=cv.c[0]-2 && cv.t[1]>=cv.c[1]-2, 'canvas fills the map in the iframe ('+cv.t+' vs '+cv.c+')');
+
+  // Runs still in review: off the public map, on with ?review, and never
+  // carrying the "no plan on record" finding they have not earned.
+  console.log('terrain runs in review');
+  const pub = await p.evaluate(() => ({ src: (document.querySelector('#run-list label.row .src') || {}).textContent || '', runs: +document.getElementById('count-runs').textContent }));
+  ok(pub.runs >= 1 && !/in review/.test(pub.src), 'the public map draws only reviewed runs (' + pub.runs + ')');
+  const p3 = await ctx.newPage();
+  await p3.goto('http://127.0.0.1:8901/index.html?review'); await p3.waitForTimeout(2500);
+  await p3.evaluate(() => {
+    const o = maplibregl.Map.prototype._render;
+    maplibregl.Map.prototype._render = function(){ if (this.getContainer() && this.getContainer().id === 'map') window.__M = this; return o.apply(this, arguments); };
+  });
+  await p3.click('#tab-dod'); await p3.waitForTimeout(3000);
+  const rev = await p3.evaluate(() => { const m = window.__M, s = m.getSource('dodfp'), fp = s ? s._data.features : [];
+    return { src: (document.querySelector('#run-list label.row .src') || {}).textContent || '', runs: +document.getElementById('count-runs').textContent,
+             boxes: document.querySelectorAll('#run-list input[type=checkbox]').length, fp: fp.length,
+             rasters: m.getStyle().layers.filter(l => l.type === 'raster' && /^dod(-|$)/.test(l.id)).length,
+             second: (fp.find(f => f.properties.id !== 'gjerdrum_2007_2020') || { properties: {} }).properties.id || null }; });
+  ok(rev.runs >= pub.runs && rev.fp === rev.runs && rev.rasters <= rev.runs && rev.boxes === 1,
+     '?review adds the drafts: one switch draws every run, each with its outline (' + rev.runs + ' runs, ' + rev.fp + ' outlines)');
+  ok(rev.runs === pub.runs || /in review/.test(rev.src), 'and the legend says how many are in review');
+  if (rev.second) {
+    const id = rev.second;
+    await p3.evaluate(k => { const m = window.__M, f = m.getSource('dodfp')._data.features.find(x => x.properties.id === k);
+      let x0 = 180, y0 = 90, x1 = -180, y1 = -90;
+      const walk = c => { if (typeof c[0] === 'number') { x0 = Math.min(x0, c[0]); x1 = Math.max(x1, c[0]); y0 = Math.min(y0, c[1]); y1 = Math.max(y1, c[1]); } else c.forEach(walk); };
+      walk(f.geometry.coordinates); m.jumpTo({ center: [(x0 + x1) / 2, (y0 + y1) / 2], zoom: 11 }); }, id);
+    for (let i = 0; i < 40 && !(await p3.evaluate(k => !!window.__M.getSource('dod-hit-' + k), id)); i++) await p3.waitForTimeout(300);
+    const d = await p3.evaluate(k => { const m = window.__M;
+      const s = m.getSource('dod-hit-' + k), f = s ? s._data.features : [];
+      return { raster: !!m.getLayer('dod-' + k), n: f.length, flags: f.filter(x => 'np' in x.properties || 'pl' in x.properties).length,
+               first: m.getLayoutProperty('dodfar', 'visibility') !== 'none' && (!m.getLayer('dod') || m.getLayoutProperty('dod', 'visibility') !== 'none'),
+               at: (() => { const big = f.slice().sort((x, y) => y.properties.a - x.properties.a)[0]; if (!big) return null;
+                     const ring = big.geometry.type === 'Polygon' ? big.geometry.coordinates[0] : big.geometry.coordinates[0][0];
+                     const c = ring.reduce((q, v) => [q[0] + v[0] / ring.length, q[1] + v[1] / ring.length], [0, 0]);
+                     m.jumpTo({ center: c, zoom: 15.5 }); return c; })() }; }, id);
+    // A large kommune's click targets take a while to be cut into tiles, and the
+    // mean of a ragged outline's vertices can sit a pixel from its edge. Wait for
+    // the polygon, then click a point that has it on every side.
+    let box3 = null;
+    for (let i = 0; i < 20 && !box3; i++) {
+      await p3.waitForTimeout(500);
+      box3 = await p3.evaluate(k => { const m = window.__M, H = 'dod-hit-' + k, c = m.project(m.getCenter());
+        const r = document.getElementById('map').getBoundingClientRect();
+        const hit = (x, y) => m.queryRenderedFeatures([x, y], { layers: [H] }).length > 0;
+        for (let dy = -60; dy <= 60; dy += 6) for (let dx = -60; dx <= 60; dx += 6) {
+          const x = Math.round(c.x + dx), y = Math.round(c.y + dy);
+          if (hit(x, y) && hit(x - 4, y) && hit(x + 4, y) && hit(x, y - 4) && hit(x, y + 4)) return [r.left + x, r.top + y];
+        }
+        return null; }, id);
+    }
+    box3 = box3 || [720, 272];
+    await p3.waitForTimeout(400);
+    await p3.mouse.click(box3[0], box3[1]); await p3.waitForTimeout(2500);
+    d.text = await p3.evaluate(() => { const e = document.querySelector('.tag .tag-txt'); return e ? e.textContent : ''; });
+    const pick = await p3.evaluate(() => { const m = window.__M, s = m.getSource('dodsel'), fs = s ? s._data.features : [];
+      return { n: fs.length, one: new Set(fs.map(f => f.properties.c)).size, veil: !!m.getSource('dodmask'),
+               row: document.querySelectorAll('#site-table tbody tr[data-dod].sel').length }; });
+    ok(d.raster && d.n > 0, 'a second run draws beside the first (' + d.n + ' polygons)');
+    ok(d.flags === 0 ? /not checked/.test(d.text) && !/no reguleringsplan/.test(d.text) : d.flags === d.n && !/not checked/.test(d.text),
+       d.flags === 0 ? 'an unchecked run says its plan coverage is not checked' : 'a checked run carries a plan finding on every polygon and says so (' + d.flags + ')');
+    ok(d.first, 'and the first run stays on');
+    ok(pick.n >= 1 && pick.one === 1 && !pick.veil && /changes/.test(d.text),
+       'a click on a change goes to its group and outlines it, with nothing veiled (' + pick.n + ' polygons, row marked: ' + pick.row + ')');
+    await p3.evaluate(() => document.querySelectorAll('.maplibregl-popup').forEach(e => e.remove()));
+  }
+  // The TERRAIN CHANGE sheet: the largest sites of the runs on the map, each
+  // with its probable origin. A row goes to its cluster and outlines it.
+  console.log('terrain change sheet');
+  await p3.click('#tab-facility'); await p3.waitForTimeout(500);
+  await p3.click('#tab-dod'); await p3.waitForTimeout(1500);
+  const ts = await p3.evaluate(() => {
+    const rows = [...document.querySelectorAll('#site-table tbody tr[data-dod]')];
+    const key = k => [...document.querySelectorAll('#site-table thead th')].findIndex(th => th.dataset.key === k);
+    const num = s => +String(s).replace(/[^0-9]/g, '');
+    const plan = r => r.cells[key('__plan')].textContent.trim();
+    return { title: document.getElementById('deck-title').textContent,
+             head: [...document.querySelectorAll('#site-table thead th .lab')].map(e => e.textContent.replace(/[ ↓↑]+$/, '')),
+             n: rows.length, runs: new Set(rows.map(r => r.dataset.run)).size,
+             forest: rows.filter(r => r.dataset.kind === 'forest').length,
+             type: rows.filter(r => r.cells[key('__type')].textContent.trim().length > 4).length,
+             signs: rows.every(r => /^(\+[\d ]+|0)$/.test(r.cells[key('dep')].textContent.trim()) && /^(−[\d ]+|0)$/.test(r.cells[key('exc')].textContent.trim())),
+             plan: [...new Set(rows.map(r => plan(r).replace(/ · ≈ \d+ %$/, '').replace(/ · \d+ reguleringsplaner$/, '').replace(/\d{4}(–\d{4})?/, 'Y')))],
+             split: rows.filter(r => / · ≈ \d+ %$/.test(plan(r))).length,
+             joined: rows.filter(r => / · \d+ reguleringsplaner/.test(plan(r))).length,
+             what: rows.filter(r => r.cells[key('__what')].textContent.trim().length > 2).length,
+             moved: rows.slice(0, 12).map(r => num(r.cells[key('__moved')].textContent)),
+             foot: document.querySelector('#site-table tfoot') ? document.querySelector('#site-table tfoot').textContent : '',
+             key: document.getElementById('sheet-key').textContent, hash: location.hash,
+             off: ((rows.find(r => r.dataset.run !== 'gjerdrum_2007_2020') || rows[0] || {dataset: {}}).dataset.dod) || null };
+  });
+  ok(/LARGEST CLUSTERS/.test(ts.title) && ts.head[0] === 'NEAREST PLACE NAME' && ts.head[2] === 'PROBABLE ORIGIN' && ts.head[3] === 'TYPOLOGY', 'the TERRAIN CHANGE tab opens its own sheet of clusters (' + ts.head.slice(0, 5).join(', ') + ')');
+  ok(ts.n >= 20 && ts.runs >= 2 && ts.forest >= 1, 'with the largest clusters of every run in view, the ones under forest too (' + ts.n + ' clusters, ' + ts.forest + ' under forest, ' + ts.runs + ' runs)');
+  ok(ts.what === ts.n && ts.type === ts.n, 'every cluster names a probable origin and carries a typology');
+  ok(ts.signs && /≈/.test(ts.head.join(' ')), 'figures are approximate and signed: + for deposit, − for excavation / erosion');
+  ok(ts.split === 0, 'no cluster mixes ground under a reguleringsplan with ground under none (' + ts.split + ' mixed)');
+  ok(ts.joined >= 1, 'and a work regulated in sections is one cluster, with the number of its reguleringsplaner (' + ts.joined + ' such clusters)');
+  ok(ts.plan.every(s => /reguleringsplan/.test(s)) && ts.plan.includes('no reguleringsplan'), 'the plan is called a reguleringsplan, and its absence is said plainly (' + ts.plan.join(' | ') + ')');
+  ok(ts.moved.every((v, i) => !i || v <= ts.moved[i - 1]), 'largest volume moved first (' + ts.moved.slice(0, 3).join(', ') + ')');
+  ok(/Σ/.test(ts.foot) && /not a finding/.test(ts.key) && /sheet=dod/.test(ts.hash), 'with a totals line, a key that calls the names leads, and its own address');
+  // The clusters themselves, as written by tools/make_dod_sites.py.
+  { const sites = JSON.parse(fs.readFileSync(__dirname + '/../data/dod_sites.json', 'utf8')).sites;
+    const names = {}; sites.forEach(d => { const k = d.kommune + '|' + d.place; names[k] = (names[k] || 0) + 1; });
+    const twice = Object.keys(names).filter(k => names[k] > 1);
+    const roads = sites.filter(d => d.road), far = sites.filter(d => !d.road && !d.ls && (d.bounds[3] - d.bounds[1]) * 111 > 6);
+    ok(twice.length === 0, 'within a kommune no two clusters carry the same name (' + twice.slice(0, 3).join(', ') + ')');
+    ok(roads.length >= 5 && roads.some(d => d.plans >= 3), 'a road or a railway is one cluster over the reguleringsplaner of its sections (' + roads.length + ' such clusters)');
+    ok(far.length === 0, 'and nothing else is gathered over kilometres: nearness is the base (' + far.map(d => d.id).join(' ') + ')'); }
+  if (ts.off) {
+    await p3.click('#site-table tbody tr[data-dod="' + ts.off + '"] td:nth-child(2)'); await p3.waitForTimeout(2500);
+    const go = await p3.evaluate(id => { const tr = document.querySelector('#site-table tbody tr[data-dod="' + id + '"]');
+      const m = window.__M, c = m.getCenter(), k = tr.dataset.run;
+      return { on: document.getElementById('filter-dod').checked, layer: !!m.getLayer('dod-' + k) || !!m.getSource('dod-' + k), zoom: m.getZoom(), c: [c.lng, c.lat] }; }, ts.off);
+    ok(go.on && go.layer && go.zoom > 8, 'a row goes to its cluster (zoom ' + go.zoom.toFixed(1) + ')');
+    const mark = () => p3.evaluate(id => { const m = window.__M, s = m.getSource('dodsel'), fs = s ? s._data.features : [];
+      const L = m.getStyle().layers.map(l => l.id), tr = document.querySelector('#site-table tbody tr[data-dod="' + id + '"]');
+      const shapes = (m.getSource(tr.dataset.run === 'gjerdrum_2007_2020' ? 'dod-hit' : 'dod-hit-' + tr.dataset.run) || {})._data;
+      const mine = new Set(); if (fs.length && shapes) shapes.features.forEach(x => mine.add(JSON.stringify(x.geometry.coordinates[0][0])));
+      return { n: fs.length, one: new Set(fs.map(f => f.properties.c)).size, sel: tr.classList.contains('sel'),
+               own: fs.length && shapes ? fs.every(f => mine.has(JSON.stringify(f.geometry.coordinates[0][0]))) : null,
+               veil: !!m.getSource('dodmask') || L.includes('dodmask'),
+               above: L.indexOf('dodsel-line') > L.indexOf(tr.dataset.run === 'gjerdrum_2007_2020' ? 'dod' : 'dod-' + tr.dataset.run) }; }, ts.off);
+    let v1 = await mark();
+    for (let i = 0; i < 24 && (!v1.n || v1.own === null); i++) { await p3.waitForTimeout(500); v1 = await mark(); }   // the line waits for the run to load
+    ok(v1.n >= 1 && v1.one === 1 && v1.sel && v1.above, 'and a line is drawn round that cluster, above the change raster (' + v1.n + ' polygons)');
+    ok(v1.own === true && !v1.veil, 'the line follows the run\'s own change polygons, and nothing else is veiled');
+    const tag = await p3.evaluate(() => { const e = document.querySelector('.tag .tag-txt'), w = document.querySelector('.tag');
+      if (!e) return { text: '' };
+      const m = window.__M, at = w.getBoundingClientRect(), b = e.getBoundingClientRect();
+      const edge = m.getLayer('dodsel-edge') ? JSON.stringify(m.getFilter('dodsel-edge')) : '';
+      return { text: e.textContent, font: getComputedStyle(e).fontFamily, lead: (() => { const q = (w.querySelector('svg.tag-lead polyline').getAttribute('points') || '').trim().split(' ').map(t => t.split(',').map(Number)); return q.length === 3 ? { len: Math.hypot(q[1][0], q[1][1]), flat: q[1][1] === q[2][1], oblique: Math.round(Math.atan2(Math.abs(q[1][1]), Math.abs(q[1][0])) * 180 / Math.PI) } : null; })(), dots: w.querySelectorAll('circle').length, boxed: ['Left', 'Right', 'Bottom'].some(k => getComputedStyle(e)['border' + k + 'Width'] !== '0px'),
+               off: !(at.left >= b.left && at.left <= b.right && at.top >= b.top && at.top <= b.bottom), inMap: b.left >= 0 && b.right <= innerWidth, close: !!e.querySelector('.tag-x'), edge,
+               clear: ['bar', 'dod-panel'].every(id => { const o = document.getElementById(id).getBoundingClientRect(); return !o.width || o.right < b.left || o.left > b.right || o.bottom < b.top || o.top > b.bottom; }) }; });
+    ok(/changes/.test(tag.text) && tag.lead && tag.lead.flat && [30, 45, 60].includes(tag.lead.oblique) && tag.dots === 0,
+       'and its label hangs from a shelf at the end of one oblique leader that starts on the perimeter (' + (tag.lead ? tag.lead.oblique + '°, ' + Math.round(tag.lead.len) + ' px' : 'no leader') + ')');
+    ok(tag.lead && tag.lead.len >= 100 && tag.off && tag.inMap, 'well out from the cluster, and inside the map');
+    ok(tag.clear, 'clear of the toolbar and of the panel');
+    ok(/Cutive Mono/.test(tag.font) && /≈ [+−]/.test(tag.text), 'set in the face of the table, the figures signed after the ≈');
+    ok(new RegExp('"r"\\],"' + (await p3.evaluate(id => document.querySelector('#site-table tbody tr[data-dod="' + id + '"]').dataset.run, ts.off)) + '"').test(tag.edge),
+       'the chosen cluster is outlined along the exact edge of its changes');
+    await p3.keyboard.press('Escape'); await p3.waitForTimeout(500);
+    const esc = await mark();
+    ok(esc.n === 0 && !esc.sel && !(await p3.evaluate(() => !!document.querySelector('.tag'))), 'Esc lets go of it, and so does the mark on the label (' + tag.close + ')');
+    await p3.click('#site-table tbody tr[data-dod="' + ts.off + '"] td:nth-child(2)'); await p3.waitForTimeout(1500);
+    await p3.click('#site-table tbody tr[data-dod="' + ts.off + '"] td:nth-child(2)'); await p3.waitForTimeout(1500);
+    const v2 = await mark();
+    ok(v2.n === 0 && !v2.sel, 'the same row again lets go of it');
+    await p3.click('#site-table tbody tr[data-dod="' + ts.off + '"] td:nth-child(2)'); await p3.waitForTimeout(1500);
+  }
+  await p3.click('#tab-facility'); await p3.waitForTimeout(1500);
+  const backT = await p3.evaluate(() => ({ uid: document.querySelectorAll('#site-table tbody tr[data-uid]').length, dod: document.querySelectorAll('#site-table tbody tr[data-dod]').length }));
+  const v3 = await p3.evaluate(() => { const m = window.__M, s = m.getSource('dodsel');
+    return { n: s ? s._data.features.length : 0, dod: m.getLayoutProperty('dodfar', 'visibility') !== 'none',
+             base: (document.querySelector('input[name="basemap"]:checked') || {}).value }; });
+  ok(backT.uid > 0 && backT.dod === 0 && v3.n === 0 && !v3.dod, "and RECEPTION brings the sites back and takes terrain change off the map (" + backT.uid + ")");
+  ok(v3.base === 'satellite', 'with the background that was there before the relief (' + v3.base + ')');
+  // Each tab draws its own family on the map; ALL draws them all.
+  console.log('tabs and families');
+  const fam2 = {};
+  for (const tab of ['facility', 'project', 'dod', 'all']) {
+    await p3.click('#tab-' + tab); await p3.waitForTimeout(700);
+    fam2[tab] = await p3.evaluate(() => { const m = window.__M, f = JSON.stringify(m.getFilter('site-sym'));
+      return { rec: /AK_AH_001/.test(f), proj: /CP_001/.test(f), none: /\["==",\["get","uid"\],""\]/.test(f), scoped: /"uid"/.test(f),
+               dod: !!m.getLayer('dodfar') && m.getLayoutProperty('dodfar', 'visibility') !== 'none' }; });
+  }
+  ok(fam2.facility.rec && !fam2.facility.proj && !fam2.facility.dod, 'RECEPTION draws the reception sites only');
+  ok(fam2.project.proj && !fam2.project.rec && !fam2.project.dod, 'CONSTRUCTION draws the projects only');
+  ok(fam2.dod.none && fam2.dod.dod, 'TERRAIN CHANGE draws the terrain change and no site');
+  ok(!fam2.all.scoped && fam2.all.dod, 'and ALL draws every family together');
+  await p3.close();
+  const p4 = await ctx.newPage();
+  await p4.goto('http://127.0.0.1:8901/index.html#sheet=dod'); await p4.waitForTimeout(3000);
+  const pubT = await p4.evaluate(() => ({ on: document.getElementById('filter-dod').checked,
+    rows: [...document.querySelectorAll('#site-table tbody tr[data-dod]')].map(r => r.dataset.run),
+    tab: document.getElementById('tab-dod').getAttribute('aria-selected'), runs: +document.getElementById('count-runs').textContent }));
+  ok(pubT.tab === 'true' && pubT.on && pubT.rows.length > 0 && pubT.rows.includes('gjerdrum_2007_2020') && new Set(pubT.rows).size === pubT.runs,
+     'the public map opens the sheet from its address, terrain change on, with the clusters of every published run (' + pubT.rows.length + ' rows, ' + pubT.runs + ' runs)');
+  await p4.close();
 
   console.log(errs.length? 'JS errors:\n'+errs.join('\n') : 'no JS errors');
   if (errs.length) fail++;
