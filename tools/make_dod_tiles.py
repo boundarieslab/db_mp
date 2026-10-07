@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
 """Turn one unigis_tesis DoD run into the web map's DoD layer.
 
-    python tools/make_dod_tiles.py <run_dir> <slug>
+    python tools/make_dod_tiles.py <run_dir> <slug> [--res M] [--rng M] [--plan-unchecked] [--aside DIR]
+
+    --res M            work on a grid of M metres instead of the run's own. A
+                       0.5 m run (Asker) is 800 M pixels and does not fit in
+                       memory; the deepest tile zoom is ~1.2 m/px anyway.
+    --rng M            fix the colour range to +/-M metres instead of taking it
+                       from this run's percentiles, so every kommune reads
+                       against the same legend. Gjerdrum's own is 12.093.
+    --plan-unchecked   leave the plan flag out of the click targets. The
+                       pipeline marks every polygon "sin_plan" when it has no
+                       plan layer, which is a gap and not a finding.
 
 <run_dir> is a folder like
     unigis_tesis/data/outputs/AK_GJERDRUM/2007_to_2020
@@ -64,6 +74,24 @@ def read_gpkg(path, layer='poligonos_cambio', fields=()):
         con.close()
 
 
+def regrid(path, res, out, resampling):
+    """Average a run raster onto a coarser grid of `res` metres."""
+    with rasterio.open(path) as s:
+        f = res / abs(s.transform.a)
+        if abs(f - 1.0) < 1e-6:
+            return path
+        w, h = int(round(s.width / f)), int(round(s.height / f))
+        tr = from_origin(s.bounds.left, s.bounds.top, res, res)
+        prof = s.profile.copy()
+        prof.update(width=w, height=h, transform=tr, compress='deflate', tiled=True,
+                    blockxsize=512, blockysize=512, BIGTIFF='IF_SAFER')
+        prof.pop('predictor', None)
+        with rasterio.open(out, 'w', **prof) as d:
+            reproject(rasterio.band(s, 1), rasterio.band(d, 1), src_nodata=s.nodata,
+                      dst_nodata=s.nodata, resampling=resampling, num_threads=4)
+    return out
+
+
 def change_mask(dod_path, gpkg_path):
     """Valid DoD pixels that fall inside a vectorised change polygon.
 
@@ -80,18 +108,28 @@ def change_mask(dod_path, gpkg_path):
     return d, valid & poly, len(geoms)
 
 
-def composite(run, out_tif):
+def composite(run, out_tif, res=None, rng_fixed=None):
     dtm = os.path.join(run, 'new_aligned.tif')
+    dod = os.path.join(run, 'DoD_final.tif')
+    tmp = []
+    if res:
+        base = os.path.splitext(out_tif)[0]
+        dtm2 = regrid(dtm, res, base + '_dtm.tif', Resampling.average)
+        dod2 = regrid(dod, res, base + '_dh.tif', Resampling.average)
+        tmp = [p for p, q in ((dtm2, dtm), (dod2, dod)) if p != q]
+        dtm, dod = dtm2, dod2
     with rasterio.open(dtm) as s:
         prof = s.profile
         elev = s.read(1).astype(np.float32)
         nod = s.nodata
+        px = np.float32(abs(s.transform.a))
     elev[elev == nod] = np.nan
     np.copyto(elev, np.float32(np.nanmedian(elev)), where=np.isnan(elev))
 
     # matplotlib LightSource(315, 45).hillshade(elev, vert_exag=2, dx=1, dy=1),
     # written out in float32 because the array is 115 M pixels.
-    e_dy, e_dx = np.gradient(np.float32(2.0) * elev, np.float32(-1.0), np.float32(1.0))
+    # Spacing is the pixel size; on the 1 m Gjerdrum grid that is the 1 it always was.
+    e_dy, e_dx = np.gradient(np.float32(2.0) * elev, -px, px)
     del elev
     az, alt = math.radians(90 - 315), math.radians(45)
     d0, d1, d2 = math.cos(az) * math.cos(alt), math.sin(az) * math.cos(alt), math.sin(alt)
@@ -104,11 +142,13 @@ def composite(run, out_tif):
     shade = np.float32(0.40) + np.float32(0.60) * inten
     del inten
 
-    d, mask, npoly = change_mask(os.path.join(run, 'DoD_final.tif'),
-                                 os.path.join(run, 'poligonos.gpkg'))
+    d, mask, npoly = change_mask(dod, os.path.join(run, 'poligonos.gpkg'))
     vals = d[mask].astype(np.float64)
     del d
-    rng = min(max(abs(np.percentile(vals, 2)), abs(np.percentile(vals, 98))), 25.0) or 5.0
+    own = min(max(abs(np.percentile(vals, 2)), abs(np.percentile(vals, 98))), 25.0) or 5.0
+    rng = rng_fixed or own
+    if rng_fixed:
+        print(f'  own range of this run would be +/-{own:.3f} m')
     print(f'  {npoly} polygons, {mask.sum():,} px, rng +/-{rng:.3f} m')
 
     rgb = mpl.colormaps.get_cmap('turbo')(mcolors.Normalize(-rng, rng, clip=True)(vals))[:, :3]
@@ -130,6 +170,8 @@ def composite(run, out_tif):
         dst.write(rgba)
         dst.colorinterp = [rasterio.enums.ColorInterp.red, rasterio.enums.ColorInterp.green,
                            rasterio.enums.ColorInterp.blue, rasterio.enums.ColorInterp.alpha]
+    for p in tmp:
+        os.remove(p)
     return rng
 
 
@@ -177,38 +219,67 @@ def tiles(src_tif, outdir):
         print(f'  bounds for index.html: [[{s:.5f}, {w:.5f}], [{n:.5f}, {e:.5f}]]')
 
 
-def hit_targets(gpkg, out_json):
-    tf = Transformer.from_crs('EPSG:25832', 'EPSG:4326', always_xy=True).transform
+def gpkg_epsg(path, layer='poligonos_cambio'):
+    con = sqlite3.connect(f'file:{path}?mode=ro', uri=True)
+    try:
+        return con.execute('SELECT s.organization_coordsys_id FROM gpkg_geometry_columns g '
+                           'JOIN gpkg_spatial_ref_sys s ON s.srs_id = g.srs_id '
+                           'WHERE g.table_name = ?', (layer,)).fetchone()[0]
+    finally:
+        con.close()
+
+
+def hit_targets(gpkg, out_json, plan_flag=True):
+    tf = Transformer.from_crs(f'EPSG:{gpkg_epsg(gpkg)}', 'EPSG:4326', always_xy=True).transform
     rnd = lambda o: [rnd(i) for i in o] if isinstance(o, (list, tuple)) else round(o, COORD_DECIMALS)
     feats = []
     for geom, p in read_gpkg(gpkg, fields=('area_m2', 'volume_m3', 'mean_dh_m', 'sin_plan')):
         g = shp_transform(tf, geom).simplify(SIMPLIFY_DEG, preserve_topology=True)
         if g.is_empty:
             continue
+        props = {'a': int(round(p['area_m2'])), 'v': int(round(p['volume_m3'])),
+                 'dh': round(p['mean_dh_m'], 2)}
+        if plan_flag:
+            props['np'] = 1 if p['sin_plan'] else 0
         feats.append({'type': 'Feature',
                       'geometry': {'type': g.geom_type,
                                    'coordinates': rnd(mapping(g)['coordinates'])},
-                      'properties': {'a': int(round(p['area_m2'])),
-                                     'v': int(round(p['volume_m3'])),
-                                     'dh': round(p['mean_dh_m'], 2),
-                                     'np': 1 if p['sin_plan'] else 0}})
+                      'properties': props})
     txt = json.dumps({'type': 'FeatureCollection', 'features': feats}, separators=(',', ':'))
-    open(out_json, 'w').write(txt)
+    open(out_json, 'w', encoding='utf-8').write(txt)
     print(f'  {len(feats)} click targets, {len(txt)/1024:.0f} KB')
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
+    args = sys.argv[1:]
+    def opt(name, cast=float):
+        if name in args:
+            i = args.index(name); v = cast(args[i + 1]); del args[i:i + 2]; return v
+    res, rng_fixed = opt('--res'), opt('--rng')
+    aside = opt('--aside', str)
+    plan_flag = '--plan-unchecked' not in args
+    args = [a for a in args if a != '--plan-unchecked']
+    if len(args) != 2:
         sys.exit(__doc__)
-    run, slug = sys.argv[1], sys.argv[2]
+    run, slug = args
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     tmp = os.path.join(here, f'_dod_{slug}.tif')
     print('compositing turbo x hillshade...')
-    rng = composite(run, tmp)
+    rng = composite(run, tmp, res, rng_fixed)
     print('tiling...')
-    tiles(tmp, os.path.join(here, 'data', 'dod', slug))
+    outdir = os.path.join(here, 'data', 'dod', slug)
+    if aside and os.path.isdir(outdir):
+        # A rebuilt run draws change in other places than the run before it. Tiles
+        # are only ever written, so the earlier ones would stay where the new run
+        # has nothing. The earlier folder is moved out whole, and kept.
+        import time
+        os.makedirs(aside, exist_ok=True)
+        dest = os.path.join(aside, f"{slug}_{time.strftime('%Y%m%d_%H%M%S')}")
+        os.replace(outdir, dest)
+        print(f'  earlier tiles moved to {dest}')
+    tiles(tmp, outdir)
     print('click targets...')
     hit_targets(os.path.join(run, 'poligonos.gpkg'),
-                os.path.join(here, 'data', f'dod_{slug}.geojson'))
+                os.path.join(here, 'data', f'dod_{slug}.geojson'), plan_flag)
     os.remove(tmp)
     print(f'\ndone. Legend range for index.html: +/-{rng:.1f} m')
