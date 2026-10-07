@@ -844,13 +844,23 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     fp: (window.__M.getSource('fp')._data.features || []).some(f => f.properties.uid === 'AK_ZZ_999') }));
   ok(!unpub.site && !unpub.fp, 'a row not marked Published stays off the map');
   ok(fp.col === '#FF0000' && /col/.test(fp.lineCol), 'they are coloured by status, not black (' + fp.col + ')');
-  // The 2026 method draws more than the footprint: a mining licence is dotted,
-  // property parcels are a hairline, and both stay out of the fill.
+  // Lines only, in an order of weight: the site in its status colour, what is
+  // permitted or licensed in white, a planned expansion in short dashes of one
+  // fixed colour, property in white dashes. A facility is never filled.
   const kinds = await p.evaluate(() => { const m = window.__M;
-    return { lic: !!m.getLayer('fp-lic'), prop: !!m.getLayer('fp-prop'),
-             licDash: m.getLayer('fp-lic') ? JSON.stringify(m.getPaintProperty('fp-lic', 'line-dasharray')) : '',
-             classes: [...new Set(m.getSource('fp')._data.features.map(f => f.properties.pcls).filter(Boolean))].sort().join(',') }; });
-  ok(kinds.lic && kinds.prop && /0\.2/.test(kinds.licDash), 'a mining licence and property parcels have their own line (' + kinds.licDash + ')');
+    const fs = m.getSource('fp')._data.features;
+    return { paper: !!m.getLayer('fp-paper') && m.getPaintProperty('fp-paper', 'line-color'),
+             exp: !!m.getLayer('fp-exp') && m.getPaintProperty('fp-exp', 'line-color') + ' ' + JSON.stringify(m.getPaintProperty('fp-exp', 'line-dasharray')),
+             prop: !!m.getLayer('fp-prop') && JSON.stringify(m.getPaintProperty('fp-prop', 'line-dasharray')),
+             old: !!m.getLayer('fp-lic'), fill: JSON.stringify(m.getPaintProperty('fp-fill', 'fill-opacity')),
+             siteW: JSON.stringify(m.getPaintProperty('fp-line', 'line-width')),
+             twice: fs.filter(f => f.properties.pcls === 'register' && !f.properties.hid
+                                   && fs.some(g => g.properties.uid === f.properties.uid && g.properties.firm === 1)).length,
+             classes: [...new Set(fs.map(f => f.properties.pcls).filter(Boolean))].sort().join(',') }; });
+  ok(kinds.paper === '#FFFFFF' && /#00FFFF \[3,2\.6\]/.test(kinds.exp) && /5,4\.3/.test(kinds.prop) && !kinds.old,
+     'permitted or licensed is white, a planned expansion short dashes in its own colour, property white dashes (' + kinds.exp + ')');
+  ok(/"cat"\],"facility"\],0/.test(kinds.fill) && /"facility"\],\["case"/.test(kinds.siteW), 'a facility is a line and never a fill');
+  ok(kinds.twice === 0, 'a register outline is not drawn again on a site whose ground is traced');
   ok(/observed/.test(kinds.classes) && /permitted/.test(kinds.classes), 'the outline file carries worked ground and the permitted outline (' + kinds.classes + ')');
   ok(/0\.14/.test(fp.fill) && /match/.test(fp.fill),
      'with a see-through fill whose weight follows the status, and no glow');
