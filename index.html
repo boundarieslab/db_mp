@@ -682,7 +682,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M0 2h16v1h-16zM0 3h1v1h-1zM15 3h1v1h-1zM0 4h1v1h-1zM11 4h2v1h-2zM15 4h1v1h-1zM0 5h1v1h-1zM11 5h2v1h-2zM15 5h1v1h-1zM0 6h1v1h-1zM5 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM4 7h3v1h-3zM15 7h1v1h-1zM0 8h1v1h-1zM3 8h5v1h-5zM11 8h1v1h-1zM15 8h1v1h-1zM0 9h1v1h-1zM2 9h7v1h-7zM10 9h3v1h-3zM15 9h1v1h-1zM0 10h9v1h-9zM10 10h4v1h-4zM15 10h1v1h-1zM0 11h1v1h-1zM15 11h1v1h-1zM0 12h16v1h-16z"/></svg>
             <input type="range" class="slider" id="dod-photo" min="0" max="100" value="30" aria-label="Aerial photo opacity">
             <span class="val" id="dod-photo-val">30%</span></div>
-        <div class="dp-row" id="dod-dtm-note" data-title-en="Which survey the relief shows. The older one is drawn from zoom 11, inside the studied areas." data-title-no="Hvilken skanning relieffet viser. Den eldre tegnes fra zoom 11, innenfor de undersøkte områdene." title="Which survey the relief shows. The older one is drawn from zoom 11, inside the studied areas.">
+        <div class="dp-row" id="dod-dtm-note" data-title-en="Which survey the relief and the terrain contours show. The older one is drawn inside the studied areas." data-title-no="Hvilken skanning relieffet og høydekurvene viser. Den eldre tegnes innenfor de undersøkte områdene." title="Which survey the relief and the terrain contours show. The older one is drawn inside the studied areas.">
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h2v1h-2zM3 3h1v1h-1zM6 3h1v1h-1zM12 3h2v1h-2zM2 4h1v1h-1zM7 4h1v1h-1zM11 4h1v1h-1zM14 4h1v1h-1zM1 5h1v1h-1zM8 5h1v1h-1zM10 5h1v1h-1zM15 5h1v1h-1zM0 6h1v1h-1zM9 6h1v1h-1zM4 8h2v1h-2zM3 9h1v1h-1zM6 9h1v1h-1zM12 9h2v1h-2zM2 10h1v1h-1zM7 10h1v1h-1zM11 10h1v1h-1zM14 10h1v1h-1zM1 11h1v1h-1zM8 11h1v1h-1zM10 11h1v1h-1zM15 11h1v1h-1zM0 12h1v1h-1zM9 12h1v1h-1z"/></svg>
             <span class="dp-two">
             <label class="dp-opt"><input type="radio" name="dod-dtm" id="dod-dtm-new" value="new" checked><span data-en="newer" data-no="nyere">newer</span></label>
@@ -690,7 +690,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
             </span></div>
         <div class="dp-rule"></div>
         <label class="dp-opt" data-title-en="The edge of every change and a line at every metre of change, from zoom 14" data-title-no="Kanten av hver endring og en linje for hver meter endring, fra zoom 14" title="The edge of every change and a line at every metre of change, from zoom 14"><input type="checkbox" id="dod-iso" checked><span data-en="Change contours, 1 m" data-no="Endringskoter, 1 m">Change contours, 1 m</span></label>
-        <label class="dp-opt" data-title-en="Every metre from zoom 14, read from Kartverket's 1 m model as you move" data-title-no="Hver meter fra zoom 14, lest fra Kartverkets 1 m-modell mens du flytter kartet" title="Every metre from zoom 14, read from Kartverket's 1 m model as you move"><input type="checkbox" id="dod-contours"><span data-en="Terrain contours, 1 m" data-no="Høydekurver, 1 m">Terrain contours, 1 m</span><span class="dp-state" id="dod-ct-state"></span></label>
+        <label class="dp-opt" data-title-en="A line every metre from zoom 14, of the survey chosen above: black outside the changes, white inside them. Read from Kartverket as you move" data-title-no="En linje for hver meter fra zoom 14, fra skanningen som er valgt over: svart utenfor endringene, hvit inni dem. Leses fra Kartverket mens du flytter kartet" title="A line every metre from zoom 14, of the survey chosen above: black outside the changes, white inside them. Read from Kartverket as you move"><input type="checkbox" id="dod-contours"><span data-en="Terrain contours, 1 m" data-no="Høydekurver, 1 m">Terrain contours, 1 m</span><span class="dp-state" id="dod-ct-state"></span></label>
         <label class="dp-opt"><input type="checkbox" id="dod-zones" checked><span data-en="Studied areas" data-no="Undersøkte områder">Studied areas</span></label>
     </div>
 </div>
@@ -2253,7 +2253,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // a new kommune is looked at before it is published.
     const DOD_REVIEW = new URLSearchParams(window.location.search).has('review');
     const DOD_RUNS = [
-        { id: 'gjerdrum_2007_2020', kommune: 'Gjerdrum', years: '2007–2020', old: 'Romerike 07pkt 2007',
+        { id: 'gjerdrum_2007_2020', kommune: 'Gjerdrum', years: '2007–2020', old: 'Romerike 07pkt 2007', neu: 'Gjerdrum Ullensaker Nannestad 5pkt 2020',
           tiles: 'data/dod/gjerdrum_2007_2020/{z}/{x}/{y}.png',
           geojson: 'data/dod_gjerdrum_2007_2020.geojson',
           bounds: [10.95226, 60.02233, 11.13133, 60.13268], count: 1121, ha: 122.3,
@@ -2266,7 +2266,7 @@ document.addEventListener('DOMContentLoaded', function() {
         , { id: 'hurdal_2007_2020', kommune: 'Hurdal', years: '2007–2020', old: 'Hurdal 2007', tiles: 'data/dod/hurdal_2007_2020/{z}/{x}/{y}.png', geojson: 'data/dod_hurdal_2007_2020.geojson', bounds: [10.69045, 60.33138, 11.14127, 60.52518], count: 962, ha: 41.0, area: 27420.0, land: 28480.7, plan: true, src: 'DoDetector, DTM1' }
         , { id: 'lillestrom_2007_2020', kommune: 'Lillestrøm', years: '2007–2020', old: 'Romerike 07pkt 2007', tiles: 'data/dod/lillestrom_2007_2020/{z}/{x}/{y}.png', geojson: 'data/dod_lillestrom_2007_2020.geojson', bounds: [11.03611, 59.87504, 11.44135, 60.07821], count: 5978, ha: 423.9, area: 27087.6, land: 45640.9, plan: true, src: 'DoDetector, DTM1' }
         , { id: 'lorenskog_2008_2020', kommune: 'Lørenskog', years: '2008–2020', old: 'Lørenskog 2008', tiles: 'data/dod/lorenskog_2008_2020/{z}/{x}/{y}.png', geojson: 'data/dod_lorenskog_2008_2020.geojson', bounds: [10.94995, 59.90494, 10.99633, 59.95135], count: 403, ha: 39.7, area: 695.6, land: 7051.1, plan: true, src: 'DoDetector, DTM1' }
-        , { id: 'nannestad_2007_2020', kommune: 'Nannestad', years: '2007–2020', old: 'Nannestad 2007', tiles: 'data/dod/nannestad_2007_2020/{z}/{x}/{y}.png', geojson: 'data/dod_nannestad_2007_2020.geojson', bounds: [10.82456, 60.23313, 11.13112, 60.34766], count: 703, ha: 52.2, area: 12791.1, land: 34081.1, plan: true, src: 'DoDetector, DTM1' }
+        , { id: 'nannestad_2007_2020', kommune: 'Nannestad', years: '2007–2020', old: 'Nannestad 2007', neu: 'Gjerdrum Ullensaker Nannestad 5pkt 2020', tiles: 'data/dod/nannestad_2007_2020/{z}/{x}/{y}.png', geojson: 'data/dod_nannestad_2007_2020.geojson', bounds: [10.82456, 60.23313, 11.13112, 60.34766], count: 703, ha: 52.2, area: 12791.1, land: 34081.1, plan: true, src: 'DoDetector, DTM1' }
         , { id: 'nesodden_2014_2020', kommune: 'Nesodden', years: '2014–2020', old: 'Follo 2014', tiles: 'data/dod/nesodden_2014_2020/{z}/{x}/{y}.png', geojson: 'data/dod_nesodden_2014_2020.geojson', bounds: [10.57828, 59.72114, 10.73425, 59.87588], count: 854, ha: 47.8, area: 6140.0, land: 6142.5, plan: true, src: 'DoDetector, DTM1' }
         , { id: 'nes_2010_2020', kommune: 'Nes', years: '2010–2020', old: 'Ullensaker Nes Nannestad 2010', tiles: 'data/dod/nes_2010_2020/{z}/{x}/{y}.png', geojson: 'data/dod_nes_2010_2020.geojson', bounds: [11.25257, 59.98747, 11.82469, 60.35354], count: 6236, ha: 326.9, area: 63866.5, land: 64055.7, plan: true, src: 'DoDetector, DTM1' }
         , { id: 'nittedal_2013_2020', kommune: 'Nittedal', years: '2013–2020', old: 'Romeriksåsene 2013', tiles: 'data/dod/nittedal_2013_2020/{z}/{x}/{y}.png', geojson: 'data/dod_nittedal_2013_2020.geojson', bounds: [10.76524, 59.97239, 10.95458, 60.18896], count: 918, ha: 61.8, area: 6646.4, land: 18612.6, plan: true, src: 'DoDetector, DTM1' }
@@ -2291,6 +2291,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // change and the contours of the change, as vector tiles (tools/make_dod_lines.py).
     const DOD_FAR = 'data/dod_far/{z}/{x}/{y}.png';
     const DOD_LINES = 'data/dod_lines.pmtiles';
+    const DOD_IN = { old: 'data/dod_before.pmtiles', new: 'data/dod_after.pmtiles' };
     const RUN = DOD_RUNS[0];
     // The first run keeps the plain ids, so links and tests written for it hold.
     const dodLayer = r => r === RUN ? 'dod' : 'dod-' + r.id;
@@ -2425,15 +2426,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     // Which survey the relief shows: the newer one (the background) or the older.
-    let dodDtm = 'new', dodZones = true, dodContours = false, contourState = 0, dodIso = true, dodLines = 0, selEdge = null;
+    let dodDtm = 'new', dodZones = true, dodContours = false, contourState = 0, dodIso = true, dodLines = 0, selEdge = null, inState = 0;
     const farOpacity = () => ['interpolate', ['linear'], ['zoom'], 11.5, dodOpacity / 100, 12.6, 0];
     function syncDodExtras() {
         const on = dodShown();
         DOD_RUNS.forEach(r => setVis(dodOld(r), on && dodDtm === 'old'));
         if (dodBuilt) ['dodfp-line'].forEach(id => setVis(id, on && dodZones));
-        ['dod-contours', 'dod-contours-far'].forEach(id => setVis(id, on && dodContours));
+        // Terrain contours are of the survey the relief shows: the newer one or the older.
+        const ct = on && dodContours;
+        setVis('dod-contours-far', ct);
+        ['new', 'old'].forEach(k => { setVis(k === 'new' ? 'dod-contours' : 'dod-contours-old', ct && dodDtm === k); setVis('dod-in-' + k, ct && dodDtm === k); });
         ['dod-iso', 'dod-edge'].forEach(id => setVis(id, on && dodIso));
-        if (on && dodContours && !contourState) buildContours();
+        if (ct && !contourState) buildContours();
+        if (ct && !inState) buildInside();
         const p = $('dod-panel');
         if (p) p.hidden = !on;
     }
@@ -2454,7 +2459,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(DOD_LINES, { method: 'HEAD' }).then(r => { if (!r.ok) throw new Error('no line tiles (' + r.status + ')'); })
             .then(() => loadScripts([['pmtiles', 'https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js']]))
             .then(() => {
-                maplibregl.addProtocol('pmtiles', new pmtiles.Protocol().tile);
+                if (!maplibregl.__pm) { maplibregl.addProtocol('pmtiles', new pmtiles.Protocol().tile); maplibregl.__pm = true; }
                 whenStyleIn(() => {
                     const lay = on => ({ visibility: on ? 'visible' : 'none' });
                     map.addSource('dodlines', { type: 'vector', url: 'pmtiles://' + new URL(DOD_LINES, location.href).href });
@@ -2483,11 +2488,39 @@ document.addEventListener('DOMContentLoaded', function() {
     let nhmBusy = 0, nhmFail = 0;
     const nhmWait = [];
     const nhmNote = () => { const el = $('dod-ct-state'); if (el) el.textContent = nhmBusy + nhmWait.length ? t('ct_wait') : nhmFail > 3 ? t('ct_fail') : ''; };
-    function nhmTile(url, abort) {
-        const m = /(\d+)\/(\d+)\/(\d+)$/.exec(url), z = +m[1], x = +m[2], y = +m[3], w = 2 * MERC / Math.pow(2, z);
+    // Each survey is a project in Kartverket's project mosaic (Prosjekt_DTM), under the
+    // name the run records as its older survey. A tile is asked from the project of the
+    // run whose studied ground its centre lies in; anywhere else, and for the newer
+    // survey of a run that names none, it comes from the national model as it is today.
+    const PROJ = 'https://hoydedata.no/arcgis/rest/services/Prosjekt_DTM/ImageServer';
+    const projIds = {};
+    const idsOf = name => projIds[name] || (projIds[name] = fetch(PROJ + '/query?where=' + encodeURIComponent("NAME = '" + name.replace(/'/g, "''") + "'") + '&returnIdsOnly=true&f=json')
+        .then(r => r.json()).then(j => j.objectIds || []).catch(() => { delete projIds[name]; return []; }));
+    const inRing = (x, y, ring) => { let c = false;
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+            const a = ring[i], b = ring[j];
+            if ((a[1] > y) !== (b[1] > y) && x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) c = !c;
+        }
+        return c; };
+    function runAt(lon, lat) {
+        const src = map.getSource('dodfp'), fs = (src && src._data && src._data.features) || [];
+        const hit = fs.find(f => (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates)
+            .some(poly => inRing(lon, lat, poly[0]) && !poly.slice(1).some(h => inRing(lon, lat, h))));
+        if (hit) return DOD_RUNS.find(r => r.id === hit.properties.id);
+        // Before the outlines of the studied ground are in: the smallest run whose box holds the point.
+        return fs.length ? null : DOD_RUNS.filter(r => lon >= r.bounds[0] && lon <= r.bounds[2] && lat >= r.bounds[1] && lat <= r.bounds[3])
+            .sort((p, q) => (p.bounds[2] - p.bounds[0]) * (p.bounds[3] - p.bounds[1]) - (q.bounds[2] - q.bounds[0]) * (q.bounds[3] - q.bounds[1]))[0] || null;
+    }
+    const surveyTile = which => (url, abort) => {
+        const m = /(\d+)\/(\d+)\/(\d+)$/.exec(url), z = +m[1], x = +m[2], y = +m[3], n = Math.pow(2, z), w = 2 * MERC / n;
         const bbox = [-MERC + x * w, MERC - (y + 1) * w, -MERC + (x + 1) * w, MERC - y * w].join(',');
-        const ask = () => fetch(NHM + '?bbox=' + bbox + '&bboxSR=3857&imageSR=3857&size=512,512&format=lerc&pixelType=F32'
-                                + '&interpolation=RSP_BilinearInterpolation&f=image', { signal: abort && abort.signal })
+        const run = runAt((x + 0.5) / n * 360 - 180, Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 0.5) / n))) * 180 / Math.PI);
+        const name = run && (which === 'old' ? run.old : run.neu);
+        const from = (name ? idsOf(name) : Promise.resolve([])).then(ids => ids.length
+            ? PROJ + '/exportImage?mosaicRule=' + encodeURIComponent(JSON.stringify({ mosaicMethod: 'esriMosaicLockRaster', lockRasterIds: ids })) + '&'
+            : NHM + '?');
+        const ask = () => from.then(base => fetch(base + 'bbox=' + bbox + '&bboxSR=3857&imageSR=3857&size=512,512&format=lerc&pixelType=F32'
+                                + '&interpolation=RSP_BilinearInterpolation&f=image', { signal: abort && abort.signal }))
             .then(r => { if (!r.ok) throw new Error('høydedata ' + r.status); return r.blob(); })
             .then(b => { nhmFail = 0; return { data: b }; }, err => { if (err.name !== 'AbortError') nhmFail++; throw err; });
         // The service drops requests when it is asked for many at once: four at a time.
@@ -2495,12 +2528,39 @@ document.addEventListener('DOMContentLoaded', function() {
             const start = () => { nhmBusy++; nhmNote(); ask().then(res, rej).finally(() => { nhmBusy--; const nx = nhmWait.shift(); if (nx) nx(); nhmNote(); }); };
             if (nhmBusy < 4) start(); else { nhmWait.push(start); nhmNote(); }
         });
-    }
+    };
     const nhmDecode = blob => blob.arrayBuffer().then(buf => {
         const d = Lerc.decode(buf), px = d.pixels[0], mask = d.maskData || d.mask, out = new Float32Array(px.length);
         for (let i = 0; i < px.length; i++) out[i] = (mask && !mask[i]) || !(px[i] > -500 && px[i] < 9000) ? NaN : px[i];
         return { width: d.width, height: d.height, data: out };
     });
+    // Inside a change the terrain contours are white and lie over the change colours,
+    // under the lines of the change. They are not read live: they are the two surveys
+    // the difference was made from, cut to the change polygons, as vector tiles.
+    const CT_UNDER = () => map.getLayer('dod-iso') ? 'dod-iso' : 'dodfp-fill';
+    // The white lines belong to the colours: they fade with them, so that with the colours
+    // taken away only the black lines are left and the two never lie on each other.
+    const inOpacity = () => { const k = dodOpacity / 100, m = ['==', ['get', 'm'], 1];
+        return ['interpolate', ['linear'], ['zoom'], 14, ['case', m, 0.85 * k, 0.5 * k], 16, ['case', m, 0.95 * k, 0.75 * k]]; };
+    function buildInside() {
+        inState = 1;
+        loadScripts([['pmtiles', 'https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js']]).then(() => {
+            if (!maplibregl.__pm) { maplibregl.addProtocol('pmtiles', new pmtiles.Protocol().tile); maplibregl.__pm = true; }
+            return Promise.all(['old', 'new'].map(k => fetch(DOD_IN[k], { method: 'HEAD' }).then(r => r.ok ? k : null, () => null)));
+        }).then(have => whenStyleIn(() => {
+            have.filter(Boolean).forEach(k => {
+                map.addSource('dodin-' + k, { type: 'vector', url: 'pmtiles://' + new URL(DOD_IN[k], location.href).href });
+                map.addLayer({ id: 'dod-in-' + k, type: 'line', source: 'dodin-' + k, 'source-layer': k === 'old' ? 'before' : 'after', minzoom: 14,
+                    layout: { visibility: dodShown() && dodContours && dodDtm === k ? 'visible' : 'none' },
+                    paint: { 'line-color': '#fff',
+                             'line-opacity': inOpacity(),
+                             'line-width': ['interpolate', ['linear'], ['zoom'], 14, ['case', ['==', ['get', 'm'], 1], 0.6, 0.3], 17, ['case', ['==', ['get', 'm'], 1], 0.9, 0.45]] } }, CT_UNDER());
+            });
+            inState = 2;
+        })).catch(err => { console.error('terrain inside the changes:', err); inState = 0; });
+    }
+    // Outside a change they are black hairlines under the change colours, read live from
+    // Kartverket and drawn in the browser: one set for the newer survey, one for the older.
     function buildContours() {
         contourState = 1;
         loadScripts([['mlcontour', 'https://unpkg.com/maplibre-contour@0.1.1/dist/index.min.js'],
@@ -2509,24 +2569,24 @@ document.addEventListener('DOMContentLoaded', function() {
                                                   encoding: 'terrarium', maxzoom: 12, worker: true, cacheSize: 100, timeoutMs: 15000 });
             far.setupMaplibre(maplibregl);
             // Read and decoded here, not in the library's worker: the tiles are not pictures.
-            const near = new mlcontour.DemSource({ id: 'dem-nhm', url: 'nhm://{z}/{x}/{y}', encoding: 'terrarium', maxzoom: 15,
-                                                   worker: false, cacheSize: 80, timeoutMs: 40000 });
-            near.manager.getTile = nhmTile;
-            near.manager.decodeImage = nhmDecode;
-            near.setupMaplibre(maplibregl);
+            const dem = which => { const d = new mlcontour.DemSource({ id: which === 'new' ? 'dem-nhm' : 'dem-old', url: (which === 'new' ? 'nhm' : 'old') + '://{z}/{x}/{y}',
+                                                   encoding: 'terrarium', maxzoom: 15, worker: false, cacheSize: 80, timeoutMs: 40000 });
+                d.manager.getTile = surveyTile(which); d.manager.decodeImage = nhmDecode; d.setupMaplibre(maplibregl); return d; };
             const opts = { multiplier: 1, elevationKey: 'ele', levelKey: 'level', contourLayer: 'contours' };
+            const ink = { 'line-color': '#000',
+                          'line-opacity': ['interpolate', ['linear'], ['zoom'], 14, ['match', ['get', 'level'], 1, 0.6, 0.3], 16, ['match', ['get', 'level'], 1, 0.8, 0.5]],
+                          'line-width': ['interpolate', ['linear'], ['zoom'], 14, ['match', ['get', 'level'], 1, 0.5, 0.2], 17, ['match', ['get', 'level'], 1, 0.8, 0.35]] };
             whenStyleIn(() => {
-                const lay = { visibility: dodShown() && dodContours ? 'visible' : 'none' };
+                const vis = on => ({ visibility: on ? 'visible' : 'none' }), ct = dodShown() && dodContours;
                 map.addSource('dod-contours-far', { type: 'vector', maxzoom: 12,
                     tiles: [far.contourProtocolUrl(Object.assign({ overzoom: 1, thresholds: { 9: [100, 500], 11: [50, 200], 12: [20, 100] } }, opts))] });
-                map.addLayer({ id: 'dod-contours-far', type: 'line', source: 'dod-contours-far', 'source-layer': 'contours', maxzoom: 13, layout: lay,
-                    paint: { 'line-color': '#fff', 'line-opacity': 0.85, 'line-width': ['match', ['get', 'level'], 1, 0.9, 0.35] } }, 'bym');
-                map.addSource('dod-contours', { type: 'vector', minzoom: 13, maxzoom: 15,
-                    tiles: [near.contourProtocolUrl(Object.assign({ overzoom: 0, thresholds: { 13: [5, 25], 14: [1, 5] } }, opts))] });
-                map.addLayer({ id: 'dod-contours', type: 'line', source: 'dod-contours', 'source-layer': 'contours', minzoom: 13, layout: lay,
-                    paint: { 'line-color': '#fff',
-                             'line-opacity': ['interpolate', ['linear'], ['zoom'], 14, ['match', ['get', 'level'], 1, 0.85, 0.4], 16, ['match', ['get', 'level'], 1, 0.9, 0.75]],
-                             'line-width': ['match', ['get', 'level'], 1, 0.9, 0.35] } }, 'bym');
+                map.addLayer({ id: 'dod-contours-far', type: 'line', source: 'dod-contours-far', 'source-layer': 'contours', maxzoom: 13, layout: vis(ct),
+                    paint: { 'line-color': '#000', 'line-opacity': 0.45, 'line-width': ['match', ['get', 'level'], 1, 0.6, 0.25] } }, 'bym');
+                [['new', 'dod-contours'], ['old', 'dod-contours-old']].forEach(([which, id]) => {
+                    map.addSource(id, { type: 'vector', minzoom: 13, maxzoom: 15,
+                        tiles: [dem(which).contourProtocolUrl(Object.assign({ overzoom: 0, thresholds: { 13: [5, 25], 14: [1, 5] } }, opts))] });
+                    map.addLayer({ id, type: 'line', source: id, 'source-layer': 'contours', minzoom: 13, layout: vis(ct && dodDtm === which), paint: ink }, 'bym');
+                });
                 contourState = 2;
             });
         }).catch(err => { console.error('contours failed:', err); contourState = 0; nhmFail = 9; nhmNote(); });
@@ -2538,6 +2598,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $('dod-opacity-val').textContent = dodOpacity + '%';
             DOD_RUNS.forEach(r => { if (map.getLayer(dodLayer(r))) map.setPaintProperty(dodLayer(r), 'raster-opacity', dodOpacity / 100); });
             if (map.getLayer('dodfar')) map.setPaintProperty('dodfar', 'raster-opacity', farOpacity());
+            ['dod-in-new', 'dod-in-old'].forEach(id => { if (map.getLayer(id)) map.setPaintProperty(id, 'line-opacity', inOpacity()); });
         });
         $('dod-photo').addEventListener('input', e => {
             photoOpacity = +e.target.value;
@@ -3324,21 +3385,23 @@ document.addEventListener('DOMContentLoaded', function() {
     function fitTerrain(b) {
         const p = visiblePadding(), box = map.getContainer();
         const panel = $('dod-panel'), pw = panel && !panel.hidden ? panel.offsetWidth + 20 : 0;
-        let side = Math.max(p.left, p.right, pw, 440) + 20, top = p.top + 70, bottom = p.bottom + 60;
-        if (2 * side > box.clientWidth - 160) side = 40;
+        // The label stands on the left under the toolbar (300 px wide), so the cluster is
+        // framed to the right of it and a little below its name, where the leader can reach it.
+        const bar = $('bar'), bb = bar && bar.getClientRects().length ? bar.getBoundingClientRect() : null;
+        let left = Math.max(p.left, 310) + 80, right = Math.max(p.right, pw) + 30, bottom = p.bottom + 50;
+        let top = Math.max(p.top, bb ? bb.bottom - box.getBoundingClientRect().top : 0) + 120;
+        if (left + right > box.clientWidth - 160) { left = 40; right = 40; }
         if (top + bottom > box.clientHeight - 120) { top = 90; bottom = 30; }
         // On a phone the label is docked under the toolbar, so the cluster goes below it.
-        if (box.clientWidth < TAG_DOCK) { side = 24; top = Math.min(330, Math.round(box.clientHeight * .45)); bottom = 56; }
-        map.fitBounds(b, { padding: { left: side, right: side, top, bottom }, maxZoom: 16, duration: dur(900), essential: true });
+        if (box.clientWidth < TAG_DOCK) { left = right = 24; top = Math.min(330, Math.round(box.clientHeight * .45)); bottom = 56; }
+        map.fitBounds(b, { padding: { left, right, top, bottom }, maxZoom: 16, duration: dur(900), essential: true });
     }
     // The label of a chosen cluster is a drawing annotation, set in the face of the table.
-    // One oblique leader (45, 60 or 30 degrees) runs from the perimeter of the change out
-    // to a shelf; the name stands on the shelf and the rest hangs under it. The leader
-    // starts on the outline of the polygon the row stands for, or of the one that was
-    // clicked, at the point of that outline furthest out in the leader's own direction,
-    // so it never crosses the polygon it names. The label stands well clear: 260 px or
-    // more from the perimeter when there is room, where it covers nothing of the cluster and is not under
-    // the toolbar or the panel. It is placed again when the map comes to rest.
+    // It has one place: on the side, under the toolbar, and it stays there while the map
+    // moves. One leader ties it to the cluster: a shelf runs out from under the name, and
+    // an oblique line (45, 60 or 30 degrees) goes from the end of the shelf to the outline
+    // of the polygon the row stands for, or of the one that was clicked, at its nearest point.
+    // The cluster is framed to the right of the label, so the leader is short and clear.
     // On a map too narrow for that (a phone) the label is docked: as wide as the map,
     // under the toolbar, and the leader runs from the top of the outline up to its lower edge.
     const TAG_DOCK = 620;
@@ -3402,42 +3465,34 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         txt.style.width = '';
+        // The label has its place: on the side, under the toolbar. It stays there while
+        // the map moves, and the leader goes from the shelf under its name to the cluster.
         const W = txt.offsetWidth, H = txt.offsetHeight, hH = el.querySelector('.tag-h').offsetHeight;
-        if (full === true || !st.pick) {
-            // Not under the toolbar, the panel, the compass and zoom, or the credits line.
-            const inWay = [$('bar'), $('dod-panel')].concat([...document.querySelectorAll('.maplibregl-ctrl, .compass')])
-                .filter(e => e && e.getClientRects().length).map(e => e.getBoundingClientRect())
-                .map(o => [o.left - box.left - 8, o.top - box.top - 8, o.right - box.left + 8, o.bottom - box.top + 8]);
-            const cl = st.boxes.map(b => { const a = map.project([b[0], b[3]]), c = map.project([b[2], b[1]]); return [a.x - 6, a.y - 6, c.x + 6, c.y + 6]; })
-                .filter(b => b[2] > -300 && b[0] < box.width + 300 && b[3] > -300 && b[1] < box.height + 300);
-            const pts = st.ring.map(c => map.project(c));
-            const over = (r, b) => Math.max(0, Math.min(r[2], b[2]) - Math.max(r[0], b[0])) * Math.max(0, Math.min(r[3], b[3]) - Math.max(r[1], b[1]));
-            let best = null;
-            [45, 60, 30].forEach((deg, di) => [st.want, -st.want].forEach(sx => [1, -1].forEach(sy => {
-                const rad = deg * Math.PI / 180, ux = sx * Math.cos(rad), uy = -sy * Math.sin(rad);
-                // Where the leader leaves the perimeter: the point of the outline furthest out this way.
-                let e = 0, far = -Infinity;
-                pts.forEach((q, i) => { const v = q.x * ux + q.y * uy; if (v > far) { far = v; e = i; } });
-                [260, 320, 390, 210, 160, 110].forEach(L => {
-                    const dx = L * ux, dy = L * uy, x0 = pts[e].x + (sx > 0 ? dx : dx - W), y0 = pts[e].y + dy - hH;
-                    const r = [x0, y0, x0 + W, y0 + H];
-                    // 260 px out when there is room; nearer only when nothing else fits.
-                    let cost = (L >= 260 ? L : 900 + 3 * (260 - L)) + (sx !== st.want ? 60 : 0) + (sy < 0 ? 90 : 0) + di * 40;
-                    if (r[0] < 6 || r[1] < 6 || r[2] > box.width - 6 || r[3] > box.height - 6) cost += 1e7;
-                    inWay.forEach(o => { if (over(r, o) > 0) cost += 1e7; });
-                    cl.forEach(b => { cost += 4 * over(r, b); });
-                    if (!best || cost < best.cost) best = { cost, dx, dy, sx, edge: st.ring[e] };
-                });
-            })));
-            st.pick = best;
-        }
-        const k = st.pick, P = map.project(k.edge);
-        P.x = Math.round(P.x); P.y = Math.round(P.y);
+        const bar = $('bar'), bb = bar && bar.getClientRects().length ? bar.getBoundingClientRect() : null;
+        const L0 = Math.round(bb ? bb.left - box.left : 10), T0 = Math.round(bb ? bb.bottom - box.top + 8 : 10);
+        const xr = L0 + W, ys = T0 + hH;
+        // The point of the outline nearest the end of the shelf.
+        let P = null, near = Infinity;
+        st.ring.forEach(c => { const q = map.project(c), d = Math.hypot(q.x - (xr + 24), q.y - ys); if (d < near) { near = d; P = q; } });
+        P = { x: Math.round(P.x), y: Math.round(P.y) };
         el.style.left = P.x + 'px'; el.style.top = P.y + 'px';
-        el.classList.toggle('left', k.sx < 0);
-        const ex = Math.round(k.dx), ey = Math.round(k.dy);
-        txt.style.left = (k.sx < 0 ? ex - W : ex) + 'px'; txt.style.top = (ey - hH) + 'px';
-        line.setAttribute('points', `0,0 ${ex},${ey} ${ex + k.sx * W},${ey}`);
+        el.classList.remove('left');
+        txt.style.left = (L0 - P.x) + 'px'; txt.style.top = (T0 - P.y) + 'px';
+        const dy = ys - P.y, seen = P.x > -40 && P.x < box.width + 40 && P.y > -40 && P.y < box.height + 40;
+        let pts = '';
+        if (seen && P.x >= xr + 14) {
+            // 45 degrees when the shelf has room for it, else 60, else 30, else as it comes
+            let dx = null;
+            [45, 60, 30].forEach(deg => { const d = Math.abs(dy) / Math.tan(deg * Math.PI / 180); if (dx === null && P.x - d >= xr + 14) dx = d; });
+            if (dx === null) dx = P.x - xr - 14;
+            pts = `0,0 ${-Math.round(dx)},${dy} ${xr - P.x},${dy}`;
+        } else if (seen && P.y > T0 + H + 10) {
+            // the cluster is under the label: straight up to its lower edge
+            const x = Math.max(L0 + 10, Math.min(xr - 10, P.x)) - P.x;
+            pts = `0,0 ${x},${T0 + H - P.y}`;
+        }
+        line.setAttribute('points', pts);
+        st.pick = null;
     }
     map.on('move', () => placeTag(false));
     map.on('moveend', () => placeTag(true));

@@ -30,9 +30,15 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   // Kartverket's 1 m model, asked for by the terrain contours: one real tile of it
   // (Ask, Gjerdrum, 128 px) answers every request. The other høydedata layers get a pixel.
   const NHM = fs.readFileSync(HERE + '/nhm_dtm_128.lerc');
-  await ctx.route(/hoydedata\.no/, r => /NHM_DTM/.test(r.request().url())
-    ? r.fulfill({ status: 200, contentType: 'application/octet-stream', body: NHM })
-    : r.fulfill({ status: 200, contentType: 'image/png', body: PX }));
+  // The surveys themselves are projects in another mosaic: a name gives its ids, and
+  // the same tile stands in for every project.
+  const projReq = [];
+  await ctx.route(/hoydedata\.no/, r => { const u = decodeURIComponent(r.request().url());
+    if (/Prosjekt_DTM/.test(u)) projReq.push(u);
+    if (/Prosjekt_DTM\/ImageServer\/query/.test(u)) return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ objectIdFieldName: 'OBJECTID', objectIds: [8074] }) });
+    return /format=lerc/.test(u)
+      ? r.fulfill({ status: 200, contentType: 'application/octet-stream', body: NHM })
+      : r.fulfill({ status: 200, contentType: 'image/png', body: PX }); });
   // The ownership graphs live on Pages. Serve the repo's own copy when it is
   // there, so the graph box is exercised offline too.
   await ctx.route(/boundarieslab\.github\.io\/db_mp\/network\//, r => {
@@ -311,17 +317,49 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   // Terrain contours: every metre from zoom 14, from the 1 m model.
   const ct = await p.evaluate(async () => { const m = window.__M;
     document.getElementById('dod-contours').click();
-    for (let i = 0; i < 50 && !m.getLayer('dod-contours'); i++) await new Promise(r => setTimeout(r, 200));
+    for (let i = 0; i < 150 && !m.getLayer('dod-contours'); i++) await new Promise(r => setTimeout(r, 200));
     const src = m.getSource('dod-contours'), url = src && src.tiles ? decodeURIComponent(src.tiles[0]) : '';
-    await new Promise(r => setTimeout(r, 3500));
-    const fs_ = m.getLayer('dod-contours') ? m.queryRenderedFeatures({ layers: ['dod-contours'] }) : [];
+    let fs_ = [];
+    for (let i = 0; i < 24 && !fs_.length; i++) { await new Promise(r => setTimeout(r, 500)); fs_ = m.getLayer('dod-contours') ? m.queryRenderedFeatures({ layers: ['dod-contours'] }) : []; }
+    await new Promise(r => setTimeout(r, 1500));
+    fs_ = m.getLayer('dod-contours') ? m.queryRenderedFeatures({ layers: ['dod-contours'] }) : [];
     const ele = [...new Set(fs_.map(f => f.properties.ele))].sort((a, b) => a - b);
     const out = { url, n: fs_.length, step: ele.length > 1 ? Math.min(...ele.slice(1).map((v, i) => v - ele[i])) : 0,
                   far: !!m.getLayer('dod-contours-far'), white: m.getPaintProperty('dod-contours', 'line-color') };
     document.getElementById('dod-contours').click();
     return out; });
-  ok(/thresholds=.*14\*1\*5/.test(ct.url) && /nhm/.test(ct.url) && ct.far && ct.white === '#fff', 'terrain contours are asked for every metre from zoom 14, from the 1 m model, in white');
+  ok(/thresholds=.*14\*1\*5/.test(ct.url) && /nhm/.test(ct.url) && ct.far && ct.white === '#000', 'terrain contours are asked for every metre from zoom 14, from the 1 m model, in black');
   ok(ct.n > 0 && ct.step === 1, 'and are drawn one metre apart (' + ct.n + ' lines in view, step ' + ct.step + ' m)');
+  // Terrain contours follow the survey the relief shows, one survey at a time. Outside a
+  // change they are black, read live, under the colours; inside they are white, from
+  // vector tiles of the two surveys, over the colours.
+  const sv = await p.evaluate(async () => { const m = window.__M, wait = ms => new Promise(r => setTimeout(r, ms));
+    document.getElementById('dod-contours').click();
+    for (let i = 0; i < 50 && !(m.getLayer('dod-in-new') && m.getLayer('dod-in-old') && m.getLayer('dod-contours-old')); i++) await wait(200);
+    await wait(3000);
+    const L = m.getStyle().layers.map(l => l.id), vis = id => !!m.getLayer(id) && m.getLayoutProperty(id, 'visibility') !== 'none', q = id => m.getLayer(id) ? m.queryRenderedFeatures({ layers: [id] }) : [];
+    const a = { newOut: vis('dod-contours'), oldOut: vis('dod-contours-old'), newIn: vis('dod-in-new'), oldIn: vis('dod-in-old'), nIn: q('dod-in-new').length };
+    document.getElementById('dod-dtm-old').click(); await wait(3500);
+    const inOld = q('dod-in-old'), ele = [...new Set(inOld.map(f => f.properties.e))].sort((x, y) => x - y);
+    const b = { newOut: vis('dod-contours'), oldOut: vis('dod-contours-old'), newIn: vis('dod-in-new'), oldIn: vis('dod-in-old'), nIn: inOld.length, nOut: q('dod-contours-old').length,
+                step: ele.length > 1 ? Math.min(...ele.slice(1).map((v, i) => v - ele[i])) : 0 };
+    const out = { a, b, ink: m.getPaintProperty('dod-contours-old', 'line-color'), paper: m.getPaintProperty('dod-in-old', 'line-color'),
+                  under: L.indexOf('dod-contours') < L.indexOf('dod') && L.indexOf('dod-contours-old') < L.indexOf('dod'),
+                  over: L.indexOf('dod-in-old') > L.indexOf('dod') && L.indexOf('dod-in-new') > L.indexOf('dod') && L.indexOf('dod-in-old') < L.indexOf('dod-iso'),
+                  thin: JSON.stringify(m.getPaintProperty('dod-contours', 'line-width')) };
+    // with the change colours taken away the white lines go with them
+    const sl = document.getElementById('dod-opacity'), was = sl.value, set = v => { sl.value = v; sl.dispatchEvent(new Event('input', { bubbles: true })); };
+    set(0); out.gone = JSON.stringify(m.getPaintProperty('dod-in-old', 'line-opacity')); set(was); out.back = JSON.stringify(m.getPaintProperty('dod-in-old', 'line-opacity'));
+    document.getElementById('dod-dtm-new').click(); document.getElementById('dod-contours').click();
+    return out; });
+  ok(sv.a.newOut && sv.a.newIn && !sv.a.oldOut && !sv.a.oldIn && sv.a.nIn > 0, 'terrain contours are of the newer survey to begin with (' + sv.a.nIn + ' lines inside the changes)');
+  ok(sv.b.oldOut && sv.b.oldIn && !sv.b.newOut && !sv.b.newIn && sv.b.nIn > 0 && sv.b.step === 1,
+     'the newer / older switch turns them to the older survey, never both at once (' + sv.b.nIn + ' lines inside, ' + sv.b.nOut + ' outside)');
+  ok(sv.ink === '#000' && sv.under && sv.paper === '#fff' && sv.over, 'black under the change colours outside a change, white over them inside');
+  ok(!/0\.9/.test(sv.thin) && /0\.2/.test(sv.thin), 'and hairlines, so the photograph shows through');
+  ok(!/[1-9]/.test(sv.gone.replace(/\b1[46]\b/g, '').replace(/"m"\],1/g, '')) && /0\.[4-9]/.test(sv.back), 'the white lines fade with the change colours, so white never lies on black (' + sv.gone.slice(-40) + ')');
+  ok(projReq.some(u => /Romerike 07pkt 2007/.test(u)) && projReq.some(u => /lockRasterIds/.test(u)),
+     'the older survey is asked from Kartverket by the name of its project (' + projReq.length + ' requests)');
 
   await openTree();
   await p.click('#base-gray'); await p.waitForTimeout(200);
@@ -1395,11 +1433,12 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
       const m = window.__M, at = w.getBoundingClientRect(), b = e.getBoundingClientRect();
       const edge = m.getLayer('dodsel-edge') ? JSON.stringify(m.getFilter('dodsel-edge')) : '';
       return { text: e.textContent, font: getComputedStyle(e).fontFamily, lead: (() => { const q = (w.querySelector('svg.tag-lead polyline').getAttribute('points') || '').trim().split(' ').map(t => t.split(',').map(Number)); return q.length === 3 ? { len: Math.hypot(q[1][0], q[1][1]), flat: q[1][1] === q[2][1], oblique: Math.round(Math.atan2(Math.abs(q[1][1]), Math.abs(q[1][0])) * 180 / Math.PI) } : null; })(), dots: w.querySelectorAll('circle').length, boxed: ['Left', 'Right', 'Bottom'].some(k => getComputedStyle(e)['border' + k + 'Width'] !== '0px'),
-               off: !(at.left >= b.left && at.left <= b.right && at.top >= b.top && at.top <= b.bottom), inMap: b.left >= 0 && b.right <= innerWidth, close: !!e.querySelector('.tag-x'), edge,
+               off: !(at.left >= b.left && at.left <= b.right && at.top >= b.top && at.top <= b.bottom), inMap: b.left >= 0 && b.right <= innerWidth,
+               docked: (() => { const o = document.getElementById('bar').getBoundingClientRect(); return Math.abs(b.left - o.left) <= 2 && b.top >= o.bottom && b.top - o.bottom <= 12; })(), close: !!e.querySelector('.tag-x'), edge,
                clear: ['bar', 'dod-panel'].every(id => { const o = document.getElementById(id).getBoundingClientRect(); return !o.width || o.right < b.left || o.left > b.right || o.bottom < b.top || o.top > b.bottom; }) }; });
     ok(/changes/.test(tag.text) && tag.lead && tag.lead.flat && [30, 45, 60].includes(tag.lead.oblique) && tag.dots === 0,
-       'and its label hangs from a shelf at the end of one oblique leader that starts on the perimeter (' + (tag.lead ? tag.lead.oblique + '°, ' + Math.round(tag.lead.len) + ' px' : 'no leader') + ')');
-    ok(tag.lead && tag.lead.len >= 100 && tag.off && tag.inMap, 'well out from the cluster, and inside the map');
+       'and its label is tied to it by a shelf and one oblique leader that ends on the perimeter (' + (tag.lead ? tag.lead.oblique + '°, ' + Math.round(tag.lead.len) + ' px' : 'no leader') + ')');
+    ok(tag.docked && tag.lead && tag.lead.len >= 60 && tag.off && tag.inMap, 'the label stands on the side, under the toolbar, off the cluster');
     ok(tag.clear, 'clear of the toolbar and of the panel');
     ok(/Cutive Mono/.test(tag.font) && /≈ [+−]/.test(tag.text), 'set in the face of the table, the figures signed after the ≈');
     ok(new RegExp('"r"\\],"' + (await p3.evaluate(id => document.querySelector('#site-table tbody tr[data-dod="' + id + '"]').dataset.run, ts.off)) + '"').test(tag.edge),
