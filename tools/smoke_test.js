@@ -345,7 +345,9 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     const lw  = document.getElementById('bar').getBoundingClientRect();
     const sbb = document.getElementById('sidebar').getBoundingClientRect();
     const left = lw.right - box.left, right = sbb.left - box.left;
-    const f = m.getSource('fp')._data.features.find(x => x.properties.uid === 'AK_AH_001');
+    // A site with worked ground is framed on that outline, not on its plan or parcels.
+    const own = m.getSource('fp')._data.features.filter(x => x.properties.uid === 'AK_AH_001');
+    const f = own.find(x => x.properties.pcls === 'observed') || own[0];
     let w = 180, so = 90, e = -180, n = -90;
     if (f) (function walk(c) {
       if (typeof c[0] === 'number') { w = Math.min(w, c[0]); e = Math.max(e, c[0]); so = Math.min(so, c[1]); n = Math.max(n, c[1]); }
@@ -723,6 +725,14 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     fp: (window.__M.getSource('fp')._data.features || []).some(f => f.properties.uid === 'AK_ZZ_999') }));
   ok(!unpub.site && !unpub.fp, 'a row not marked Published stays off the map');
   ok(fp.col === '#FF0000' && /col/.test(fp.lineCol), 'they are coloured by status, not black (' + fp.col + ')');
+  // The 2026 method draws more than the footprint: a mining licence is dotted,
+  // property parcels are a hairline, and both stay out of the fill.
+  const kinds = await p.evaluate(() => { const m = window.__M;
+    return { lic: !!m.getLayer('fp-lic'), prop: !!m.getLayer('fp-prop'),
+             licDash: m.getLayer('fp-lic') ? JSON.stringify(m.getPaintProperty('fp-lic', 'line-dasharray')) : '',
+             classes: [...new Set(m.getSource('fp')._data.features.map(f => f.properties.pcls).filter(Boolean))].sort().join(',') }; });
+  ok(kinds.lic && kinds.prop && /0\.2/.test(kinds.licDash), 'a mining licence and property parcels have their own line (' + kinds.licDash + ')');
+  ok(/observed/.test(kinds.classes) && /permitted/.test(kinds.classes), 'the outline file carries worked ground and the permitted outline (' + kinds.classes + ')');
   ok(/0\.14/.test(fp.fill) && /match/.test(fp.fill),
      'with a see-through fill whose weight follows the status, and no glow');
 
@@ -730,7 +740,9 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   await p.waitForTimeout(3000);
   const frame = await p.evaluate(() => {
     const m = window.__M, b = m.getBounds();
-    const f = m.getSource('fp')._data.features.find(x => x.properties.uid === 'AK_AH_001');
+    // A site with worked ground is framed on that outline, not on its plan or parcels.
+    const own = m.getSource('fp')._data.features.filter(x => x.properties.uid === 'AK_AH_001');
+    const f = own.find(x => x.properties.pcls === 'observed') || own[0];
     let w = 180, so = 90, e = -180, n = -90;
     (function walk(c) { if (typeof c[0] === 'number') { w = Math.min(w, c[0]); e = Math.max(e, c[0]); so = Math.min(so, c[1]); n = Math.max(n, c[1]); } else c.forEach(walk); })(f.geometry.coordinates);
     return { inside: b.getWest() <= w && b.getEast() >= e && b.getSouth() <= so && b.getNorth() >= n,
@@ -1010,7 +1022,7 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
   ok(/sheet=extract/.test(fam.ext.hash) && fam.ext.drawer, 'the sheet is in the address and keeps the reception switches');
   ok(/100.000 t\/yr/.test(fam.rec.tonnes), 'a yearly intake carries its own unit (' + fam.rec.tonnes + ')');
   ok(fam.rec.na === '–', 'a dash in the sheet is drawn as a dash, not as n.d. (' + fam.rec.na + ')');
-  ok(/53.091 plan/.test(fam.rec.area), 'area is read from the outline and says which kind it is (' + fam.rec.area + ')');
+  ok(/31.301 worked/.test(fam.rec.area), 'area is read from the outline and says which kind it is (' + fam.rec.area + ')');
 
   console.log('a number is a link to its source');
   const sl = await p.evaluate(async () => {

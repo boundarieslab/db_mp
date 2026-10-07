@@ -679,7 +679,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                           <input type="checkbox" id="filter-facilities" checked></label>
                       <label class="row" for="filter-footprints">
                           <span class="nm"><b data-en="Site outlines" data-no="Anleggsomriss">Site outlines</b>
-                              <span class="src" id="footprint-note" data-en="plan, cadastre and traced ground" data-no="plan, matrikkel og tolket grunn">plan, cadastre and traced ground</span></span>
+                              <span class="src" id="footprint-note" data-en="worked ground, plan, licence and property" data-no="driftsområde, plan, konsesjon og eiendom">worked ground, plan, licence and property</span></span>
                           <span class="ct" id="count-footprints">–</span>
                           <input type="checkbox" id="filter-footprints" checked></label>
                       <div class="note" data-en="Colour is status. Tick the colours in the table below to choose what the map shows."
@@ -799,9 +799,11 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                     <div class="key-list" id="key-list"></div>
                     <div class="key-sep"></div>
                     <div class="key-list">
-                        <div class="kr"><span class="swatch" style="background:rgba(255,0,0,.18);border:2px solid #FF0000"></span><span data-en="Footprint, operating extent" data-no="Omriss, driftsområde">Footprint, operating extent</span></div>
-                        <div class="kr"><span class="swatch" style="background:#fff;border:1.5px dashed #FF0000"></span><span data-en="Footprint, NGU resource area only" data-no="Omriss, kun NGU-ressursområde">Footprint, NGU resource area only</span></div>
-                        <div class="kr"><span class="swatch ring" style="background:#fff;border:2.5px solid #FF0000;box-shadow:0 0 0 .5px #999"></span><span data-en="Site with no footprint yet" data-no="Sted uten omriss ennå">Site with no footprint yet</span></div>
+                        <div class="kr"><span class="swatch" style="background:rgba(255,0,0,.18);border:2px solid #FF0000"></span><span data-en="Worked ground" data-no="Driftsområde">Worked ground</span></div>
+                        <div class="kr"><span class="swatch" style="background:#fff;border:1.5px dashed #FF0000"></span><span data-en="Permitted by reguleringsplan, or register outline" data-no="Tillatt i reguleringsplan, eller registeromriss">Permitted by reguleringsplan, or register outline</span></div>
+                        <div class="kr"><span class="swatch" style="background:#fff;border:1.5px dotted #FF0000"></span><span data-en="Mining licence (driftskonsesjon)" data-no="Driftskonsesjon">Mining licence (driftskonsesjon)</span></div>
+                        <div class="kr"><span class="swatch" style="background:#fff;border:.75px solid #FF0000"></span><span data-en="Property parcels under the site" data-no="Eiendommer under anlegget">Property parcels under the site</span></div>
+                        <div class="kr"><span class="swatch ring" style="background:#fff;border:2.5px solid #FF0000;box-shadow:0 0 0 .5px #999"></span><span data-en="Site with no outline yet" data-no="Sted uten omriss ennå">Site with no outline yet</span></div>
                         <div class="key-sep"></div>
                         <div class="kr"><span class="ev"></span><span data-en="Flow, documented" data-no="Strøm, dokumentert">Flow, documented</span><span class="ct" data-flow-ct="evidenced"></span></div>
                         <div class="kr"><span class="ev structural"></span><span data-en="Flow, shared ownership" data-no="Strøm, felles eierskap">Flow, shared ownership</span><span class="ct" data-flow-ct="structural"></span></div>
@@ -1645,6 +1647,8 @@ document.addEventListener('DOMContentLoaded', function() {
         n_extract: { en: "extraction sites", no: "uttak" },
         pc_observed: { en: "worked", no: "drift" }, pc_permitted: { en: "permitted", no: "tillatt" },
         pc_plan: { en: "plan", no: "plan" }, pc_register: { en: "register", no: "register" },
+        pc_licence: { en: "mining licence", no: "driftskonsesjon" }, pc_expansion: { en: "proposed plan", no: "planforslag" },
+        outl: { en: "Outlines", no: "Omriss" },
         pc_property: { en: "property", no: "eiendom" }, pc_resource: { en: "resource", no: "ressurs" },
         mat: { en: "Materials", no: "Masser" },
         prod: { en: "Produced", no: "Produsert" },
@@ -1724,8 +1728,8 @@ document.addEventListener('DOMContentLoaded', function() {
         zoomto: { en: "zoom to", no: "zoom til" },
         opacity: { en: "opacity", no: "dekkevne" },
         nofp: { en: "no footprint yet", no: "uten omriss ennå" },
-        fpfirm: { en: "trace an operating footprint", no: "følger et driftsområde" },
-        fpngu: { en: "are plan or property boundaries", no: "er plan- eller eiendomsgrenser" },
+        fpfirm: { en: "sites with worked ground traced", no: "anlegg med tolket driftsområde" },
+        fpngu: { en: "plan, licence, register and property outlines", no: "plan-, konsesjons-, register- og eiendomsomriss" },
         ground: { en: "ground", no: "bakke" },
         th_uid: { en: "UID", no: "UID" }, th_name: { en: "FACILITY", no: "ANLEGG" },
         th_pname: { en: "PROJECT", no: "PROSJEKT" }, th_op: { en: "OPERATOR", no: "OPERATØR" },
@@ -1898,7 +1902,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="sb-desc">${esc(desc || '')}</div>
             ${section('prop', row('comp', site.Company) + row('op', site.Operator) + row('org', site.OrgNr) + row('par', site.ParentCompany))}
             <div class="graph-head"><b>${t('net')}</b>${graphSrc ? `<a class="graph-open" href="${esc(graphSrc)}" target="_blank" rel="noopener noreferrer">${t('openGraph')}</a>` : ''}</div>${graphHtml}
-            ${section('loc', row('coord', coords) + row('mun', site.Municipality) + row('area', areaOf(site) ? fmt(areaOf(site).v) + ' m² · ' + pclsWord(areaOf(site).cls) : '') + row('geom', geomText(site)) + row('wat', site.WaterRecipient, 'WaterRecipient'))}
+            ${section('loc', row('coord', coords) + row('mun', site.Municipality) + row('area', areaOf(site) ? fmt(areaOf(site).v) + ' m² · ' + pclsWord(areaOf(site).cls) : '') + row('outl', outlinesOf(site)) + row('geom', geomText(site)) + row('wat', site.WaterRecipient, 'WaterRecipient'))}
             ${section('cap', row('capyr', withUnit(site.AnnualCapacity, site.AnnualCapacityUnit || site.CapacityUnit), 'AnnualCapacity') + row('tot', withUnit(site.TotalCapacity, site.TotalCapacityUnit), 'TotalCapacity') + row('extyr', withUnit(site.ExtractionAnnual, site.ExtractionAnnualUnit), 'ExtractionAnnual') + row('exttot', withUnit(site.ExtractionTotal, site.ExtractionTotalUnit), 'ExtractionTotal') + row('mat', site.MassesAccepted, 'MassesAccepted') + row('prod', site.MassesProduced, 'MassesProduced'))}
             ${section('env', row('code', site.WasteCodes) + row('cont', site.Contaminants || site.Contamination) + row('risk', site.EnvironmentalRisk))}
             ${section('perm', row('ref', site.PermitRef, 'PermitRef') + row('start', site.StartYear, 'StartYear') + row('auth', site.PermitAuthority || site.Authority))}
@@ -2156,7 +2160,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // The line (tunnel, road, railway) or the perimeter (site, building) of a
     // construction project. Built by tools/make_project_geometries.py.
     const PROJECT_GEOJSON = 'data/project_geometries.geojson';
-    const FP_LAYERS = ['fp-fill', 'fp-line', 'fp-soft'];
+    const FP_LAYERS = ['fp-fill', 'fp-line', 'fp-soft', 'fp-lic', 'fp-prop'];
+    // An outline that is not worked ground is one of three line kinds: dashed
+    // (permitted, register, plan), dotted (mining licence), hairline (property).
+    const IS_LIC  = ['==', ['get', 'pcls'], 'licence'];
+    const IS_PROP = ['==', ['get', 'pcls'], 'property'];
+    const F_SOFT  = ['any', ['all', ['==', ['get', 'firm'], 0], ['!', IS_LIC], ['!', IS_PROP]], ['==', ['get', 'cls'], 'future']];
+    const F_LIC   = ['all', ['==', ['get', 'firm'], 0], IS_LIC];
+    const F_PROP  = ['all', ['==', ['get', 'firm'], 0], IS_PROP];
     const PT_LAYERS = ['site-hot', 'site-sym'];
     const SITE_LAYERS = FP_LAYERS.concat(PT_LAYERS);
     const COV_LAYERS = {
@@ -2272,9 +2283,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // measured operating extent.
         map.addLayer({ id: 'fp-soft', type: 'line', source: 'fp',
             layout: { 'line-join': 'round' },
-            filter: ['any', ['==', ['get', 'firm'], 0], ['==', ['get', 'cls'], 'future']],
+            filter: F_SOFT,
             paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, LINE_W_H_ALL, LINE_W_ALL],
                      'line-dasharray': [3, 2], 'line-opacity': 0.95 } }, before);
+        map.addLayer({ id: 'fp-lic', type: 'line', source: 'fp', minzoom: 10,
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            filter: F_LIC,
+            paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, 2.2, 1.4],
+                     'line-dasharray': [0.2, 2.2], 'line-opacity': 0.95 } }, before);
+        map.addLayer({ id: 'fp-prop', type: 'line', source: 'fp', minzoom: 12,
+            layout: { 'line-join': 'round' },
+            filter: F_PROP,
+            paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, 1.2, 0.6], 'line-opacity': 0.6 } }, before);
 
         // Hover is a ring, not a glow: it appears only under the marker the
         // pointer is on, and has no radius at all otherwise.
@@ -2326,8 +2346,10 @@ document.addEventListener('DOMContentLoaded', function() {
         fpState = 1;
         fetch(FOOTPRINTS_GEOJSON).then(r => r.json()).then(gj => {
             fpData = gj;
+            const hasWorked = new Set(gj.features.filter(f => f.properties.firm === 1).map(f => f.properties.uid));
             gj.features.forEach(f => {
                 const uid = f.properties.uid;
+                if (hasWorked.has(uid) && f.properties.firm !== 1) return;
                 let w = 180, so = 90, e = -180, n = -90;
                 const rings = fpRings[uid] || (fpRings[uid] = []);
                 const walk = (c, depth) => {
@@ -2341,8 +2363,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 fpBounds[uid] = b ? [Math.min(b[0], w), Math.min(b[1], so), Math.max(b[2], e), Math.max(b[3], n)]
                                   : [w, so, e, n];
             });
-            const firm = gj.features.filter(f => f.properties.firm === 1).length;
-            $('count-footprints').textContent = gj.features.length;
+            const firm = hasWorked.size;
+            $('count-footprints').textContent = new Set(gj.features.map(f => f.properties.uid)).size;
             const note = $('footprint-note');
             const en = `${firm} ${t2('fpfirm', 'en')}, ${gj.features.length - firm} ${t2('fpngu', 'en')}`;
             const no = `${firm} ${t2('fpfirm', 'no')}, ${gj.features.length - firm} ${t2('fpngu', 'no')}`;
@@ -2427,7 +2449,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const fpOn = $('filter-footprints').checked;
             map.setFilter('fp-fill', ['all', ['==', ['get', 'firm'], 1], NOT_LINE, f]);
             map.setFilter('fp-line', ['all', ['==', ['get', 'firm'], 1], ['!=', ['get', 'cls'], 'future'], f]);
-            map.setFilter('fp-soft', ['all', ['any', ['==', ['get', 'firm'], 0], ['==', ['get', 'cls'], 'future']], f]);
+            map.setFilter('fp-soft', ['all', F_SOFT, f]);
+            map.setFilter('fp-lic', ['all', F_LIC, f]);
+            map.setFilter('fp-prop', ['all', F_PROP, f]);
             FP_LAYERS.forEach(id => setVis(id, fpOn));
             PT_LAYERS.forEach(id => map.setFilter(id, f));
         }
@@ -2557,7 +2581,18 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     // The area of a site is the area of its outline, and an outline is one of
     // six kinds. The table names the kind beside the number.
-    const PCLS = ['observed', 'permitted', 'plan', 'register', 'property', 'resource'];
+    const PCLS = ['observed', 'permitted', 'licence', 'plan', 'register', 'property', 'resource', 'expansion'];
+    // Every kind of outline a site has, with its area, for the record window.
+    function outlinesOf(s) {
+        if (!fpData) return '';
+        const uid = uidOf(s), by = {};
+        fpData.features.forEach(f => {
+            const p = f.properties || {};
+            if (p.uid !== uid || !Number.isFinite(+p.a)) return;
+            by[p.pcls || ''] = (by[p.pcls || ''] || 0) + (+p.a);
+        });
+        return PCLS.filter(c => c in by).map(c => pclsWord(c) + ' ' + fmt(by[c]) + ' m²').join(' · ');
+    }
     function areaOf(s) {
         if (!fpData) return null;
         const uid = uidOf(s), by = {};
