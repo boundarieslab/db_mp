@@ -882,22 +882,29 @@ const ok = (c,m) => { console.log((c?'  ok   ':'  FAIL ')+m); if(!c) fail++; };
     fp: (window.__M.getSource('fp')._data.features || []).some(f => f.properties.uid === 'AK_ZZ_999') }));
   ok(!unpub.site && !unpub.fp, 'a row not marked Published stays off the map');
   ok(fp.col === '#FF0000' && /col/.test(fp.lineCol), 'they are coloured by status, not black (' + fp.col + ')');
-  // Lines only, in an order of weight: the site in its status colour, what is
-  // permitted or licensed in white, a planned expansion in short dashes of one
-  // fixed colour, property in white dashes. A facility is never filled.
+  // Few lines: one white outline round everything permitted or licensed with
+  // nothing inside it, the planned expansion in short dashes of one fixed colour,
+  // and the site's own line only for a closed site or a site with nothing allowed.
   const kinds = await p.evaluate(() => { const m = window.__M;
     const fs = m.getSource('fp')._data.features;
+    const allowed = fs.filter(f => f.properties.pcls === 'allowed');
     return { paper: !!m.getLayer('fp-paper') && m.getPaintProperty('fp-paper', 'line-color'),
+             paperF: JSON.stringify(m.getFilter('fp-paper')), siteF: JSON.stringify(m.getFilter('fp-line')),
              exp: !!m.getLayer('fp-exp') && m.getPaintProperty('fp-exp', 'line-color') + ' ' + JSON.stringify(m.getPaintProperty('fp-exp', 'line-dasharray')),
-             prop: !!m.getLayer('fp-prop') && JSON.stringify(m.getPaintProperty('fp-prop', 'line-dasharray')),
-             old: !!m.getLayer('fp-lic'), fill: JSON.stringify(m.getPaintProperty('fp-fill', 'fill-opacity')),
-             siteW: JSON.stringify(m.getPaintProperty('fp-line', 'line-width')),
+             gone: ['fp-lic', 'fp-prop'].filter(id => m.getLayer(id)).join(','), fill: JSON.stringify(m.getPaintProperty('fp-fill', 'fill-opacity')),
+             holes: allowed.reduce((n, f) => n + f.geometry.coordinates.reduce((k, poly) => k + poly.length - 1, 0), 0), nAllowed: allowed.length,
+             noArea: allowed.every(f => f.properties.a === undefined),
+             solo: fs.filter(f => f.properties.firm === 1 && f.properties.cat === 'facility' && f.properties.solo === 1
+                                  && allowed.some(g => g.properties.uid === f.properties.uid)).length,
              twice: fs.filter(f => f.properties.pcls === 'register' && !f.properties.hid
                                    && fs.some(g => g.properties.uid === f.properties.uid && g.properties.firm === 1)).length,
              classes: [...new Set(fs.map(f => f.properties.pcls).filter(Boolean))].sort().join(',') }; });
-  ok(kinds.paper === '#FFFFFF' && /#00FFFF \[3,2\.6\]/.test(kinds.exp) && /5,4\.3/.test(kinds.prop) && !kinds.old,
-     'permitted or licensed is white, a planned expansion short dashes in its own colour, property white dashes (' + kinds.exp + ')');
-  ok(/"cat"\],"facility"\],0/.test(kinds.fill) && /"facility"\],\["case"/.test(kinds.siteW), 'a facility is a line and never a fill');
+  ok(kinds.paper === '#FFFFFF' && /"allowed"/.test(kinds.paperF) && /#00FFFF \[3,2\.6\]/.test(kinds.exp) && !kinds.gone,
+     'what is permitted or licensed is one white outline, a planned expansion short dashes; parcels and single fields are not drawn (' + kinds.exp + ')');
+  ok(kinds.nAllowed > 0 && kinds.holes === 0 && kinds.noArea, 'that outline has nothing inside it and counts as no area of its own (' + kinds.nAllowed + ' sites)');
+  ok(/"cls"\],"old"/.test(kinds.siteF) && /"solo"\],1/.test(kinds.siteF) && kinds.solo === 0,
+     'the site has its own line only when it is closed or has nothing allowed to show');
+  ok(/"cat"\],"facility"\],0/.test(kinds.fill), 'a facility is never filled');
   ok(kinds.twice === 0, 'a register outline is not drawn again on a site whose ground is traced');
   ok(/observed/.test(kinds.classes) && /permitted/.test(kinds.classes), 'the outline file carries worked ground and the permitted outline (' + kinds.classes + ')');
   ok(/0\.14/.test(fp.fill) && /match/.test(fp.fill),

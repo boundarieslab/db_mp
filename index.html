@@ -891,10 +891,9 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                     <div class="key-list" id="key-list"></div>
                     <div class="key-sep"></div>
                     <div class="key-list">
-                        <div class="kr"><span class="swatch" style="background:#fff;border:1.5px solid #FF0000"></span><span data-en="Site: worked ground, or the registered outline of a closed site" data-no="Anlegg: driftsområde, eller registrert omriss for et nedlagt anlegg">Site: worked ground, or the registered outline of a closed site</span></div>
+                        <div class="kr"><span class="swatch" style="background:#fff;border:1.5px solid #FFD400"></span><span data-en="Closed site: its ground, or its registered outline" data-no="Nedlagt anlegg: området, eller registrert omriss">Closed site: its ground, or its registered outline</span></div>
                         <div class="kr"><span class="swatch" style="background:#5a5a5a;border:1.5px solid #fff;box-shadow:0 0 0 .5px #999"></span><span data-en="Permitted or licensed (reguleringsplan, mining licence)" data-no="Tillatt eller konsesjon (reguleringsplan, driftskonsesjon)">Permitted or licensed (reguleringsplan, mining licence)</span></div>
                         <div class="kr"><span class="swatch" style="background:#5a5a5a;border:1.5px dashed #00FFFF;box-shadow:0 0 0 .5px #999"></span><span data-en="Planned expansion" data-no="Planlagt utvidelse">Planned expansion</span></div>
-                        <div class="kr"><span class="swatch" style="background:#5a5a5a;border:1px dashed #fff;box-shadow:0 0 0 .5px #999"></span><span data-en="Property parcels under the site" data-no="Eiendommer under anlegget">Property parcels under the site</span></div>
                         <div class="kr"><span class="swatch ring" style="background:#fff;border:2.5px solid #FF0000;box-shadow:0 0 0 .5px #999"></span><span data-en="Site with no outline yet" data-no="Sted uten omriss ennå">Site with no outline yet</span></div>
                         <div class="key-sep"></div>
                         <div class="kr"><span class="ev"></span><span data-en="Flow, documented" data-no="Strøm, dokumentert">Flow, documented</span><span class="ct" data-flow-ct="evidenced"></span></div>
@@ -2712,22 +2711,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // The line (tunnel, road, railway) or the perimeter (site, building) of a
     // construction project. Built by tools/make_project_geometries.py.
     const PROJECT_GEOJSON = 'data/project_geometries.geojson';
-    const FP_LAYERS = ['fp-fill', 'fp-line', 'fp-soft', 'fp-paper', 'fp-exp', 'fp-prop'];
+    const FP_LAYERS = ['fp-fill', 'fp-line', 'fp-soft', 'fp-paper', 'fp-exp'];
     // Lines only, in an order of weight. The site is the one line in the status
     // colour. What is permitted or licensed is white and solid, a planned
     // expansion is short dashes in one fixed colour, property is white dashes.
     const PAPER_COL = '#FFFFFF', EXP_COL = '#00FFFF';
     const NOT_FIRM = ['==', ['get', 'firm'], 0];
-    const IS_PAPER = ['in', ['get', 'pcls'], ['literal', ['permitted', 'licence', 'plan']]];
-    const IS_EXP   = ['==', ['get', 'pcls'], 'expansion'];
-    const IS_PROP  = ['==', ['get', 'pcls'], 'property'];
+    // Two outlines are drawn for a site: "allowed", the outer edge of everything
+    // permitted or licensed, and "planned", the outer edge of the expansion. The
+    // single plan fields, the licence and the parcels are kept for their areas only.
+    const IS_ALLOWED = ['==', ['get', 'pcls'], 'allowed'];
+    const IS_PLANNED = ['==', ['get', 'pcls'], 'planned'];
+    const IS_KEPT    = ['in', ['get', 'pcls'], ['literal', ['permitted', 'licence', 'plan', 'expansion', 'property']]];
+    // The site's own line: a closed site, or a site with nothing allowed to show.
+    const SITE_LINE  = ['any', ['!', ['==', ['get', 'cat'], 'facility']], ['==', ['get', 'cls'], 'old'], ['==', ['get', 'solo'], 1]];
     // Dashed in the status colour: a site still to come, and an outline that
     // stands in for the site (a register outline where nothing was traced).
-    const F_SOFT  = ['any', ['all', NOT_FIRM, ['!', IS_PAPER], ['!', IS_EXP], ['!', IS_PROP], ['!=', ['get', 'hid'], 1]],
+    const F_SOFT  = ['any', ['all', NOT_FIRM, ['!', IS_ALLOWED], ['!', IS_PLANNED], ['!', IS_KEPT], ['!=', ['get', 'hid'], 1]],
                             ['all', ['==', ['get', 'cls'], 'future'], ['!', NOT_FIRM]]];
-    const F_PAPER = ['all', NOT_FIRM, IS_PAPER];
-    const F_EXP   = ['all', NOT_FIRM, IS_EXP];
-    const F_PROP  = ['all', NOT_FIRM, IS_PROP];
+    const F_PAPER = ['all', NOT_FIRM, IS_ALLOWED];
+    const F_EXP   = ['all', NOT_FIRM, IS_PLANNED];
     const IS_FAC  = ['==', ['get', 'cat'], 'facility'];
     const PT_LAYERS = ['site-hot', 'site-sym'];
     const SITE_LAYERS = FP_LAYERS.concat(PT_LAYERS);
@@ -2764,6 +2767,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const shapes = (fpData ? fpData.features : []).concat(pgData ? pgData.features : []);
         const byUid = new Map(allSites.map(s => [uidOf(s), s]));
         const traced = new Set((fpData ? fpData.features : []).filter(f => f.properties.firm === 1).map(f => f.properties.uid));
+        const allowed = new Set((fpData ? fpData.features : []).filter(f => f.properties.pcls === 'allowed').map(f => f.properties.uid));
         // A footprint is drawn only for a site that is itself on the map.
         return { type: 'FeatureCollection', features: shapes.filter(f => byUid.has(f.properties.uid)).map(f => {
             const s = byUid.get(f.properties.uid);
@@ -2772,6 +2776,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return { type: 'Feature', geometry: f.geometry,
                      properties: Object.assign({}, f.properties, { cat, cls, col: classInfo(cat, cls).col,
                                                                     hid: f.properties.pcls === 'register' && traced.has(f.properties.uid) ? 1 : 0,
+                                                                    solo: allowed.has(f.properties.uid) ? 0 : 1,
                                                                     dir: s ? getMarkerInfo(s).direction : 'receiving' }) };
         }) };
     }
@@ -2840,7 +2845,7 @@ document.addEventListener('DOMContentLoaded', function() {
             filter: ['all', ['==', ['get', 'firm'], 1], NOT_LINE],
             paint: { 'fill-color': ['get', 'col'], 'fill-opacity': ['case', IS_FAC, 0, ['case', HOVER, FILL_A_H, FILL_A]] } }, before);
         map.addLayer({ id: 'fp-line', type: 'line', source: 'fp',
-            filter: ['all', ['==', ['get', 'firm'], 1], ['!=', ['get', 'cls'], 'future']],
+            filter: ['all', ['==', ['get', 'firm'], 1], ['!=', ['get', 'cls'], 'future'], SITE_LINE],
             layout: { 'line-join': 'round' },
             paint: { 'line-color': ['get', 'col'],
                      'line-width': ['case', IS_FAC, ['case', HOVER, 2.4, 1.5], ['case', HOVER, LINE_W_H_ALL, LINE_W_ALL]] } }, before);
@@ -2851,10 +2856,6 @@ document.addEventListener('DOMContentLoaded', function() {
             filter: F_SOFT,
             paint: { 'line-color': ['get', 'col'], 'line-width': ['case', HOVER, LINE_W_H_ALL, LINE_W_ALL],
                      'line-dasharray': [3, 2], 'line-opacity': 0.95 } }, before);
-        map.addLayer({ id: 'fp-prop', type: 'line', source: 'fp', minzoom: 12,
-            layout: { 'line-join': 'round' },
-            filter: F_PROP,
-            paint: { 'line-color': PAPER_COL, 'line-width': ['case', HOVER, 0.9, 0.6], 'line-dasharray': [5, 4.3] } }, before);
         map.addLayer({ id: 'fp-exp', type: 'line', source: 'fp', minzoom: 10,
             layout: { 'line-join': 'round' },
             filter: F_EXP,
@@ -2934,8 +2935,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const firm = hasWorked.size;
             $('count-footprints').textContent = new Set(gj.features.map(f => f.properties.uid)).size;
             const note = $('footprint-note');
-            const en = `${firm} ${t2('fpfirm', 'en')}, ${gj.features.length - firm} ${t2('fpngu', 'en')}`;
-            const no = `${firm} ${t2('fpfirm', 'no')}, ${gj.features.length - firm} ${t2('fpngu', 'no')}`;
+            const en = `${firm} ${t2('fpfirm', 'en')}, ${gj.features.filter(f => !/^(allowed|planned)$/.test(f.properties.pcls)).length - firm} ${t2('fpngu', 'en')}`;
+            const no = `${firm} ${t2('fpfirm', 'no')}, ${gj.features.filter(f => !/^(allowed|planned)$/.test(f.properties.pcls)).length - firm} ${t2('fpngu', 'no')}`;
             note.setAttribute('data-en', en); note.setAttribute('data-no', no);
             note.textContent = currentLang === 'no' ? no : en;
             fpState = 2;
@@ -3022,11 +3023,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const f = mapFilter();
             const fpOn = $('filter-footprints').checked;
             map.setFilter('fp-fill', ['all', ['==', ['get', 'firm'], 1], NOT_LINE, f]);
-            map.setFilter('fp-line', ['all', ['==', ['get', 'firm'], 1], ['!=', ['get', 'cls'], 'future'], f]);
+            map.setFilter('fp-line', ['all', ['==', ['get', 'firm'], 1], ['!=', ['get', 'cls'], 'future'], SITE_LINE, f]);
             map.setFilter('fp-soft', ['all', F_SOFT, f]);
             map.setFilter('fp-paper', ['all', F_PAPER, f]);
             map.setFilter('fp-exp', ['all', F_EXP, f]);
-            map.setFilter('fp-prop', ['all', F_PROP, f]);
             FP_LAYERS.forEach(id => setVis(id, fpOn));
             PT_LAYERS.forEach(id => map.setFilter(id, f));
         }
