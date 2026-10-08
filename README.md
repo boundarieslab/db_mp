@@ -1,4 +1,4 @@
-# db_mp — Dirty Business map
+Dirty Business 
 
 The interactive map behind [dirtybusiness.no](https://dirtybusiness.no), published at
 **https://boundarieslab.github.io/db_mp/**. It plots mass reception facilities
