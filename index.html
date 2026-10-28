@@ -279,7 +279,7 @@ button,input,select{font:inherit;color:inherit}
    to a control led by a small bitmap sign. Sliders are a pill with a round knob,
    switches a box with a cross in it. Set in the face of the table and the label. No rule
    between the parts, only air. Grey and black, and the sliders in pure blue. */
-#dod-panel{position:absolute;top:10px;right:10px;width:236px;z-index:6;background:#fff;border:1px solid #777;font:11px "Cutive Mono","Courier New",monospace;font-synthesis:none;color:#000}
+#dod-panel{position:absolute;top:calc(var(--frame-top) + 10px);right:10px;width:236px;max-height:calc(100% - var(--frame-top) - 20px);overflow:auto;z-index:6;background:#fff;border:1px solid #777;font:11px "Cutive Mono","Courier New",monospace;font-synthesis:none;color:#000}
 #dod-panel[hidden]{display:none}
 #dod-panel .dp-head{display:flex;align-items:center;justify-content:space-between;height:20px;padding:0 6px 0 3px;background:#bbb;font-size:12px;cursor:move;user-select:none}
 #dod-panel .dp-head button{width:16px;height:16px;border:0;background:none;font:400 17px/14px "Cutive Mono","Courier New",monospace;color:#000;cursor:pointer;padding:0}
@@ -2625,7 +2625,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const mv = ev => {
                 panel.style.right = 'auto'; panel.style.bottom = 'auto';
                 panel.style.left = Math.max(0, Math.min(st.width - b.width, ev.clientX - st.left - dx)) + 'px';
-                panel.style.top = Math.max(0, Math.min(st.height - 24, ev.clientY - st.top - dy)) + 'px';
+                const ft = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--frame-top')) || 0;
+                panel.style.top = Math.max(ft, Math.min(st.height - 24, ev.clientY - st.top - dy)) + 'px';
             };
             const up = () => { head.removeEventListener('pointermove', mv); head.removeEventListener('pointerup', up); };
             head.addEventListener('pointermove', mv);
