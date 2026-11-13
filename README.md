@@ -63,7 +63,7 @@ The map needs WebGL; a browser without it gets a message rather than a grey rect
 
   | | closed / finished | running | still to come | other |
   |---|---|---|---|---|
-  | Reception | `#FFD400` yellow | `#FF0000` red | `#FF8000` orange, dashed | `#B300FF` violet: built for contaminated masses |
+  | Reception | `#FFD400` yellow | `#FF0000` red | `#0000FF` blue, dashed (planned) | `#B300FF` violet: built for contaminated masses |
   | Construction | `#00B218` deep green | `#00FF00` green | `#95FF00` chartreuse, dashed | |
   | Either | | | | `#FFFFFF` hollow, dotted: no status |
   | Terrain change | | | | `#007FFF` blue |

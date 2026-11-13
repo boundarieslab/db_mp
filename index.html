@@ -30,7 +30,7 @@
   /* Every status colour is pure: HSL saturation 100 across the board.
      Reception: yellow closed, red receiving, orange to come, violet
      contaminated. Construction: a run of greens. Blue is terrain change. */
-  --r-old:#FFD400; --r-active:#FF0000; --r-future:#FF8000; --r-cont:#B300FF;
+  --r-old:#FFD400; --r-active:#FF0000; --r-future:#0000FF; --r-cont:#B300FF;
   --c-done:#00B218; --c-active:#00FF00; --c-planned:#95FF00;
   --terrain:#007FFF;   /* terrain change: the third tab */
   --hl:.5px;           /* one device pixel; set exactly from script */
@@ -1213,11 +1213,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Colour on this map is status, and nothing else, and every hue is a pure
     // one: the lifecycle is carried by lightness order and by the line, never
     // by washing the colour out. Reception runs yellow (closed) to red
-    // (receiving now) to orange (still to come); a site built to take
+    // (receiving now) to blue (planned, not built); a site built to take
     // contaminated masses is violet whatever its age. Construction runs deep
     // green (finished) to green (under way) to chartreuse (planned). Every
     // hue here is at full saturation — HSL S=100 — and the lifecycle moves
-    // along hue and lightness, never by desaturating. Blue belongs to terrain
+    // along hue and lightness, never by desaturating. Pure blue (#0000FF) is a
+    // planned reception site; the lighter azure #007FFF belongs to terrain
     // change. Red and green are close together for a red-green colour-blind
     // reader, so the two families are also told apart by their shape: round
     // for reception, square for construction.
@@ -1229,7 +1230,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLASSES = {
         facility: [
             { k: 'active',       col: '#FF0000', en: 'receiving now', no: 'mottar nå' },
-            { k: 'future',       col: '#FF8000', en: 'to come',       no: 'kommende' },
+            { k: 'future',       col: '#0000FF', en: 'planned',       no: 'planlagt' },
             { k: 'old',          col: '#FFD400', en: 'closed',        no: 'nedlagt' },
             { k: 'contaminated', col: '#B300FF', en: 'contaminated',  no: 'forurenset' },
             { k: 'unknown',      col: '#FFFFFF', en: 'no status',     no: 'ukjent' }
