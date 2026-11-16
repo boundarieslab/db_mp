@@ -188,6 +188,31 @@ file, add its name to `KNOWN_GRAPHS`.**
    `boundarieslab.github.io/db_mp/network/...` URL in `GraphURL`.
 5. Reload the map. No deploy step for data-only changes.
 
+## The style editor
+
+Open the map with `?edit` at the end of the address (`index.html?edit`) and a STYLE
+window opens over it. Everything about the look can be changed there, on the live map:
+
+- **ARRANGE**: click any part of the page and drag it, drag its squares to resize it,
+  nudge it with the arrow keys (Shift for 10 px). Guides snap it to the other parts.
+  Then set its padding, margins, typeface, size, colour, border and opacity. The
+  desktop and phone layouts are kept apart: a window narrower than 760 px edits the
+  phone layout.
+- **TYPE, COLOUR, LINES**: every typeface, type size, weight, colour and line weight
+  the site uses, each changeable everywhere at once. Colours carry through to the map
+  and the table symbols.
+- **MAP**: every layer, with its width, opacity, dashes, colours, or hidden.
+- **FILE**: download the result as one style file, open one, or start over. Undo and
+  redo are Ctrl+Z and Ctrl+Shift+Z; hold BEFORE to see the site without the changes.
+
+Changes are a draft kept in that browser only. To make them the site's, the style
+file's content goes into `<script type="application/json" id="db-style">` in
+`index.html`; `editor/style-runtime.js` applies it on every visit. Empty, the page is
+exactly as written.
+
+The Cargo header and tabs sit outside the map. FILE has a bookmarklet that opens the
+same editor on dirtybusiness.no itself; there it gives CSS for Cargo's Custom CSS.
+
 ## Testing
 
     python3 -m http.server 8901 --bind 127.0.0.1     # from the repo root
