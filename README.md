@@ -188,6 +188,24 @@ file, add its name to `KNOWN_GRAPHS`.**
    `boundarieslab.github.io/db_mp/network/...` URL in `GraphURL`.
 5. Reload the map. No deploy step for data-only changes.
 
+## The map's look in Maputnik
+
+`data/map-style.json` is the look of every map layer as a MapLibre style: colours,
+line widths, dashes, opacities, raster contrast and so on. It opens in Maputnik
+(https://maplibre.org/maputnik/ → Open → Load from URL →
+`https://boundarieslab.github.io/db_mp/data/map-style.json`), with the sites, outlines,
+plan coverage and terrain change drawn from preview copies in `data/maputnik/`.
+
+Edit it there, export it, and save it over `data/map-style.json`. On every visit
+`editor/style-runtime.js` compares it with `data/maputnik/baseline.json` and applies
+only what differs: paint, layout (but not on/off) and zoom range, per layer. Sources,
+filters, layer order and which layers are on stay the page's. A changed value wins
+over the page in every state, including the tabs that normally dim a layer.
+
+Not shown in Maputnik: the terrain contours (made in the browser from elevation
+tiles), the flows (drawn only for an opened site), and the PMTiles layers if the
+Maputnik version cannot read `pmtiles://`. They can still be edited there.
+
 ## The style editor
 
 Open the map with `?edit` at the end of the address (`index.html?edit`) and a STYLE

@@ -326,10 +326,13 @@
         Object.keys(loc).forEach(k => { t[k] = loc[k]; });
         return t;
     }
+    // Only where a colour comes out of the expression: a branch of case / match / step /
+    // interpolate, or the whole value. Inputs and conditions are left alone.
     function remapExpr(e, table) {
         if (typeof e === 'string') { const k = colorKey(e); return k && table[k] ? table[k] : e; }
-        if (!Array.isArray(e)) return e;
-        if (e[0] === 'get' && e.length === 2 && typeof e[1] === 'string') {
+        if (!Array.isArray(e) || typeof e[0] !== 'string') return e;
+        const op = e[0];
+        if (op === 'get' && e.length === 2 && typeof e[1] === 'string') {
             // A colour read from the data: answered through a match on its value.
             const ks = Object.keys(table);
             if (!ks.length) return e;
@@ -339,14 +342,50 @@
             m.push(e);
             return m;
         }
-        if (e[0] === 'literal') return e;
-        return e.map((x, i) => i === 0 ? x : remapExpr(x, table));
+        if (op === 'case') { const r = [op]; for (let i = 1; i < e.length - 1; i += 2) r.push(e[i], remapExpr(e[i + 1], table)); r.push(remapExpr(e[e.length - 1], table)); return r; }
+        if (op === 'match') { const r = [op, e[1]]; for (let i = 2; i < e.length - 1; i += 2) r.push(e[i], remapExpr(e[i + 1], table)); r.push(remapExpr(e[e.length - 1], table)); return r; }
+        if (op === 'step') { const r = [op, e[1], remapExpr(e[2], table)]; for (let i = 3; i < e.length; i += 2) r.push(e[i], remapExpr(e[i + 1], table)); return r; }
+        if (/^interpolate/.test(op)) { const r = e.slice(0, 3); for (let i = 3; i < e.length; i += 2) r.push(e[i], remapExpr(e[i + 1], table)); return r; }
+        if (op === 'coalesce' || op === 'to-color') return [op].concat(e.slice(1).map(x => remapExpr(x, table)));
+        return e;
+    }
+    // The map's look as saved in data/map-style.json (edited in Maputnik). Only what
+    // differs from data/maputnik/baseline.json is taken; the rest stays the page's.
+    let FILE = {};
+    const own = (o, k) => !!o && Object.prototype.hasOwnProperty.call(o, k);
+    const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    function loadMapFile() {
+        if (PAGE_MODE || !window.fetch) return;
+        const q = EDIT ? '?v=' + Date.now() : '';
+        Promise.all(['data/map-style.json', 'data/maputnik/baseline.json'].map(u => fetch(u + q).then(r => r.ok ? r.json() : null).catch(() => null)))
+            .then(([st, base]) => {
+                if (!st || !base || !Array.isArray(st.layers) || !base.layers) return;
+                const out = {};
+                st.layers.forEach(l => {
+                    const b = base.layers[l.id];
+                    if (!b) return;
+                    const o = {};
+                    ['paint', 'layout'].forEach(k => {
+                        const cur = l[k] || {}, was = b[k] || {};
+                        new Set(Object.keys(cur).concat(Object.keys(was))).forEach(p => {
+                            if (p === 'visibility' || same(cur[p], was[p])) return;
+                            (o[k] = o[k] || {})[p] = cur[p] === undefined ? null : cur[p];
+                        });
+                    });
+                    ['minzoom', 'maxzoom'].forEach(z => { if (!same(l[z], b[z])) o[z] = l[z] === undefined ? null : l[z]; });
+                    if (Object.keys(o).length) out[l.id] = o;
+                });
+                FILE = out;
+                if (Object.keys(out).length) apply();
+            });
     }
     function xPaint(id, prop, v) {
         if (OFF) return v;
         const L = layerOf(id);
         if (L.paint && Object.prototype.hasOwnProperty.call(L.paint, prop)) return L.paint[prop];
         if (prop === 'line-dasharray' && L.dash) return L.dash;
+        const F = FILE[id];
+        if (F && own(F.paint, prop)) v = F.paint[prop] === null ? undefined : F.paint[prop];
         if (v === undefined) return v;
         let out = v;
         if (/-color$/.test(prop)) { const t = colorTable(id); if (Object.keys(t).length) out = remapExpr(out, t); }
@@ -359,25 +398,33 @@
     function xLayout(id, prop, v) {
         if (OFF) return v;
         const L = layerOf(id);
+        const F = FILE[id];
+        if (prop !== 'visibility' && F && own(F.layout, prop)) v = F.layout[prop] === null ? undefined : F.layout[prop];
         if (prop === 'visibility' && L.hide) return 'none';
         if (L.layout && Object.prototype.hasOwnProperty.call(L.layout, prop)) return L.layout[prop];
         if (prop === 'icon-size' && L.size !== undefined && v !== undefined) return scaleExpr(v, +L.size);
         return v;
     }
     function register(layer) {
-        REG[layer.id] = { type: layer.type, paint: Object.assign({}, layer.paint || {}), layout: Object.assign({}, layer.layout || {}) };
+        REG[layer.id] = { type: layer.type, paint: Object.assign({}, layer.paint || {}), layout: Object.assign({}, layer.layout || {}), minzoom: layer.minzoom, maxzoom: layer.maxzoom };
     }
     function xLayer(layer) {
         const L = layerOf(layer.id);
         const out = Object.assign({}, layer);
         const paint = Object.assign({}, layer.paint || {});
         Object.keys(paint).forEach(p => { paint[p] = xPaint(layer.id, p, paint[p]); });
+        const F = FILE[layer.id] || {};
+        if (!OFF && F.paint) Object.keys(F.paint).forEach(p => { if (!(p in paint) && F.paint[p] !== null) paint[p] = xPaint(layer.id, p, F.paint[p]); });
+        if (!OFF && own(F, 'minzoom')) { if (F.minzoom === null) delete out.minzoom; else out.minzoom = F.minzoom; }
+        if (!OFF && own(F, 'maxzoom')) { if (F.maxzoom === null) delete out.maxzoom; else out.maxzoom = F.maxzoom; }
         if (!OFF && L.paint) Object.keys(L.paint).forEach(p => { if (!(p in paint)) paint[p] = L.paint[p]; });
         if (!OFF && L.dash && layer.type === 'line' && !('line-dasharray' in paint)) paint['line-dasharray'] = L.dash;
+        Object.keys(paint).forEach(p => { if (paint[p] === undefined) delete paint[p]; });
         out.paint = paint;
         const layout = Object.assign({}, layer.layout || {});
-        Object.keys(layout).forEach(p => { layout[p] = xLayout(layer.id, p, layout[p]); });
+        Object.keys(layout).forEach(p => { layout[p] = xLayout(layer.id, p, layout[p]); if (layout[p] === undefined) delete layout[p]; });
         if (!OFF && L.hide) layout.visibility = 'none';
+        if (!OFF && F.layout) Object.keys(F.layout).forEach(p => { if (!(p in layout) && p !== 'visibility' && F.layout[p] !== null) layout[p] = F.layout[p]; });
         if (!OFF && L.layout) Object.keys(L.layout).forEach(p => { if (!(p in layout)) layout[p] = L.layout[p]; });
         out.layout = layout;
         return out;
@@ -418,7 +465,7 @@
     let mapCaptured = false, mapEverStyled = false;
     function applyMap() {
         if (!MAP || !O) return;
-        const styled = hasColors() || (+S.map.lineWidth || 1) !== 1 || Object.keys(S.map.layers || {}).length > 0;
+        const styled = hasColors() || (+S.map.lineWidth || 1) !== 1 || Object.keys(S.map.layers || {}).length > 0 || Object.keys(FILE).length > 0;
         if (!styled && !mapEverStyled) return;          // nothing asked of the map: leave it alone
         mapEverStyled = mapEverStyled || styled;
         if (!mapCaptured) {
@@ -429,6 +476,12 @@
             const R = REG[id], L = layerOf(id), T = TOUCHED[id] || (TOUCHED[id] = {});
             const pk = new Set(Object.keys(R.paint));
             if (L.paint) Object.keys(L.paint).forEach(p => pk.add(p));
+            const F = FILE[id] || {};
+            if (F.paint) Object.keys(F.paint).forEach(p => pk.add(p));
+            if (OFF ? (own(T, 'z')) : (own(F, 'minzoom') || own(F, 'maxzoom') || own(T, 'z'))) {
+                const mn = !OFF && own(F, 'minzoom') ? F.minzoom : R.minzoom, mx = !OFF && own(F, 'maxzoom') ? F.maxzoom : R.maxzoom;
+                try { MAP.setLayerZoomRange(id, mn === null || mn === undefined ? 0 : mn, mx === null || mx === undefined ? 24 : mx); T.z = 1; } catch (e) {}
+            }
             if (L.dash && (R.type || MAP.getLayer(id).type) === 'line') pk.add('line-dasharray');
             Object.keys(T).filter(k => k.startsWith('p:')).forEach(k => pk.add(k.slice(2)));
             pk.forEach(p => {
@@ -441,6 +494,7 @@
             const lk = new Set(Object.keys(R.layout));
             lk.add('visibility');
             if (L.layout) Object.keys(L.layout).forEach(p => lk.add(p));
+            if (F.layout) Object.keys(F.layout).forEach(p => { if (p !== 'visibility') lk.add(p); });
             Object.keys(T).filter(k => k.startsWith('l:')).forEach(k => lk.add(k.slice(2)));
             lk.forEach(p => {
                 const orig = R.layout[p];
@@ -478,12 +532,14 @@
         set off(v) { OFF = !!v; apply(); },
         get map() { return MAP; },
         layers: REG,
+        get mapFile() { return FILE; },
         apply, applyNow, applyCss, buildCss, remapValue, colorKey, remapColorText, collectRules, rules: RULES, norm, blank,
         saveDraft() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} },
         clearDraft() { try { localStorage.removeItem(KEY); } catch (e) {} }
     };
     window.__dbStyle = api;
 
+    loadMapFile();
     // First pass now (stylesheets are parsed), again once the page has built itself.
     applyNow();
     document.addEventListener('DOMContentLoaded', apply);

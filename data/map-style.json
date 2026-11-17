@@ -1,0 +1,1928 @@
+{
+ "version": 8,
+ "name": "Dirty Business map",
+ "metadata": {
+  "db:about": "The look of the dirtybusiness.no map. Edit it in Maputnik and save it back as data/map-style.json. The site takes the paint, layout and zoom range of each layer from here, where they differ from data/maputnik/baseline.json; sources, filters, order and on/off are kept by the page."
+ },
+ "center": [
+  11.04,
+  60.07
+ ],
+ "zoom": 12,
+ "sprite": "https://boundarieslab.github.io/db_mp/data/maputnik/sprite",
+ "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+ "sources": {
+  "graytone": {
+   "type": "raster",
+   "tileSize": 256,
+   "maxzoom": 18,
+   "tiles": [
+    "https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png"
+   ],
+   "attribution": "© <a href=\"https://kartverket.no\">Kartverket</a>"
+  },
+  "relief": {
+   "type": "raster",
+   "tileSize": 512,
+   "minzoom": 12,
+   "maxzoom": 17,
+   "tiles": [
+    "https://wms.geonorge.no/skwms1/wms.hoyde-dtm-nhm-25833?service=WMS&version=1.3.0&request=GetMap&layers=NHM_DTM_25833%3Askyggerelieff&styles=&format=image%2Fpng&crs=EPSG%3A3857&width=512&height=512&bbox={bbox-epsg-3857}"
+   ],
+   "attribution": "© <a href=\"https://kartverket.no\">Kartverket</a>"
+  },
+  "relief-dem": {
+   "type": "raster-dem",
+   "encoding": "terrarium",
+   "tileSize": 256,
+   "maxzoom": 15,
+   "tiles": [
+    "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
+   ],
+   "attribution": "Elevation: Kartverket / Tilezen terrain tiles"
+  },
+  "satellite": {
+   "type": "raster",
+   "tileSize": 256,
+   "maxzoom": 19,
+   "tiles": [
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+   ],
+   "attribution": "© <a href=\"https://www.esri.com\">Esri</a>"
+  },
+  "historical": {
+   "type": "raster",
+   "tileSize": 256,
+   "maxzoom": 19,
+   "tiles": [
+    "https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/10/{z}/{y}/{x}"
+   ],
+   "attribution": "© <a href=\"https://www.esri.com\">Esri</a>"
+  },
+  "bym": {
+   "type": "raster",
+   "tileSize": 256,
+   "maxzoom": 20,
+   "bounds": [
+    10.48009,
+    59.81408,
+    10.96212,
+    60.13055
+   ],
+   "tiles": [
+    "https://geodata.bymoslo.no/arcgis/rest/services/geodata/Ortofoto/MapServer/export?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&format=jpg&transparent=false&f=image"
+   ],
+   "attribution": "© <a href=\"https://www.oslo.kommune.no\">Bymiljøetaten, Oslo kommune</a>"
+  },
+  "fp": {
+   "type": "geojson",
+   "promoteId": "uid",
+   "attribution": "Footprints: Kartverket plan and cadastre · NGU · LUB · Project lines and perimeters © OpenStreetMap contributors",
+   "data": "https://boundarieslab.github.io/db_mp/data/maputnik/fp.geojson"
+  },
+  "sites": {
+   "type": "geojson",
+   "promoteId": "uid",
+   "data": "https://boundarieslab.github.io/db_mp/data/maputnik/sites.geojson"
+  },
+  "flows": {
+   "type": "geojson",
+   "promoteId": "fid",
+   "data": "https://boundarieslab.github.io/db_mp/data/maputnik/flows.geojson"
+  },
+  "flowheads": {
+   "type": "geojson",
+   "promoteId": "fid",
+   "data": "https://boundarieslab.github.io/db_mp/data/maputnik/flowheads.geojson"
+  },
+  "cov": {
+   "type": "geojson",
+   "attribution": "Plan sweep: Kartverket, Miljødirektoratet · LUB",
+   "data": "https://boundarieslab.github.io/db_mp/data/maputnik/cov.geojson"
+  },
+  "dodfar": {
+   "type": "raster",
+   "tiles": [
+    "https://boundarieslab.github.io/db_mp/data/dod_far/{z}/{x}/{y}.png"
+   ],
+   "tileSize": 256,
+   "minzoom": 6,
+   "maxzoom": 12,
+   "bounds": [
+    9.94124,
+    59.10895,
+    11.82469,
+    60.59796
+   ],
+   "attribution": "DoD: Kartverket DTM1 · LUB"
+  },
+  "dodfp": {
+   "type": "geojson",
+   "data": "https://boundarieslab.github.io/db_mp/data/maputnik/dodfp.geojson"
+  },
+  "dodsel": {
+   "type": "geojson",
+   "data": "https://boundarieslab.github.io/db_mp/data/maputnik/dodsel.geojson"
+  },
+  "dod": {
+   "type": "raster",
+   "tiles": [
+    "https://boundarieslab.github.io/db_mp/data/dod/gjerdrum_2007_2020/{z}/{x}/{y}.png"
+   ],
+   "tileSize": 256,
+   "minzoom": 11,
+   "maxzoom": 16,
+   "bounds": [
+    10.95226,
+    60.02233,
+    11.13133,
+    60.13268
+   ],
+   "attribution": "DoD: Kartverket DTM1 · LUB"
+  },
+  "dodold-gjerdrum_2007_2020": {
+   "type": "raster",
+   "tileSize": 512,
+   "minzoom": 11,
+   "maxzoom": 17,
+   "bounds": [
+    10.95226,
+    60.02233,
+    11.13133,
+    60.13268
+   ],
+   "tiles": [
+    "https://hoydedata.no/arcgis/rest/services/Prosjekt_DTM/ImageServer/exportImage?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=512,512&format=png32&transparent=true&f=image&renderingRule=%7B%22rasterFunction%22%3A%22skyggerelieff%22%7D&mosaicRule=%7B%22mosaicMethod%22%3A%22esriMosaicNorthwest%22%2C%22where%22%3A%22LAS_PROJECT_NAME%20%3D%20'Romerike%2007pkt%202007'%22%7D"
+   ],
+   "attribution": "Older terrain: Kartverket, Romerike 07pkt 2007"
+  },
+  "dod-hit": {
+   "type": "geojson",
+   "data": "https://boundarieslab.github.io/db_mp/data/maputnik/dod-hit.geojson"
+  },
+  "dod-contours-far": {
+   "type": "vector",
+   "maxzoom": 12,
+   "tiles": [
+    "dem-far-contour://{z}/{x}/{y}?contourLayer=contours&elevationKey=ele&levelKey=level&multiplier=1&overzoom=1&thresholds=11*50*200~12*20*100~9*100*500"
+   ]
+  },
+  "dod-contours": {
+   "type": "vector",
+   "minzoom": 13,
+   "maxzoom": 15,
+   "tiles": [
+    "dem-nhm-contour://{z}/{x}/{y}?contourLayer=contours&elevationKey=ele&levelKey=level&multiplier=1&overzoom=0&thresholds=13*5*25~14*1*5"
+   ]
+  },
+  "dod-contours-old": {
+   "type": "vector",
+   "minzoom": 13,
+   "maxzoom": 15,
+   "tiles": [
+    "dem-old-contour://{z}/{x}/{y}?contourLayer=contours&elevationKey=ele&levelKey=level&multiplier=1&overzoom=0&thresholds=13*5*25~14*1*5"
+   ]
+  },
+  "dodin-old": {
+   "type": "vector",
+   "url": "pmtiles://https://boundarieslab.github.io/db_mp/data/dod_before.pmtiles"
+  },
+  "dodin-new": {
+   "type": "vector",
+   "url": "pmtiles://https://boundarieslab.github.io/db_mp/data/dod_after.pmtiles"
+  },
+  "dodlines": {
+   "type": "vector",
+   "url": "pmtiles://https://boundarieslab.github.io/db_mp/data/dod_lines.pmtiles"
+  }
+ },
+ "layers": [
+  {
+   "id": "graytone",
+   "type": "raster",
+   "source": "graytone",
+   "layout": {
+    "visibility": "none"
+   }
+  },
+  {
+   "id": "relief-ground",
+   "type": "background",
+   "layout": {
+    "visibility": "none"
+   },
+   "paint": {
+    "background-color": "#c4c4c4"
+   }
+  },
+  {
+   "id": "relief-shade",
+   "type": "hillshade",
+   "source": "relief-dem",
+   "layout": {
+    "visibility": "none"
+   },
+   "paint": {
+    "hillshade-illumination-direction": 315,
+    "hillshade-illumination-anchor": "map",
+    "hillshade-exaggeration": 0.8,
+    "hillshade-shadow-color": "#000000",
+    "hillshade-highlight-color": "#ffffff",
+    "hillshade-accent-color": "#000000"
+   }
+  },
+  {
+   "id": "relief",
+   "type": "raster",
+   "source": "relief",
+   "minzoom": 12,
+   "layout": {
+    "visibility": "none"
+   },
+   "paint": {
+    "raster-contrast": 0.45,
+    "raster-fade-duration": 200,
+    "raster-opacity": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     12,
+     0,
+     13,
+     1
+    ]
+   }
+  },
+  {
+   "id": "dodold-gjerdrum_2007_2020",
+   "type": "raster",
+   "source": "dodold-gjerdrum_2007_2020",
+   "minzoom": 11,
+   "layout": {
+    "visibility": "none"
+   },
+   "paint": {
+    "raster-contrast": 0.45,
+    "raster-fade-duration": 200
+   }
+  },
+  {
+   "id": "satellite",
+   "type": "raster",
+   "source": "satellite",
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "raster-fade-duration": 200,
+    "raster-saturation": 0,
+    "raster-opacity": 1
+   }
+  },
+  {
+   "id": "dod-contours-far",
+   "type": "line",
+   "source": "dod-contours-far",
+   "source-layer": "contours",
+   "maxzoom": 13,
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#000",
+    "line-opacity": 0.45,
+    "line-width": [
+     "match",
+     [
+      "get",
+      "level"
+     ],
+     1,
+     0.6,
+     0.25
+    ]
+   }
+  },
+  {
+   "id": "dod-contours",
+   "type": "line",
+   "source": "dod-contours",
+   "source-layer": "contours",
+   "minzoom": 13,
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#000",
+    "line-opacity": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     14,
+     [
+      "match",
+      [
+       "get",
+       "level"
+      ],
+      1,
+      0.6,
+      0.3
+     ],
+     16,
+     [
+      "match",
+      [
+       "get",
+       "level"
+      ],
+      1,
+      0.8,
+      0.5
+     ]
+    ],
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     14,
+     [
+      "match",
+      [
+       "get",
+       "level"
+      ],
+      1,
+      0.5,
+      0.2
+     ],
+     17,
+     [
+      "match",
+      [
+       "get",
+       "level"
+      ],
+      1,
+      0.8,
+      0.35
+     ]
+    ]
+   }
+  },
+  {
+   "id": "dod-contours-old",
+   "type": "line",
+   "source": "dod-contours-old",
+   "source-layer": "contours",
+   "minzoom": 13,
+   "layout": {
+    "visibility": "none"
+   },
+   "paint": {
+    "line-color": "#000",
+    "line-opacity": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     14,
+     [
+      "match",
+      [
+       "get",
+       "level"
+      ],
+      1,
+      0.6,
+      0.3
+     ],
+     16,
+     [
+      "match",
+      [
+       "get",
+       "level"
+      ],
+      1,
+      0.8,
+      0.5
+     ]
+    ],
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     14,
+     [
+      "match",
+      [
+       "get",
+       "level"
+      ],
+      1,
+      0.5,
+      0.2
+     ],
+     17,
+     [
+      "match",
+      [
+       "get",
+       "level"
+      ],
+      1,
+      0.8,
+      0.35
+     ]
+    ]
+   }
+  },
+  {
+   "id": "bym",
+   "type": "raster",
+   "source": "bym",
+   "layout": {
+    "visibility": "none"
+   }
+  },
+  {
+   "id": "historical",
+   "type": "raster",
+   "source": "historical",
+   "layout": {
+    "visibility": "none"
+   },
+   "paint": {
+    "raster-fade-duration": 200
+   }
+  },
+  {
+   "id": "cov-old-line",
+   "type": "line",
+   "source": "cov",
+   "filter": [
+    "==",
+    [
+     "get",
+     "k"
+    ],
+    "old"
+   ],
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#f4f4f4",
+    "line-opacity": 0.9,
+    "line-width": 1,
+    "line-dasharray": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "id": "cov-current-line",
+   "type": "line",
+   "source": "cov",
+   "filter": [
+    "==",
+    [
+     "get",
+     "k"
+    ],
+    "current"
+   ],
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#f4f4f4",
+    "line-opacity": 0.9,
+    "line-width": 1.1
+   }
+  },
+  {
+   "id": "cov-future-line",
+   "type": "line",
+   "source": "cov",
+   "filter": [
+    "==",
+    [
+     "get",
+     "k"
+    ],
+    "future"
+   ],
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#f4f4f4",
+    "line-opacity": 0.9,
+    "line-width": 1.1,
+    "line-dasharray": [
+     3,
+     2
+    ]
+   }
+  },
+  {
+   "id": "dod",
+   "type": "raster",
+   "source": "dod",
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "raster-opacity": 0.9,
+    "raster-fade-duration": 250
+   }
+  },
+  {
+   "id": "dodfar",
+   "type": "raster",
+   "source": "dodfar",
+   "maxzoom": 12.6,
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "raster-opacity": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     11.5,
+     0.9,
+     12.6,
+     0
+    ],
+    "raster-resampling": "nearest",
+    "raster-fade-duration": 0
+   }
+  },
+  {
+   "id": "dod-in-old",
+   "type": "line",
+   "source": "dodin-old",
+   "source-layer": "before",
+   "minzoom": 14,
+   "layout": {
+    "visibility": "none"
+   },
+   "paint": {
+    "line-color": "#fff",
+    "line-opacity": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     14,
+     [
+      "case",
+      [
+       "==",
+       [
+        "get",
+        "m"
+       ],
+       1
+      ],
+      0.765,
+      0.45
+     ],
+     16,
+     [
+      "case",
+      [
+       "==",
+       [
+        "get",
+        "m"
+       ],
+       1
+      ],
+      0.855,
+      0.675
+     ]
+    ],
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     14,
+     [
+      "case",
+      [
+       "==",
+       [
+        "get",
+        "m"
+       ],
+       1
+      ],
+      0.6,
+      0.3
+     ],
+     17,
+     [
+      "case",
+      [
+       "==",
+       [
+        "get",
+        "m"
+       ],
+       1
+      ],
+      0.9,
+      0.45
+     ]
+    ]
+   }
+  },
+  {
+   "id": "dod-in-new",
+   "type": "line",
+   "source": "dodin-new",
+   "source-layer": "after",
+   "minzoom": 14,
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#fff",
+    "line-opacity": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     14,
+     [
+      "case",
+      [
+       "==",
+       [
+        "get",
+        "m"
+       ],
+       1
+      ],
+      0.765,
+      0.45
+     ],
+     16,
+     [
+      "case",
+      [
+       "==",
+       [
+        "get",
+        "m"
+       ],
+       1
+      ],
+      0.855,
+      0.675
+     ]
+    ],
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     14,
+     [
+      "case",
+      [
+       "==",
+       [
+        "get",
+        "m"
+       ],
+       1
+      ],
+      0.6,
+      0.3
+     ],
+     17,
+     [
+      "case",
+      [
+       "==",
+       [
+        "get",
+        "m"
+       ],
+       1
+      ],
+      0.9,
+      0.45
+     ]
+    ]
+   }
+  },
+  {
+   "id": "dod-iso",
+   "type": "line",
+   "source": "dodlines",
+   "source-layer": "lines",
+   "minzoom": 14,
+   "filter": [
+    "!=",
+    [
+     "get",
+     "o"
+    ],
+    1
+   ],
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#000",
+    "line-opacity": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     14,
+     0.35,
+     16,
+     0.6
+    ],
+    "line-width": [
+     "case",
+     [
+      "==",
+      [
+       "get",
+       "m"
+      ],
+      1
+     ],
+     0.8,
+     0.35
+    ]
+   }
+  },
+  {
+   "id": "dod-edge",
+   "type": "line",
+   "source": "dodlines",
+   "source-layer": "lines",
+   "minzoom": 13,
+   "filter": [
+    "==",
+    [
+     "get",
+     "o"
+    ],
+    1
+   ],
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#000",
+    "line-opacity": 0.7,
+    "line-width": 0.35
+   }
+  },
+  {
+   "id": "dodfp-fill",
+   "type": "fill",
+   "source": "dodfp",
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "fill-color": "#fff",
+    "fill-opacity": 0
+   }
+  },
+  {
+   "id": "dodfp-line",
+   "type": "line",
+   "source": "dodfp",
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#fff",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     6,
+     1.6,
+     10,
+     2.4,
+     14,
+     3
+    ],
+    "line-dasharray": [
+     1.4,
+     1.2
+    ]
+   }
+  },
+  {
+   "id": "dod-hit",
+   "type": "fill",
+   "source": "dod-hit",
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "fill-color": "#fff",
+    "fill-opacity": 0.01
+   }
+  },
+  {
+   "id": "dodsel-edge",
+   "type": "line",
+   "source": "dodlines",
+   "source-layer": "lines",
+   "filter": [
+    "==",
+    [
+     "get",
+     "o"
+    ],
+    -1
+   ],
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#000",
+    "line-width": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     9,
+     0.45,
+     13,
+     0.9
+    ]
+   }
+  },
+  {
+   "id": "dodsel-line",
+   "type": "line",
+   "source": "dodsel",
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#000",
+    "line-width": 0.7,
+    "line-opacity": 0
+   }
+  },
+  {
+   "id": "fp-fill",
+   "type": "fill",
+   "source": "fp",
+   "filter": [
+    "all",
+    [
+     "==",
+     [
+      "get",
+      "firm"
+     ],
+     1
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "kind"
+     ],
+     "line"
+    ],
+    [
+     "all",
+     [
+      "in",
+      [
+       "concat",
+       [
+        "get",
+        "cat"
+       ],
+       ":",
+       [
+        "get",
+        "cls"
+       ]
+      ],
+      [
+       "literal",
+       [
+        "facility:active",
+        "facility:future",
+        "facility:old",
+        "facility:contaminated",
+        "facility:unknown",
+        "project:active",
+        "project:future",
+        "project:old",
+        "project:unknown"
+       ]
+      ]
+     ]
+    ]
+   ],
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "fill-color": [
+     "get",
+     "col"
+    ],
+    "fill-opacity": [
+     "case",
+     [
+      "==",
+      [
+       "get",
+       "cat"
+      ],
+      "facility"
+     ],
+     0,
+     [
+      "case",
+      [
+       "boolean",
+       [
+        "feature-state",
+        "hot"
+       ],
+       false
+      ],
+      [
+       "match",
+       [
+        "get",
+        "cls"
+       ],
+       "active",
+       0.3,
+       "contaminated",
+       0.3,
+       "future",
+       0.2,
+       "old",
+       0.22,
+       "unknown",
+       0.08,
+       0.26
+      ],
+      [
+       "match",
+       [
+        "get",
+        "cls"
+       ],
+       "active",
+       0.14,
+       "contaminated",
+       0.14,
+       "future",
+       0.08,
+       "old",
+       0.1,
+       "unknown",
+       0,
+       0.12
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "id": "fp-line",
+   "type": "line",
+   "source": "fp",
+   "filter": [
+    "all",
+    [
+     "==",
+     [
+      "get",
+      "firm"
+     ],
+     1
+    ],
+    [
+     "!=",
+     [
+      "get",
+      "cls"
+     ],
+     "future"
+    ],
+    [
+     "any",
+     [
+      "!",
+      [
+       "==",
+       [
+        "get",
+        "cat"
+       ],
+       "facility"
+      ]
+     ],
+     [
+      "==",
+      [
+       "get",
+       "cls"
+      ],
+      "old"
+     ],
+     [
+      "==",
+      [
+       "get",
+       "solo"
+      ],
+      1
+     ]
+    ],
+    [
+     "all",
+     [
+      "in",
+      [
+       "concat",
+       [
+        "get",
+        "cat"
+       ],
+       ":",
+       [
+        "get",
+        "cls"
+       ]
+      ],
+      [
+       "literal",
+       [
+        "facility:active",
+        "facility:future",
+        "facility:old",
+        "facility:contaminated",
+        "facility:unknown",
+        "project:active",
+        "project:future",
+        "project:old",
+        "project:unknown"
+       ]
+      ]
+     ]
+    ]
+   ],
+   "layout": {
+    "line-join": "round",
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": [
+     "get",
+     "col"
+    ],
+    "line-width": [
+     "case",
+     [
+      "==",
+      [
+       "get",
+       "cat"
+      ],
+      "facility"
+     ],
+     [
+      "case",
+      [
+       "boolean",
+       [
+        "feature-state",
+        "hot"
+       ],
+       false
+      ],
+      2.4,
+      1.5
+     ],
+     [
+      "case",
+      [
+       "boolean",
+       [
+        "feature-state",
+        "hot"
+       ],
+       false
+      ],
+      [
+       "case",
+       [
+        "==",
+        [
+         "get",
+         "kind"
+        ],
+        "line"
+       ],
+       3.8,
+       [
+        "match",
+        [
+         "get",
+         "cls"
+        ],
+        "active",
+        2,
+        "contaminated",
+        2,
+        "future",
+        1.8,
+        "old",
+        1.8,
+        "unknown",
+        1.5,
+        1.8
+       ]
+      ],
+      [
+       "case",
+       [
+        "==",
+        [
+         "get",
+         "kind"
+        ],
+        "line"
+       ],
+       2.4,
+       [
+        "match",
+        [
+         "get",
+         "cls"
+        ],
+        "active",
+        1.2,
+        "contaminated",
+        1.2,
+        "future",
+        1,
+        "old",
+        1,
+        "unknown",
+        0.8,
+        1
+       ]
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "id": "fp-soft",
+   "type": "line",
+   "source": "fp",
+   "filter": [
+    "all",
+    [
+     "any",
+     [
+      "all",
+      [
+       "==",
+       [
+        "get",
+        "firm"
+       ],
+       0
+      ],
+      [
+       "!",
+       [
+        "==",
+        [
+         "get",
+         "pcls"
+        ],
+        "allowed"
+       ]
+      ],
+      [
+       "!",
+       [
+        "==",
+        [
+         "get",
+         "pcls"
+        ],
+        "planned"
+       ]
+      ],
+      [
+       "!",
+       [
+        "in",
+        [
+         "get",
+         "pcls"
+        ],
+        [
+         "literal",
+         [
+          "permitted",
+          "licence",
+          "plan",
+          "expansion",
+          "property"
+         ]
+        ]
+       ]
+      ],
+      [
+       "!=",
+       [
+        "get",
+        "hid"
+       ],
+       1
+      ]
+     ],
+     [
+      "all",
+      [
+       "==",
+       [
+        "get",
+        "cls"
+       ],
+       "future"
+      ],
+      [
+       "!",
+       [
+        "==",
+        [
+         "get",
+         "firm"
+        ],
+        0
+       ]
+      ]
+     ]
+    ],
+    [
+     "all",
+     [
+      "in",
+      [
+       "concat",
+       [
+        "get",
+        "cat"
+       ],
+       ":",
+       [
+        "get",
+        "cls"
+       ]
+      ],
+      [
+       "literal",
+       [
+        "facility:active",
+        "facility:future",
+        "facility:old",
+        "facility:contaminated",
+        "facility:unknown",
+        "project:active",
+        "project:future",
+        "project:old",
+        "project:unknown"
+       ]
+      ]
+     ]
+    ]
+   ],
+   "layout": {
+    "line-join": "round",
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": [
+     "get",
+     "col"
+    ],
+    "line-width": [
+     "case",
+     [
+      "boolean",
+      [
+       "feature-state",
+       "hot"
+      ],
+      false
+     ],
+     [
+      "case",
+      [
+       "==",
+       [
+        "get",
+        "kind"
+       ],
+       "line"
+      ],
+      3.8,
+      [
+       "match",
+       [
+        "get",
+        "cls"
+       ],
+       "active",
+       2,
+       "contaminated",
+       2,
+       "future",
+       1.8,
+       "old",
+       1.8,
+       "unknown",
+       1.5,
+       1.8
+      ]
+     ],
+     [
+      "case",
+      [
+       "==",
+       [
+        "get",
+        "kind"
+       ],
+       "line"
+      ],
+      2.4,
+      [
+       "match",
+       [
+        "get",
+        "cls"
+       ],
+       "active",
+       1.2,
+       "contaminated",
+       1.2,
+       "future",
+       1,
+       "old",
+       1,
+       "unknown",
+       0.8,
+       1
+      ]
+     ]
+    ],
+    "line-dasharray": [
+     3,
+     2
+    ],
+    "line-opacity": 0.95
+   }
+  },
+  {
+   "id": "fp-exp",
+   "type": "line",
+   "source": "fp",
+   "minzoom": 10,
+   "filter": [
+    "all",
+    [
+     "all",
+     [
+      "==",
+      [
+       "get",
+       "firm"
+      ],
+      0
+     ],
+     [
+      "==",
+      [
+       "get",
+       "pcls"
+      ],
+      "planned"
+     ]
+    ],
+    [
+     "all",
+     [
+      "in",
+      [
+       "concat",
+       [
+        "get",
+        "cat"
+       ],
+       ":",
+       [
+        "get",
+        "cls"
+       ]
+      ],
+      [
+       "literal",
+       [
+        "facility:active",
+        "facility:future",
+        "facility:old",
+        "facility:contaminated",
+        "facility:unknown",
+        "project:active",
+        "project:future",
+        "project:old",
+        "project:unknown"
+       ]
+      ]
+     ]
+    ]
+   ],
+   "layout": {
+    "line-join": "round",
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#00FFFF",
+    "line-width": [
+     "case",
+     [
+      "boolean",
+      [
+       "feature-state",
+       "hot"
+      ],
+      false
+     ],
+     1.5,
+     1
+    ],
+    "line-dasharray": [
+     3,
+     2.6
+    ]
+   }
+  },
+  {
+   "id": "fp-paper",
+   "type": "line",
+   "source": "fp",
+   "minzoom": 10,
+   "filter": [
+    "all",
+    [
+     "all",
+     [
+      "==",
+      [
+       "get",
+       "firm"
+      ],
+      0
+     ],
+     [
+      "==",
+      [
+       "get",
+       "pcls"
+      ],
+      "allowed"
+     ]
+    ],
+    [
+     "all",
+     [
+      "in",
+      [
+       "concat",
+       [
+        "get",
+        "cat"
+       ],
+       ":",
+       [
+        "get",
+        "cls"
+       ]
+      ],
+      [
+       "literal",
+       [
+        "facility:active",
+        "facility:future",
+        "facility:old",
+        "facility:contaminated",
+        "facility:unknown",
+        "project:active",
+        "project:future",
+        "project:old",
+        "project:unknown"
+       ]
+      ]
+     ]
+    ]
+   ],
+   "layout": {
+    "line-join": "round",
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#FFFFFF",
+    "line-width": [
+     "case",
+     [
+      "boolean",
+      [
+       "feature-state",
+       "hot"
+      ],
+      false
+     ],
+     1.5,
+     1
+    ]
+   }
+  },
+  {
+   "id": "flow-modelled-cas",
+   "type": "line",
+   "source": "flows",
+   "filter": [
+    "==",
+    [
+     "get",
+     "ev"
+    ],
+    "modelled"
+   ],
+   "layout": {
+    "line-join": "round",
+    "line-cap": "butt",
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#0e0e0b",
+    "line-opacity": 0.4,
+    "line-width": 2.2
+   }
+  },
+  {
+   "id": "flow-modelled",
+   "type": "line",
+   "source": "flows",
+   "filter": [
+    "==",
+    [
+     "get",
+     "ev"
+    ],
+    "modelled"
+   ],
+   "layout": {
+    "line-join": "round",
+    "line-cap": "butt",
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#ffffff",
+    "line-opacity": 0.62,
+    "line-width": 0.9
+   }
+  },
+  {
+   "id": "flow-structural-cas",
+   "type": "line",
+   "source": "flows",
+   "filter": [
+    "==",
+    [
+     "get",
+     "ev"
+    ],
+    "structural"
+   ],
+   "layout": {
+    "line-join": "round",
+    "line-cap": "butt",
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#0e0e0b",
+    "line-opacity": 0.4,
+    "line-width": 2.2
+   }
+  },
+  {
+   "id": "flow-structural",
+   "type": "line",
+   "source": "flows",
+   "filter": [
+    "==",
+    [
+     "get",
+     "ev"
+    ],
+    "structural"
+   ],
+   "layout": {
+    "line-join": "round",
+    "line-cap": "butt",
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#ffffff",
+    "line-opacity": 0.62,
+    "line-width": 0.9
+   }
+  },
+  {
+   "id": "flow-evidenced-cas",
+   "type": "line",
+   "source": "flows",
+   "filter": [
+    "==",
+    [
+     "get",
+     "ev"
+    ],
+    "evidenced"
+   ],
+   "layout": {
+    "line-join": "round",
+    "line-cap": "butt",
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#0e0e0b",
+    "line-opacity": 0.4,
+    "line-width": 2.2
+   }
+  },
+  {
+   "id": "flow-evidenced",
+   "type": "line",
+   "source": "flows",
+   "filter": [
+    "==",
+    [
+     "get",
+     "ev"
+    ],
+    "evidenced"
+   ],
+   "layout": {
+    "line-join": "round",
+    "line-cap": "butt",
+    "visibility": "visible"
+   },
+   "paint": {
+    "line-color": "#ffffff",
+    "line-opacity": 0.62,
+    "line-width": 0.9
+   }
+  },
+  {
+   "id": "flow-head",
+   "type": "fill",
+   "source": "flowheads",
+   "layout": {
+    "visibility": "visible"
+   },
+   "paint": {
+    "fill-color": [
+     "case",
+     [
+      "==",
+      [
+       "get",
+       "mat"
+      ],
+      "contam"
+     ],
+     "#B300FF",
+     [
+      "step",
+      [
+       "get",
+       "v"
+      ],
+      "#93a0ac",
+      50000,
+      "#bcc8d2",
+      200000,
+      "#dde5eb",
+      600000,
+      "#f2f6f8",
+      1500000,
+      "#ffffff"
+     ]
+    ],
+    "fill-opacity": 0.98,
+    "fill-outline-color": "rgba(14,14,11,0.55)"
+   }
+  },
+  {
+   "id": "site-hot",
+   "type": "circle",
+   "source": "sites",
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "concat",
+      [
+       "get",
+       "cat"
+      ],
+      ":",
+      [
+       "get",
+       "cls"
+      ]
+     ],
+     [
+      "literal",
+      [
+       "facility:active",
+       "facility:future",
+       "facility:old",
+       "facility:contaminated",
+       "facility:unknown",
+       "project:active",
+       "project:future",
+       "project:old",
+       "project:unknown"
+      ]
+     ]
+    ]
+   ],
+   "paint": {
+    "circle-color": "rgba(0,0,0,0)",
+    "circle-radius": [
+     "case",
+     [
+      "boolean",
+      [
+       "feature-state",
+       "hot"
+      ],
+      false
+     ],
+     13,
+     0
+    ],
+    "circle-stroke-color": "#111",
+    "circle-stroke-width": [
+     "case",
+     [
+      "boolean",
+      [
+       "feature-state",
+       "hot"
+      ],
+      false
+     ],
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "id": "site-sym",
+   "type": "symbol",
+   "source": "sites",
+   "filter": [
+    "all",
+    [
+     "in",
+     [
+      "concat",
+      [
+       "get",
+       "cat"
+      ],
+      ":",
+      [
+       "get",
+       "cls"
+      ]
+     ],
+     [
+      "literal",
+      [
+       "facility:active",
+       "facility:future",
+       "facility:old",
+       "facility:contaminated",
+       "facility:unknown",
+       "project:active",
+       "project:future",
+       "project:old",
+       "project:unknown"
+      ]
+     ]
+    ]
+   ],
+   "layout": {
+    "icon-image": [
+     "get",
+     "sym"
+    ],
+    "icon-size": [
+     "interpolate",
+     [
+      "linear"
+     ],
+     [
+      "zoom"
+     ],
+     6,
+     0.4,
+     15,
+     0.66
+    ],
+    "icon-allow-overlap": true,
+    "icon-ignore-placement": true,
+    "icon-anchor": "center"
+   }
+  }
+ ]
+}

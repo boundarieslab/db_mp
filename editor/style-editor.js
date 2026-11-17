@@ -423,7 +423,7 @@ html.dbx-arr #dbx, html.dbx-arr #dbx *{cursor:auto!important}
             ov.appendChild(h('div', { class: 'nm', style: `left:${b.left}px;top:${Math.max(0, b.top - 15)}px` }, partName(selEl, selSel) + '  ' + Math.round(b.width) + ' × ' + Math.round(b.height)));
             const P = { nw: [b.left, b.top], n: [b.left + b.width / 2, b.top], ne: [b.right, b.top], e: [b.right, b.top + b.height / 2],
                         se: [b.right, b.bottom], s: [b.left + b.width / 2, b.bottom], sw: [b.left, b.bottom], w: [b.left, b.top + b.height / 2] };
-            HD.forEach(k => {
+            if (!fixedEl(selEl)) HD.forEach(k => {
                 const d = h('div', { class: 'hd', style: `left:${P[k][0]}px;top:${P[k][1]}px;cursor:${CUR[k]}!important` });
                 d.addEventListener('pointerdown', e => startDrag(e, k));
                 ov.appendChild(d);
@@ -440,6 +440,10 @@ html.dbx-arr #dbx, html.dbx-arr #dbx *{cursor:auto!important}
         return list.find(e => !ours(e) && e !== document.documentElement) || null;
     }
     let drag = null;
+    // The map and the page's frame are picked for their look, never dragged: a drag there
+    // would move the whole map off the screen.
+    const FIXED = '#map, #map .maplibregl-canvas-container, #map canvas, #stage, #shell, body, html';
+    const fixedEl = el => { try { return el.matches(FIXED); } catch (e) { return false; } };
     function targets(el) {
         const xs = [], ys = [];
         const add = b => { xs.push(b.left, b.right, (b.left + b.right) / 2); ys.push(b.top, b.bottom, (b.top + b.bottom) / 2); };
@@ -467,6 +471,7 @@ html.dbx-arr #dbx, html.dbx-arr #dbx *{cursor:auto!important}
     function startDrag(e, handle) {
         if (!selEl) return;
         e.preventDefault(); e.stopPropagation();
+        if (fixedEl(selEl)) return;
         const b = selEl.getBoundingClientRect();
         drag = { handle, sx: e.clientX, sy: e.clientY, b: { left: b.left, top: b.top, right: b.right, bottom: b.bottom, width: b.width, height: b.height },
                  t: targets(selEl), anchor: anchorOf(selEl), moved: false };
@@ -529,7 +534,10 @@ html.dbx-arr #dbx, html.dbx-arr #dbx *{cursor:auto!important}
         if (!el) return;
         if (e.altKey) { const base = selEl && selEl.contains(el) ? selEl : el; if (base.parentElement && base.parentElement !== document.documentElement) { scopeOne = false; select(base.parentElement); } return; }
         // Inside what is picked: a drag moves it, a click without moving picks the thing under the pointer.
-        if (selEl && selEl.contains(el)) { startDrag(e, 'move'); if (drag) drag.pick = el === selEl ? null : el; return; }
+        if (selEl && selEl.contains(el)) {
+            if (fixedEl(selEl)) { if (el !== selEl) { scopeOne = false; select(el); } return; }
+            startDrag(e, 'move'); if (drag) drag.pick = el === selEl ? null : el; return;
+        }
         scopeOne = false; select(el);
         startDrag(e, 'move');
     }, true));
@@ -544,7 +552,7 @@ html.dbx-arr #dbx, html.dbx-arr #dbx *{cursor:auto!important}
         if ((e.ctrlKey || e.metaKey) && !typing && e.key.toLowerCase() === 'y') { e.preventDefault(); e.stopPropagation(); go(1); return; }
         if (!arrange || typing) return;
         if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); select(null); return; }
-        if (!selEl || !/^Arrow/.test(e.key)) return;
+        if (!selEl || !/^Arrow/.test(e.key) || fixedEl(selEl)) return;
         e.preventDefault(); e.stopPropagation();
         const d = e.shiftKey ? 10 : 1;
         const b = selEl.getBoundingClientRect();
