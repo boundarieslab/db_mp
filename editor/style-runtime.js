@@ -6,10 +6,16 @@
    weights everywhere they occur, rules for single elements (place, size,
    spacing, type, box), and the map's layers.
 
-   The saved look lives in index.html, in <script type="application/json"
-   id="db-style">. Empty, the page is exactly as written.
+   The saved look lives in editor/site-style.js (window.__DB_SITE_STYLE),
+   written by the editor's SAVE TO SITE, or else in index.html, in
+   <script type="application/json" id="db-style">. Empty, the page is
+   exactly as written.
    With ?edit in the address the editor opens, and a draft kept in this
    browser is shown instead of the saved look.
+
+   Besides looks, the style can change words on the page, add text, images,
+   boxes and links, duplicate parts, carry free CSS, and reorder the map's
+   layers.
 
    Must load after maplibre-gl.js and before the page's own script.
    ========================================================================== */
@@ -24,18 +30,24 @@
     const MEDIA = { all: '', desktop: '(min-width:761px)', phone: '(max-width:760px)' };
 
     // ── state ────────────────────────────────────────────────────────────
-    const blank = () => ({ version: 1, vars: {}, colors: {}, fonts: {}, fontFiles: [], googleFonts: [],
+    const blank = () => ({ version: 2, vars: {}, colors: {}, fonts: {}, fontFiles: [], googleFonts: [],
                            sizes: {}, weights: {}, widths: {}, rules: [],
-                           map: { lineWidth: 1, layers: {} } });
+                           texts: [], added: [], dups: [], css: '',
+                           map: { lineWidth: 1, layers: {}, order: [] } });
     function norm(s) {
         const b = blank();
         s = (s && typeof s === 'object') ? s : {};
         Object.keys(b).forEach(k => { if (s[k] === undefined || s[k] === null) s[k] = b[k]; });
         if (!s.map.layers) s.map.layers = {};
+        if (!Array.isArray(s.map.order)) s.map.order = [];
         if (s.map.lineWidth === undefined) s.map.lineWidth = 1;
         return s;
     }
     function readBaked() {
+        const pub = window.__DB_SITE_STYLE;
+        if (pub && typeof pub === 'object' && Object.keys(pub).length) {
+            try { return norm(JSON.parse(JSON.stringify(pub))); } catch (e) {}
+        }
         const el = document.getElementById('db-style');
         if (!el) return blank();
         try { return norm(JSON.parse(el.textContent || '{}')); } catch (e) { return blank(); }
@@ -118,7 +130,7 @@
         }
         return out;
     }
-    const isOurs = el => !!(el && el.closest && el.closest('#dbx,#dbx-ov'));
+    const isOurs = el => !!(el && el.closest && el.closest('#dbx,#dbx-ov,[data-dbx-ui]'));
 
     // Every rule of every stylesheet that can be read, with its first value kept.
     const RULES = [];
@@ -279,6 +291,8 @@
             if (!part) return;
             css += MEDIA[m] ? '@media ' + MEDIA[m] + '{\n' + part + '}\n' : part;
         });
+        // Free CSS, written by hand, last so it wins.
+        if (S.css && String(S.css).trim()) css += '/* free css */\n' + S.css + '\n';
         return css;
     }
     function applyCss() {
@@ -297,6 +311,116 @@
             l.href = 'https://fonts.googleapis.com/css2?family=' + g.trim().replace(/\s+/g, '+') + '&display=swap';
             document.head.appendChild(l);
         });
+    }
+
+    // ── words, added parts, copies ───────────────────────────────────────
+    // A part's own words are its text nodes, not those of the parts inside it
+    // (a button keeps its icon when its label changes).
+    function ownTextNodes(el) { return [...el.childNodes].filter(n => n.nodeType === 3); }
+    function ownText(el) { return ownTextNodes(el).map(n => n.nodeValue).join('').replace(/\s+/g, ' ').trim(); }
+    function setOwnText(el, t) {
+        const ns = ownTextNodes(el).filter(n => n.nodeValue.trim());
+        if (!ns.length) { el.insertBefore(document.createTextNode(t), el.firstChild); return; }
+        if (ns[0].nodeValue !== t) ns[0].nodeValue = t;
+        for (let i = 1; i < ns.length; i++) if (ns[i].nodeValue) ns[i].nodeValue = '';
+    }
+    const T_ORIG = new WeakMap();           // element → its words as the page wrote them
+    const T_DONE = new Set();               // elements whose words we changed
+    function applyTexts() {
+        const want = OFF ? [] : (S.texts || []);
+        const now = new Set();
+        want.forEach(t => {
+            if (!t || !t.sel || t.to === undefined) return;
+            let els; try { els = document.querySelectorAll(t.sel); } catch (e) { return; }
+            els.forEach(el => {
+                if (isOurs(el)) return;
+                const cur = ownText(el);
+                const orig = T_ORIG.has(el) && (cur === T_ORIG.get(el).to) ? T_ORIG.get(el).from : cur;
+                if (t.from !== undefined && t.from !== null && t.from !== '*' && orig !== t.from) return;
+                if (!T_ORIG.has(el) || T_ORIG.get(el).from !== orig) T_ORIG.set(el, { from: orig, to: t.to });
+                else T_ORIG.get(el).to = t.to;
+                if (cur !== t.to) setOwnText(el, t.to);
+                now.add(el);
+            });
+        });
+        T_DONE.forEach(el => {
+            if (now.has(el)) return;
+            const o = T_ORIG.get(el);
+            if (o && el.isConnected && ownText(el) === o.to) setOwnText(el, o.from);
+            T_DONE.delete(el);
+        });
+        now.forEach(el => T_DONE.add(el));
+    }
+    // Parts added in the editor: text, image, box, link. Placed by rules like any other part.
+    function addedEl(a) {
+        let el = document.getElementById(a.id);
+        const tag = a.kind === 'link' ? 'a' : 'div';
+        if (el && el.tagName.toLowerCase() !== tag) { el.remove(); el = null; }
+        if (!el) {
+            el = document.createElement(tag);
+            el.id = a.id; el.setAttribute('data-dbu', 'add');
+        }
+        el.className = 'dbu dbu-' + (a.kind || 'box') + (a.cls ? ' ' + a.cls : '');
+        if (a.kind === 'image') {
+            let img = el.querySelector('img');
+            if (!img) { img = document.createElement('img'); el.textContent = ''; el.appendChild(img); }
+            if (img.getAttribute('src') !== (a.src || '')) img.setAttribute('src', a.src || '');
+            img.alt = a.alt || '';
+            img.style.cssText = 'display:block;width:100%;height:100%;object-fit:' + (a.fit || 'contain');
+        } else if (a.kind === 'text' || a.kind === 'link') {
+            if (el.getAttribute('contenteditable') !== 'true' && el.textContent !== (a.text || '')) el.textContent = a.text || '';
+            if (a.kind === 'link') { el.href = a.href || '#'; el.target = a.newTab === false ? '' : '_blank'; if (a.newTab !== false) el.rel = 'noopener'; }
+        }
+        let parent = null;
+        try { parent = a.parent && a.parent !== 'body' ? document.querySelector(a.parent) : document.body; } catch (e) {}
+        if (!parent) return null;
+        if (el.parentNode !== parent) parent.appendChild(el);
+        el.hidden = OFF;
+        return el;
+    }
+    function applyAdded() {
+        const ids = new Set();
+        (S.added || []).forEach(a => { if (a && a.id) { ids.add(a.id); addedEl(a); } });
+        document.querySelectorAll('[data-dbu="add"]').forEach(el => { if (!ids.has(el.id)) el.remove(); });
+    }
+    // Copies of a part, placed right after it.
+    function applyDups() {
+        const ids = new Set();
+        (S.dups || []).forEach(d => {
+            if (!d || !d.id || !d.of) return;
+            ids.add(d.id);
+            let src; try { src = document.querySelector(d.of); } catch (e) {}
+            let el = document.getElementById(d.id);
+            if (!src) return;
+            if (!el) {
+                el = src.cloneNode(true);
+                el.id = d.id; el.setAttribute('data-dbu', 'dup');
+                el.querySelectorAll('[id]').forEach(k => { k.id = k.id + '--' + d.id; });
+                src.parentNode.insertBefore(el, src.nextSibling);
+            }
+            el.hidden = OFF;
+        });
+        document.querySelectorAll('[data-dbu="dup"]').forEach(el => { if (!ids.has(el.id)) el.remove(); });
+    }
+    let domObs = null, domQueued = false, domEver = false;
+    const wantDom = () => (S.texts && S.texts.length) || (S.added && S.added.length) || (S.dups && S.dups.length);
+    function applyDom() {
+        domQueued = false;
+        const want = wantDom();
+        if (!want && !domEver) return;
+        domEver = true;
+        if (!document.body) return;
+        if (domObs) domObs.disconnect();
+        try { applyAdded(); } catch (e) { console.warn('[style] added', e); }
+        try { applyDups(); } catch (e) { console.warn('[style] copies', e); }
+        try { applyTexts(); } catch (e) { console.warn('[style] words', e); }
+        if (want) {
+            if (!domObs) domObs = new MutationObserver(ms => {
+                if (ms.every(m => isOurs(m.target.nodeType === 1 ? m.target : m.target.parentElement))) return;
+                if (!domQueued) { domQueued = true; requestAnimationFrame(applyDom); }
+            });
+            domObs.observe(document.body, { subtree: true, childList: true, characterData: true });
+        }
     }
 
     // ── the map ──────────────────────────────────────────────────────────
@@ -432,12 +556,14 @@
     function grab(m) { if (!MAP && m && m.getContainer && m.getContainer().id === 'map') MAP = m; }
     if (ML && ML.Map) {
         const P = ML.Map.prototype;
-        O = { addLayer: P.addLayer, setPaintProperty: P.setPaintProperty, setLayoutProperty: P.setLayoutProperty, addControl: P.addControl };
+        O = { addLayer: P.addLayer, setPaintProperty: P.setPaintProperty, setLayoutProperty: P.setLayoutProperty, addControl: P.addControl, moveLayer: P.moveLayer };
         P.addControl = function () { grab(this); return O.addControl.apply(this, arguments); };
         P.addLayer = function (layer, before) {
             grab(this);
             try { if (layer && layer.id && this === MAP) { register(layer); layer = xLayer(layer); } } catch (e) {}
-            return O.addLayer.call(this, layer, before);
+            const r = O.addLayer.call(this, layer, before);
+            if (this === MAP && !OFF && (S.map.order || []).length) apply();
+            return r;
         };
         P.setPaintProperty = function (id, prop, val, opt) {
             if (this === MAP) {
@@ -465,7 +591,7 @@
     let mapCaptured = false, mapEverStyled = false;
     function applyMap() {
         if (!MAP || !O) return;
-        const styled = hasColors() || (+S.map.lineWidth || 1) !== 1 || Object.keys(S.map.layers || {}).length > 0 || Object.keys(FILE).length > 0;
+        const styled = hasColors() || (+S.map.lineWidth || 1) !== 1 || Object.keys(S.map.layers || {}).length > 0 || Object.keys(FILE).length > 0 || (S.map.order || []).length > 0;
         if (!styled && !mapEverStyled) return;          // nothing asked of the map: leave it alone
         mapEverStyled = mapEverStyled || styled;
         if (!mapCaptured) {
@@ -478,8 +604,10 @@
             if (L.paint) Object.keys(L.paint).forEach(p => pk.add(p));
             const F = FILE[id] || {};
             if (F.paint) Object.keys(F.paint).forEach(p => pk.add(p));
-            if (OFF ? (own(T, 'z')) : (own(F, 'minzoom') || own(F, 'maxzoom') || own(T, 'z'))) {
-                const mn = !OFF && own(F, 'minzoom') ? F.minzoom : R.minzoom, mx = !OFF && own(F, 'maxzoom') ? F.maxzoom : R.maxzoom;
+            if (OFF ? (own(T, 'z')) : (own(F, 'minzoom') || own(F, 'maxzoom') || own(L, 'minzoom') || own(L, 'maxzoom') || own(T, 'z'))) {
+                let mn = !OFF && own(F, 'minzoom') ? F.minzoom : R.minzoom, mx = !OFF && own(F, 'maxzoom') ? F.maxzoom : R.maxzoom;
+                if (!OFF && own(L, 'minzoom')) mn = L.minzoom;
+                if (!OFF && own(L, 'maxzoom')) mx = L.maxzoom;
                 try { MAP.setLayerZoomRange(id, mn === null || mn === undefined ? 0 : mn, mx === null || mx === undefined ? 24 : mx); T.z = 1; } catch (e) {}
             }
             if (L.dash && (R.type || MAP.getLayer(id).type) === 'line') pk.add('line-dasharray');
@@ -505,6 +633,27 @@
                 try { O.setLayoutProperty.call(MAP, id, p, v === undefined ? null : v); } catch (e) {}
             });
         });
+        applyOrder();
+    }
+    // Layer order: each entry [id, idBelowWhichItSits] (null = on top). The place a
+    // layer had before it was first moved is kept, for BEFORE.
+    const ORIG_BEFORE = {};
+    function layerIds() { try { return MAP.getStyle().layers.map(l => l.id); } catch (e) { return []; } }
+    function moveIfNeeded(id, before) {
+        const ids = layerIds();
+        const i = ids.indexOf(id);
+        if (i < 0) return;
+        if (before) { const j = ids.indexOf(before); if (j < 0 || j === i + 1) return; }
+        else if (i === ids.length - 1) return;
+        if (!(id in ORIG_BEFORE)) ORIG_BEFORE[id] = ids[i + 1] || null;
+        try { O.moveLayer.call(MAP, id, before || undefined); } catch (e) {}
+    }
+    function applyOrder() {
+        if (!MAP || !O || !O.moveLayer) return;
+        const order = OFF ? [] : (S.map.order || []);
+        const want = new Set(order.map(o => o[0]));
+        Object.keys(ORIG_BEFORE).forEach(id => { if (!want.has(id)) { const b = ORIG_BEFORE[id]; delete ORIG_BEFORE[id]; moveIfNeeded(id, b && MAP.getLayer(b) ? b : null); delete ORIG_BEFORE[id]; } });
+        order.forEach(([id, before]) => { if (MAP.getLayer(id) && (!before || MAP.getLayer(before))) moveIfNeeded(id, before); });
     }
     function whenMap(fn) {
         const ready = () => { try { return MAP && MAP.isStyleLoaded(); } catch (e) { return false; } };
@@ -521,6 +670,7 @@
         try { applyRules(); } catch (e) { console.warn('[style] rules', e); }
         try { watchDom(); } catch (e) { console.warn('[style] page', e); }
         try { applyMap(); } catch (e) { console.warn('[style] map', e); }
+        applyDom();
     }
     function apply() { if (!queued) { queued = true; requestAnimationFrame(applyNow); } }
 
@@ -533,7 +683,8 @@
         get map() { return MAP; },
         layers: REG,
         get mapFile() { return FILE; },
-        apply, applyNow, applyCss, buildCss, remapValue, colorKey, remapColorText, collectRules, rules: RULES, norm, blank,
+        apply, applyNow, applyCss, applyDom, buildCss, remapValue, colorKey, remapColorText, collectRules, rules: RULES, norm, blank, ownText, origText: el => { const o = T_ORIG.get(el); const c = ownText(el); return o && c === o.to ? o.from : c; }, layerIds: () => MAP ? layerIds() : [], get origBefore() { return ORIG_BEFORE; },
+        get published() { return !!(window.__DB_SITE_STYLE && Object.keys(window.__DB_SITE_STYLE).length); },
         saveDraft() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} },
         clearDraft() { try { localStorage.removeItem(KEY); } catch (e) {} }
     };
@@ -553,7 +704,7 @@
         const me = document.currentScript && document.currentScript.src;
         const base = me ? me.replace(/[^\/]*$/, '') : 'editor/';
         const s = document.createElement('script');
-        s.src = base + 'style-editor.js?v=' + Date.now();
+        s.src = base + (Q.get('edit') === 'old' ? 'style-editor.js' : 'site-editor.js') + '?v=' + Date.now();
         s.defer = true;
         (document.body || document.documentElement).appendChild(s);
     }

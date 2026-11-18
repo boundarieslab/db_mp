@@ -206,30 +206,50 @@ Not shown in Maputnik: the terrain contours (made in the browser from elevation
 tiles), the flows (drawn only for an opened site), and the PMTiles layers if the
 Maputnik version cannot read `pmtiles://`. They can still be edited there.
 
-## The style editor
+## The site editor
 
-Open the map with `?edit` at the end of the address (`index.html?edit`) and a STYLE
-window opens over it. Everything about the look can be changed there, on the live map:
+Open the map with `?edit` at the end of the address (`index.html?edit`). A toolbar
+opens across the top; everything is changed on the live page and shows at once.
 
-- **ARRANGE**: click any part of the page and drag it, drag its squares to resize it,
-  nudge it with the arrow keys (Shift for 10 px). Guides snap it to the other parts.
-  Then set its padding, margins, typeface, size, colour, border and opacity. The
-  desktop and phone layouts are kept apart: a window narrower than 760 px edits the
-  phone layout.
-- **TYPE, COLOUR, LINES**: every typeface, type size, weight, colour and line weight
-  the site uses, each changeable everywhere at once. Colours carry through to the map
-  and the table symbols.
-- **MAP**: every layer, with its width, opacity, dashes, colours, or hidden.
-- **FILE**: download the result as one style file, open one, or start over. Undo and
-  redo are Ctrl+Z and Ctrl+Shift+Z; hold BEFORE to see the site without the changes.
+- **SELECT** (V): click any part to pick it. An inspector opens beside it with its
+  words, place and size, layout (flex, position, overflow), spacing, type, fill and
+  border, effects (shadow, blur, turn, scale, blend) and **ALL CSS**, where any CSS
+  property can be added. Drag to move, drag the squares to resize (Shift keeps the
+  proportions, Alt skips snapping), arrows nudge, Alt-click picks what it sits in,
+  Del hides it, Ctrl+D copies it. "Every one like it" or "only this one" decides how
+  far a change reaches; dotted outlines show the others it reaches.
+- **TEXT** (T), or a double-click in SELECT: change the words of any part where they
+  are. Enter keeps them, Esc undoes.
+- **+ ADD**: a text, a picture (by address or uploaded), a box or a link, on the page
+  or inside the picked part. Copies of any part are made the same way.
+- **OUTLINE**: every part of the page as a tree, including the folded-away ones; added
+  parts, copies and hidden parts are listed with a way back.
+- **MAP**: every layer in drawing order, top first. Drag by ⠿ to reorder; tick to hide;
+  width, opacity, dashes, colours and the zoom range it shows at; and under
+  **EVERY PROPERTY**, each paint and layout property MapLibre has for that layer type,
+  as a number, colour, choice, a curve by zoom (z) or a hand-written expression ({}).
+  ⌖ picks the layers drawn at a spot on the map. Layers the site adds later (contours,
+  flows, runs) appear as soon as they are on.
+- **TYPE, COLOUR, LINES**: every typeface, size, weight, colour and line weight the site
+  uses, changed everywhere at once; Google Fonts or font files can be added.
+- **CSS**: free CSS, written by hand, applied last.
+- **SAVE TO SITE** writes `editor/site-style.js` into this repository through the GitHub
+  API, and GitHub Pages shows it a minute or two later. It needs a fine-grained token
+  with Contents: read and write on this repository, pasted once in the SAVE panel; the
+  token stays in that browser. Pictures and font files uploaded in the editor are
+  written to `editor/media/`. SAVE also downloads or opens the style as a file, and can
+  take every change off the site again.
 
-Changes are a draft kept in that browser only. To make them the site's, the style
-file's content goes into `<script type="application/json" id="db-style">` in
-`index.html`; `editor/style-runtime.js` applies it on every visit. Empty, the page is
-exactly as written.
+Until it is saved, the work is a draft in that browser only. Undo and redo are Ctrl+Z
+and Ctrl+Shift+Z; hold BEFORE to see the site without the changes. The desktop
+(wider than 760 px) and phone layouts are kept apart unless "both" is on.
 
-The Cargo header and tabs sit outside the map. FILE has a bookmarklet that opens the
-same editor on dirtybusiness.no itself; there it gives CSS for Cargo's Custom CSS.
+`editor/style-runtime.js` applies the saved style on every visit; `{}` in
+`editor/site-style.js` is the page exactly as written. The first editor is still there
+at `index.html?edit=old`.
+
+The Cargo header and tabs sit outside the map. SAVE has a bookmarklet that opens the
+editor on dirtybusiness.no itself; there it gives CSS for Cargo's Custom CSS.
 
 ## Testing
 
