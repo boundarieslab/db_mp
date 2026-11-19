@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All sites - Ownership Network</title>
+<style>
+    @font-face {
+        font-family: 'Diatype Mono';
+        src: url('https://freight.cargo.site/t/original/i/34e062220d932607590d93991273932252277d33d93566736279930922253303/DiatypeMono-Regular.woff2') format('woff2');
+        font-weight: normal; font-display: swap;
+    }
+    @font-face {
+        font-family: 'Diatype Mono';
+        src: url('https://freight.cargo.site/t/original/i/2274439092002939333902999233829283733003002928833773300022200299/DiatypeMono-Bold.woff2') format('woff2');
+        font-weight: bold; font-display: swap;
+    }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff;
+                 font-family: 'Diatype Mono', 'Courier New', monospace; }
+    #net { position: absolute; inset: 0 0 24px 0; }
+    #net svg { width: 100%; height: 100%; display: block; cursor: grab; user-select: none; }
+    #net svg:active { cursor: grabbing; }
+    #legend { position: absolute; left: 0; right: 0; bottom: 0; height: 24px; box-sizing: border-box;
+              display: flex; align-items: center; gap: 4px 14px; padding: 0 14px; background: #fff;
+              font-size: 7px; color: #777; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; overflow: hidden; }
+    #legend .it { display: flex; align-items: center; gap: 4px; }
+    #legend svg { width: 8px; height: 8px; overflow: visible; }
+    #legend .note { margin-left: auto; text-transform: none; letter-spacing: 0; color: #999; }
+    #status { position: absolute; top: 10px; left: 14px; font-size: 9px; color: #999; }
+    .lk { stroke: #dcdcdc; stroke-width: .6; fill: none; }
+    .lk.same { stroke-dasharray: 2 2; }
+    text { font-size: 8px; fill: #666; paint-order: stroke; stroke: #fff; stroke-width: 2.6px; stroke-linejoin: round; pointer-events: none; }
+    text.site { fill: #00f; font-size: 8.5px; }
+    text.top { fill: #000; font-size: 9px; }
+    .nd { cursor: pointer; }
+    .dim { opacity: .12; }
+    .lk.on { stroke: #000; stroke-width: .9; }
+</style>
+</head>
+<body>
+<div id="net"></div>
+<div id="status">Loading the published diagrams…</div>
+<div id="legend">
+    <span class="it"><svg viewBox="-5 -5 10 10"><rect x="-4" y="-4" width="8" height="8" fill="#000"/></svg>Parent group</span>
+    <span class="it"><svg viewBox="-5 -5 10 10"><polygon points="0,-4.5 4.5,4.5 -4.5,4.5" fill="#666"/></svg>Division</span>
+    <span class="it"><svg viewBox="-5 -5 10 10"><polygon points="0,-4.5 4.5,4.5 -4.5,4.5" fill="none" stroke="#666"/></svg>Subsidiary</span>
+    <span class="it"><svg viewBox="-5 -5 10 10"><circle r="4" fill="none" stroke="#FF0000"/><path d="M-4,0 A4,4 0 0,0 4,0 Z" fill="#000"/></svg>Site, active</span>
+    <span class="it"><svg viewBox="-5 -5 10 10"><circle r="4" fill="none" stroke="#FFD400"/><path d="M-4,0 A4,4 0 0,0 4,0 Z" fill="#000"/></svg>Closed</span>
+    <span class="note" id="count"></span>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script>
+/* One network of every published site and the companies that own it.
+   Built in the page from the published diagrams of db_database, so it follows
+   the table: a site appears only when its row is published and its diagram
+   released. A site's name opens it on the map. */
+(function () {
+    var SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?output=csv";
+    var MAP = "../index.html#site=";
+    var status = document.getElementById("status");
+
+    function parseCSV(s) {
+        var R = [], r = [], f = "", q = false;
+        for (var i = 0; i < s.length; i++) {
+            var c = s[i];
+            if (q) { if (c === '"') { if (s[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+            else if (c === '"') q = true;
+            else if (c === ",") { r.push(f); f = ""; }
+            else if (c === "\n") { r.push(f.replace(/\r$/, "")); R.push(r); r = []; f = ""; }
+            else f += c;
+        }
+        if (r.length || f) { r.push(f); R.push(r); }
+        var h = R[0];
+        return R.slice(1).map(function (x) { var o = {}; h.forEach(function (k, j) { o[k] = x[j] || ""; }); return o; });
+    }
+    function readGraph(text) {
+        var m = text.match(/var NODES = \[([\s\S]*?)\];/), l = text.match(/var LINKS = (\[[\s\S]*?\]);/);
+        if (!m || !l) return null;
+        var nodes = (m[1].match(/\{[^{}]*\}/g) || []).map(function (x) {
+            var o = {}; x.replace(/(\w+)\s*:\s*("(?:[^"\\]|\\.)*"|true|false)/g, function (_, k, v) { o[k] = JSON.parse(v); });
+            return o;
+        });
+        return { nodes: nodes, links: JSON.parse(l[1]) };
+    }
+    function shortName(id) {
+        var t = String(id).replace(/\s*\([^)]*\)/g, "").replace(/\s+/g, " ").trim();
+        var d = t.split(" - ");
+        if (d.length > 1 && !/\b(AS|ASA|IKS|KF|ANS)$/.test(d[0])) t = d[0];
+        return t || id;
+    }
+    var RANK = { receiving: 5, p: 4, div_ent: 3, div_ind: 2, s: 1 };
+    function colour(st) {
+        st = (st || "").toLowerCase();
+        if (/planned/.test(st)) return "#0000FF";
+        if (/closed|historical|inactive/.test(st)) return "#FFD400";
+        return "#FF0000";
+    }
+
+    fetch(SHEET).then(function (r) { return r.text(); }).then(function (csv) {
+        var rows = parseCSV(csv).filter(function (r) {
+            return /^true$/i.test(r.Published) && /^true$/i.test(r.GraphPublished) && r.GraphURL;
+        });
+        var byName = {};
+        parseCSV(csv).filter(function (r) { return /^true$/i.test(r.Published); })
+            .forEach(function (r) { byName[r.Name.trim()] = r; });
+        status.textContent = "Reading " + rows.length + " diagrams…";
+        return Promise.all(rows.map(function (r) {
+            var file = r.GraphURL.split("/").pop();
+            return fetch(file).then(function (x) { return x.ok ? x.text() : ""; })
+                .then(function (t) { return { row: r, g: readGraph(t), file: file }; })
+                .catch(function () { return { row: r, g: null }; });
+        })).then(function (gs) { build(gs, byName); });
+    }).catch(function () { status.textContent = "The table could not be read."; });
+
+    function build(gs, byName) {
+        var N = {}, L = {}, up = {};
+        function key(id, file) { return id === "Private individual" ? id + " · " + file : id; }
+        gs.forEach(function (x) {
+            if (!x.g) return;
+            x.g.nodes.forEach(function (n) {
+                var k = key(n.id, x.file), o = N[k];
+                if (!o) o = N[k] = { id: k, name: n.id, type: n.type || "s" };
+                if ((RANK[n.type] || 0) > (RANK[o.type] || 0)) o.type = n.type;
+                if (n.active) { o.uid = x.row.UID; o.st = x.row.Status; o.type = "receiving"; }
+            });
+            x.g.links.forEach(function (l) {
+                var a = key(l[0], x.file), b = key(l[1], x.file), k = a + "\u0001" + b;
+                if (!N[a] || !N[b] || L[k]) return;
+                L[k] = { source: a, target: b };
+            });
+        });
+        // other sites named in a diagram are sites too, when they are published
+        Object.keys(N).forEach(function (k) {
+            var n = N[k], r = byName[n.name];
+            if (r && !n.uid) { n.uid = r.UID; n.st = r.Status; n.type = "receiving"; }
+        });
+        // keep the sites, everything above them, and what sits on a site
+        Object.keys(L).forEach(function (k) { var l = L[k]; (up[l.source] = up[l.source] || []).push(l.target); });
+        var keep = {};
+        function climb(id, d) { if (keep[id] || d > 40) return; keep[id] = 1; (up[id] || []).forEach(function (p) { climb(p, d + 1); }); }
+        Object.keys(N).forEach(function (k) { if (N[k].uid) climb(k, 0); });
+        Object.keys(L).forEach(function (k) { var l = L[k]; if (N[l.target].uid && !keep[l.source]) keep[l.source] = 2; });
+        var nodes = Object.keys(N).filter(function (k) { return keep[k]; }).map(function (k) { return N[k]; });
+        var links = Object.keys(L).map(function (k) { return L[k]; })
+            .filter(function (l) { return keep[l.source] && keep[l.target]; })
+            .map(function (l) { return { source: l.source, target: l.target, same: !!N[l.target].uid && keep[l.source] === 2 }; });
+        // how many sites sit under each company: the groups that hold several are named on the drawing
+        var down = {}; links.forEach(function (l) { (down[l.target] = down[l.target] || []).push(l.source); });
+        nodes.forEach(function (n) {
+            var seen = {}, c = 0, st = [n.id];
+            while (st.length) { var x = st.pop(); if (seen[x]) continue; seen[x] = 1; if (N[x].uid && x !== n.id) c++; (down[x] || []).forEach(function (y) { st.push(y); }); }
+            n.sites = c;
+            n.top = !up[n.id] || !(up[n.id] || []).some(function (p) { return keep[p]; });
+        });
+        status.textContent = "";
+        document.getElementById("count").textContent = nodes.filter(function (n) { return n.uid; }).length + " sites · " +
+            nodes.filter(function (n) { return !n.uid; }).length + " companies and bodies · hover a company to see what it holds; a blue name opens the site on the map";
+        draw(nodes, links);
+    }
+
+    function draw(nodes, links) {
+        var el = document.getElementById("net"), W = el.clientWidth, H = el.clientHeight;
+        var svg = d3.select(el).append("svg").attr("viewBox", [0, 0, W, H]);
+        var g = svg.append("g");
+        nodes.forEach(function (n) {
+            n.label = n.uid || n.sites >= 2 || (n.top && n.sites >= 1);
+            n.text = shortName(n.name);
+            n.w = n.label ? Math.min(150, n.text.length * 5) + 10 : 10;
+        });
+        var sim = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(function (d) { return d.id; }).distance(function (l) { return l.same ? 22 : 34; }).strength(0.7))
+            .force("charge", d3.forceManyBody().strength(-90).distanceMax(400))
+            .force("collide", d3.forceCollide().radius(function (d) { return d.label ? d.w / 2 + 3 : 7; }).strength(0.9))
+            .force("x", d3.forceX(W / 2).strength(0.035))
+            .force("y", d3.forceY(H / 2).strength(0.05))
+            .stop();
+        for (var i = 0; i < 500; i++) sim.tick();
+
+        var lk = g.append("g").selectAll("line").data(links).join("line")
+            .attr("class", function (d) { return "lk" + (d.same ? " same" : ""); })
+            .attr("x1", function (d) { return d.source.x; }).attr("y1", function (d) { return d.source.y; })
+            .attr("x2", function (d) { return d.target.x; }).attr("y2", function (d) { return d.target.y; });
+        var nd = g.append("g").selectAll("g").data(nodes).join("g")
+            .attr("class", "nd").attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+        nd.each(function (d) {
+            var s = d3.select(this), r = 3.2;
+            if (d.uid) {
+                s.append("circle").attr("r", r + 1.6).attr("fill", "#fff");
+                s.append("circle").attr("r", r).attr("fill", "none").attr("stroke", colour(d.st)).attr("stroke-width", 1);
+                s.append("path").attr("d", "M" + -r + ",0 A" + r + "," + r + " 0 0,0 " + r + ",0 Z").attr("fill", "#000");
+            } else if (d.type === "p") {
+                s.append("rect").attr("x", -r).attr("y", -r).attr("width", 2 * r).attr("height", 2 * r).attr("fill", "#000");
+            } else if (d.type === "div_ind") {
+                s.append("polygon").attr("points", "0," + -(r + 1) + " " + (r + 1) + "," + (r + 1) + " " + -(r + 1) + "," + (r + 1)).attr("fill", "#666");
+            } else if (d.type === "s") {
+                s.append("rect").attr("x", -r).attr("y", -r).attr("width", 2 * r).attr("height", 2 * r).attr("fill", "#fff").attr("stroke", "#666");
+            } else {
+                s.append("polygon").attr("points", "0," + -(r + 1) + " " + (r + 1) + "," + (r + 1) + " " + -(r + 1) + "," + (r + 1))
+                    .attr("fill", "#fff").attr("stroke", "#666");
+            }
+            s.append("title").text(d.name + (d.uid ? " (open on the map)" : d.sites ? " · " + d.sites + " site" + (d.sites > 1 ? "s" : "") : ""));
+            s.append("text").attr("x", 7).attr("y", 3)
+                .attr("class", d.uid ? "site" : (d.sites >= 2 || d.top) ? "top" : "")
+                .text(d.text).style("display", d.label ? null : "none");
+        });
+
+        // hover: the node, all it holds and all that holds it
+        var upM = {}, downM = {};
+        links.forEach(function (l) { (upM[l.source.id] = upM[l.source.id] || []).push(l.target.id); (downM[l.target.id] = downM[l.target.id] || []).push(l.source.id); });
+        function reach(id, M) { var s = {}, st = [id]; while (st.length) { var x = st.pop(); if (s[x]) continue; s[x] = 1; (M[x] || []).forEach(function (y) { st.push(y); }); } return s; }
+        nd.on("mouseenter", function (e, d) {
+            var a = reach(d.id, upM), b = reach(d.id, downM);
+            nd.classed("dim", function (n) { return !a[n.id] && !b[n.id]; })
+              .select("text").style("display", function (n) { return (a[n.id] || b[n.id] || n.label) ? null : "none"; });
+            lk.classed("dim", function (l) { return !((a[l.source.id] && a[l.target.id]) || (b[l.source.id] && b[l.target.id])); })
+              .classed("on", function (l) { return (a[l.source.id] && a[l.target.id]) || (b[l.source.id] && b[l.target.id]); });
+        }).on("mouseleave", function () {
+            nd.classed("dim", false).select("text").style("display", function (n) { return n.label || zk > 1.8 ? null : "none"; });
+            lk.classed("dim", false).classed("on", false);
+        }).on("click", function (e, d) {
+            if (d.uid) { try { window.top.location.href = new URL(MAP + encodeURIComponent(d.uid), location.href).href; } catch (err) { location.href = MAP + d.uid; } }
+        });
+
+        // pan and zoom; every name shows once zoomed in
+        var zk = 1;
+        var zoom = d3.zoom().scaleExtent([0.3, 6]).on("zoom", function (e) {
+            g.attr("transform", e.transform); zk = e.transform.k;
+            nd.select("text").style("display", function (n) { return n.label || zk > 1.8 ? null : "none"; });
+        });
+        svg.call(zoom);
+        // frame the whole network
+        var x0 = d3.min(nodes, function (n) { return n.x; }) - 20, x1 = d3.max(nodes, function (n) { return n.x + (n.label ? n.w : 10); }) + 20;
+        var y0 = d3.min(nodes, function (n) { return n.y; }) - 20, y1 = d3.max(nodes, function (n) { return n.y; }) + 20;
+        var k = Math.min(W / (x1 - x0), H / (y1 - y0), 2);
+        svg.call(zoom.transform, d3.zoomIdentity.translate(W / 2 - k * (x0 + x1) / 2, H / 2 - k * (y0 + y1) / 2).scale(k));
+    }
+})();
+</script>
+</body>
+</html>
