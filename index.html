@@ -1083,6 +1083,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // EvidenceClass: evidenced | structural | modelled  (default modelled)
     // VolumeUnit:    pfm3 | pam3
     const FLOWS_CSV = 'data/flows.csv';
+    // The road a flow takes: shortest path over the NVDB truck network
+    // (tools/route_flows.py). A flow with no route, or a sea leg, is drawn as an arc.
+    const FLOW_ROUTES = 'data/flow_routes.geojson';
+    let flowRoute = {};
 
     // ─────────────────────────────────────────────────────────────────────
     // Ownership-graph links. The GraphURL column has accumulated three URL
@@ -5589,15 +5593,18 @@ document.addEventListener('DOMContentLoaded', function() {
         return { pts: pts, back: f.back };
     }
     function arc(a, b) { const g = arcPts(a, b, 34); return g.pts.map(g.back); }
+    function flowPath(f) {
+        const r = flowRoute[f.FlowUID];
+        if (r && r.mode === 'road' && r.coords.length > 1) return r.coords;
+        return arc([num(f.__from.Longitude), num(f.__from.Latitude)], [num(f.__to.Longitude), num(f.__to.Latitude)]);
+    }
 
     function flowFeatures() {
         const drawn = allFlows.filter(f => f.__xy);
         flowMaxV = drawn.reduce((m, f) => Math.max(m, qty(f.Volume_m3) || 0), 1);
         return { type: 'FeatureCollection', features: drawn.map(f => ({
             type: 'Feature', id: f.FlowUID,
-            geometry: { type: 'LineString', coordinates: arc(
-                [num(f.__from.Longitude), num(f.__from.Latitude)],
-                [num(f.__to.Longitude),   num(f.__to.Latitude)]) },
+            geometry: { type: 'LineString', coordinates: flowPath(f) },
             properties: { fid: f.FlowUID, ev: f.__ev, mat: matOf(f),
                           v: qty(f.Volume_m3) || 0, from: f.FromUID, to: f.ToUID,
                           lbl: f.__fromName + ' → ' + f.__toName } })) };
@@ -5610,9 +5617,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const mine = allFlows.filter(f => f.__xy &&
             (f.FromUID === flowFocus || f.ToUID === flowFocus));
         return { type: 'FeatureCollection', features: mine.map(f => {
-            const a = [num(f.__from.Longitude), num(f.__from.Latitude)];
-            const b = [num(f.__to.Longitude),   num(f.__to.Latitude)];
-            const g = arcPts(a, b, 34), pts = g.pts;
+            const path = flowPath(f), b = path[path.length - 1];
+            const g = frame(b[1]), pts = path.map(g.to);
             const q = pts[pts.length - 1], o = pts[pts.length - 2];
             let tx = q[0] - o[0], ty = q[1] - o[1];
             const t = Math.hypot(tx, ty) || 1; tx /= t; ty /= t;
@@ -5808,7 +5814,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadFlows() {
         if (!FLOWS_CSV) { updateFlowCounts(); return; }
-        parseCsv(FLOWS_CSV).then(r => {
+        Promise.all([parseCsv(FLOWS_CSV),
+                     fetch(FLOW_ROUTES).then(x => x.ok ? x.json() : null).catch(() => null)]).then(([r, routes]) => {
+            flowRoute = {};
+            ((routes && routes.features) || []).forEach(ft => {
+                const p = ft.properties || {};
+                if (p.fid && ft.geometry) flowRoute[p.fid] = { mode: p.mode, km: p.km, coords: ft.geometry.coordinates };
+            });
             rawCounts.flow = (r.data || []).filter(x => x.FlowUID || x.FromUID || x.ToUID).length;
             allFlows = tagFlows(r.data || []);
             updateFlowCounts();
