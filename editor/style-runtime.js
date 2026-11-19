@@ -503,8 +503,15 @@
                 if (Object.keys(out).length) apply();
             });
     }
+    // What the page itself drives cannot be pinned from the editor: the photograph's
+    // strength is the terrain panel's photo slider (and full in the other backgrounds),
+    // and the backgrounds the layer window offers are switched by it. A value fixed
+    // here silently broke those switches; the editor's value is ignored for them.
+    const DRIVEN = { satellite: ['raster-opacity'] };
+    const SWITCHED = ['satellite', 'graytone', 'relief', 'relief-ground', 'relief-shade', 'base-shade', 'bym', 'historical'];
+    const driven = (id, prop) => !!(DRIVEN[id] && DRIVEN[id].indexOf(prop) >= 0);
     function xPaint(id, prop, v) {
-        if (OFF) return v;
+        if (OFF || driven(id, prop)) return v;
         const L = layerOf(id);
         if (L.paint && Object.prototype.hasOwnProperty.call(L.paint, prop)) return L.paint[prop];
         if (prop === 'line-dasharray' && L.dash) return L.dash;
@@ -524,7 +531,7 @@
         const L = layerOf(id);
         const F = FILE[id];
         if (prop !== 'visibility' && F && own(F.layout, prop)) v = F.layout[prop] === null ? undefined : F.layout[prop];
-        if (prop === 'visibility' && L.hide) return 'none';
+        if (prop === 'visibility' && L.hide && SWITCHED.indexOf(id) < 0) return 'none';
         if (L.layout && Object.prototype.hasOwnProperty.call(L.layout, prop)) return L.layout[prop];
         if (prop === 'icon-size' && L.size !== undefined && v !== undefined) return scaleExpr(v, +L.size);
         return v;
@@ -541,13 +548,13 @@
         if (!OFF && F.paint) Object.keys(F.paint).forEach(p => { if (!(p in paint) && F.paint[p] !== null) paint[p] = xPaint(layer.id, p, F.paint[p]); });
         if (!OFF && own(F, 'minzoom')) { if (F.minzoom === null) delete out.minzoom; else out.minzoom = F.minzoom; }
         if (!OFF && own(F, 'maxzoom')) { if (F.maxzoom === null) delete out.maxzoom; else out.maxzoom = F.maxzoom; }
-        if (!OFF && L.paint) Object.keys(L.paint).forEach(p => { if (!(p in paint)) paint[p] = L.paint[p]; });
+        if (!OFF && L.paint) Object.keys(L.paint).forEach(p => { if (!(p in paint) && !driven(layer.id, p)) paint[p] = L.paint[p]; });
         if (!OFF && L.dash && layer.type === 'line' && !('line-dasharray' in paint)) paint['line-dasharray'] = L.dash;
         Object.keys(paint).forEach(p => { if (paint[p] === undefined) delete paint[p]; });
         out.paint = paint;
         const layout = Object.assign({}, layer.layout || {});
         Object.keys(layout).forEach(p => { layout[p] = xLayout(layer.id, p, layout[p]); if (layout[p] === undefined) delete layout[p]; });
-        if (!OFF && L.hide) layout.visibility = 'none';
+        if (!OFF && L.hide && SWITCHED.indexOf(layer.id) < 0) layout.visibility = 'none';
         if (!OFF && F.layout) Object.keys(F.layout).forEach(p => { if (!(p in layout) && p !== 'visibility' && F.layout[p] !== null) layout[p] = F.layout[p]; });
         if (!OFF && L.layout) Object.keys(L.layout).forEach(p => { if (!(p in layout)) layout[p] = L.layout[p]; });
         out.layout = layout;

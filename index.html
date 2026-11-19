@@ -285,17 +285,20 @@ button,input,select{font:inherit;color:inherit}
    to a control led by a small bitmap sign. Sliders are a pill with a round knob,
    switches a box with a cross in it. Set in the face of the table and the label. No rule
    between the parts, only air. Grey and black, and the sliders in pure blue. */
-#dod-panel{position:absolute;top:calc(var(--frame-top) + 10px);right:10px;width:236px;max-height:calc(100% - var(--frame-top) - 20px);overflow:auto;z-index:6;background:#fff;border:1px solid #777;font:11px "Cutive Mono","Courier New",monospace;font-synthesis:none;color:#000}
+#dod-panel{font:11px "Cutive Mono","Courier New",monospace;font-synthesis:none;color:#000}
+#dod-panel .dp-head{display:none}
+#dod-panel.off > .dp-body > :not(.dp-show){opacity:.35;pointer-events:none}
 #dod-panel[hidden]{display:none}
 #dod-panel .dp-head{display:flex;align-items:center;justify-content:space-between;height:20px;padding:0 6px 0 3px;background:#fff;font-size:12px;cursor:move;user-select:none}
 #dod-panel .dp-head button{width:16px;height:16px;border:0;background:none;font:400 17px/14px "Cutive Mono","Courier New",monospace;color:#000;cursor:pointer;padding:0}
-#dod-panel .dp-body{padding:9px 12px 9px}
+#dod-panel .dp-body{padding:2px 4px 2px}
 #dod-panel.folded .dp-body{display:none}
 #dod-panel .dp-cap{text-align:center;margin:0 0 6px}
 #dod-panel .ramp{height:14px;border:0}
 #dod-panel .ramp-scale{margin-top:4px;font:11px "Cutive Mono","Courier New",monospace;color:#000}
 #dod-panel .dp-ends{display:flex;justify-content:space-between;color:var(--sub);font-size:10px;margin-top:1px}
-#dod-panel .dp-rule{height:0;margin:10px 0 0}
+#dod-panel .dp-rule{height:0;margin:8px 0 0}
+#dod-panel .dp-rule.dp-show{margin:4px 0 6px}
 #dod-panel .dp-row{display:flex;align-items:center;gap:9px;height:26px}
 #dod-panel .dp-row svg{flex:0 0 16px;width:16px;height:16px;fill:#000;shape-rendering:crispEdges}
 #dod-panel .dp-row .val{flex:0 0 30px;font-size:11px}
@@ -315,7 +318,6 @@ button,input,select{font:inherit;color:inherit}
 #dod-panel .dp-two .dp-opt input{margin:0}
 #dod-panel .dp-opt span{white-space:nowrap}
 #dod-panel .dp-state{margin-left:auto;color:var(--sub);font-size:10px}
-@media (max-width:760px){#dod-panel{top:auto;bottom:56px;right:10px;width:214px}}
 .pin{width:13px;height:13px;border:.5px solid #000;background:#fff;position:relative}
 .pin::before,.pin::after{content:"";position:absolute;background:#000}
 .pin::before{left:6px;top:1px;width:.5px;height:10px}
@@ -676,37 +678,6 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 
 <div id="map" role="application" aria-label="Map of mass reception sites, construction projects and terrain change in the Oslo region"></div>
 <div id="sel-box"></div>
-<!-- The layers of the terrain-change view, handled on the map. Shown with terrain change. -->
-<div id="dod-panel" hidden>
-    <div class="dp-head"><button type="button" id="dp-fold" aria-expanded="true" aria-label="Fold">–</button>
-        <span data-en="Terrain change" data-no="Terrengendring">Terrain change</span></div>
-    <div class="dp-body">
-        <div class="dp-cap" data-en="Change in height, in metres." data-no="Endring i høyde, i meter.">Change in height, in metres.</div>
-        <div class="ramp"></div>
-        <div class="ramp-scale"><span>−12.1</span><span>+12.1</span></div>
-        <div class="dp-ends"><span data-en="excavation / erosion" data-no="utgravd / erodert">excavation / erosion</span><span data-en="deposit" data-no="deponert">deposit</span></div>
-        <div class="dp-rule"></div>
-        <div class="dp-row" data-title-en="Strength of the change colours" data-title-no="Styrken på endringsfargene" title="Strength of the change colours">
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2h3v1h-3zM8 2h3v1h-3zM2 3h3v1h-3zM8 3h3v1h-3zM2 4h3v1h-3zM8 4h3v1h-3zM5 5h3v1h-3zM11 5h3v1h-3zM5 6h3v1h-3zM11 6h3v1h-3zM5 7h3v1h-3zM11 7h3v1h-3zM2 8h3v1h-3zM8 8h3v1h-3zM2 9h3v1h-3zM8 9h3v1h-3zM2 10h3v1h-3zM8 10h3v1h-3zM5 11h3v1h-3zM11 11h3v1h-3zM5 12h3v1h-3zM11 12h3v1h-3zM5 13h3v1h-3zM11 13h3v1h-3z"/></svg>
-            <input type="range" class="slider" id="dod-opacity" min="0" max="100" value="90" aria-label="Terrain change opacity">
-            <span class="val" id="dod-opacity-val">90%</span></div>
-        <div class="dp-row" data-title-en="Strength of the aerial photograph over the relief" data-title-no="Styrken på flyfotoet over relieffet" title="Strength of the aerial photograph over the relief">
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M0 2h16v1h-16zM0 3h1v1h-1zM15 3h1v1h-1zM0 4h1v1h-1zM11 4h2v1h-2zM15 4h1v1h-1zM0 5h1v1h-1zM11 5h2v1h-2zM15 5h1v1h-1zM0 6h1v1h-1zM5 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM4 7h3v1h-3zM15 7h1v1h-1zM0 8h1v1h-1zM3 8h5v1h-5zM11 8h1v1h-1zM15 8h1v1h-1zM0 9h1v1h-1zM2 9h7v1h-7zM10 9h3v1h-3zM15 9h1v1h-1zM0 10h9v1h-9zM10 10h4v1h-4zM15 10h1v1h-1zM0 11h1v1h-1zM15 11h1v1h-1zM0 12h16v1h-16z"/></svg>
-            <input type="range" class="slider" id="dod-photo" min="0" max="100" value="30" aria-label="Aerial photo opacity">
-            <span class="val" id="dod-photo-val">30%</span></div>
-        <div class="dp-row" id="dod-dtm-note" data-title-en="Which survey the relief and the terrain contours show. The older one is drawn inside the studied areas." data-title-no="Hvilken skanning relieffet og høydekurvene viser. Den eldre tegnes innenfor de undersøkte områdene." title="Which survey the relief and the terrain contours show. The older one is drawn inside the studied areas.">
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h2v1h-2zM3 3h1v1h-1zM6 3h1v1h-1zM12 3h2v1h-2zM2 4h1v1h-1zM7 4h1v1h-1zM11 4h1v1h-1zM14 4h1v1h-1zM1 5h1v1h-1zM8 5h1v1h-1zM10 5h1v1h-1zM15 5h1v1h-1zM0 6h1v1h-1zM9 6h1v1h-1zM4 8h2v1h-2zM3 9h1v1h-1zM6 9h1v1h-1zM12 9h2v1h-2zM2 10h1v1h-1zM7 10h1v1h-1zM11 10h1v1h-1zM14 10h1v1h-1zM1 11h1v1h-1zM8 11h1v1h-1zM10 11h1v1h-1zM15 11h1v1h-1zM0 12h1v1h-1zM9 12h1v1h-1z"/></svg>
-            <span class="dp-two">
-            <label class="dp-opt"><input type="radio" name="dod-dtm" id="dod-dtm-new" value="new" checked><span data-en="newer" data-no="nyere">newer</span></label>
-            <label class="dp-opt"><input type="radio" name="dod-dtm" id="dod-dtm-old" value="old"><span data-en="older" data-no="eldre">older</span></label>
-            </span></div>
-        <div class="dp-rule"></div>
-        <label class="dp-opt" data-title-en="The edge of every change and a line at every metre of change, from zoom 14" data-title-no="Kanten av hver endring og en linje for hver meter endring, fra zoom 14" title="The edge of every change and a line at every metre of change, from zoom 14"><input type="checkbox" id="dod-iso" checked><span data-en="Change contours, 1 m" data-no="Endringskoter, 1 m">Change contours, 1 m</span></label>
-        <label class="dp-opt" data-title-en="A line every metre from zoom 14, of the survey chosen above: black outside the changes, white inside them. Read from Kartverket as you move" data-title-no="En linje for hver meter fra zoom 14, fra skanningen som er valgt over: svart utenfor endringene, hvit inni dem. Leses fra Kartverket mens du flytter kartet" title="A line every metre from zoom 14, of the survey chosen above: black outside the changes, white inside them. Read from Kartverket as you move"><input type="checkbox" id="dod-contours"><span data-en="Terrain contours, 1 m" data-no="Høydekurver, 1 m">Terrain contours, 1 m</span><span class="dp-state" id="dod-ct-state"></span></label>
-        <label class="dp-opt"><input type="checkbox" id="dod-zones" checked><span data-en="Studied areas" data-no="Undersøkte områder">Studied areas</span></label>
-    </div>
-</div>
-
 <!-- ================================ BAR ================================ -->
 <!-- One horizontal strip of tools, top left, and a drawer that drops under
      whichever is pressed. Nothing is open when the map loads. -->
@@ -721,6 +692,9 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
         <button type="button" class="btn filter-toggle" id="btn-key" aria-controls="filter-panel" aria-expanded="false"
                 data-title-en="Key to colours and lines" data-title-no="Tegnforklaring"
                 title="Key to colours and lines" aria-label="Key to colours and lines"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h5v1h-5zM1 2h1v1h-1zM5 2h1v1h-1zM1 3h1v1h-1zM5 3h1v1h-1zM7 3h8v1h-8zM1 4h1v1h-1zM5 4h1v1h-1zM1 5h5v1h-5zM1 8h5v1h-5zM1 9h5v1h-5zM1 10h5v1h-5zM7 10h8v1h-8zM1 11h5v1h-5zM1 12h5v1h-5z"/></svg></button>
+        <button type="button" class="btn" id="btn-terrain" aria-controls="terrain-panel" aria-expanded="false"
+                data-title-en="Terrain change: colours, photo, surveys and contours" data-title-no="Terrengendring: farger, foto, skanninger og koter"
+                title="Terrain change" aria-label="Terrain change"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 8h3v1h-3zM4 9h1v1h-1zM8 9h1v1h-1zM3 10h1v1h-1zM9 10h1v1h-1zM1 11h2v1h-2zM4 11h1v1h-1zM6 11h1v1h-1zM8 11h1v1h-1zM10 11h1v1h-1zM12 11h1v1h-1zM14 11h2v1h-2zM10 12h1v1h-1zM13 12h1v1h-1zM11 13h2v1h-2z"/></svg></button>
         <span class="sp"></span>
         <button type="button" class="btn" id="btn-3d" aria-pressed="false"
                 data-title-en="3D terrain. Right-drag or Ctrl-drag to turn and tilt" data-title-no="3D-terreng. Høyredra eller Ctrl-dra for å snu og vippe"
@@ -917,6 +891,42 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                     </div>
                 </div></div></div>
 
+                <!-- TERRAIN CHANGE: the layers of the terrain-change view, one pane like the key -->
+                <div class="pane" id="terrain-panel"><div class="in"><div class="pad">
+                    <div class="pane-title" data-en="TERRAIN CHANGE" data-no="TERRENGENDRING">TERRAIN CHANGE</div>
+<div id="dod-panel" class="off">
+    <div class="dp-head"><button type="button" id="dp-fold" aria-expanded="true" aria-label="Fold">–</button>
+        <span data-en="Terrain change" data-no="Terrengendring">Terrain change</span></div>
+    <div class="dp-body">
+        <label class="dp-opt dp-show"><input type="checkbox" id="dod-show"><span data-en="Terrain change on the map" data-no="Terrengendring på kartet">Terrain change on the map</span></label>
+        <div class="dp-rule dp-show"></div>
+        <div class="dp-cap" data-en="Change in height, in metres." data-no="Endring i høyde, i meter.">Change in height, in metres.</div>
+        <div class="ramp"></div>
+        <div class="ramp-scale"><span>−12.1</span><span>+12.1</span></div>
+        <div class="dp-ends"><span data-en="excavation / erosion" data-no="utgravd / erodert">excavation / erosion</span><span data-en="deposit" data-no="deponert">deposit</span></div>
+        <div class="dp-rule"></div>
+        <div class="dp-row" data-title-en="Strength of the change colours" data-title-no="Styrken på endringsfargene" title="Strength of the change colours">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2h3v1h-3zM8 2h3v1h-3zM2 3h3v1h-3zM8 3h3v1h-3zM2 4h3v1h-3zM8 4h3v1h-3zM5 5h3v1h-3zM11 5h3v1h-3zM5 6h3v1h-3zM11 6h3v1h-3zM5 7h3v1h-3zM11 7h3v1h-3zM2 8h3v1h-3zM8 8h3v1h-3zM2 9h3v1h-3zM8 9h3v1h-3zM2 10h3v1h-3zM8 10h3v1h-3zM5 11h3v1h-3zM11 11h3v1h-3zM5 12h3v1h-3zM11 12h3v1h-3zM5 13h3v1h-3zM11 13h3v1h-3z"/></svg>
+            <input type="range" class="slider" id="dod-opacity" min="0" max="100" value="90" aria-label="Terrain change opacity">
+            <span class="val" id="dod-opacity-val">90%</span></div>
+        <div class="dp-row" data-title-en="Strength of the aerial photograph over the relief" data-title-no="Styrken på flyfotoet over relieffet" title="Strength of the aerial photograph over the relief">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M0 2h16v1h-16zM0 3h1v1h-1zM15 3h1v1h-1zM0 4h1v1h-1zM11 4h2v1h-2zM15 4h1v1h-1zM0 5h1v1h-1zM11 5h2v1h-2zM15 5h1v1h-1zM0 6h1v1h-1zM5 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM4 7h3v1h-3zM15 7h1v1h-1zM0 8h1v1h-1zM3 8h5v1h-5zM11 8h1v1h-1zM15 8h1v1h-1zM0 9h1v1h-1zM2 9h7v1h-7zM10 9h3v1h-3zM15 9h1v1h-1zM0 10h9v1h-9zM10 10h4v1h-4zM15 10h1v1h-1zM0 11h1v1h-1zM15 11h1v1h-1zM0 12h16v1h-16z"/></svg>
+            <input type="range" class="slider" id="dod-photo" min="0" max="100" value="30" aria-label="Aerial photo opacity">
+            <span class="val" id="dod-photo-val">30%</span></div>
+        <div class="dp-row" id="dod-dtm-note" data-title-en="Which survey the relief and the terrain contours show. The older one is drawn inside the studied areas." data-title-no="Hvilken skanning relieffet og høydekurvene viser. Den eldre tegnes innenfor de undersøkte områdene." title="Which survey the relief and the terrain contours show. The older one is drawn inside the studied areas.">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h2v1h-2zM3 3h1v1h-1zM6 3h1v1h-1zM12 3h2v1h-2zM2 4h1v1h-1zM7 4h1v1h-1zM11 4h1v1h-1zM14 4h1v1h-1zM1 5h1v1h-1zM8 5h1v1h-1zM10 5h1v1h-1zM15 5h1v1h-1zM0 6h1v1h-1zM9 6h1v1h-1zM4 8h2v1h-2zM3 9h1v1h-1zM6 9h1v1h-1zM12 9h2v1h-2zM2 10h1v1h-1zM7 10h1v1h-1zM11 10h1v1h-1zM14 10h1v1h-1zM1 11h1v1h-1zM8 11h1v1h-1zM10 11h1v1h-1zM15 11h1v1h-1zM0 12h1v1h-1zM9 12h1v1h-1z"/></svg>
+            <span class="dp-two">
+            <label class="dp-opt"><input type="radio" name="dod-dtm" id="dod-dtm-new" value="new" checked><span data-en="newer" data-no="nyere">newer</span></label>
+            <label class="dp-opt"><input type="radio" name="dod-dtm" id="dod-dtm-old" value="old"><span data-en="older" data-no="eldre">older</span></label>
+            </span></div>
+        <div class="dp-rule"></div>
+        <label class="dp-opt" data-title-en="The edge of every change and a line at every metre of change, from zoom 14" data-title-no="Kanten av hver endring og en linje for hver meter endring, fra zoom 14" title="The edge of every change and a line at every metre of change, from zoom 14"><input type="checkbox" id="dod-iso" checked><span data-en="Change contours, 1 m" data-no="Endringskoter, 1 m">Change contours, 1 m</span></label>
+        <label class="dp-opt" data-title-en="A line every metre from zoom 14, of the survey chosen above: black outside the changes, white inside them. Read from Kartverket as you move" data-title-no="En linje for hver meter fra zoom 14, fra skanningen som er valgt over: svart utenfor endringene, hvit inni dem. Leses fra Kartverket mens du flytter kartet" title="A line every metre from zoom 14, of the survey chosen above: black outside the changes, white inside them. Read from Kartverket as you move"><input type="checkbox" id="dod-contours"><span data-en="Terrain contours, 1 m" data-no="Høydekurver, 1 m">Terrain contours, 1 m</span><span class="dp-state" id="dod-ct-state"></span></label>
+        <label class="dp-opt"><input type="checkbox" id="dod-zones" checked><span data-en="Studied areas" data-no="Undersøkte områder">Studied areas</span></label>
+    </div>
+</div>
+                </div></div></div>
+
                 <!-- LIGHT -->
                 <div class="pane" id="light-panel"><div class="in"><div class="pad">
                     <div class="pane-title"><span data-en="LIGHT" data-no="LYS">LIGHT</span>
@@ -962,6 +972,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 3h14v1h-14zM1 4h14v1h-14zM1 7h14v1h-14zM1 8h14v1h-14zM1 11h14v1h-14zM1 12h14v1h-14z"/></svg></dt><dd data-en="layers, and what is on the map" data-no="lag, og hva som er på kartet">layers, and what is on the map</dd>
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM10 3h1v1h-1zM2 4h1v1h-1zM10 4h1v1h-1zM2 5h1v1h-1zM10 5h1v1h-1zM2 6h1v1h-1zM10 6h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM4 8h5v1h-5zM10 8h1v1h-1zM11 9h1v1h-1zM12 10h1v1h-1zM13 11h1v1h-1zM14 12h1v1h-1z"/></svg></dt><dd data-en="search a site, an operator, a place or coordinates" data-no="søk sted, operatør, stedsnavn eller koordinater">search a site, an operator, a place or coordinates</dd>
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h5v1h-5zM1 2h1v1h-1zM5 2h1v1h-1zM1 3h1v1h-1zM5 3h1v1h-1zM7 3h8v1h-8zM1 4h1v1h-1zM5 4h1v1h-1zM1 5h5v1h-5zM1 8h5v1h-5zM1 9h5v1h-5zM1 10h5v1h-5zM7 10h8v1h-8zM1 11h5v1h-5zM1 12h5v1h-5z"/></svg></dt><dd data-en="key to colours and lines" data-no="tegnforklaring">key to colours and lines</dd>
+                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 8h3v1h-3zM4 9h1v1h-1zM8 9h1v1h-1zM3 10h1v1h-1zM9 10h1v1h-1zM1 11h2v1h-2zM4 11h1v1h-1zM6 11h1v1h-1zM8 11h1v1h-1zM10 11h1v1h-1zM12 11h1v1h-1zM14 11h2v1h-2zM10 12h1v1h-1zM13 12h1v1h-1zM11 13h2v1h-2z"/></svg></dt><dd data-en="terrain change: colours, photo, older or newer survey, contours" data-no="terrengendring: farger, foto, eldre eller nyere skanning, koter">terrain change: colours, photo, older or newer survey, contours</dd>
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM5 1h2v1h-2zM9 1h2v1h-2zM3 2h2v1h-2zM11 2h2v1h-2zM1 3h2v1h-2zM13 3h2v1h-2zM1 4h3v1h-3zM12 4h3v1h-3zM1 5h1v1h-1zM4 5h2v1h-2zM10 5h2v1h-2zM14 5h1v1h-1zM1 6h1v1h-1zM6 6h4v1h-4zM14 6h1v1h-1zM1 7h1v1h-1zM8 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM8 8h1v1h-1zM14 8h1v1h-1zM1 9h1v1h-1zM8 9h1v1h-1zM14 9h1v1h-1zM1 10h1v1h-1zM8 10h1v1h-1zM14 10h1v1h-1zM1 11h2v1h-2zM8 11h1v1h-1zM13 11h2v1h-2zM3 12h2v1h-2zM8 12h1v1h-1zM11 12h2v1h-2zM5 13h2v1h-2zM8 13h1v1h-1zM10 13h2v1h-2zM7 14h3v1h-3z"/></svg></dt><dd data-en="terrain in 3D, 1 m LiDAR where a run exists" data-no="terreng i 3D, 1 m LiDAR der en kjøring finnes">terrain in 3D, 1 m LiDAR where a run exists</dd>
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 0h1v1h-1zM7 0h1v1h-1zM13 0h1v1h-1zM2 1h1v1h-1zM7 1h1v1h-1zM12 1h1v1h-1zM3 2h1v1h-1zM11 2h1v1h-1zM6 3h3v1h-3zM5 4h5v1h-5zM1 5h2v1h-2zM4 5h7v1h-7zM12 5h2v1h-2zM5 6h5v1h-5zM6 7h3v1h-3zM10 9h1v1h-1zM9 10h3v1h-3zM7 11h2v1h-2zM12 11h2v1h-2zM5 12h2v1h-2zM14 12h1v1h-1zM3 13h2v1h-2zM15 13h1v1h-1zM1 14h2v1h-2zM0 15h16v1h-16z"/></svg></dt><dd data-en="shade the ground and turn the light" data-no="skyggelegg bakken og drei lyset">shade the ground and turn the light</dd>
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h1v1h-1zM0 1h1v1h-1zM0 2h1v1h-1zM10 2h2v1h-2zM0 3h1v1h-1zM9 3h1v1h-1zM12 3h1v1h-1zM0 4h1v1h-1zM3 4h2v1h-2zM8 4h1v1h-1zM13 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM5 5h1v1h-1zM7 5h1v1h-1zM14 5h1v1h-1zM0 6h2v1h-2zM6 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM0 8h1v1h-1zM0 9h1v1h-1zM0 10h1v1h-1zM0 11h1v1h-1zM0 12h1v1h-1zM0 13h1v1h-1zM0 14h16v1h-16z"/></svg></dt><dd data-en="cross section along a line, with CSV and SVG" data-no="tverrsnitt langs en linje, med CSV og SVG">cross section along a line, with CSV and SVG</dd>
@@ -1678,10 +1689,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // The toolbar alone is a strip along the top, not a column: it takes
         // room above the map, not beside it. Only an open pane under it makes
         // a column worth keeping clear on the left.
-        const column = lw && lw.height > box.clientHeight * 0.4;
+        // Measured from what is open, not from the drawer's height, which is still
+        // folding away for a moment after a pane closes.
+        const tb = seen(document.querySelector('#bar .toolbar'));
+        const column = lw && !!document.querySelector('#bar .pane.open') && lw.height > box.clientHeight * 0.4;
         let left  = column ? Math.round(lw.right - br.left) + 20 : 20;
         let right = sb ? Math.round(br.right - sb.left) + 20 : 20;
-        const top = lw && !column ? Math.max(20, Math.round(lw.bottom - br.top) + 12) : 20;
+        const top = tb && !column ? Math.max(20, Math.round(tb.bottom - br.top) + 12) : 20;
         const fit = (a, b, total) => (a + b < total - 40) ? [a, b] : [20, 20];
         const lr = fit(left, right, box.clientWidth);
         return { left: lr[0], right: lr[1], top: top, bottom: 20 };
@@ -1751,7 +1765,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const b = siteBox(site);
         if (!b) { updateStatus(t('nocoords')); return; }
         if (mode === 'auto' && !worthFraming(b)) return;
-        const opts = { padding: visiblePadding(), maxZoom: 17.5, duration: dur(1100), essential: true };
+        const opts = { padding: centredPadding(), maxZoom: 17.5, duration: dur(1100), essential: true };
         if (terrainBox && terrainBox.checked) {
             // In 3D, keep the tilt and turn you chose; only move the camera.
             const cam = map.cameraForBounds(b, { padding: opts.padding, maxZoom: opts.maxZoom,
@@ -1762,6 +1776,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         map.fitBounds(b, opts);
     }
+    // A site is framed in the middle of the map, not of what is left beside the
+    // windows: the same margin on both sides, as wide as the widest thing in the way,
+    // and air on top of that, so the outline never touches the edge or a window.
+    function centredPadding() {
+        const p = visiblePadding(), box = map.getContainer();
+        const air = Math.round(Math.min(box.clientWidth, box.clientHeight) * 0.08) + 24;
+        // the air gives way first, down to a strip of 240 by 160 px in the middle
+        const side = (n, total, min) => { const most = Math.floor((total - min) / 2); return n + 12 > most ? null : Math.min(n + air, most); };
+        const h = side(Math.max(p.left, p.right), box.clientWidth, 240), v = side(Math.max(p.top, p.bottom), box.clientHeight, 160);
+        return { left: h === null ? p.left + 24 : h, right: h === null ? p.right + 24 : h,
+                 top: v === null ? p.top + 24 : v, bottom: v === null ? p.bottom + 24 : v };
+    }
+    if (window.__M) window.__pad = () => ({ visible: visiblePadding(), centred: centredPadding(), box: currentSite && siteBox(currentSite) });
     function worthFraming(b) {
         const c = map.getContainer();
         const p = visiblePadding();
@@ -2526,8 +2553,14 @@ document.addEventListener('DOMContentLoaded', function() {
         ['dod-iso', 'dod-edge'].forEach(id => setVis(id, on && dodIso));
         if (ct && !contourState) buildContours();
         if (ct && !inState) buildInside();
+        syncDodPanel();
+    }
+    // The pane's switch and whether its controls are awake follow what the map shows.
+    function syncDodPanel() {
         const p = $('dod-panel');
-        if (p) p.hidden = !on;
+        if (p) { p.hidden = false; p.classList.toggle('off', !dodShown()); }
+        const sh = $('dod-show');
+        if (sh) sh.checked = dodShown();
     }
     const loadScripts = list => list.reduce((q, it) => q.then(() => window[it[0]] ? null : new Promise((res, rej) => {
         const sc = document.createElement('script');
@@ -2697,11 +2730,10 @@ document.addEventListener('DOMContentLoaded', function() {
         $('dod-contours').addEventListener('change', e => { dodContours = e.target.checked; syncDodExtras(); });
         $('dod-iso').addEventListener('change', e => { dodIso = e.target.checked; syncDodExtras(); });
         $('dod-zones').addEventListener('change', e => { dodZones = e.target.checked; syncDodExtras(); });
+        $('dod-show').addEventListener('change', e => { if (e.target.checked) showTerrain(); else toggleDod(false); });
         // The dark part of a slider's pill, up to its knob.
         panel.querySelectorAll('.slider').forEach(sl => { const fill = () => sl.style.setProperty('--v', 100 * (sl.value - sl.min) / (sl.max - sl.min) + '%');
             sl.addEventListener('input', fill); fill(); });
-        // On a phone the panel opens folded: the map is small and the label needs it.
-        if (window.innerWidth <= 760) { panel.classList.add('folded'); $('dp-fold').textContent = '+'; $('dp-fold').setAttribute('aria-expanded', 'false'); }
         $('dp-fold').onclick = () => { const f = panel.classList.toggle('folded'); $('dp-fold').textContent = f ? '+' : '–'; $('dp-fold').setAttribute('aria-expanded', String(!f)); };
         // The panel can be moved out of the way by its head.
         const head = panel.querySelector('.dp-head');
@@ -2775,6 +2807,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (lbl) lbl.classList.toggle('sel', dodWanted);
         if (!dodWanted) { try { if (terrainSel) { markTerrain(null); tagTerrain([], ''); } } catch (err) {} }
         syncDod();
+        syncDodPanel();
         // Opening it from far away goes to where the runs are.
         if (dodWanted && !quiet && dodShown() && map.getZoom() < 7) {
             const bb = new maplibregl.LngLatBounds();
@@ -3488,7 +3521,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // left and right, and room above for its label.
     function fitTerrain(b) {
         const p = visiblePadding(), box = map.getContainer();
-        const panel = $('dod-panel'), pw = panel && !panel.hidden ? panel.offsetWidth + 20 : 0;
+        const pw = 0;
         // The label stands on the left under the toolbar (300 px wide), so the cluster is
         // framed to the right of it and a little below its name, where the leader can reach it.
         const bar = $('bar'), bb = bar && bar.getClientRects().length ? bar.getBoundingClientRect() : null;
@@ -4663,6 +4696,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!dodOn() && (tab === 'dod' || (tab === 'all' && !quiet))) toggleDod(true, quiet || tab === 'all');
         else syncDod();
         setScope(tab);
+        try { syncDodPanel(); } catch (err) {}
         // after the table has opened, so the fit is made for the map's real size
         if (!quiet) setTimeout(() => { if (currentTab === tab) frameFamily(tab); }, 300);
     }
@@ -5074,12 +5108,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // One place that knows how the map opens: every located record, with
     // room left for the chrome, and never so far out that the region
     // stops being the subject.
+    // The map opens on Oslo, in the middle, wide enough to hold the region the
+    // project studies (the kommuner with a terrain-change run) but no wider: the
+    // outlying sites are a pan away, not a reason to open on half of Norway.
+    const OSLO = [10.7522, 59.9139];
     function fitAll(duration) {
         const b = new maplibregl.LngLatBounds();
-        allSites.filter(hasXY).forEach(s => b.extend([num(s.Longitude), num(s.Latitude)]));
+        DOD_RUNS.forEach(r => { b.extend([r.bounds[0], r.bounds[1]]); b.extend([r.bounds[2], r.bounds[3]]); });
         if (b.isEmpty()) return;
-        map.fitBounds(b, { padding: visiblePadding(), maxZoom: 10, duration: duration || 0 });
-        if (map.getZoom() < 5.5) map.setZoom(5.5);
+        // the region made symmetric about Oslo, so Oslo can sit in the middle
+        const dx = Math.max(OSLO[0] - b.getWest(), b.getEast() - OSLO[0]) * 0.8,
+              dy = Math.max(OSLO[1] - b.getSouth(), b.getNorth() - OSLO[1]) * 0.8;
+        const p = visiblePadding(), v = Math.max(p.top, p.bottom), h = Math.max(p.left, p.right);
+        const cam = map.cameraForBounds([[OSLO[0] - dx, OSLO[1] - dy], [OSLO[0] + dx, OSLO[1] + dy]],
+                                        { padding: { top: v, bottom: v, left: h, right: h } });
+        const zoom = Math.max(7, Math.min(10, cam ? cam.zoom : 8.5));
+        map.jumpTo({ center: OSLO, zoom });
     }
     window.__fitAll = fitAll;
 
@@ -5192,10 +5236,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─────────────────────────────────────────────────────────────────────
     // TOOL PANES: key, light, cross section, help. One open at a time.
     // ─────────────────────────────────────────────────────────────────────
-    const PANES = ['search-panel', 'data-panel', 'filter-panel', 'light-panel',
+    const PANES = ['search-panel', 'data-panel', 'filter-panel', 'terrain-panel', 'light-panel',
                    'profile-panel', 'help-panel'];
     const PANE_BTN = { 'search-panel': '#btn-search', 'data-panel': '#btn-menu',
-                       'filter-panel': '#btn-key', 'light-panel': '#btn-light',
+                       'filter-panel': '#btn-key', 'terrain-panel': '#btn-terrain', 'light-panel': '#btn-light',
                        'profile-panel': '#btn-profile', 'help-panel': '#btn-help' };
     // One pane at a time, and the drawer is only there while one is open.
     function openPane(id) {
@@ -5249,6 +5293,7 @@ document.addEventListener('DOMContentLoaded', function() {
             b.setAttribute('aria-pressed', String(on)); b.classList.toggle('on', on);
         };
         set('#btn-key', $('filter-panel').classList.contains('open'));
+        set('#btn-terrain', $('terrain-panel').classList.contains('open'));
         set('#btn-help', $('help-panel').classList.contains('open'));
         set('#btn-search', $('search-panel').classList.contains('open'));
         set('#btn-menu', $('data-panel').classList.contains('open'));
@@ -5257,6 +5302,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.toggleFilter = () => openPane('filter-panel');
     $('btn-key').onclick = () => openPane('filter-panel');
+    // Opening the terrain-change pane puts terrain change on the map: from a sheet that
+    // does not draw it, that is its own sheet. Closing the pane leaves the map as it is.
+    const showTerrain = () => { if (currentTab !== 'dod' && currentTab !== 'all') selectTab('dod'); else if (!dodOn()) toggleDod(true); };
+    $('btn-terrain').onclick = () => { if (openPane('terrain-panel')) showTerrain(); };
     $('btn-help').onclick = () => openPane('help-panel');
     $('btn-search').onclick = () => openPane('search-panel');
 
