@@ -28,10 +28,13 @@ add a row with Redact 1 for anything else to black out (a name it missed),
 then run again with --again. Every occurrence of the text on the page is
 covered.
 
-The issuer named in each letterhead (Fylkesmannen i Oslo og Viken,
-Direktoratet for mineralforvaltning, a company, a consultant) is written to
-data/doc_authors.json; the index shows it under the title when the sheet's
-Creator column is empty. A Creator in the sheet always wins.
+Who issued each permit, inspection report, licence, government document and
+DMF hearing letter (Fylkesmannen / Statsforvalteren i ..., Direktoratet for
+mineralforvaltning, Miljødirektoratet ...) is read from the page and written to
+data/doc_authors.json; for an application, the applicant after "Søker:" or
+"Fra:". The receiver in the address block is never taken. Reports are left to
+the sheet. The index shows it under the title when the sheet's Creator column
+is empty; a Creator in the sheet always wins.
 
 Then commit assets/docs/, data/doc_thumbs.json, data/doc_redact.csv and
 data/doc_authors.json and push.
@@ -124,25 +127,69 @@ def people_on(page):
     return found
 
 
-# A letterhead names who issued the document.
-ISSUER = re.compile(r"fylkesmann|statsforvalter|direktorat|kommune|departement|tilsyn|etaten|vegvesen|bane nor|"
-                    r"\b(as|asa|iks|kf)\b|consult|cowi|ngi\b|sweco|ramb\u00f8ll|norconsult|asplan|multiconsult", re.I)
+# Who issued a document. Public bodies are found by name anywhere on the first page
+# (letterhead, footer); "Til ..." lines and the address block are the receiver, not the
+# issuer. Applications are read from "Søker:"/"Fra:"; reports are left to the sheet.
+PUBLIC = [
+    r"(?:Statsforvalteren|Fylkesmannen) i \S.*",
+    r"Direktoratet for mineralforvaltning",
+    r"Klima- og forurensningsdirektoratet",
+    r"Statens forurensningstilsyn",
+    r"Milj\u00f8direktoratet",
+    r"Statens vegvesen",
+    r"Norges vassdrags- og energidirektorat",
+]
 
 
-def issuer_of(page):
-    """Who issued the document, read from the letterhead: the largest text near the top that names a body."""
-    best = None
-    for block in page.get_text('dict')['blocks']:
-        for line in block.get('lines', []):
-            text = re.sub(r'\s+', ' ', ' '.join(sp['text'] for sp in line['spans'])).strip()
-            size = max((sp['size'] for sp in line['spans']), default=0)
-            if not text or line['bbox'][1] > page.rect.height * .2 or len(text) > 70 or not ISSUER.search(text):
-                continue
-            if re.search(r'postboks|telefon|e-post|www\.|dato|ref', text, re.I):
-                continue
-            if best is None or size > best[0] + .1:
-                best = (size, text)
-    return best[1] if best else ''
+STOP = {'postadresse', 'postboks', 'besøksadresse', 'telefon', 'telefaks', 'miljøvernavdelingen', 'e-post',
+        'sentralbord', 'org.nr', 'org.nr.', 'www', 'side', 'vår', 'deres', 'dato'}
+
+
+def county_body(found):
+    """'Fylkesmannen i Oslo og Akershus Postadresse ...' -> 'Fylkesmannen i Oslo og Akershus'."""
+    head, rest = found.split(' i ', 1)
+    out = []
+    for w in re.split(r'\s+', rest):
+        bare = w.strip(',.;:')
+        if not bare or bare.lower() in STOP or bare[:1].isdigit():
+            break
+        if bare.lower() == 'og' or bare[:1].isupper():
+            out.append(w)
+            if w.endswith(('.', ';', ':')):
+                break
+        else:
+            break
+    while out and out[-1].strip(',').lower() == 'og':
+        out.pop()
+    return head + ' i ' + ' '.join(out).strip(' ,.;:') if out else ''
+
+
+def tidy(name):
+    name = re.sub(r'\s+', ' ', name).strip(' ,.-')
+    if name.isupper():  # FYLKESMANNEN I OSLO OG AKERSHUS -> Fylkesmannen i Oslo og Akershus
+        small = {'i', 'og', 'for', 'med', 'av'}
+        name = ' '.join(w.lower() if w.lower() in small else w.capitalize() for w in name.split())
+        name = name[0].upper() + name[1:]
+    return name
+
+
+def issuer_of(page, cls):
+    text = page.get_text()
+    if cls in ('Permit', 'Inspection report', 'Mining licence', 'Government document') or \
+            (cls == 'Permit application' and re.search(r'h\u00f8ring av s\u00f8knad', text, re.I)):
+        lines = [l.strip() for l in text.splitlines() if l.strip() and not re.match(r'(til|att\.?)\b', l.strip(), re.I)]
+        for rx in PUBLIC:
+            for line in lines:
+                m = re.search(rx, line, re.I)
+                if m:
+                    found = county_body(m.group(0)) if ' i ' in m.group(0)[:20] else m.group(0)
+                    if found:
+                        return tidy(found)
+        return ''
+    if cls == 'Permit application':
+        m = re.search(r'(?:s\u00f8ker|tiltakshaver|fra)\s*:\s*([^\n]{3,70})', text, re.I)
+        return tidy(m.group(1)) if m else ''
+    return ''
 
 
 def read_rules():
@@ -164,7 +211,7 @@ def write_rules(rules):
                 w.writerow([did, text, 1 if on else 0, why])
 
 
-def first_page(pdf_bytes, did, rules):
+def first_page(pdf_bytes, did, rules, cls=''):
     """The first page as a JPEG, with private names blacked out; returns (jpeg, (texts covered, scanned))."""
     doc = fitz.open(stream=pdf_bytes, filetype='pdf')
     page = doc[0]
@@ -181,7 +228,7 @@ def first_page(pdf_bytes, did, rules):
     zoom = WIDTH / page.rect.width
     pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
     scanned = not page.get_text().strip()  # a scanned page has no text to find names in
-    return pix.tobytes('jpg', jpg_quality=72), (covered, scanned, issuer_of(page))
+    return pix.tobytes('jpg', jpg_quality=72), (covered, scanned, issuer_of(page, cls))
 
 
 def main():
@@ -214,9 +261,11 @@ def main():
                 skipped += 1
                 print(f'[{i}/{len(todo)}] {did}: not a PDF, left without a picture')
                 continue
-            jpg, (covered, scanned, issuer) = first_page(data, did, rules)
+            jpg, (covered, scanned, issuer) = first_page(data, did, rules, r.get('Class', ''))
             if issuer:
                 authors[did] = issuer
+            else:
+                authors.pop(did, None)
             if scanned:
                 scans.append(did)
             with open(path, 'wb') as f:
