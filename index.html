@@ -339,7 +339,7 @@ button,input,select{font:inherit;color:inherit}
 .sb-header .title{flex:1 1 auto;text-align:right;font-weight:500;letter-spacing:.1em;font-size:9px;padding-right:2px}
 .share-btn{background:#fff;border:.5px solid var(--frame);cursor:pointer;font-size:9px;letter-spacing:.1em;padding:1px 5px;font-weight:500}
 .share-btn:hover{background:var(--sel)}
-.sb-scroll-area{flex:1 1 auto;min-height:0;overflow-y:auto}
+.sb-scroll-area{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden!important}
 /* The picture band: the whole facility with some ground around it. */
 .sb-media{position:relative;height:196px;background:#f3f3f3;border-bottom:.5px solid var(--hair);overflow:hidden}
 .slideshow-slide{position:absolute;inset:0;background:#f3f3f3 center/contain no-repeat;opacity:0;transition:opacity .25s}
@@ -574,6 +574,19 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 #hover-card .cp{font-size:10px;padding:4px 1px 1px;max-width:240px;display:flex;gap:6px;align-items:baseline}
 #hover-card .cp .swatch{align-self:center}
 #hover-card .cp span{color:var(--sub);font-size:9px;font-family:PlexMono,monospace;margin-left:auto;white-space:nowrap}
+/* the pinned card: the hover card held at the site, with the way into the record */
+#peek-card{position:absolute;z-index:22;background:#fff;border:.5px solid var(--frame);padding:4px;width:250px;
+  opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s var(--ease)}
+#peek-card.on{opacity:1;transform:none}
+#peek-card[hidden]{display:none}
+#peek-card .im{width:100%;height:160px;background:#f3f3f3 center/cover no-repeat;border:.5px solid var(--rule);position:relative;overflow:hidden}
+#peek-card .cp{font-size:10px;padding:4px 1px 1px;display:flex;gap:6px;align-items:baseline}
+#peek-card .cp .swatch{align-self:center}
+#peek-card .cp span{color:var(--sub);font-size:9px;font-family:PlexMono,monospace;margin-left:auto;white-space:nowrap}
+#peek-card .pk-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px;padding-top:5px;border-top:.5px solid var(--hair)}
+#peek-open{background:none;border:0;padding:0;cursor:pointer;color:#00f;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase}
+#peek-open:hover{text-decoration:underline}
+@media (prefers-reduced-motion:reduce){#peek-card{transition:none}}
 
 /* ---------- flows: the fourth sheet ---------- */
 /* Evidence is drawn, not coloured: a documented edge is a solid black
@@ -1002,6 +1015,11 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 </div>
 
 <div class="share-notification" id="share-notification" role="status"></div>
+<!-- A picked site: its picture and name pinned beside it, and the way into the full record. -->
+<div id="peek-card" role="dialog" aria-label="Site" hidden>
+    <div class="im"></div><div class="cp"></div>
+    <div class="pk-row"><button type="button" id="peek-open"></button><button type="button" class="close-btn" id="peek-x" aria-label="Close"></button></div>
+</div>
 </div><!-- /stage -->
 
 <!-- ================================ DECK ================================ -->
@@ -1955,6 +1973,7 @@ document.addEventListener('DOMContentLoaded', function() {
         excav: { en: "Excavation / erosion", no: "Utgravd / erodert" },
         records: { en: "records", no: "poster" },
         aerialshort: { en: "aerial", no: "flyfoto" },
+        peek_open: { en: "Open the record \u2197", no: "\u00c5pne posten \u2197" },
         dtm1: { en: "1 m LiDAR (this run)", no: "1 m LiDAR (denne kjøringen)" },
         dtm10: { en: "10 m national, Kartverket", no: "10 m nasjonal, Kartverket" },
         terrdef: { en: "1 m LiDAR where a run exists, Kartverket 10 m elsewhere", no: "1 m LiDAR der en kjøring finnes, Kartverket 10 m ellers" },
@@ -3009,7 +3028,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.originalEvent.__handled = true;
             const site = allSites.find(s => uidOf(s) === e.features[0].properties.uid);
             if (!site) { updateStatus(t('notfound')); return; }
-            openSite(site, 'auto');
+            pickSite(site);
         };
         SITE_LAYERS.forEach(id => {
             map.on('click', id, pick);
@@ -3017,6 +3036,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (toolBusy() || !e.features || !e.features.length) return;
                 const uid = e.features[0].properties.uid;
                 map.getCanvas().style.cursor = 'pointer';
+                if (peekSite && uidOf(peekSite) === uid) return;
                 if (hoverUid === uid) { placeHover(e.point); return; }
                 const site = allSites.find(s => uidOf(s) === uid);
                 if (site) showHover(site, e.point);
@@ -4173,7 +4193,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     const curIx = () => viewRows.findIndex(r => rowId(r) === cur.id);
     function openRow(r) {
-        if (r.__cat === 'flow') frameFlow(r, true); else if (r.__cat === 'dod') frameTerrain(r); else openSite(r, true);
+        if (r.__cat === 'flow') frameFlow(r, true); else if (r.__cat === 'dod') frameTerrain(r); else pickSite(r);
     }
     deckBody.addEventListener('click', e => {
         const td = e.target.closest('td'); const tr = e.target.closest('tr');
@@ -4489,8 +4509,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (deckSize === 'closed') setDeckSize('half');
     }
 
+    let peekSite = null;          // the site picked on the map or in the table, shown in the small card
     function markDeckSelection(noScroll){
-        const id = currentSite ? uidOf(currentSite) : null;
+        const sel = currentSite || peekSite;
+        const id = sel ? uidOf(sel) : null;
         let on = null;
         deckBody.querySelectorAll('tr').forEach(tr => {
             const s = !!id && tr.dataset.uid === id;
@@ -4504,8 +4526,83 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Open a record from anywhere: the row, the map, search, a link.
+    // ── picking a site: the map goes to it, its row is chosen, and a small card is
+    // pinned beside it. The full record opens only from the card's link (or a
+    // shared #site= address), never from the click itself.
+    const peekCard = $('peek-card');
+    function pickSite(site) {
+        if ($('sidebar').classList.contains('active')) closeSidebar();
+        if (!deckSelection && site.__cat && !inScope(site, deckScope)) {
+            selectTab(site.__cat === 'facility' && !actsOf(site).rec ? 'extract' : site.__cat, true);
+        }
+        peekSite = site;
+        hideHover();
+        setHot(site, true);
+        markDeckSelection();
+        focusFlows(uidOf(site));
+        if (hasXY(site)) frameSite(site); else updateStatus(t('nocoords'));
+        fillPeek(site);
+        peekCard.hidden = false;
+        placePeek();
+        requestAnimationFrame(() => peekCard.classList.add('on'));
+    }
+    function fillPeek(site) {
+        const uid = uidOf(site);
+        const im = peekCard.querySelector('.im');
+        const imgs = site.Images ? site.Images.split(',').map(u => u.trim()).filter(u => safeUrl(u)) : [];
+        im.innerHTML = ''; im.style.backgroundImage = 'none';
+        let aerialShown = false;
+        if (imgs.length) im.style.backgroundImage = `url("${safeUrl(imgs[0])}")`;
+        else aerialShown = aerial(im, site, 240, 160);
+        if (!imgs.length && !aerialShown) im.innerHTML = `<div class="no-images">${t('noimg')}</div>`;
+        peekCard.querySelector('.cp').innerHTML =
+            `<span class="swatch" style="background:${colourOf(site)}"></span>${esc(site.Name || t('untitled'))}` +
+            `<span>${esc(uid)}${aerialShown ? ' · ' + t('aerialshort') : ''}</span>`;
+        $('peek-open').textContent = t('peek_open');
+        peekCard.setAttribute('aria-label', site.Name || uid);
+    }
+    // Beside the site, on the side with room, and with it while the map moves.
+    function placePeek() {
+        if (!peekSite || peekCard.hidden) return;
+        const box = map.getContainer(), W = box.clientWidth, H = box.clientHeight;
+        const w = peekCard.offsetWidth || 250, h = peekCard.offsetHeight || 220, GAP = 22, pad = 10;
+        const b = siteBox(peekSite);
+        if (!b) { peekCard.style.left = pad + 'px'; peekCard.style.top = (H - h - pad) + 'px'; return; }
+        const east = map.project([b[2], (b[1] + b[3]) / 2]), west = map.project([b[0], (b[1] + b[3]) / 2]);
+        const cy = (map.project([b[0], b[3]]).y + map.project([b[0], b[1]]).y) / 2;
+        let left = east.x + GAP;
+        if (left + w > W - pad) left = west.x - w - GAP;
+        left = Math.max(pad, Math.min(left, W - w - pad));
+        const tb = document.querySelector('#bar .toolbar');
+        const top0 = tb ? tb.getBoundingClientRect().bottom - box.getBoundingClientRect().top + 8 : pad;
+        const top = Math.max(top0, Math.min(Math.round(cy - h / 2), H - h - pad));
+        peekCard.style.left = Math.round(left) + 'px';
+        peekCard.style.top = Math.round(top) + 'px';
+    }
+    function hidePeek(keepHot) {
+        if (!peekSite) return;
+        peekCard.classList.remove('on');
+        peekCard.hidden = true;
+        const was = peekSite;
+        peekSite = null;
+        if (!keepHot && currentSite !== was) { setHot(null, true); focusFlows(null); }
+        markDeckSelection(true);
+    }
+    map.on('move', placePeek);
+    $('peek-x').onclick = e => { e.stopPropagation(); hidePeek(); };
+    $('peek-open').onclick = e => {
+        e.stopPropagation();
+        const site = peekSite; if (!site) return;
+        hidePeek(true);
+        openSite(site, 'auto');
+    };
+    ['click', 'dblclick', 'wheel', 'mousedown'].forEach(ev => peekCard.addEventListener(ev, e => e.stopPropagation()));
+    // A click on bare map puts the card away.
+    map.on('click', e => { setTimeout(() => { if (peekSite && !(e.originalEvent && e.originalEvent.__handled)) hidePeek(); }, 0); });
+
+    // Open a record from anywhere: the card's link, a shared address.
     function openSite(site, frame) {
+        if (peekSite) hidePeek(true);
         currentSite = site;
         if (!deckSelection && site.__cat && !inScope(site, deckScope)) {
             selectTab(site.__cat === 'facility' && !actsOf(site).rec ? 'extract' : site.__cat, true);
@@ -4822,6 +4919,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─────────────────────────────────────────────────────────────────────
     const btnEn = $('btn-en'), btnNo = $('btn-no');
     function setLanguage(lang) {
+        try { if (peekSite) { const ps = peekSite; setTimeout(() => { if (peekSite === ps) { fillPeek(ps); placePeek(); } }, 0); } } catch (err) {}
         currentLang = lang;
         document.documentElement.lang = lang === 'no' ? 'nb' : 'en';
         btnEn.setAttribute('aria-pressed', String(lang === 'en'));
@@ -4921,7 +5019,7 @@ document.addEventListener('DOMContentLoaded', function() {
             matches.slice(0, 8).forEach(site => {
                 const meta = [site.Municipality, classInfo(site.__cat, site.__cls)[currentLang]].filter(Boolean).join(' · ')
                     + (passes(site) ? '' : ' · ' + t('hidden'));
-                sResults.appendChild(resultItem(colourOf(site), site.Name || t('untitled'), meta, () => openSite(site, true)));
+                sResults.appendChild(resultItem(colourOf(site), site.Name || t('untitled'), meta, () => pickSite(site)));
             });
             if (matches.length > 8) {
                 const more = document.createElement('div');
@@ -6032,6 +6130,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // under it, so it is the next thing to give way.
             if (deckSize === 'full') { setDeckSize('half'); return; }
             if ($('sidebar').classList.contains('active')) { closeSidebar(); return; }
+            if (peekSite) { hidePeek(); return; }
             try { if (terrainSel) { markTerrain(null); tagTerrain([], ''); return; } } catch (err) {}
             if (deckSelection) clearSelection();
         }

@@ -249,8 +249,22 @@
 
     // ── generated rules: variables, typefaces, single elements ──────────
     const POS = /^(left|top|right|bottom)$/;
+    // Some measures are the page's to keep, whatever a saved rule says: the record
+    // window ends above the table (its height may be set, never past that), and its
+    // picture and graph run the full width of the window. Pinned in pixels they
+    // overran the table, left the picture short and pushed a sideways scrollbar in.
+    const KEEP = [
+        [/(^|\s)#sidebar$/, ['max-height', 'bottom']],
+        [/sb-scroll-area$/, ['height', 'max-height', 'width', 'max-width']],
+        [/#sb-minimap$/, ['width', 'max-width', 'left', 'right']],
+        [/#sb-minimap\s.*aerial$/, ['left', 'right', 'top', 'bottom', 'width', 'height']],
+        [/sb-media$/, ['width', 'max-width']],
+        [/graph-head$/, ['width', 'max-width']]
+    ];
     function ruleCss(rule, forCargo) {
-        const props = rule.props || {};
+        const keep = KEEP.filter(k => k[0].test(String(rule.sel || '').trim())).reduce((a, k) => a.concat(k[1]), []);
+        const props = Object.assign({}, rule.props || {});
+        keep.forEach(k => { delete props[k]; });
         const ks = Object.keys(props);
         if (!ks.length) return '';
         const sel = rule.sel;
