@@ -584,7 +584,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 #hover-card .cp .swatch{align-self:center}
 #hover-card .cp span{color:var(--sub);font-size:9px;font-family:PlexMono,monospace;margin-left:auto;white-space:nowrap}
 /* the pinned card: the hover card held at the site, with the way into the record */
-#peek-card{position:absolute;z-index:22;background:#fff;border:.5px solid var(--frame);padding:4px;width:250px;--tx:50%;
+#peek-card{position:absolute;z-index:22;background:#fff;border:.5px solid var(--frame);padding:4px;width:250px;--tx:50%;--ty:50%;
   opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s var(--ease)}
 #peek-card.on{opacity:1;transform:none}
 #peek-card[hidden]{display:none}
@@ -594,6 +594,11 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 #peek-card::after{top:100%;margin-left:-6px;margin-top:-.5px;border-width:6px 6px 0;border-top-color:#fff}
 #peek-card.below::before{top:auto;bottom:100%;border-width:0 7px 7px;border-color:transparent transparent var(--frame)}
 #peek-card.below::after{top:auto;bottom:100%;margin-top:0;margin-bottom:-.5px;border-width:0 6px 6px;border-color:transparent transparent #fff}
+#peek-card.side-r::before,#peek-card.side-l::before,#peek-card.side-r::after,#peek-card.side-l::after{left:auto;top:var(--ty)}
+#peek-card.side-r::before{right:100%;margin:-7px 0 0;border-width:7px 7px 7px 0;border-color:transparent var(--frame) transparent transparent}
+#peek-card.side-r::after{right:100%;margin:-6px -.5px 0 0;border-width:6px 6px 6px 0;border-color:transparent #fff transparent transparent}
+#peek-card.side-l::before{left:100%;margin:-7px 0 0;border-width:7px 0 7px 7px;border-color:transparent transparent transparent var(--frame)}
+#peek-card.side-l::after{left:100%;margin:-6px 0 0 -.5px;border-width:6px 0 6px 6px;border-color:transparent transparent transparent #fff}
 #peek-card.away{visibility:hidden}
 #peek-card .im{width:100%;height:160px;background:#f3f3f3 center/cover no-repeat;border:.5px solid var(--rule);position:relative;overflow:hidden}
 #peek-card .cp{font-size:10px;padding:4px 1px 1px;display:flex;gap:6px;align-items:baseline}
@@ -1799,7 +1804,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // not throw the view away — and clicking a six-pixel dot at national
     // zoom does take you to it.
     // lift: pixels the site sits below the middle, to leave room for its label above
-    function frameSite(site, mode, lift) {
+    // room: pixels kept free on the right of the site, for its label
+    function frameSite(site, mode, lift, room) {
         const b = siteBox(site);
         if (!b) { updateStatus(t('nocoords')); return; }
         if (mode === 'auto' && !worthFraming(b)) return;
@@ -1808,6 +1814,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const sum = pad.top + pad.bottom;
             pad.bottom = Math.max(20, pad.bottom - lift);
             pad.top = sum - pad.bottom;
+        }
+        if (room) {
+            // the label's band comes out of the margins first, then out of the map
+            const box = map.getContainer(), give = Math.min(room, Math.max(0, pad.left - 20));
+            pad.left -= Math.round(give / 2); pad.right += room - Math.round(give / 2);
+            if (pad.left + pad.right > box.clientWidth - 160) pad.right = Math.max(20, box.clientWidth - 160 - pad.left);
         }
         const opts = { padding: pad, maxZoom: 17.5, duration: dur(1100), essential: true };
         if (terrainBox && terrainBox.checked) {
@@ -4564,7 +4576,8 @@ document.addEventListener('DOMContentLoaded', function() {
         markDeckSelection();
         focusFlows(uidOf(site));
         fillPeek(site);
-        if (hasXY(site)) frameSite(site, null, 120); else updateStatus(t('nocoords'));
+        // room on the right for the label: its width, its point and a margin
+        if (hasXY(site)) frameSite(site, null, 0, (peekCard.offsetWidth || 258) + 40); else updateStatus(t('nocoords'));
         peekCard.hidden = false;
         placePeek();
         requestAnimationFrame(() => peekCard.classList.add('on'));
@@ -4584,9 +4597,10 @@ document.addEventListener('DOMContentLoaded', function() {
         $('peek-open').textContent = t('peek_open');
         peekCard.setAttribute('aria-label', site.Name || uid);
     }
-    // A label on the symbol: above it, its point on the symbol, and with it while the
-    // map moves. Below the symbol only when there is no room above.
-    const PEEK_GAP = 14;                          // from the symbol's centre to the tip of the point
+    // A label beside the site: to the right of its outline, or to the left when the right
+    // has no room, level with the symbol, its point towards it, so the outline stays
+    // clear. Above or below the symbol only when neither side has room.
+    const PEEK_GAP = 14;                          // from the outline (or symbol) to the tip of the point
     function placePeek() {
         if (!peekSite || peekCard.hidden) return;
         const box = map.getContainer(), W = box.clientWidth, H = box.clientHeight;
@@ -4599,11 +4613,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!seen) return;
         const tb = document.querySelector('#bar .toolbar');
         const top0 = tb ? tb.getBoundingClientRect().bottom - box.getBoundingClientRect().top + 6 : pad;
-        let top = q.y - PEEK_GAP - TIP - h, below = false;
-        if (top < top0) { top = q.y + PEEK_GAP + TIP; below = true; }
-        let left = Math.max(pad, Math.min(q.x - w / 2, W - w - pad));
-        peekCard.classList.toggle('below', below);
-        peekCard.style.setProperty('--tx', Math.max(12, Math.min(w - 12, q.x - left)) + 'px');
+        // the outline's sides on screen (the symbol itself when there is no outline)
+        const fb = fpBounds[uidOf(peekSite)];
+        let xw = q.x - 10, xe = q.x + 10;
+        if (fb) { const a = map.project([fb[0], fb[1]]), c = map.project([fb[2], fb[3]]);
+                  xw = Math.min(xw, a.x, c.x); xe = Math.max(xe, a.x, c.x); }
+        const sb = $('sidebar'), sbOn = sb.classList.contains('active');
+        const right = sbOn ? sb.getBoundingClientRect().left - box.getBoundingClientRect().left - pad : W - pad;
+        let left, cls;
+        if (xe + PEEK_GAP + TIP + w <= right) { left = xe + PEEK_GAP + TIP; cls = 'side-r'; }
+        else if (xw - PEEK_GAP - TIP - w >= pad) { left = xw - PEEK_GAP - TIP - w; cls = 'side-l'; }
+        let top;
+        if (cls) {
+            top = Math.max(top0, Math.min(Math.round(q.y - h / 2), H - h - pad));
+            peekCard.style.setProperty('--ty', Math.max(12, Math.min(h - 12, q.y - top)) + 'px');
+        } else {
+            top = q.y - PEEK_GAP - TIP - h; cls = '';
+            if (top < top0) { top = q.y + PEEK_GAP + TIP; cls = 'below'; }
+            left = Math.max(pad, Math.min(q.x - w / 2, W - w - pad));
+            peekCard.style.setProperty('--tx', Math.max(12, Math.min(w - 12, q.x - left)) + 'px');
+        }
+        ['side-r', 'side-l', 'below'].forEach(c => peekCard.classList.toggle(c, c === cls));
         peekCard.style.left = Math.round(left) + 'px';
         peekCard.style.top = Math.round(top) + 'px';
     }
