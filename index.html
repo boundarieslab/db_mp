@@ -410,12 +410,15 @@ iframe{border:0}
 .chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 6px;border:var(--hl,.5px) solid var(--frame);
   background:#fff;cursor:pointer;white-space:nowrap;font:12px "Cutive Mono","Courier New",monospace;transition:opacity .15s}
 .chip .ring{flex:0 0 11px}
+/* the legend: the symbol alone, its name and count in the tooltip */
+.chip:not(.clear) .w,.chip:not(.clear) .ct{display:none}
+.deck-head .chip:not(.clear),.sheet-bar .chip:not(.clear){padding:0 5px}
 .chip .ct{color:var(--sub)}
 .chip[aria-pressed="false"]{opacity:.4}
 .chip:hover{background:#fafafa}
 .chip.clear{border-style:dashed}
 .deck-head.tight .chips{gap:3px}
-.deck-head.tight .chip{font-size:11px;padding:0 5px;gap:4px}
+.deck-head.tight .chip{font-size:11px;padding:0 4px;gap:3px}
 .deck-head.tight .find{width:64px}
 .deck-head.tight .actions{gap:9px}
 .deck-head .actions{display:flex;gap:12px;align-items:center;color:var(--sub);white-space:nowrap;flex:0 0 auto}
@@ -768,7 +771,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
           </div>
           <div class="tab-body" id="tb-facility" role="tabpanel">
                       <label class="row" for="filter-facilities">
-                          <span class="nm"><b data-en="Reception sites on the map" data-no="Mottaksanlegg på kartet">Reception sites on the map</b>
+                          <span class="nm"><b data-en="Reception and extraction sites" data-no="Mottak og uttak">Reception and extraction sites</b>
                               <span class="src" data-en="LUB db_database" data-no="LUB db_database">LUB db_database</span></span>
                           <span class="ct" id="count-fac-mapped"></span>
                           <input type="checkbox" id="filter-facilities" checked></label>
@@ -1014,7 +1017,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
             <button type="button" id="deck-cols" data-en="columns" data-no="kolonner">columns</button>
             <input type="search" id="deck-find" class="find" autocomplete="off" spellcheck="false"
                    placeholder="find" data-ph-en="find" data-ph-no="finn" aria-label="Find in sheet">
-            <button type="button" id="deck-dir" data-en="all flows" data-no="alle strømmer">all flows</button>
+            <button type="button" id="deck-dir"></button>
             <button type="button" id="deck-csv">csv</button>
             <button type="button" id="deck-size" data-title-en="Half screen, whole page, closed" data-title-no="Halv skjerm, hel side, lukket" title="Half screen, whole page, closed" aria-label="Table size"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 4h2v1h-2zM5 5h2v1h-2zM9 5h2v1h-2zM3 6h2v1h-2zM11 6h2v1h-2zM1 7h2v1h-2zM13 7h2v1h-2z"/></svg></button>
         </span>
@@ -1458,6 +1461,12 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+    // Folded at the start: open, it ran across the map and, on a phone, over
+    // the zoom buttons. The status line already names every source.
+    map.once('load', () => {
+        const a = document.querySelector('.maplibregl-ctrl-attrib');
+        if (a) { a.classList.remove('maplibregl-compact-show'); a.removeAttribute('open'); }
+    });
     // Bottom corners stack upwards: the first control added sits lowest.
     map.addControl(new maplibregl.ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left');
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-left');
@@ -1653,11 +1662,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return { top: ok ? top : 20, bottom: ok ? bottom : 20, left: 20, right: 20 };
         }
         const lw = seen($('bar'));
-        let left  = lw ? Math.round(lw.right - br.left) + 20 : 20;
+        // The toolbar alone is a strip along the top, not a column: it takes
+        // room above the map, not beside it. Only an open pane under it makes
+        // a column worth keeping clear on the left.
+        const column = lw && lw.height > box.clientHeight * 0.4;
+        let left  = column ? Math.round(lw.right - br.left) + 20 : 20;
         let right = sb ? Math.round(br.right - sb.left) + 20 : 20;
+        const top = lw && !column ? Math.max(20, Math.round(lw.bottom - br.top) + 12) : 20;
         const fit = (a, b, total) => (a + b < total - 40) ? [a, b] : [20, 20];
         const lr = fit(left, right, box.clientWidth);
-        return { left: lr[0], right: lr[1], top: 20, bottom: 20 };
+        return { left: lr[0], right: lr[1], top: top, bottom: 20 };
     }
 
     // uid -> footprint bounds and rings, filled when the footprint file loads.
@@ -1911,12 +1925,13 @@ document.addEventListener('DOMContentLoaded', function() {
         grade: { en: "grade", no: "stigning" },
         nonesel: { en: "NOTHING IN THAT BOX", no: "INGENTING I DEN BOKSEN" },
         recep: { en: "RECEPTION SITES", no: "MOTTAKSANLEGG" },
+        recep_key: { en: "RECEPTION AND EXTRACTION SITES", no: "MOTTAK OG UTTAK" },
         projects: { en: "CONSTRUCTION PROJECTS", no: "BYGGEPROSJEKTER" },
         runs: { en: "TERRAIN CHANGE RUNS", no: "TERRENGENDRINGER" },
         selection: { en: "SELECTION", no: "UTVALG" },
         clearsel: { en: "clear selection", no: "fjern utvalg" },
         selected: { en: "SELECTED", no: "VALGT" },
-        dir_all: { en: "all flows", no: "alle strømmer" },
+        dir_all: { en: "all directions", no: "alle retninger" },
         dir_producing: { en: "producing", no: "produserer" },
         dir_receiving: { en: "receiving", no: "mottar" },
         dir_mixed: { en: "mixed", no: "blandet" },
@@ -3968,14 +3983,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (deckSelection && !pool.length) return;
             CLASSES[cat].forEach(ci => {
                 const n = pool.filter(s => s.__cls === ci.k).length;
-                if (!n && ci.k === 'unknown') return;
+                if (!n) return;   // an empty class is left to the key
                 const b = document.createElement('button');
                 b.type = 'button';
                 b.className = 'chip';
                 b.dataset.cat = cat; b.dataset.cls = ci.k;
                 const on = show[cat].on && show[cat].cls.has(ci.k);
                 b.setAttribute('aria-pressed', String(on));
-                b.title = ci[currentLang];
+                b.title = ci[currentLang] + ' · ' + n;
+                b.setAttribute('aria-label', ci[currentLang] + ', ' + n);
                 b.innerHTML = `${ring(ci.col)}<span class="w">${esc(ci[currentLang])}</span> <span class="ct">${n}</span>`;
                 b.onclick = e => {
                     e.stopPropagation();
@@ -4525,10 +4541,19 @@ document.addEventListener('DOMContentLoaded', function() {
     function hideHover(){ hoverCard.classList.remove('on'); hoverUid = null; setHot(null); }
 
     const DIRS = ['all', 'producing', 'receiving', 'mixed'];
+    // The direction switch is drawn, like the toolbar: the symbol the sites
+    // carry for the direction shown, a plain ring for all of them. The word
+    // is its tooltip. As a word it took the room the legend needed.
     function paintDir() {
         const b = $('deck-dir');
-        b.setAttribute('data-en', t2('dir_' + show.dir, 'en')); b.setAttribute('data-no', t2('dir_' + show.dir, 'no'));
-        b.textContent = t('dir_' + show.dir);
+        const nx = DIRS[(DIRS.indexOf(show.dir) + 1) % DIRS.length];
+        ['en', 'no'].forEach(l => b.setAttribute('data-title-' + l,
+            t2('dir_' + show.dir, l) + ' · ' + (l === 'no' ? 'neste: ' : 'next: ') + t2('dir_' + nx, l)));
+        const tt = b.getAttribute('data-title-' + currentLang);
+        b.title = tt; b.setAttribute('aria-label', tt);
+        b.innerHTML = show.dir === 'all'
+            ? '<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#fff" stroke="#555" stroke-width="1.2"/><path d="M1,8 H15" stroke="#555" stroke-width="1"/></svg>'
+            : facilitySymbol(show.dir, '#555');
     }
     $('deck-dir').onclick = e => {
         e.stopPropagation();
@@ -4619,6 +4644,29 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!dodOn() && (tab === 'dod' || (tab === 'all' && !quiet))) toggleDod(true, quiet || tab === 'all');
         else syncDod();
         setScope(tab);
+        // after the table has opened, so the fit is made for the map's real size
+        if (!quiet) setTimeout(() => { if (currentTab === tab) frameFamily(tab); }, 300);
+    }
+    // Picking TERRAIN CHANGE or FLOWS while looking at a place where there is
+    // none showed an empty map. When nothing of the family is in view, go to
+    // where it is; when some is, leave the view alone.
+    function frameFamily(tab) {
+        try {
+            let boxes = [];
+            if (tab === 'dod') boxes = DOD_RUNS.filter(r => DOD_REVIEW || !r.draft).map(r => r.bounds);
+            else if (tab === 'flow') boxes = allFlows.filter(f => f.__xy && flowPasses(f)).map(f => {
+                const a = [num(f.__from.Longitude), num(f.__from.Latitude)], c = [num(f.__to.Longitude), num(f.__to.Latitude)];
+                return [Math.min(a[0], c[0]), Math.min(a[1], c[1]), Math.max(a[0], c[0]), Math.max(a[1], c[1])];
+            });
+            if (!boxes.length) return;
+            const v = map.getBounds();
+            const inView = boxes.some(b => b[0] < v.getEast() && b[2] > v.getWest() && b[1] < v.getNorth() && b[3] > v.getSouth());
+            if (inView) return;
+            const bb = new maplibregl.LngLatBounds();
+            boxes.forEach(b => { bb.extend([b[0], b[1]]); bb.extend([b[2], b[3]]); });
+            map.fitBounds(bb, { padding: visiblePadding(), maxZoom: 12, duration: dur(1100), essential: true,
+                                bearing: map.getBearing(), pitch: map.getPitch() });
+        } catch (err) {}
     }
     document.querySelectorAll('.tab').forEach(b => {
         // The tabs are the sheets of the table, so picking one shows it.
@@ -4650,7 +4698,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let h = '';
         ['facility', 'project'].forEach((cat, i) => {
             if (i) h += '<div class="key-sep"></div>';
-            h += `<div class="kr" style="font-weight:500;letter-spacing:.06em;font-size:10px">${t(cat === 'facility' ? 'recep' : 'projects')}</div>`;
+            h += `<div class="kr" style="font-weight:500;letter-spacing:.06em;font-size:10px">${t(cat === 'facility' ? 'recep_key' : 'projects')}</div>`;
             CLASSES[cat].forEach(ci => {
                 const n = allSites.filter(s => s.__cat === cat && s.__cls === ci.k).length;
                 h += `<div class="kr"><span class="swatch" style="background:${ci.col}"></span><span>${esc(ci[currentLang])}</span><span class="ct">${n}</span></div>`;
@@ -5063,9 +5111,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function insideRun(lng, lat) {
         return lng > TERRAIN_BOUNDS[0] && lng < TERRAIN_BOUNDS[2] && lat > TERRAIN_BOUNDS[1] && lat < TERRAIN_BOUNDS[3];
     }
+    // The metre model covers the run and nothing else: outside its edge the
+    // ground read as height 0, and the run stood up as a cliff hundreds of
+    // metres high. It is used only when everything in view lies inside it.
     function terrainSourceHere() {
-        const c = map.getCenter();
-        return insideRun(c.lng, c.lat) ? TERRAIN_SRC : TERRAIN_NAT;
+        const v = map.getBounds();
+        return insideRun(v.getWest(), v.getSouth()) && insideRun(v.getEast(), v.getNorth()) ? TERRAIN_SRC : TERRAIN_NAT;
     }
     function terrainNote() {
         const el = $('terrain-res');
@@ -5586,9 +5637,10 @@ document.addEventListener('DOMContentLoaded', function() {
             b.className = 'chip';
             const on = show.flow.on && show.flow.cls.has(ci.k);
             b.setAttribute('aria-pressed', String(on));
-            b.title = ci[currentLang];
-            b.innerHTML = '<span class="ev ' + ci.k + '"></span>' + esc(ci[currentLang])
-                        + ' <span class="ct">' + n + '</span>';
+            b.title = ci[currentLang] + ' · ' + n;
+            b.setAttribute('aria-label', ci[currentLang] + ', ' + n);
+            b.innerHTML = '<span class="ev ' + ci.k + '"></span><span class="w">' + esc(ci[currentLang])
+                        + '</span> <span class="ct">' + n + '</span>';
             b.onclick = e => {
                 e.stopPropagation();
                 const set = show.flow.cls;
