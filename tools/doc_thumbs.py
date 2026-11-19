@@ -166,14 +166,33 @@ def county_body(found):
 
 def tidy(name):
     name = re.sub(r'\s+', ' ', name).strip(' ,.-')
+    if name[:1].islower():
+        name = name[0].upper() + name[1:]
     if name.isupper():  # FYLKESMANNEN I OSLO OG AKERSHUS -> Fylkesmannen i Oslo og Akershus
         small = {'i', 'og', 'for', 'med', 'av'}
-        name = ' '.join(w.lower() if w.lower() in small else w.capitalize() for w in name.split())
+        keep = {'as', 'asa', 'iks', 'kf', 'ans', 'da', 'sa'}
+        name = ' '.join(w.upper() if w.lower() in keep else w.lower() if w.lower() in small else w.capitalize()
+                        for w in name.split())
         name = name[0].upper() + name[1:]
     return name
 
 
+# The county office's e-mail in a letter footer names it even when the letterhead is a logo.
+FOOTER_MAIL = [
+    (r"fmoapost", "Fylkesmannen i Oslo og Akershus"),
+    (r"fmovpost", "Fylkesmannen i Oslo og Viken"),
+    (r"sfovpost", "Statsforvalteren i Oslo og Viken"),
+    (r"fmbupost", "Fylkesmannen i Buskerud"),
+    (r"fmhepost", "Fylkesmannen i Hedmark"),
+    (r"fmvtpost", "Fylkesmannen i Vestfold og Telemark"),
+    (r"fmospost", "Fylkesmannen i \u00d8stfold"),
+]
+
+
 def issuer_of(page, cls):
+    """The body that issued the document. Only a line that is the name itself (a letterhead
+    or footer line), never a sentence that mentions a body - a 2019 letter often cites
+    an older permit 'gitt fra Fylkesmannen i Oslo og Akershus'."""
     text = page.get_text()
     if cls in ('Permit', 'Inspection report', 'Mining licence', 'Government document') or \
             (cls == 'Permit application' and re.search(r'h\u00f8ring av s\u00f8knad', text, re.I)):
@@ -181,13 +200,18 @@ def issuer_of(page, cls):
         for rx in PUBLIC:
             for line in lines:
                 m = re.search(rx, line, re.I)
-                if m:
-                    found = county_body(m.group(0)) if ' i ' in m.group(0)[:20] else m.group(0)
-                    if found:
-                        return tidy(found)
+                if not m:
+                    continue
+                found = county_body(m.group(0)) if ' i ' in m.group(0)[:20] else m.group(0)
+                if found and len(found) >= .6 * len(line):  # the line is the name, not a sentence
+                    return tidy(found)
+        for rx, name in FOOTER_MAIL:
+            if re.search(rx, text, re.I):
+                return name
         return ''
     if cls == 'Permit application':
-        m = re.search(r'(?:s\u00f8ker|tiltakshaver|fra)\s*:\s*([^\n]{3,70})', text, re.I)
+        m = (re.search(r'bedrift\s*:\s*([^\n]{3,70})', text, re.I)
+             or re.search(r'(?:s\u00f8ker|tiltakshaver|fra)\s*:\s*([^\n]{3,70})', text, re.I))
         return tidy(m.group(1)) if m else ''
     return ''
 
