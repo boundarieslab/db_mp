@@ -152,7 +152,9 @@ drive.
 `UID` - `Name` - `Latitude` - `Longitude` - `Status` - `Type` - `Subtype` -
 `Municipality` - `County` - `Company` - `Operator` - `OrgNr` - `ParentCompany` -
 `MassesAccepted` - `Area_m2` - `AnnualCapacity` - `TotalCapacity` - `PermitRef` -
-`Description` - `Description_NO` - `Images` (comma-separated URLs) - `GraphURL` -
+`Description` - `Description_NO` - `Images` (comma-separated URLs; the first is the one
+shown first) - `ImageCredits` (one credit per image, same order, separated by ` | `; a URL
+at the end of a credit links it to the photo's record) - `GraphURL` -
 `Website` - `PermitDocuments` - `Sources` - optionally `StatusClass`
 (active / future / old / contaminated).
 

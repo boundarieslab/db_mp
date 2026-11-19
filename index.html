@@ -343,6 +343,9 @@ button,input,select{font:inherit;color:inherit}
 .sb-media{position:relative;height:196px;background:#f3f3f3;border-bottom:.5px solid var(--hair);overflow:hidden}
 .slideshow-slide{position:absolute;inset:0;background:#f3f3f3 center/contain no-repeat;opacity:0;transition:opacity .25s}
 .slideshow-slide.active{opacity:1}
+.sb-credit{padding:4px 8px 5px;font-size:9px;line-height:1.35;color:#6e6e6e;border-bottom:.5px solid var(--hair)}
+.sb-credit:empty{display:none}
+.sb-credit a{color:inherit;text-decoration:none;border-bottom:.5px solid #bbb}
 .slideshow-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.92);
   border:.5px solid var(--frame);width:18px;height:22px;cursor:pointer;font-size:10px;line-height:1;padding:0}
 .slideshow-prev{left:4px}.slideshow-next{right:4px}
@@ -1331,6 +1334,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSite = null;
     let currentSlideIndex = 0;
     let currentImages = [];
+    let currentCredits = [];
     let suppressHash = false;
     const statusStrip = $('status-strip');
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1597,10 +1601,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Slideshow
+    // Every accepted licence asks for attribution, so a photo is never shown without
+    // its credit line when one is on file.
+    function creditHtml(i) {
+        const c = currentCredits[i];
+        if (!c || !c.text) return '';
+        const label = currentLang === 'no' ? 'Foto' : 'Photo';
+        return `${label}: ` + (c.href ? `<a href="${esc(c.href)}" target="_blank" rel="noopener noreferrer">${esc(c.text)}</a>` : esc(c.text));
+    }
     window.slideshowPrev = () => { if (currentImages.length > 1) { currentSlideIndex = (currentSlideIndex - 1 + currentImages.length) % currentImages.length; updateSlideshow(); } };
     window.slideshowNext = () => { if (currentImages.length > 1) { currentSlideIndex = (currentSlideIndex + 1) % currentImages.length; updateSlideshow(); } };
     function updateSlideshow() {
         document.querySelectorAll('.slideshow-slide').forEach((s, i) => s.classList.toggle('active', i === currentSlideIndex));
+        const cr = document.getElementById('sb-credit'); if (cr) cr.innerHTML = creditHtml(currentSlideIndex);
         const c = document.querySelector('.slideshow-counter');
         if (c) c.textContent = `${currentSlideIndex + 1} / ${currentImages.length}`;
     }
@@ -2116,6 +2129,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const desc = currentLang === 'no' ? (site.Description_NO || site.Description) : (site.Description || site.Description_NO);
         currentImages = site.Images ? site.Images.split(',').map(u => u.trim()).filter(u => safeUrl(u)) : [];
+        // ImageCredits holds one entry per image, in the same order, separated by
+        // ' | '; a trailing URL in an entry is the record the photo comes from.
+        currentCredits = String(site.ImageCredits || '').split(' | ').map(c => {
+            const m = /^(.*?)\s*(https?:\/\/\S+)\s*$/.exec(c.trim());
+            return m ? { text: m[1], href: safeUrl(m[2]) } : { text: c.trim(), href: '' };
+        });
         currentSlideIndex = 0;
         if (!keepMedia) mediaMode = currentImages.length ? 'photo' : 'aerial';
         const lat = num(site.Latitude), lon = num(site.Longitude);
@@ -2172,7 +2191,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const place = [site.Municipality, site.County].map(x => String(x || '').trim()).filter(Boolean).join(', ');
         const area = qty(site.Area_m2);
 
-        container.innerHTML = `<div class="sb-media">${media}</div>
+        container.innerHTML = `<div class="sb-media">${media}</div><div class="sb-credit" id="sb-credit">${mediaMode === 'photo' ? creditHtml(currentSlideIndex) : ''}</div>
             <div class="sb-head">
                 <span class="status-badge"><span class="swatch" style="background:${ci.col}"></span>${esc(ci[currentLang].toUpperCase())}${rawStatus(site, ci) ? ' · ' + esc(rawStatus(site, ci).slice(0, 60)) : ''}</span>
                 <h1 id="sb-title">${esc(site.Name || t('untitled'))}<span class="sb-uid">${esc(uidOf(site))}</span></h1>
