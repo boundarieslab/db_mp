@@ -45,6 +45,7 @@ img.pg{box-shadow:0 0 0 .5px var(--ink)}
 .open .pic img{display:block;max-width:100%;max-height:62vh}
 .open .pic .no{display:flex;align-items:center;justify-content:center;width:min(480px,80vw);height:min(360px,60vw);border:1px solid var(--frame)}
 .open .tt{max-width:560px}
+.open .by{max-width:560px;color:var(--sub);margin-top:-6px}
 .open .tm{max-width:560px;color:var(--sub)}
 .open .tm span{white-space:nowrap}
 .open .tm button{white-space:normal;color:var(--sub)}
@@ -75,7 +76,7 @@ img.pg{box-shadow:0 0 0 .5px var(--ink)}
   parts: [
     ['#a-nav', 'Left column'], ['#a-q', 'Search'], ['.cat', 'Category'], ['.subs', 'Groups list'], ['.sub', 'Group name'],
     ['#a-main', 'Documents'], ['.sec-t', 'Group title'], ['.grid', 'Grid'], ['.obj', 'Document'], ['.obj .im', 'Document picture'],
-    ['.obj .lb', 'Document label'], ['.open', 'Opened document'], ['.open .tt', 'Opened title'], ['.open .tm', 'Opened terms'],
+    ['.obj .lb', 'Document label'], ['.open', 'Opened document'], ['.open .tt', 'Opened title'], ['.open .by', 'Opened author'], ['.open .tm', 'Opened terms'],
     ['.open .ln', 'Opened links'], ['body', 'Page']
   ]
 };</script>
@@ -97,6 +98,8 @@ const KOMMUNER = 'data/kommuner.geojson';
 // Pictures made for documents that have none in the sheet: the first page of the PDFs
 // (tools/doc_thumbs.py).
 const THUMBS = 'data/doc_thumbs.json';
+// Who issued each document, read from its letterhead (tools/doc_thumbs.py); the sheet's Creator wins.
+const AUTHORS = 'data/doc_authors.json';
 const MAP_LINK = 'https://dirtybusiness.no/#site=';
 
 // The classes of document, in the order they are listed.
@@ -159,7 +162,7 @@ const inGeom = (x, y, g) => (g.type === 'Polygon' ? [g.coordinates] : g.type ===
   .some(p => inRing(x, y, p[0]) && !p.slice(1).some(h => inRing(x, y, h)));
 const kByName = n => KOM.find(k => coll.compare(k.n, String(n || '').trim()) === 0);
 
-function prepare(f, p, d, kom, th) {
+function prepare(f, p, d, kom, th, au) {
   const tag = cat => r => { r.__cat = cat; return r; };
   SITES = [...f.filter(r => uidOf(r) && isTrue(r.Published)).map(tag('facility')), ...p.filter(r => uidOf(r) && isTrue(r.Published)).map(tag('project'))];
   BYUID = {}; SITES.forEach(s => { BYUID[uidOf(s)] = s; });
@@ -172,7 +175,7 @@ function prepare(f, p, d, kom, th) {
     s.__ty = String(s.Type || '').trim();
   });
   // Documents: published, and tied to a published site or to none.
-  th = th || {};
+  th = th || {}; au = au || {};
   DOCS = d.filter(r => r.DocID && isTrue(r.Published) && !HIDDEN.has(String(r.Class || '').trim())).map(r => {
     const named = String(r.Sites || '').split(/[;,]/).map(x => x.trim()).filter(Boolean);
     r.__sites = named.filter(u => BYUID[u]).map(u => BYUID[u]);
@@ -187,6 +190,7 @@ function prepare(f, p, d, kom, th) {
     String(r.Kommune || '').split(/[;,/]/).forEach(n => { const k = kByName(n); if (k) ks.add(k.n); else if (n.trim() && !r.__sites.length) ks.add(n.trim()); });
     r.__k = [...ks];
     r.__arch = String(r.Archive || '').trim();
+    r.__by = String(r.Creator || '').trim() || String(au[r.DocID] || '').trim();
     r.__siteNames = r.__sites.map(s => String(s.Name || '').trim()).filter(Boolean);
     r.__ty = uniq(r.__sites.map(s => s.__ty).filter(Boolean));
     r.__icon = ICON[KIND[r.Class] || 'page'];
@@ -298,6 +302,8 @@ function opened(d) {
   return `<div class="open" data-id="${esc(d.DocID)}">` +
     `<button class="pic" data-close aria-label="Close">${pic}</button>` +
     `<div class="tt">${esc(d.Title)}</div>` +
+    // who made it: the source is always named (åndsverkloven § 25)
+    (d.__by ? `<div class="by">${esc(d.__by)}</div>` : '') +
     (tm ? `<div class="tm">${tm}</div>` : '') +
     `<div class="ln">${note}${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">document ↗</a>` : ''}` +
     `${site ? `<a href="${esc(MAP_LINK + encodeURIComponent(uidOf(site)))}" target="_top">map →</a>` : ''}<button data-close>close ×</button></div></div>`;
@@ -369,9 +375,9 @@ document.addEventListener('error', e => {
 $('a-q').addEventListener('input', e => { state.q = e.target.value; search(); writeHash(); });
 window.addEventListener('hashchange', () => { const o = readHash(); if (['by', 'g', 'doc', 'q'].some(k => o[k] !== state[k])) { state = o; $('a-q').value = state.q; render(); } });
 
-Promise.all([parseCsv(FACILITIES_CSV), parseCsv(PROJECTS_CSV), parseCsv(DOCUMENTS_CSV), getJson(KOMMUNER), getJson(THUMBS)])
-  .then(([f, p, d, kom, th]) => {
-    prepare(f.data || [], p.data || [], d.data || [], kom, th);
+Promise.all([parseCsv(FACILITIES_CSV), parseCsv(PROJECTS_CSV), parseCsv(DOCUMENTS_CSV), getJson(KOMMUNER), getJson(THUMBS), getJson(AUTHORS)])
+  .then(([f, p, d, kom, th, au]) => {
+    prepare(f.data || [], p.data || [], d.data || [], kom, th, au);
     if (!DOCS.length) throw new Error('empty');
     state = readHash();
     $('a-q').value = state.q;

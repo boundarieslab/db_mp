@@ -28,7 +28,13 @@ add a row with Redact 1 for anything else to black out (a name it missed),
 then run again with --again. Every occurrence of the text on the page is
 covered.
 
-Then commit assets/docs/, data/doc_thumbs.json and data/doc_redact.csv and push.
+The issuer named in each letterhead (Fylkesmannen i Oslo og Viken,
+Direktoratet for mineralforvaltning, a company, a consultant) is written to
+data/doc_authors.json; the index shows it under the title when the sheet's
+Creator column is empty. A Creator in the sheet always wins.
+
+Then commit assets/docs/, data/doc_thumbs.json, data/doc_redact.csv and
+data/doc_authors.json and push.
 """
 import re
 import csv
@@ -53,6 +59,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'assets', 'docs')
 LIST = os.path.join(ROOT, 'data', 'doc_thumbs.json')
 REDACT = os.path.join(ROOT, 'data', 'doc_redact.csv')
+AUTHORS = os.path.join(ROOT, 'data', 'doc_authors.json')
 SHEET = ('https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-'
          '8G0vL1F7xG1WKn_ADmwwfSARan/pub?gid=187064250&single=true&output=csv')
 CLASSES = {'Permit', 'Permit application', 'Mining licence', 'Inspection report', 'Report', 'Government document'}
@@ -117,6 +124,27 @@ def people_on(page):
     return found
 
 
+# A letterhead names who issued the document.
+ISSUER = re.compile(r"fylkesmann|statsforvalter|direktorat|kommune|departement|tilsyn|etaten|vegvesen|bane nor|"
+                    r"\b(as|asa|iks|kf)\b|consult|cowi|ngi\b|sweco|ramb\u00f8ll|norconsult|asplan|multiconsult", re.I)
+
+
+def issuer_of(page):
+    """Who issued the document, read from the letterhead: the largest text near the top that names a body."""
+    best = None
+    for block in page.get_text('dict')['blocks']:
+        for line in block.get('lines', []):
+            text = re.sub(r'\s+', ' ', ' '.join(sp['text'] for sp in line['spans'])).strip()
+            size = max((sp['size'] for sp in line['spans']), default=0)
+            if not text or line['bbox'][1] > page.rect.height * .2 or len(text) > 70 or not ISSUER.search(text):
+                continue
+            if re.search(r'postboks|telefon|e-post|www\.|dato|ref', text, re.I):
+                continue
+            if best is None or size > best[0] + .1:
+                best = (size, text)
+    return best[1] if best else ''
+
+
 def read_rules():
     rules = {}
     if os.path.exists(REDACT):
@@ -153,7 +181,7 @@ def first_page(pdf_bytes, did, rules):
     zoom = WIDTH / page.rect.width
     pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
     scanned = not page.get_text().strip()  # a scanned page has no text to find names in
-    return pix.tobytes('jpg', jpg_quality=72), (covered, scanned)
+    return pix.tobytes('jpg', jpg_quality=72), (covered, scanned, issuer_of(page))
 
 
 def main():
@@ -164,6 +192,10 @@ def main():
         with open(LIST, encoding='utf-8') as f:
             thumbs = json.load(f)
     rules = read_rules()
+    authors = {}
+    if os.path.exists(AUTHORS):
+        with open(AUTHORS, encoding='utf-8') as f:
+            authors = json.load(f)
     rows = list(csv.DictReader(io.StringIO(get(SHEET).decode('utf-8'))))
     todo = [r for r in rows
             if r.get('Class') in CLASSES and str(r.get('Published', '')).strip().upper() == 'TRUE'
@@ -182,7 +214,9 @@ def main():
                 skipped += 1
                 print(f'[{i}/{len(todo)}] {did}: not a PDF, left without a picture')
                 continue
-            jpg, (covered, scanned) = first_page(data, did, rules)
+            jpg, (covered, scanned, issuer) = first_page(data, did, rules)
+            if issuer:
+                authors[did] = issuer
             if scanned:
                 scans.append(did)
             with open(path, 'wb') as f:
@@ -196,6 +230,8 @@ def main():
             print(f'[{i}/{len(todo)}] {did}: failed ({e})')
         time.sleep(0.5)
     write_rules(rules)
+    with open(AUTHORS, 'w', encoding='utf-8') as f:
+        json.dump(dict(sorted(authors.items())), f, ensure_ascii=False, indent=0)
     with open(LIST, 'w', encoding='utf-8') as f:
         json.dump(dict(sorted(thumbs.items())), f, ensure_ascii=False, indent=0)
     print(f'\n{made} new pictures, {skipped} links that are not PDFs, {failed} failed. '
