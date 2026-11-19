@@ -840,7 +840,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                                   <span class="nm"><b data-en="Map, grey" data-no="Kart, grått">Map, grey</b><span class="src">Kartverket topograatone</span></span>
                                   <input type="radio" name="basemap" id="base-gray" value="graytone"></label>
                               <label class="row" for="base-relief">
-                                  <span class="nm"><b data-en="Relief" data-no="Relieff">Relief</b><span class="src" data-en="Kartverket, shaded terrain 1 m, with the aerial photo in black and white over it" data-no="Kartverket, skyggerelieff 1 m, med flyfoto i svart-hvitt over">Kartverket, shaded terrain 1 m, with the aerial photo in black and white over it</span></span>
+                                  <span class="nm"><b data-en="Relief" data-no="Relieff">Relief</b><span class="src" data-en="Aerial photo in black and white, shaded by the terrain" data-no="Flyfoto i svart-hvitt, skyggelagt av terrenget">Aerial photo in black and white, shaded by the terrain</span></span>
                                   <input type="radio" name="basemap" id="base-relief" value="relief" checked></label>
                               <label class="row" for="base-bym">
                                   <span class="nm"><b data-en="Oslo aerial survey" data-no="Oslo flyfoto">Oslo aerial survey</b>
@@ -1359,7 +1359,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const MAX_ZOOM = 19;
     const T = 256;
     const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-    const BASE_PHOTO = 50;      // the black-and-white photograph over the relief, the default background
     const WAYBACK_URL = r => `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${r}/{z}/{y}/{x}`;
 
     const style = {
@@ -1414,15 +1413,21 @@ document.addEventListener('DOMContentLoaded', function() {
             // The relief background, bottom to top: a grey ground (so a tile that has
             // not come is never a black hole), the relief shaded here from the 10 m
             // model at every zoom, and Kartverket's 1 m shading over it close in.
-            { id: 'relief-ground', type: 'background', layout: { visibility: 'visible' }, paint: { 'background-color': '#c4c4c4' } },
-            { id: 'relief-shade', type: 'hillshade', source: 'relief-dem', layout: { visibility: 'visible' },
+            { id: 'relief-ground', type: 'background', layout: { visibility: 'none' }, paint: { 'background-color': '#c4c4c4' } },
+            { id: 'relief-shade', type: 'hillshade', source: 'relief-dem', layout: { visibility: 'none' },
               paint: { 'hillshade-illumination-direction': 315, 'hillshade-illumination-anchor': 'map', 'hillshade-exaggeration': 0.8,
                        'hillshade-shadow-color': '#000000', 'hillshade-highlight-color': '#ffffff', 'hillshade-accent-color': '#000000' } },
-            { id: 'relief',     type: 'raster', source: 'relief',     minzoom: 12, layout: { visibility: 'visible' },
+            { id: 'relief',     type: 'raster', source: 'relief',     minzoom: 12, layout: { visibility: 'none' },
               paint: { 'raster-contrast': 0.45, 'raster-fade-duration': dur(200),
                        'raster-opacity': ['interpolate', ['linear'], ['zoom'], 12, 0, 13, 1] } },
             { id: 'satellite',  type: 'raster', source: 'satellite',  layout: { visibility: 'visible' },
-              paint: { 'raster-fade-duration': dur(200), 'raster-saturation': -1, 'raster-opacity': BASE_PHOTO / 100 } },
+              paint: { 'raster-fade-duration': dur(200), 'raster-saturation': -1 } },
+            // The default background: the photograph in black and white, whole, and the
+            // terrain shaded over it in shadow only, so the slopes darken it (a multiply).
+            { id: 'base-shade', type: 'hillshade', source: 'relief-dem', layout: { visibility: 'visible' },
+              paint: { 'hillshade-illumination-direction': 315, 'hillshade-illumination-anchor': 'map', 'hillshade-exaggeration': 0.5,
+                       'hillshade-shadow-color': 'rgba(0,0,0,0.6)', 'hillshade-highlight-color': 'rgba(255,255,255,0)',
+                       'hillshade-accent-color': 'rgba(0,0,0,0)' } },
             { id: 'bym',        type: 'raster', source: 'bym',        layout: { visibility: 'none' } },
             { id: 'historical', type: 'raster', source: 'historical', layout: { visibility: 'none' },
               paint: { 'raster-fade-duration': dur(200) } }
@@ -1525,26 +1530,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Basemaps: all in the style from the start, only visibility changes.
     document.querySelectorAll('input[name="basemap"]').forEach(r => {
         r.addEventListener('change', e => {
-            const v = e.target.value;
-            setVis('graytone', v === 'graytone');
-            // Relief: the shaded terrain carries the picture, and the photograph lies
-            // over it in black and white, faint, so the colours of the change read.
-            ['relief-ground', 'relief-shade', 'relief'].forEach(id => setVis(id, v === 'relief'));
-            setVis('satellite', v === 'satellite' || v === 'relief');
-            map.setPaintProperty('satellite', 'raster-saturation', v === 'relief' ? -1 : 0);
-            map.setPaintProperty('satellite', 'raster-opacity', v === 'relief' ? photoNow() / 100 : 1);
-            setVis('bym', v === 'bym');
+            applyBase();
         });
     });
     let photoOpacity = 30;      // the photograph over the relief in TERRAIN CHANGE, set from the terrain panel
     let inTerrainTab = false;
-    // The default background is the relief with the photograph over it at half;
-    // TERRAIN CHANGE lays it fainter, so the colours of the change read.
-    const photoNow = () => inTerrainTab ? photoOpacity : BASE_PHOTO;
-    function setPhoto() {
-        const base = (document.querySelector('input[name="basemap"]:checked') || {}).value;
-        if (base === 'relief') whenStyle(() => map.setPaintProperty('satellite', 'raster-opacity', photoNow() / 100));
+    // Relief, the default: the black-and-white photograph, whole, with the terrain
+    // shading multiplied over it. In TERRAIN CHANGE the shaded terrain carries the
+    // picture instead and the photograph lies over it faint, so the colours of the change read.
+    function applyBase() {
+        const v = (document.querySelector('input[name="basemap"]:checked') || {}).value;
+        const relief = v === 'relief', deep = relief && inTerrainTab;
+        setVis('graytone', v === 'graytone');
+        ['relief-ground', 'relief-shade', 'relief'].forEach(id => setVis(id, deep));
+        setVis('satellite', v === 'satellite' || relief);
+        setVis('base-shade', relief && !inTerrainTab);
+        map.setPaintProperty('satellite', 'raster-saturation', relief ? -1 : 0);
+        map.setPaintProperty('satellite', 'raster-opacity', deep ? photoOpacity / 100 : 1);
+        setVis('bym', v === 'bym');
     }
+    function setPhoto() { whenStyle(applyBase); }
     // The terrain tab brings the relief with it, and gives the earlier background back.
     let baseBeforeRelief = null;
     function setBase(v) {
