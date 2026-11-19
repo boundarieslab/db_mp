@@ -6,184 +6,61 @@
 <title>Index · Dirty Business</title>
 <meta name="description" content="The index of every document Dirty Business holds on the reception sites, quarries and construction projects of the Oslo region: photographs, aerials, newspaper articles, permits, plans, register entries, ownership diagrams and terrain-change sheets, by class, site, kommune, period and archive.">
 <meta property="og:title" content="Dirty Business — index of documents">
-<meta property="og:description" content="Photographs, permits, plans, newspaper articles and registers on the Oslo region's excavated masses, sorted by class, site, kommune and period.">
+<meta property="og:description" content="Photographs, permits, plans, newspaper articles and registers on the Oslo region's excavated masses, arranged by site, class, decade, kommune, type of site, archive and corporate network.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cutive+Mono&display=swap" rel="stylesheet">
 <style>
-/* ==========================================================================
-   dirtybusiness.no — the index of documents.
-   After the Atlas des Régions Naturelles: every document is one entry, and
-   the terms are ways to sort them. An index column on the left; terms in
-   groups, a light grotesque for the terms and its regular weight, in
-   capitals, for the group names. No rules, no boxes, no rounded corners.
-   Colour belongs to the data: the status colours of the map, and red for
-   what is chosen.
-   The documents are the Documents tab of db_database; the look is edited at
-   sites.html?edit.
-   ========================================================================== */
-@font-face{font-family:PlexMono;src:url(assets/fonts/plex-mono-400.woff2) format('woff2');font-weight:400;font-display:swap}
-:root{
-  --ink:#000;
-  --sub:#8a8a8a;         /* secondary text, terms with nothing under the choice */
-  --pick:#FF0000;        /* what is chosen: chip, term, kommune */
-  --link:#0000FF;        /* a link out to the document */
-  --plate:#f3f3f3;       /* the ground of a document with no picture */
-  --light:"Work Sans",Helvetica,Arial,sans-serif;
-  --fs:14px;
-  --lh:1.72;             /* ARN's line: 24 px over 14 px */
-  --fs-small:11px;
-  --pad:26px;
-  --nav:29%;
-  --gap:44px;
-  --thumb:190px;
-}
-*{box-sizing:border-box;border-radius:0}
-html,body{margin:0;padding:0;background:#fff;color:var(--ink)}
-body{font:300 var(--fs)/var(--lh) var(--light);-webkit-font-smoothing:antialiased;letter-spacing:.01em}
-a{color:inherit;text-decoration:none}
-button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;letter-spacing:inherit;text-align:left}
-.cap{font-weight:400;text-transform:uppercase;letter-spacing:.04em}
-.mono{font-family:PlexMono,ui-monospace,monospace;font-size:var(--fs-small);letter-spacing:0}
-[hidden]{display:none!important}
-:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
-.u:hover,.t:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:.5px}
-
-/* ---------- frame ---------- */
-#atlas{display:grid;grid-template-columns:var(--nav) 1fr;min-height:100vh;padding:var(--pad) var(--pad) 0}
-#a-nav{position:sticky;top:var(--pad);align-self:start;padding-right:24px}
-#a-title{font-weight:300;font-size:30px;line-height:1.05;letter-spacing:-.005em;margin:0 0 54px}
-#a-title small{display:block;font-size:var(--fs-small);letter-spacing:.04em;margin-top:12px;color:var(--sub);text-transform:uppercase;font-weight:400}
-#a-nav .nv{display:block;margin:0 0 30px}
-#a-nav .nv:hover,#a-nav .nv.on{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:.5px}
-#a-lang{margin-top:56px;font-size:var(--fs-small)}
-#a-lang button{margin-right:10px;color:var(--sub)}
-#a-lang button.on{color:var(--ink)}
-#a-main{min-width:0;padding-bottom:80px}
-
-/* ---------- top lines ---------- */
-.a-top{margin:0 0 var(--gap)}
-.a-top .ln{display:block}
-.a-top .ln .cap{margin-right:.35em}
-.a-top .t+.t::before{content:", ";color:var(--ink)}
-
-/* ---------- groups of terms ---------- */
-.a-cols{display:grid;grid-template-columns:1fr 1fr;column-gap:40px}
-.grp{margin:0 0 var(--gap);break-inside:avoid}
-.grp h3{margin:0;font:inherit}
-.grp .t{display:block}
-.t{cursor:pointer}
-.t.on{color:var(--pick)}
-.t.none{color:var(--sub);cursor:default;text-decoration:none}
-.t small{color:var(--sub);font-size:var(--fs-small);margin-left:6px}
-.more{color:var(--sub);display:block}
-
-/* ---------- chosen terms ---------- */
-.a-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 30px}
-.chip{border:1px solid var(--pick);color:var(--pick);padding:0 6px;line-height:22px;font-size:13px;white-space:nowrap}
-.chip b{font-weight:300;margin-left:6px}
-.a-count,.a-clear{color:var(--sub);font-size:var(--fs-small);text-transform:uppercase;letter-spacing:.04em;font-weight:400}
-.a-clear:hover{color:var(--ink)}
-
-/* ---------- the chosen site ---------- */
-.a-head{margin:0 0 30px}
-.a-head h2{font-weight:300;font-size:26px;line-height:1.1;margin:0;display:flex;align-items:center;gap:10px}
-.a-head .wh{margin-top:4px}
-.a-head .wh a{margin-left:14px}
-
-/* ---------- documents ---------- */
-.a-res{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--thumb),1fr));gap:34px 22px}
-.card{display:block;min-width:0}
-.card .im{display:block;aspect-ratio:4/3;overflow:hidden;position:relative;background:var(--plate)}
-.card .im img{width:100%;height:100%;object-fit:cover;display:block;filter:grayscale(1);transition:filter .2s}
-.card:hover .im img{filter:none}
-.plate{position:absolute;inset:0;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;background:var(--plate)}
-.plate .k{font-size:var(--fs-small);text-transform:uppercase;letter-spacing:.04em;font-weight:400}
-.plate .y{font-size:34px;font-weight:300;line-height:1;letter-spacing:-.01em}
-.plate .a{font-size:var(--fs-small);color:var(--sub);line-height:1.35}
-.card .nm{display:block;margin-top:8px;line-height:1.35}
-.card .ds{display:block;color:var(--sub);font-size:var(--fs-small);line-height:1.4;margin-top:3px}
-.card .ds .ask{color:var(--pick)}
-.card:hover .nm{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:.5px}
-
-/* ---------- kommune map ---------- */
-#a-kmap{display:block;width:auto;max-width:100%;height:auto;max-height:calc(100vh - 2 * var(--pad) - 60px);margin:0 0 30px}
-#a-kmap path{fill:#fff;stroke:#b9b9b9;stroke-width:.5px;vector-effect:non-scaling-stroke;stroke-linejoin:round}
-#a-kmap path.has{stroke:var(--ink);cursor:pointer}
-#a-kmap path.has:hover{fill:#e6e6e6}
-#a-kmap path.on,#a-kmap path.on:hover{fill:var(--pick)}
-#a-kmap circle{stroke:#000;stroke-width:.4px;vector-effect:non-scaling-stroke;pointer-events:none}
-#a-ktip{position:fixed;pointer-events:none;background:#fff;border:1px solid var(--ink);padding:0 6px;line-height:22px;font-size:13px;display:none;z-index:5}
-
-/* ---------- status colours, pictograms, sites ---------- */
-.a-sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:26px 22px}
-.a-sw .t{display:flex;align-items:center;gap:12px}
-.a-sw .dot{width:34px;height:34px;flex:0 0 34px;border:3px solid;border-radius:50%}
-.a-sw .sq{width:34px;height:34px;flex:0 0 34px;border:3px solid}
-.a-pic{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:26px 22px}
-.a-pic .t{display:block}
-.a-pic img{width:100%;aspect-ratio:4/3;object-fit:contain;display:block}
-.a-pic .t span{display:block;margin-top:4px;line-height:1.35}
-.a-az{column-width:240px;column-gap:30px}
-.a-az .lt{break-after:avoid;margin:18px 0 0}
-.a-az .lt:first-child{margin-top:0}
-.a-az .t{display:flex;align-items:baseline;gap:6px;break-inside:avoid;line-height:1.5;padding:1px 0}
-.a-az .t svg{flex:0 0 auto;position:relative;top:1px}
-
-/* ---------- one document ---------- */
-.a-doc{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);column-gap:40px;align-items:start;max-width:1200px}
-.a-doc .pic{position:relative;background:var(--plate);min-height:240px}
-.a-doc .pic img{display:block;width:100%;height:auto;max-height:calc(100vh - 2 * var(--pad) - 40px);object-fit:contain;background:#fff}
-.a-doc .pic .plate{position:relative;aspect-ratio:4/3}
-.a-doc .pic .plate .y{font-size:64px}
-.a-doc .pic iframe{display:block;width:100%;height:520px;border:0;background:#fff}
-.a-doc h1{font-weight:300;font-size:26px;line-height:1.15;margin:0 0 18px;letter-spacing:-.005em;overflow-wrap:anywhere}
-.a-doc .r{display:grid;grid-template-columns:34% 1fr;column-gap:14px;line-height:1.5;padding:2px 0}
-.a-doc .r .k{font-size:var(--fs-small);text-transform:uppercase;letter-spacing:.04em;font-weight:400;padding-top:2px}
-.a-doc .r .v{min-width:0;overflow-wrap:anywhere}
-.a-doc .r .v .t{display:inline}
-.a-doc .st{display:flex;align-items:baseline;gap:6px}
-.a-doc .st svg{position:relative;top:1px;flex:0 0 auto}
-.a-doc .go{display:block;margin-top:22px;color:var(--link)}
-.a-doc .go+.go{margin-top:6px}
-.a-doc .nav{margin-top:30px;font-size:var(--fs-small);color:var(--sub);text-transform:uppercase;letter-spacing:.04em;font-weight:400}
-.a-doc .nav button{margin-right:18px}
-.a-doc .nav button:hover{color:var(--ink)}
-.a-doc .ask{color:var(--pick)}
-.a-msg{color:var(--sub)}
-
-/* ---------- phone ---------- */
-@media (max-width:760px){
-  :root{--pad:16px;--gap:30px;--thumb:140px;--fs:13px}
-  #atlas{grid-template-columns:1fr}
-  #a-nav{position:static;padding:0 0 18px}
-  #a-title{font-size:24px;margin-bottom:20px}
-  #a-nav .nv{display:inline-block;margin:0 16px 8px 0}
-  #a-lang{margin-top:8px}
-  .a-cols,.a-doc{grid-template-columns:1fr}
-  .a-doc .pic{margin-bottom:20px}
-  .a-doc .pic iframe{height:360px}
-}
+:root{--ink:#000;--sub:#808080;--red:#FF0000;--cell:100px;--obj:60px;--nav:170px}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff;color:var(--ink)}
+body{font:12px/17px 'Cutive Mono','Courier New',monospace;-webkit-font-smoothing:antialiased}
+a{color:var(--ink)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:left;border-radius:0}
+#atlas{min-height:100vh;padding:20px;display:flex;flex-wrap:wrap;align-items:flex-start;gap:24px}
+#a-nav{flex:0 0 var(--nav);min-width:0;display:flex;flex-direction:column;position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto;scrollbar-width:thin}
+#a-q{width:100%;height:22px;padding:0 6px;border:1px solid var(--ink);border-radius:0;outline:none;background:#fff;font:inherit;color:var(--ink);margin-bottom:16px;-webkit-appearance:none;appearance:none}
+#a-q::-webkit-search-cancel-button{display:none}
+.cat{display:block;line-height:19px;color:var(--sub)}
+.cat.on,.cat:hover,.sub:hover,.sub.on,.sec-t:hover,.tm button:hover{color:var(--ink)}
+.cat.gap{margin-top:14px}
+.subs{display:flex;flex-direction:column;padding:0 0 8px 12px}
+.sub{line-height:17px;color:var(--sub)}
+#a-main{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:28px}
+.sec{display:flex;flex-direction:column;gap:10px}
+.sec-t{align-self:flex-start;animation:fade .5s ease .25s both}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cell),1fr));gap:16px 8px}
+.obj{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--ink);min-width:0;transition:opacity .25s}
+.obj.dim{opacity:.1}
+.obj .im{display:flex;align-items:center;justify-content:center;width:var(--obj);height:calc(var(--obj) * .8)}
+.obj .im img{display:block;max-width:100%;max-height:100%;filter:grayscale(1)}
+.obj .lb{max-width:100%;padding:0 3px;text-align:center;overflow-wrap:anywhere;font-size:11px;line-height:14px}
+.open{grid-column:1/-1;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:6px 0 18px}
+.open .pic{cursor:zoom-out;display:block;max-width:100%}
+.open .pic img{display:block;max-width:100%;max-height:62vh}
+.open .tt{max-width:560px}
+.open .tm{max-width:560px;color:var(--sub)}
+.open .tm span{white-space:nowrap}
+.open .tm button{white-space:normal;color:var(--sub)}
+.open .tm button.k{color:var(--red)}
+.open .tm button.on{color:var(--ink)}
+.open .ln{display:flex;flex-wrap:wrap;column-gap:16px}
+.open .ln .note{color:var(--sub)}
+.a-msg{color:var(--sub);margin:0}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.sec-t{animation:none}.obj{transition:none}}
+@media (max-width:640px){#atlas{padding:12px;gap:16px}#a-nav{flex-basis:100%;position:static;max-height:none}:root{--cell:84px;--obj:52px}}
 </style>
 </head>
 <body>
 <div id="atlas">
-  <nav id="a-nav" aria-label="Index">
-    <h1 id="a-title"><span data-en="Index" data-no="Register">Index</span><small id="a-tally"></small></h1>
-    <button class="nv cap" data-go="terms" data-en="Index of documents" data-no="Dokumentregister">Index of documents</button>
-    <button class="nv cap" data-go="sites" data-en="Index of sites" data-no="Stedsregister">Index of sites</button>
-    <button class="nv cap" data-go="kommuner" data-en="Index of kommuner" data-no="Kommuneregister">Index of kommuner</button>
-    <button class="nv cap" data-go="colour" data-en="Status colour" data-no="Statusfarge">Status colour</button>
-    <button class="nv cap" data-go="picto" data-en="Pictograms" data-no="Piktogrammer">Pictograms</button>
-    <div id="a-lang" class="cap"><button data-lang="en" class="on">EN</button><button data-lang="no">NO</button></div>
+  <nav id="a-nav" aria-label="Arrange the documents">
+    <input id="a-q" type="search" placeholder="Search" aria-label="Search the documents" autocomplete="off">
+    <div id="a-cats"></div>
   </nav>
-  <main id="a-main">
-    <div class="a-chips" id="a-chips"></div>
-    <div id="a-view"><p class="a-msg">Loading the documents…</p></div>
-  </main>
+  <main id="a-main"><p class="a-msg">Loading the documents…</p></main>
 </div>
-<div id="a-ktip"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <!-- The editor (sites.html?edit) saves this page's look into editor/sites-style.js, apart from the map's. -->
@@ -191,15 +68,10 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   name: 'sites', page: 'sites.html', key: 'db-style-draft-sites', global: '__DB_SITES_STYLE',
   path: 'editor/sites-style.js', nomap: true,
   parts: [
-    ['#a-nav', 'Index column'], ['#a-title', 'Title'], ['#a-nav .nv', 'Index links'], ['#a-lang', 'Language'],
-    ['#a-main', 'Main area'], ['.a-chips', 'Chosen terms'], ['.chip', 'Chip'], ['.a-head', 'Chosen site'],
-    ['.a-top', 'Top lines'], ['.a-cols', 'Term columns'], ['.grp', 'Group of terms'], ['.grp h3', 'Group name'], ['.t', 'Term'],
-    ['.a-res', 'Documents'], ['.card', 'Document card'], ['.card .im', 'Card picture'], ['.plate', 'Card plate'], ['.plate .y', 'Plate year'],
-    ['.card .nm', 'Card title'], ['.card .ds', 'Card line'],
-    ['#a-kmap', 'Kommune map'], ['.a-sw', 'Status colours'], ['.a-pic', 'Pictograms'], ['.a-az', 'Index of sites'],
-    ['.a-doc', 'Document page'], ['.a-doc .pic', 'Document picture'], ['.a-doc h1', 'Document title'],
-    ['.a-doc .r .k', 'Field label'], ['.a-doc .r .v', 'Field value'], ['.a-doc .go', 'Link out'],
-    ['body', 'Page']
+    ['#a-nav', 'Left column'], ['#a-q', 'Search'], ['.cat', 'Category'], ['.subs', 'Groups list'], ['.sub', 'Group name'],
+    ['#a-main', 'Documents'], ['.sec-t', 'Group title'], ['.grid', 'Grid'], ['.obj', 'Document'], ['.obj .im', 'Document picture'],
+    ['.obj .lb', 'Document label'], ['.open', 'Opened document'], ['.open .tt', 'Opened title'], ['.open .tm', 'Opened terms'],
+    ['.open .ln', 'Opened links'], ['body', 'Page']
   ]
 };</script>
 <script type="application/json" id="db-style">{}</script>
@@ -210,7 +82,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 'use strict';
 // ─────────────────────────────────────────────────────────────────────────
 // Sources: the published sheet (Documents, Facilities, Projects) and the
-// map's own files.
+// kommune boundaries.
 // ─────────────────────────────────────────────────────────────────────────
 const SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub';
 const FACILITIES_CSV = SHEET + '?output=csv';
@@ -219,56 +91,60 @@ const DOCUMENTS_CSV = SHEET + '?gid=187064250&single=true&output=csv';
 const KOMMUNER = 'data/kommuner.geojson';
 const MAP_LINK = 'https://dirtybusiness.no/#site=';
 
-// The classes of document, in groups, as the Atlas groups its terms.
-const CLASS_GROUPS = [
-  ['g_images', ['Photograph', 'Aerial photograph']],
-  ['g_press', ['Newspaper article']],
-  ['g_permits', ['Permit', 'Permit application', 'Mining licence', 'Inspection report']],
-  ['g_plans', ['Zoning plan']],
-  ['g_registers', ['Register entry', 'Company record', 'Public record', 'Ownership diagram']],
-  ['g_studies', ['Terrain change', 'Report', 'Government document', 'Government page']],
-  ['g_web', ['Public notice', 'Municipal page', 'Company page']]
+// The classes of document, in the order they are listed.
+const CLASS_ORDER = ['Photograph', 'Aerial photograph', 'Newspaper article', 'Permit', 'Permit application', 'Mining licence', 'Inspection report',
+  'Zoning plan', 'Register entry', 'Company record', 'Public record', 'Ownership diagram', 'Terrain change', 'Report', 'Government document',
+  'Government page', 'Public notice', 'Municipal page', 'Company page'];
+// A document without a picture is drawn as one line icon of its kind.
+const ICON = {
+  photo: 'M4 7h24v18H4z M4 21l7-7 6 6 4-4 7 7 M20 11h3v3h-3z',
+  page: 'M8 3h11l5 5v21H8z M19 3v5h5 M11 13h10 M11 17h10 M11 21h7',
+  press: 'M4 6h24v20H4z M7 9h8v7H7z M18 9h7 M18 12h7 M18 15h7 M7 19h18 M7 22h18',
+  plan: 'M4 8l8-3 8 3 8-3v19l-8 3-8-3-8 3z M12 5v19 M20 8v19',
+  card: 'M3 8h26v16H3z M6 12h9 M6 16h12 M6 20h10 M21 11h5v7h-5z',
+  tree: 'M13 3h6v5h-6z M16 8v4 M7 12h18 M7 12v5 M25 12v5 M4 17h6v5H4z M22 17h6v5h-6z M16 12v5 M13 17h6v5h-6z',
+  terrain: 'M3 25h26 M3 21c5-5 9-5 12-2s7 2 14-3 M5 16c4-4 8-4 10-2s6 2 10-3 M9 11c3-3 6-3 8-1s4 1 6-2',
+  web: 'M3 6h26v20H3z M3 10h26 M6 14h10 M6 18h20 M6 22h14'
+};
+const KIND = {
+  'Photograph': 'photo', 'Aerial photograph': 'photo', 'Newspaper article': 'press', 'Permit': 'page', 'Permit application': 'page',
+  'Mining licence': 'page', 'Inspection report': 'page', 'Zoning plan': 'plan', 'Register entry': 'card', 'Company record': 'card',
+  'Public record': 'card', 'Ownership diagram': 'tree', 'Terrain change': 'terrain', 'Report': 'page', 'Government document': 'page',
+  'Government page': 'web', 'Public notice': 'web', 'Municipal page': 'web', 'Company page': 'web'
+};
+// Corporate networks: a site belongs to a network when its owner, operator or
+// parent company (or a project's builder) names one of these groups.
+const NETWORKS = [
+  ['AF Gruppen', /\baf (gruppen|decom|anlegg|ghella|miljøbase|miljobase)\b/],
+  ['Acciona Ghella', /acciona|\bghella\b/],
+  ['Brødrene Ødegård', /brødrene ødegård|brodrene odegard/],
+  ['Bulk Industrial Real Estate', /bulk industrial/],
+  ['Egge Massedeponi', /\begge\b/],
+  ['Eidos Eiendomsutvikling', /\beidos\b/],
+  ['Feiring', /feiring/],
+  ['Franzefoss', /franzefoss/],
+  ['Gunnar Holth', /gunnar holth/],
+  ['Helgerud Massemottak', /helgerud/],
+  ['HENT', /\bhent\b/],
+  ['Herstua', /herstua/],
+  ['Kjeldaas', /kjeldaas/],
+  ['Leif Grimsrud', /grimsrud/],
+  ['Lindum', /lindum/],
+  ['Mr. Pukk', /mr\.? ?pukk/],
+  ['NOAH', /\bnoah\b/],
+  ['Norsk Gjenvinning', /norsk gjenvinning|mana group|ng nordic/],
+  ['NRC Group', /\bnrc\b/],
+  ['OSU', /\bosu\b/],
+  ['Ragn-Sells', /ragn.?sells/],
+  ['Skanska', /skanska/],
+  ['State road builders', /statens vegvesen|nye veier|bane nor/],
+  ['Veidekke', /veidekke/],
+  ['Wethal', /wethal/],
+  ['Public owners (kommuner)', /kommune|\biks\b|\bkf\b|etaten|\bvav\b|statsbygg/]
 ];
-const CLASS_NO = {
-  'Photograph': 'Fotografi', 'Aerial photograph': 'Flyfoto', 'Newspaper article': 'Avisartikkel', 'Permit': 'Tillatelse',
-  'Permit application': 'Søknad', 'Mining licence': 'Driftskonsesjon', 'Inspection report': 'Kontrollrapport', 'Zoning plan': 'Reguleringsplan',
-  'Register entry': 'Registeroppføring', 'Company record': 'Foretaksopplysninger', 'Public record': 'Offentlig journal',
-  'Ownership diagram': 'Eierskapsdiagram', 'Terrain change': 'Terrengendring', 'Report': 'Rapport', 'Government document': 'Statlig dokument',
-  'Government page': 'Statlig nettside', 'Public notice': 'Kunngjøring', 'Municipal page': 'Kommunal nettside', 'Company page': 'Bedriftens nettside'
-};
 
 // ─────────────────────────────────────────────────────────────────────────
-// Words
-// ─────────────────────────────────────────────────────────────────────────
-const W = {
-  g_images: ['Images', 'Bilder'], g_press: ['Press', 'Presse'], g_permits: ['Permits', 'Tillatelser'], g_plans: ['Plans', 'Planer'],
-  g_registers: ['Registers', 'Registre'], g_studies: ['Studies and reports', 'Studier og rapporter'], g_web: ['Web pages', 'Nettsider'],
-  decade: ['Decade', 'Tiår'], access: ['Access', 'Tilgang'], family: ['Family', 'Familie'], reception: ['Reception', 'Mottak'],
-  extraction: ['Extraction', 'Uttak'], construction: ['Construction', 'Anlegg'], undated: ['undated', 'udatert'],
-  a_open: ['open', 'åpen'], 'a_permission asked': ['permission asked', 'tillatelse etterspurt'], a_restricted: ['restricted', 'begrenset'],
-  type: ['Type of site', 'Type sted'], ptype: ['Construction projects', 'Anleggsprosjekter'], status: ['Status of site', 'Status for stedet'],
-  kommune: ['Kommune', 'Kommune'], archive: ['Archive', 'Arkiv'], site: ['Site', 'Sted'], cls: ['Class', 'Klasse'], pictogram: ['Pictogram', 'Piktogram'],
-  st_active: ['active', 'i drift'], st_old: ['closed or finished', 'nedlagt eller ferdig'], st_future: ['planned', 'planlagt'],
-  st_contaminated: ['contaminated masses', 'forurensede masser'], st_unknown: ['no status', 'ukjent'],
-  docs: ['documents', 'dokumenter'], doc1: ['document', 'dokument'], sitesN: ['sites', 'steder'],
-  more: ['more', 'flere'], fewer: ['fewer', 'færre'], clear: ['clear', 'tøm'], none: ['No document answers all of these.', 'Ingen dokumenter passer alle disse.'],
-  pickK: ['Choose a kommune on the map.', 'Velg en kommune i kartet.'],
-  f_class: ['Class', 'Klasse'], f_date: ['Date', 'Dato'], f_sites: ['Site', 'Sted'], f_kommune: ['Kommune', 'Kommune'], f_archive: ['Archive', 'Arkiv'],
-  f_creator: ['Made by', 'Laget av'], f_licence: ['Licence', 'Lisens'], f_access: ['Access', 'Tilgang'], f_note: ['Note', 'Merknad'], f_id: ['Number', 'Nummer'],
-  open: ['Open the document', 'Åpne dokumentet'], map: ['Open on the map', 'Åpne i kartet'], prev: ['previous', 'forrige'], next: ['next', 'neste'],
-  back: ['back to the list', 'tilbake til listen'], askNote: ['Shown here once the owner allows it.', 'Vises her når eieren gir tillatelse.'],
-  loadfail: ['The database could not be read. Try again in a minute.', 'Databasen kunne ikke leses. Prøv igjen om et minutt.'],
-  notfound: ['There is no published document with this number.', 'Det finnes ikke noe publisert dokument med dette nummeret.']
-};
-let lang = 'en';
-try { lang = new URLSearchParams(location.search).get('lang') || localStorage.getItem('db-sites-lang') || 'en'; } catch (e) {}
-if (lang !== 'no') lang = 'en';
-const NO = () => lang === 'no';
-const t = k => (W[k] || [k, k])[NO() ? 1 : 0];
-const clsWord = c => NO() ? (CLASS_NO[c] || c) : c;
-
-// ─────────────────────────────────────────────────────────────────────────
-// Helpers, as in the map
+// Helpers
 // ─────────────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -279,121 +155,14 @@ const isTrue = v => /^(true|yes|1)$/i.test(String(v == null ? '' : v).trim());
 const uidOf = s => (s && (s.UID || s.fid)) || '';
 const coll = new Intl.Collator('nb');
 
-// Status, as the map classifies it (index.html, statusClass).
-const RX_FUTURE = /\b(planned|planlagt|proposed|foresl|future|framtid|fremtid|under bygging|hearing|høring|horing|søknad|soknad|to come|kommende|regulert)/;
-const RX_OLD    = /\b(inactive|inaktiv|closed|lukket|nedlagt|historical|historisk|avsluttet|ferdig|complete|finished|etterdrift|ended)/;
-const RX_ACTIVE = /\b(active|aktiv|operating|i drift|drift|open|pågår|pagar|under way|ongoing|still receiv)/;
-const RX_CONT   = /(spesialdeponi|farlig avfall|jordvask|soil washing|forurensede masser|contaminated soil treatment)/;
-function statusClass(site) {
-  const cat = site.__cat;
-  const own = String(site.StatusClass || '').toLowerCase().trim();
-  if (own) {
-    if (/cont|forur|purple/.test(own)) return cat === 'facility' ? 'contaminated' : 'active';
-    if (/old|closed|nedlagt|finish|ferdig|done/.test(own)) return 'old';
-    if (/future|plan|come|komm/.test(own)) return 'future';
-    if (/activ|aktiv|way|pågår/.test(own)) return 'active';
-  }
-  if (cat === 'facility' && RX_CONT.test([site.Type, site.Subtype, site.Name].join(' ').toLowerCase())) return 'contaminated';
-  const v = String(site.Status || '').toLowerCase().trim();
-  if (!v) return 'unknown';
-  const head = v.split(/[\s(;,:]/)[0];
-  if (RX_ACTIVE.test(head)) return 'active';
-  if (RX_OLD.test(head)) return 'old';
-  if (RX_FUTURE.test(head)) return 'future';
-  if (/still receiv/.test(v)) return 'active';
-  if (RX_FUTURE.test(v)) return 'future';
-  if (RX_OLD.test(v)) return 'old';
-  if (RX_ACTIVE.test(v)) return 'active';
-  return 'unknown';
-}
-const COL = {
-  facility: { active: '#FF0000', future: '#0000FF', old: '#FFD400', contaminated: '#B300FF', unknown: '#FFFFFF' },
-  project:  { active: '#00FF00', future: '#95FF00', old: '#00B218', unknown: '#FFFFFF', contaminated: '#00FF00' }
-};
-const colourOf = s => COL[s.__cat][s.__cls] || '#FFFFFF';
-const STATUS_WORD = {
-  facility: { active: ['receiving now', 'mottar nå'], future: ['planned', 'planlagt'], old: ['closed', 'nedlagt'], contaminated: ['contaminated', 'forurenset'], unknown: ['no status', 'ukjent'] },
-  project:  { active: ['under way', 'pågår'], future: ['planned', 'planlagt'], old: ['finished', 'ferdig'], unknown: ['no status', 'ukjent'], contaminated: ['under way', 'pågår'] }
-};
-function actsOf(s) {
-  const a = String(s.Activities || '').toLowerCase();
-  if (a.trim()) return { rec: /recep|mottak/.test(a), ext: /extract|uttak/.test(a) };
-  const ty = (String(s.Type || '') + ' ' + String(s.Subtype || '')).toLowerCase();
-  return { rec: true, ext: /pukkverk|grustak|massetak|steinbrudd/.test(ty) || !!String(s.ExtractionAnnual || s.ExtractionTotal || '').trim() };
-}
-function direction(s) {
-  if (s.__cat === 'project') {
-    const sr = String(s['source /reception'] || s['source/reception'] || '').toLowerCase();
-    if (sr.includes('source') && sr.includes('reception')) return 'mixed';
-    if (sr.includes('source') || sr.includes('produc')) return 'producing';
-    if (sr.includes('reception') || sr.includes('receiv')) return 'receiving';
-    return 'mixed';
-  }
-  const ty = String(s.Type || '').toLowerCase();
-  if (ty.includes('pukkverk')) return 'producing';
-  if (ty.includes('deponi') || ty.includes('massemottak')) return 'receiving';
-  return 'mixed';
-}
-function symbol(s, size) {
-  const z = size || 13, c0 = colourOf(s), c = c0 === '#FFFFFF' ? '#4A4A4A' : c0, d = direction(s);
-  if (s.__cat === 'project') {
-    const f = d === 'producing' ? '<polygon points="1,15 15,15 1,1" fill="#000"/>' : d === 'receiving' ? '<polygon points="15,1 15,15 1,1" fill="#000"/>'
-            : '<polygon points="1,1 8,8 1,15" fill="#000"/><polygon points="15,1 8,8 15,15" fill="#000"/>';
-    return `<svg width="${z}" height="${z}" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="14" height="14" fill="#fff" stroke="${c}" stroke-width="2"/>${f}</svg>`;
-  }
-  const f = d === 'producing' ? '<path d="M1,8 A7,7 0 0,1 15,8 Z" fill="#000"/>' : d === 'receiving' ? '<path d="M1,8 A7,7 0 0,0 15,8 Z" fill="#000"/>'
-          : '<path d="M8,1 A7,7 0 0,1 15,8 L8,8 Z" fill="#000"/><path d="M8,15 A7,7 0 0,1 1,8 L8,8 Z" fill="#000"/>';
-  return `<svg width="${z}" height="${z}" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#fff" stroke="${c}" stroke-width="2"/>${f}</svg>`;
-}
-// Pictograms (picto_grammar/): what kind of ground a site makes.
-const PICTO = {
-  f_pukkverk: ['Quarry', 'Pukkverk'], f_pv_massemottak: ['Quarry that receives masses', 'Pukkverk med massemottak'],
-  f_pv_renemasser: ['Quarry, clean masses', 'Pukkverk, rene masser'], f_massemottak: ['Mass reception', 'Massemottak'],
-  f_mm_inert: ['Mass reception, inert', 'Massemottak, inert'], f_mm_inter: ['Mass reception, in the sea', 'Massemottak i sjø'],
-  f_mm_knusing: ['Crushing and storage', 'Knusing og mellomlagring'], f_mm_rene: ['Clean masses', 'Rene masser'],
-  f_d_ordinaert: ['Landfill, ordinary waste', 'Deponi, ordinært avfall'], f_d_inert: ['Landfill, inert waste', 'Deponi, inert avfall'],
-  f_d_ordinaert_inert: ['Landfill, ordinary and inert', 'Deponi, ordinært og inert'],
-  f_d_ordinaert_inert_forurenset: ['Landfill, ordinary, inert and contaminated', 'Deponi, ordinært, inert og forurenset'],
-  f_d_inter: ['Landfill, intermediate', 'Deponi, mellomnivå'], f_d_kommunalt: ['Municipal landfill', 'Kommunalt deponi'],
-  f_d_sortering: ['Landfill with sorting', 'Deponi med sortering'], f_d_gjevenning: ['Landfill with recycling', 'Deponi med gjenvinning'],
-  f_gjevenning: ['Recycling', 'Gjenvinning'],
-  cp_s_bolig: ['Housing, gives masses', 'Bolig, gir masser'], cp_s_industri: ['Industry, gives masses', 'Industri, gir masser'],
-  cp_s_infrastruktur: ['Infrastructure, gives masses', 'Infrastruktur, gir masser'], cp_s_land_bruk: ['Land use, gives masses', 'Landbruk, gir masser'],
-  cp_s_naering: ['Commerce, gives masses', 'Næring, gir masser'], cp_s_offentlig: ['Public building, gives masses', 'Offentlig bygg, gir masser'],
-  cp_r_bolig: ['Housing, takes masses', 'Bolig, tar imot masser'], cp_r_industri: ['Industry, takes masses', 'Industri, tar imot masser'],
-  cp_r_infrastruktur: ['Infrastructure, takes masses', 'Infrastruktur, tar imot masser'], cp_r_land_bruk: ['Land use, takes masses', 'Landbruk, tar imot masser'],
-  cp_r_naering: ['Commerce, takes masses', 'Næring, tar imot masser'], cp_r_offentlig: ['Public building, takes masses', 'Offentlig bygg, tar imot masser']
-};
-function pictoOf(s) {
-  const k = [s.Type, s.Subtype, s.Name].join(' ').toLowerCase();
-  if (s.__cat === 'project') {
-    const sec = /bolig|hous/.test(k) ? 'bolig' : /industri/.test(k) ? 'industri' : /landbruk|jord/.test(k) && !/vei|bane/.test(k) ? 'land_bruk'
-              : /næring|naering|kontor|commerc|handel/.test(k) ? 'naering' : /offentlig|sykehus|skole|public|regjering|kvartal|bygg/.test(k) ? 'offentlig' : 'infrastruktur';
-    return 'cp_' + (direction(s) === 'receiving' ? 'r' : 's') + '_' + sec;
-  }
-  if (/pukkverk|steinbrudd|grustak|massetak/.test(k)) return /massemottak|mottak/.test(k) ? 'f_pv_massemottak' : /rene/.test(k) ? 'f_pv_renemasser' : 'f_pukkverk';
-  if (/deponi|fyllplass|fylling/.test(k)) {
-    if (/gjenvinn/.test(k)) return 'f_d_gjevenning';
-    if (/sorter/.test(k)) return 'f_d_sortering';
-    if (/forurens|pfas|spesial/.test(k)) return 'f_d_ordinaert_inert_forurenset';
-    if (/ordin/.test(k) && /inert/.test(k)) return 'f_d_ordinaert_inert';
-    if (/ordin/.test(k)) return 'f_d_ordinaert';
-    if (/inert/.test(k)) return 'f_d_inert';
-    if (/intermed/.test(k)) return 'f_d_inter';
-    return 'f_d_kommunalt';
-  }
-  if (/gjenvinn|omlast|behandling/.test(k)) return 'f_gjevenning';
-  if (/sjø|sjo|utfylling/.test(k)) return 'f_mm_inter';
-  if (/knus|mellomlag/.test(k)) return 'f_mm_knusing';
-  if (/inert/.test(k)) return 'f_mm_inert';
-  if (/rene/.test(k)) return 'f_mm_rene';
-  return 'f_massemottak';
-}
+const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ø/g, 'o').replace(/æ/g, 'ae');
+// A short name for the label under a document; groups and the opened document keep the full name.
+const short = n => String(n || '').replace(/\s*\(.*?\)\s*/g, ' ').replace(/\b(nedlagte deponi|avfallsdeponi|massemottak|deponi)\b/gi, '').replace(/\s+/g, ' ').trim() || n;
 
 // ─────────────────────────────────────────────────────────────────────────
 // Data
 // ─────────────────────────────────────────────────────────────────────────
-let SITES = [], BYUID = {}, KOM = [], DOCS = [], BYID = {};
+let SITES = [], BYUID = {}, KOM = [], DOCS = [], BYID = {}, HAY = {};
 const parseCsv = url => new Promise((res, rej) => Papa.parse(url, {
   download: true, header: true, skipEmptyLines: true, transformHeader: h => h.trim(), complete: res, error: rej }));
 const getJson = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
@@ -410,20 +179,19 @@ const inGeom = (x, y, g) => (g.type === 'Polygon' ? [g.coordinates] : g.type ===
 const kByName = n => KOM.find(k => coll.compare(k.n, String(n || '').trim()) === 0);
 
 function prepare(f, p, d, kom) {
-  const tag = cat => r => { r.__cat = cat; r.__cls = statusClass(r); return r; };
+  const tag = cat => r => { r.__cat = cat; return r; };
   SITES = [...f.filter(r => uidOf(r) && isTrue(r.Published)).map(tag('facility')), ...p.filter(r => uidOf(r) && isTrue(r.Published)).map(tag('project'))];
   BYUID = {}; SITES.forEach(s => { BYUID[uidOf(s)] = s; });
   KOM = ((kom || {}).features || []).map(ft => ({ nr: ft.properties.nr, n: ft.properties.n, g: ft.geometry }));
   SITES.forEach(s => {
     const x = num(s.Longitude), y = num(s.Latitude);
-    s.__xy = Number.isFinite(x) && Number.isFinite(y) ? [x, y] : null;
-    let k = s.__xy ? KOM.find(k => inGeom(x, y, k.g)) : null;
-    if (!k) k = kByName(s.Municipality);
-    s.__k = k ? k.nr : ''; s.__kn = k ? k.n : String(s.Municipality || '').trim();
-    s.__fam = s.__cat === 'project' ? ['construction'] : [actsOf(s).rec ? 'reception' : null, actsOf(s).ext ? 'extraction' : null].filter(Boolean);
-    s.__pic = pictoOf(s);
+    let k = kByName(s.Municipality);
+    if (!k && Number.isFinite(x) && Number.isFinite(y)) k = KOM.find(k => inGeom(x, y, k.g));
+    s.__kn = k ? k.n : String(s.Municipality || '').trim();
+    const who = fold([s.ParentCompany, s.Operator, s.Company].join(' '));
+    s.__net = NETWORKS.filter(([, rx]) => rx.test(who)).map(([n]) => n);
+    s.__ty = String(s.Type || '').trim();
   });
-  SITES.sort((a, b) => coll.compare(String(a.Name || ''), String(b.Name || '')));
   // Documents: published, and tied to a published site or to none.
   DOCS = d.filter(r => r.DocID && isTrue(r.Published)).map(r => {
     const named = String(r.Sites || '').split(/[;,]/).map(x => x.trim()).filter(Boolean);
@@ -431,265 +199,204 @@ function prepare(f, p, d, kom) {
     if (named.length && !r.__sites.length) return null;
     const m = /(?<!\d)(1[89]\d\d|20\d\d)(?!\d)/.exec(String(r.Date || ''));
     r.__year = m ? +m[1] : null;
-    r.__dec = r.__year ? Math.floor(r.__year / 10) * 10 + 's' : 'undated';
+    r.__dec = r.__year ? Math.floor(r.__year / 10) * 10 + 's' : '';
     r.__acc = String(r.Access || 'open').trim().toLowerCase() || 'open';
     const img = safeUrl(r.Image);
     r.__img = img && r.__acc === 'open' ? img : '';
-    const ks = new Set(r.__sites.map(s => s.__k).filter(Boolean));
-    String(r.Kommune || '').split(/[;,]/).forEach(n => { const k = kByName(n); if (k) ks.add(k.nr); });
+    const ks = new Set(r.__sites.map(s => s.__kn).filter(Boolean));
+    String(r.Kommune || '').split(/[;,/]/).forEach(n => { const k = kByName(n); if (k) ks.add(k.n); else if (n.trim() && !r.__sites.length) ks.add(n.trim()); });
     r.__k = [...ks];
     r.__arch = String(r.Archive || '').trim();
+    r.__siteNames = r.__sites.map(s => String(s.Name || '').trim()).filter(Boolean);
+    r.__ty = uniq(r.__sites.map(s => s.__ty).filter(Boolean));
+    r.__net = uniq(r.__sites.flatMap(s => s.__net));
+    r.__icon = ICON[KIND[r.Class] || 'page'];
+    const where = r.__siteNames[0] ? short(r.__siteNames[0]) : (r.__k[0] || '');
+    r.__label = [where, r.__year].filter(Boolean).join(' ');
     return r;
   }).filter(Boolean);
   DOCS.sort((a, b) => (a.__year || 9999) - (b.__year || 9999) || coll.compare(a.Class, b.Class) || coll.compare(a.Title, b.Title));
-  BYID = {}; DOCS.forEach(r => { BYID[r.DocID] = r; });
+  BYID = {}; HAY = {};
+  DOCS.forEach(r => {
+    BYID[r.DocID] = r;
+    HAY[r.DocID] = fold([r.Class, r.Title, r.__year, r.__siteNames.join(' '), r.__k.join(' '), r.__ty.join(' '), r.__arch, r.__net.join(' '), r.Creator].join(' '));
+  });
 }
-
-// ─────────────────────────────────────────────────────────────────────────
-// Facets: what a document answers to
-// ─────────────────────────────────────────────────────────────────────────
 const uniq = a => [...new Set(a)];
-const FACETS = {
-  cls:  { label: 'cls',       of: d => [d.Class], word: v => clsWord(v) },
-  dec:  { label: 'decade',    of: d => [d.__dec], word: v => v === 'undated' ? t('undated') : v },
-  acc:  { label: 'access',    of: d => [d.__acc], word: v => t('a_' + v) },
-  arch: { label: 'archive',   of: d => d.__arch ? [d.__arch] : [], word: v => v },
-  site: { label: 'site',      of: d => d.__sites.map(uidOf), word: v => (BYUID[v] || {}).Name || v },
-  k:    { label: 'kommune',   of: d => d.__k, word: v => (KOM.find(k => k.nr === v) || {}).n || v },
-  fam:  { label: 'family',    of: d => uniq(d.__sites.flatMap(s => s.__fam)), word: v => t(v) },
-  ty:   { label: 'type',      of: d => uniq(d.__sites.filter(s => s.__cat === 'facility' && s.Type).map(s => String(s.Type).trim())), word: v => v },
-  pty:  { label: 'ptype',     of: d => uniq(d.__sites.filter(s => s.__cat === 'project' && s.Type).map(s => String(s.Type).trim())), word: v => v },
-  st:   { label: 'status',    of: d => uniq(d.__sites.map(s => s.__cls)), word: v => t('st_' + v) },
-  pic:  { label: 'pictogram', of: d => uniq(d.__sites.map(s => s.__pic)), word: v => (PICTO[v] || [v, v])[NO() ? 1 : 0] }
-};
-let state = { v: 'terms', f: {}, doc: '' };
-const matches = (d, f) => Object.keys(f).every(k => FACETS[k] && FACETS[k].of(d).includes(f[k]));
-const chosen = () => DOCS.filter(d => matches(d, state.f));
-function valuesOf(key, order) {
-  const n = {};
-  DOCS.forEach(d => FACETS[key].of(d).forEach(v => { n[v] = (n[v] || 0) + 1; }));
-  const vs = Object.keys(n);
-  if (order) return order.filter(v => vs.includes(v));
-  return vs.sort((a, b) => coll.compare(FACETS[key].word(a), FACETS[key].word(b)));
-}
-const countWith = (key, v) => { const f = Object.assign({}, state.f, { [key]: v }); return DOCS.filter(d => matches(d, f)).length; };
-const docsOfSite = uid => DOCS.filter(d => d.__sites.some(s => uidOf(s) === uid));
 
 // ─────────────────────────────────────────────────────────────────────────
-// Address: #doc=ID, or #v=view&cls=…&site=…
+// The ways to arrange the documents. Corporate network stands apart, last.
 // ─────────────────────────────────────────────────────────────────────────
+const CATS = [
+  { id: 'site', label: 'Site', of: d => d.__siteNames },
+  { id: 'cls', label: 'Class', of: d => d.Class ? [d.Class] : [], order: CLASS_ORDER },
+  { id: 'dec', label: 'Decade', of: d => d.__dec ? [d.__dec] : [], dec: true },
+  { id: 'k', label: 'Kommune', of: d => d.__k },
+  { id: 'ty', label: 'Type of site', of: d => d.__ty },
+  { id: 'arch', label: 'Archive', of: d => d.__arch ? [d.__arch] : [] },
+  { id: 'net', label: 'Corporate network', of: d => d.__net, gap: true }
+];
+const catOf = id => CATS.find(c => c.id === id);
+function groupsOf(cat) {
+  const groups = {}, none = [];
+  DOCS.forEach(d => { const vs = cat.of(d); if (!vs.length) none.push(d); vs.forEach(v => (groups[v] = groups[v] || []).push(d)); });
+  let keys = Object.keys(groups);
+  if (cat.order) keys = cat.order.filter(k => groups[k]).concat(keys.filter(k => !cat.order.includes(k)).sort((a, b) => coll.compare(a, b)));
+  else if (cat.dec) keys.sort(); else keys.sort((a, b) => coll.compare(a, b));
+  const list = keys.map(k => [k, groups[k]]);
+  if (none.length) list.push([cat.dec ? 'Undated' : 'None', none]);
+  return list;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Address: #by=cls&g=Photograph, #doc=ID, #q=word — so a view can be shared.
+// ─────────────────────────────────────────────────────────────────────────
+let state = { by: '', g: '', doc: '', q: '' };
 function readHash() {
-  const o = { v: 'terms', f: {}, doc: '' };
+  const o = { by: '', g: '', doc: '', q: '' };
   location.hash.replace(/^#/, '').split('&').forEach(kv => {
     const i = kv.indexOf('='); if (i < 1) return;
     const k = kv.slice(0, i); let v = kv.slice(i + 1); try { v = decodeURIComponent(v); } catch (e) {}
-    if (k === 'doc') o.doc = v; else if (k === 'v') o.v = v; else if (FACETS[k]) o.f[k] = v;
+    if (k in o) o[k] = v;
   });
-  if (o.doc) o.v = 'doc';
+  if (!catOf(o.by)) { o.by = ''; o.g = ''; }
+  if (o.doc && !BYID[o.doc]) o.doc = '';
   return o;
 }
-function go(next, keepScroll) {
-  state = Object.assign({ v: 'terms', f: {}, doc: '' }, next);
-  const parts = [];
-  if (state.v === 'doc') parts.push('doc=' + encodeURIComponent(state.doc));
-  else if (state.v !== 'terms') parts.push('v=' + state.v);
-  Object.keys(state.f).forEach(k => parts.push(k + '=' + encodeURIComponent(state.f[k])));
-  history.pushState(null, '', parts.length ? '#' + parts.join('&') : location.pathname + location.search);
-  render();
-  if (!keepScroll) window.scrollTo(0, 0);
+function writeHash() {
+  const parts = ['by', 'g', 'doc', 'q'].filter(k => state[k]).map(k => k + '=' + encodeURIComponent(state[k]));
+  history.replaceState(null, '', parts.length ? '#' + parts.join('&') : location.pathname + location.search);
 }
-window.addEventListener('popstate', () => { state = readHash(); render(); });
 
 // ─────────────────────────────────────────────────────────────────────────
-// Views
+// The documents move themselves: where each stands is noted before the
+// arrangement changes, and after it each glides from there to its new place.
 // ─────────────────────────────────────────────────────────────────────────
-const openMore = {};
-const term = (key, v, label) => {
-  const on = state.f[key] === v, n = on ? 1 : countWith(key, v);
-  return `<button class="t${on ? ' on' : ''}${n ? '' : ' none'}" data-k="${key}" data-val="${esc(v)}"${n ? '' : ' disabled'}>${esc(label || FACETS[key].word(v))}</button>`;
-};
-const group = (title, key, vals, cap) => {
-  if (!vals.length) return '';
-  const head = `<h3 class="cap">${esc(title)}</h3>`;
-  const all = !cap || vals.length <= cap || openMore[key + title];
-  return `<div class="grp">${head}${(all ? vals : vals.slice(0, cap)).map(v => term(key, v)).join('')}` +
-    (cap && vals.length > cap ? `<button class="more" data-more="${esc(key + title)}">${all ? t('fewer') : t('more') + ' (' + (vals.length - cap) + ')'}</button>` : '') + `</div>`;
-};
-const line = (key, vals) => vals.length ? `<span class="ln"><span class="cap">${esc(t(FACETS[key].label))}</span>${vals.map(v => term(key, v)).join('')}</span>` : '';
-
-function siteHead() {
-  const s = BYUID[state.f.site]; if (!s) return '';
-  const st = STATUS_WORD[s.__cat][s.__cls][NO() ? 1 : 0];
-  return `<div class="a-head"><h2>${symbol(s, 16)}<span>${esc(s.Name)}</span></h2>` +
-    `<div class="wh">${esc([s.__kn, s.Type, st].filter(Boolean).join(' · '))}<a class="u cap" href="${esc(MAP_LINK + encodeURIComponent(uidOf(s)))}" target="_top" style="font-size:var(--fs-small)">${t('map')} →</a></div></div>`;
-}
-function viewTerms() {
-  const decs = valuesOf('dec').filter(v => v !== 'undated').sort().concat(valuesOf('dec').includes('undated') ? ['undated'] : []);
-  const top = `<div class="a-top">${line('dec', decs)}${line('acc', valuesOf('acc', ['open', 'permission asked', 'restricted']))}${line('fam', valuesOf('fam', ['reception', 'extraction', 'construction']))}</div>`;
-  const present = new Set(valuesOf('cls'));
-  const classes = CLASS_GROUPS.map(([g, cs]) => group(t(g), 'cls', cs.filter(c => present.has(c)))).join('') +
-    group(t('cls'), 'cls', [...present].filter(c => !CLASS_GROUPS.some(([, cs]) => cs.includes(c))));
-  const arch = valuesOf('arch').filter(v => DOCS.filter(d => d.__arch === v).length >= 2);
-  const c1 = classes;
-  const c2 = group(t('archive'), 'arch', arch, 14) + group(t('type'), 'ty', valuesOf('ty')) + group(t('ptype'), 'pty', valuesOf('pty')) +
-             group(t('status'), 'st', valuesOf('st', ['active', 'future', 'old', 'contaminated', 'unknown'])) + group(t('kommune'), 'k', valuesOf('k'), 14);
-  const any = Object.keys(state.f).length;
-  return siteHead() + top + (any ? results() : '') + `<div class="a-cols"${any ? ' style="margin-top:var(--gap)"' : ''}><div>${c1}</div><div>${c2}</div></div>`;
-}
-function plate(d, big) {
-  const y = d.__year ? String(d.Date).slice(0, 4) : '—';
-  return `<span class="plate"><span class="k">${esc(clsWord(d.Class))}</span><span class="y">${esc(y)}</span><span class="a">${esc(d.__arch)}</span></span>`;
-}
-function card(d) {
-  const s0 = d.__sites[0];
-  const where = d.__sites.length ? s0.Name + (d.__sites.length > 1 ? ' +' + (d.__sites.length - 1) : '') : (d.Kommune || '');
-  const pic = d.__img ? `<img src="${esc(d.__img)}" alt="" loading="lazy">` : plate(d);
-  const ask = d.__acc !== 'open' ? ` · <span class="ask">${esc(t('a_' + d.__acc))}</span>` : '';
-  return `<a class="card" href="#doc=${encodeURIComponent(d.DocID)}" data-doc="${esc(d.DocID)}"><span class="im">${pic}</span>` +
-    `<span class="nm">${esc(d.Title || clsWord(d.Class))}</span>` +
-    `<span class="ds">${esc([d.Date, where].filter(Boolean).join(' · '))}${ask}</span></a>`;
-}
-function results() {
-  const rs = chosen();
-  if (!rs.length) return `<p class="a-msg">${t('none')}</p>`;
-  return `<div class="a-res">${rs.map(card).join('')}</div>`;
-}
-function viewSites() {
-  let cur = '', out = '';
-  SITES.forEach(s => {
-    const n = docsOfSite(uidOf(s)).length; if (!n) return;
-    const L = (String(s.Name || '?').trim()[0] || '?').toUpperCase();
-    if (L !== cur) { cur = L; out += `<div class="lt cap">${esc(L)}</div>`; }
-    out += `<button class="t" data-k="site" data-val="${esc(uidOf(s))}">${symbol(s, 11)}<span>${esc(s.Name)} <small>${n}</small></span></button>`;
+const still = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function capture() {
+  const m = {};
+  document.querySelectorAll('#a-main [data-id]').forEach(el => {
+    if (m[el.dataset.id]) return;
+    const b = el.getBoundingClientRect(); m[el.dataset.id] = { x: b.left, y: b.top };
   });
-  return `<div class="a-az">${out}</div>`;
+  return m;
 }
-function viewKommuner() {
-  const kx = Math.cos(60 * Math.PI / 180);
-  const P = ([x, y]) => (x * kx * 100).toFixed(2) + ',' + (-y * 100).toFixed(2);
-  const others = Object.assign({}, state.f); delete others.k;
-  const has = new Set(DOCS.filter(d => matches(d, others)).flatMap(d => d.__k));
-  const any = new Set(DOCS.flatMap(d => d.__k));
-  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-  const paths = KOM.map(k => {
-    const polys = k.g.type === 'Polygon' ? [k.g.coordinates] : k.g.coordinates;
-    const d = polys.map(p => p.map(r => {
-      if (any.has(k.nr)) r.forEach(([x, y]) => { const X = x * kx * 100, Y = -y * 100; x0 = Math.min(x0, X); x1 = Math.max(x1, X); y0 = Math.min(y0, Y); y1 = Math.max(y1, Y); });
-      return 'M' + r.map(P).join('L') + 'Z';
-    }).join('')).join('');
-    return `<path d="${d}" class="${has.has(k.nr) ? 'has' : ''}${state.f.k === k.nr ? ' on' : ''}" data-nr="${k.nr}" data-n="${esc(k.n)}"/>`;
+function glide(prev) {
+  if (!prev || !Element.prototype.animate || still()) return;
+  const seen = {}, vh = window.innerHeight || 900;
+  document.querySelectorAll('#a-main [data-id]').forEach((el, i) => {
+    const id = el.dataset.id, b = el.getBoundingClientRect(), p = prev[id];
+    if (el.classList.contains('open')) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 200, fill: 'backwards' });
+    else if (p && !seen[id]) {
+      const dx = p.x - b.left, dy = p.y - b.top;
+      if ((dx || dy) && (b.top < vh * 1.5 || p.y < vh * 1.5))
+        el.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'translate(0,0)' }],
+                   { duration: 750, easing: 'cubic-bezier(.2,.7,.2,1)', delay: Math.min(i * 0.8, 220), fill: 'backwards' });
+    } else if (b.top < vh * 1.5) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, delay: 350, fill: 'backwards' });
+    seen[id] = 1;
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Drawing
+// ─────────────────────────────────────────────────────────────────────────
+const svgIcon = (d, z, w) => `<svg width="${z}" height="${z}" viewBox="0 0 32 32" aria-hidden="true"><path d="${d}" fill="#fff" stroke="#000" stroke-width="${w}"/></svg>`;
+function obj(d) {
+  const pic = d.__img ? `<img src="${esc(d.__img)}" alt="" loading="lazy" decoding="async">` : svgIcon(d.__icon, 36, .8);
+  return `<a class="obj" href="#doc=${encodeURIComponent(d.DocID)}" data-id="${esc(d.DocID)}" data-doc="${esc(d.DocID)}" title="${esc(d.Title)}"><span class="im">${pic}</span><span class="lb">${esc(d.__label)}</span></a>`;
+}
+function opened(d) {
+  const pic = d.__img ? `<img src="${esc(d.__img)}" alt="${esc(d.Title)}">` : svgIcon(d.__icon, 120, .4);
+  const terms = [].concat(d.__siteNames.map(v => ['site', v]), d.__dec ? [['dec', d.__dec]] : [], d.__k.map(v => ['k', v]),
+                          d.Class ? [['cls', d.Class]] : [], d.__arch ? [['arch', d.__arch]] : [], d.__net.map(v => ['net', v]));
+  const tm = terms.map(([c, v], i) => {
+    const on = state.by === c && state.g === v;
+    return `<span><button class="${c === 'k' ? 'k' : ''}${on ? ' on' : ''}" data-term="${c}" data-val="${esc(v)}">${esc(v)}</button>${i < terms.length - 1 ? ', ' : ''}</span>`;
   }).join('');
-  const mx = (x1 - x0) * 0.03, my = (y1 - y0) * 0.03; x0 -= mx; x1 += mx; y0 -= my; y1 += my;
-  const dots = SITES.filter(s => s.__xy).map(s => `<circle cx="${(s.__xy[0] * kx * 100).toFixed(2)}" cy="${(-s.__xy[1] * 100).toFixed(2)}" r="1.6" fill="${colourOf(s)}"/>`).join('');
-  const svg = `<svg id="a-kmap" preserveAspectRatio="xMinYMin meet" viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${(x1 - x0).toFixed(1)} ${(y1 - y0).toFixed(1)}" role="img" aria-label="${esc(t('kommune'))}">${paths}${dots}</svg>`;
-  return svg + (state.f.k ? results() : `<p class="a-msg">${t('pickK')}</p>`);
+  const link = safeUrl(d.Link), site = d.__sites[0];
+  const note = d.__acc !== 'open' ? `<span class="note">${esc(d.__acc)}</span>` : '';
+  return `<div class="open" data-id="${esc(d.DocID)}">` +
+    `<button class="pic" data-close aria-label="Close">${pic}</button>` +
+    `<div class="tt">${esc(d.Title)}</div>` +
+    (tm ? `<div class="tm">${tm}</div>` : '') +
+    `<div class="ln">${note}${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">document ↗</a>` : ''}` +
+    `${site ? `<a href="${esc(MAP_LINK + encodeURIComponent(uidOf(site)))}" target="_top">map →</a>` : ''}<button data-close>close ×</button></div></div>`;
 }
-function viewColour() {
-  const row = (cat, k) => {
-    const n = DOCS.filter(d => d.__sites.some(s => s.__cat === cat && s.__cls === k)).length; if (!n) return '';
-    const c = COL[cat][k] === '#FFFFFF' ? '#4A4A4A' : COL[cat][k];
-    return `<button class="t" data-k="st" data-val="${k}" data-fam="${cat === 'project' ? 'construction' : ''}"><span class="${cat === 'project' ? 'sq' : 'dot'}" style="border-color:${c}"></span><span>${esc(STATUS_WORD[cat][k][NO() ? 1 : 0])}<br><span class="a-count">${n} ${t(n === 1 ? 'doc1' : 'docs')}</span></span></button>`;
-  };
-  return `<div class="grp"><h3 class="cap">${t('reception')} · ${t('extraction')}</h3></div><div class="a-sw">${['active', 'future', 'old', 'contaminated', 'unknown'].map(k => row('facility', k)).join('')}</div>` +
-         `<div class="grp" style="margin-top:var(--gap)"><h3 class="cap">${t('construction')}</h3></div><div class="a-sw">${['active', 'future', 'old', 'unknown'].map(k => row('project', k)).join('')}</div>`;
-}
-function viewPicto() {
-  const vals = Object.keys(PICTO).filter(p => DOCS.some(d => d.__sites.some(s => s.__pic === p)));
-  return `<div class="a-pic">${vals.map(p => `<button class="t${state.f.pic === p ? ' on' : ''}" data-k="pic" data-val="${p}"><img src="picto_grammar/${p}.png" alt="" loading="lazy"><span>${esc(PICTO[p][NO() ? 1 : 0])}</span></button>`).join('')}</div>`;
-}
-
-// One document.
-function viewDoc() {
-  const d = BYID[state.doc];
-  if (!d) return `<p class="a-msg">${t('notfound')}</p>`;
-  const link = safeUrl(d.Link);
-  const graph = d.Class === 'Ownership diagram' && /^https:\/\//.test(link);
-  const pic = d.__img ? `<img src="${esc(d.__img)}" alt="${esc(d.Title)}">`
-            : graph ? `<iframe src="${esc(link)}" title="${esc(d.Title)}" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>`
-            : plate(d, true);
-  const r = (k, html) => html ? `<div class="r"><span class="k">${t(k)}</span><span class="v">${html}</span></div>` : '';
-  const sites = d.__sites.map(s => `<span class="st">${symbol(s, 11)}${term('site', uidOf(s), s.Name)}</span>`).join('');
-  const kom = d.__k.map(k => term('k', k)).join(', ');
-  const acc = d.__acc === 'open' ? esc(t('a_open')) : `<span class="ask">${esc(t('a_' + d.__acc))}</span> · ${t('askNote')}`;
-  // previous and next within the list the document was opened from
-  const list = chosen(), i = list.indexOf(d);
-  const nav = list.length > 1 && i >= 0 ? `<div class="nav">` +
-    (i > 0 ? `<button data-doc="${esc(list[i - 1].DocID)}">← ${t('prev')}</button>` : '') +
-    (i < list.length - 1 ? `<button data-doc="${esc(list[i + 1].DocID)}">${t('next')} →</button>` : '') +
-    `<button data-back>${t('back')}</button></div>` : `<div class="nav"><button data-back>${t('back')}</button></div>`;
-  return `<article class="a-doc"><div class="pic">${pic}</div><div>
-    <h1>${esc(d.Title || clsWord(d.Class))}</h1>
-    ${r('f_class', term('cls', d.Class))}${r('f_date', esc(d.Date))}${r('f_sites', sites)}${r('f_kommune', kom || esc(d.Kommune))}
-    ${r('f_archive', d.__arch ? term('arch', d.__arch) : '')}${r('f_creator', esc(d.Creator))}${r('f_licence', esc(d.Licence))}
-    ${r('f_access', acc)}${r('f_note', esc(d.Note))}${r('f_id', `<span class="mono">${esc(d.DocID)}</span>`)}
-    ${link ? `<a class="go u" href="${esc(link)}" target="_blank" rel="noopener noreferrer">↗ ${t('open')}</a>` : ''}
-    ${d.__sites[0] ? `<a class="go u" href="${esc(MAP_LINK + encodeURIComponent(uidOf(d.__sites[0])))}" target="_top">${t('map')} →</a>` : ''}
-    ${nav}</div></article>`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// Render
-// ─────────────────────────────────────────────────────────────────────────
-function chips() {
-  const ks = Object.keys(state.f);
-  if (!ks.length) { $('a-chips').innerHTML = ''; return; }
-  const n = chosen().length;
-  $('a-chips').innerHTML = ks.map(k => `<button class="chip" data-drop="${k}">${esc(FACETS[k].word(state.f[k]))}<b>×</b></button>`).join('') +
-    `<span class="a-count">${n} ${t(n === 1 ? 'doc1' : 'docs')}</span>` + (ks.length > 1 ? `<button class="a-clear" data-clear>${t('clear')}</button>` : '');
+function grid(ds, shown) {
+  return '<div class="grid">' + ds.map(d => {
+    if (d.DocID === state.doc && !shown.done) { shown.done = 1; return opened(d); }
+    return obj(d);
+  }).join('') + '</div>';
 }
 function render() {
-  document.documentElement.lang = NO() ? 'no' : 'en';
-  document.querySelectorAll('[data-en]').forEach(el => { el.textContent = el.getAttribute('data-' + lang) || el.getAttribute('data-en'); });
-  document.querySelectorAll('#a-lang button').forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
-  document.querySelectorAll('#a-nav .nv').forEach(b => b.classList.toggle('on', b.dataset.go === state.v));
-  const nSites = new Set(DOCS.flatMap(d => d.__sites.map(uidOf))).size;
-  $('a-tally').textContent = `${DOCS.length} ${t('docs')} · ${nSites} ${t('sitesN')}`;
-  chips();
-  const v = { terms: viewTerms, sites: viewSites, kommuner: viewKommuner, colour: viewColour, picto: viewPicto, doc: viewDoc }[state.v] || viewTerms;
-  $('a-view').innerHTML = v();
-  const d = state.v === 'doc' ? BYID[state.doc] : null;
-  document.title = (d ? d.Title + ' · ' : '') + (NO() ? 'Register' : 'Index') + ' · Dirty Business';
+  const cat = catOf(state.by), shown = {};
+  let html, list = [];
+  if (!cat) html = `<section class="sec">${grid(DOCS, shown)}</section>`;
+  else {
+    list = groupsOf(cat);
+    html = list.filter(([k]) => !state.g || state.g === k)
+      .map(([k, ds]) => `<section class="sec"><button class="sec-t" data-g="${esc(k)}">${esc(k)}</button>${grid(ds, shown)}</section>`).join('');
+  }
+  $('a-main').innerHTML = html;
+  $('a-cats').innerHTML = CATS.map(c => {
+    const on = c.id === state.by;
+    const subs = on ? `<div class="subs">${list.map(([k]) => `<button class="sub${state.g === k ? ' on' : ''}" data-g="${esc(k)}">${esc(k)}</button>`).join('')}</div>` : '';
+    return `<button class="cat${on ? ' on' : ''}${c.gap ? ' gap' : ''}" data-by="${c.id}">${esc(c.label)}</button>${subs}`;
+  }).join('');
+  search();
+  const d = BYID[state.doc];
+  document.title = (d ? d.Title + ' · ' : '') + 'Index · Dirty Business';
+  writeHash();
+}
+function search() {
+  const terms = fold(state.q).split(/\s+/).filter(Boolean);
+  document.querySelectorAll('#a-main .obj').forEach(el => {
+    const h = HAY[el.dataset.id] || '';
+    el.classList.toggle('dim', !!terms.length && !terms.every(t => h.includes(t)));
+  });
+}
+function change(next, toTop) {
+  const prev = capture();
+  Object.assign(state, next);
+  render();
+  if (toTop) window.scrollTo(0, 0);
+  glide(prev);
+  const o = document.querySelector('#a-main .open');
+  if (o && next.doc) setTimeout(() => o.scrollIntoView({ block: 'nearest', behavior: still() ? 'auto' : 'smooth' }), 60);
 }
 
 document.addEventListener('click', e => {
-  const el = e.target.closest('button,a,path');
+  const el = e.target.closest('button,a');
   if (!el || document.documentElement.classList.contains('dbx-sel') || document.documentElement.classList.contains('dbx-txt')) return;
-  if (el.dataset.go) { go({ v: el.dataset.go, f: state.f }); return; }
-  if (el.dataset.lang) { lang = el.dataset.lang; try { localStorage.setItem('db-sites-lang', lang); } catch (x) {} render(); return; }
-  if (el.dataset.drop) { const f = Object.assign({}, state.f); delete f[el.dataset.drop]; go({ v: state.v === 'doc' ? 'terms' : state.v, f }); return; }
-  if (el.hasAttribute('data-clear')) { go({ v: state.v === 'doc' ? 'terms' : state.v, f: {} }); return; }
-  if (el.hasAttribute('data-back')) { go({ v: 'terms', f: state.f }); return; }
-  if (el.dataset.more) { openMore[el.dataset.more] = !openMore[el.dataset.more]; render(); return; }
-  if (el.dataset.k && !el.disabled) {
-    const f = Object.assign({}, state.f), k = el.dataset.k, v = el.dataset.val;
-    if (f[k] === v && state.v !== 'doc') delete f[k]; else f[k] = v;
-    if (el.dataset.fam) f.fam = el.dataset.fam;
-    go({ v: state.v === 'kommuner' && k === 'k' ? 'kommuner' : 'terms', f }); return;
+  if (el.dataset.by) { change({ by: state.by === el.dataset.by ? '' : el.dataset.by, g: '' }); return; }
+  if (el.dataset.g != null) { change({ g: state.g === el.dataset.g ? '' : el.dataset.g }, true); return; }
+  if (el.dataset.term) {
+    const on = state.by === el.dataset.term && state.g === el.dataset.val;
+    change({ by: el.dataset.term, g: on ? '' : el.dataset.val, doc: '' }, true); return;
   }
-  if (el.tagName === 'path' && el.classList.contains('has')) {
-    const f = Object.assign({}, state.f);
-    if (f.k === el.dataset.nr) delete f.k; else f.k = el.dataset.nr;
-    go({ v: 'kommuner', f }, true); return;
-  }
-  if (el.dataset.doc) { e.preventDefault(); go({ v: 'doc', doc: el.dataset.doc, f: state.f }); }
+  if (el.hasAttribute('data-close')) { change({ doc: '' }); return; }
+  if (el.dataset.doc) { e.preventDefault(); change({ doc: state.doc === el.dataset.doc ? '' : el.dataset.doc }); }
 });
-document.addEventListener('mousemove', e => {
-  const tip = $('a-ktip');
-  const p = e.target.closest && e.target.closest('#a-kmap path');
-  if (!p) { tip.style.display = 'none'; return; }
-  const n = DOCS.filter(d => d.__k.includes(p.dataset.nr)).length;
-  tip.textContent = p.dataset.n + (n ? ' · ' + n : '');
-  tip.style.display = 'block'; tip.style.left = (e.clientX + 12) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
-});
+// A picture that cannot be fetched gives way to the line icon of its kind.
+document.addEventListener('error', e => {
+  const img = e.target;
+  if (!img || img.tagName !== 'IMG') return;
+  const box = img.closest('[data-id]'), d = box && BYID[box.dataset.id];
+  if (d) img.outerHTML = box.classList.contains('open') ? svgIcon(d.__icon, 120, .4) : svgIcon(d.__icon, 36, .8);
+}, true);
+$('a-q').addEventListener('input', e => { state.q = e.target.value; search(); writeHash(); });
+window.addEventListener('hashchange', () => { const o = readHash(); if (['by', 'g', 'doc', 'q'].some(k => o[k] !== state[k])) { state = o; $('a-q').value = state.q; render(); } });
 
 Promise.all([parseCsv(FACILITIES_CSV), parseCsv(PROJECTS_CSV), parseCsv(DOCUMENTS_CSV), getJson(KOMMUNER)])
   .then(([f, p, d, kom]) => {
     prepare(f.data || [], p.data || [], d.data || [], kom);
     if (!DOCS.length) throw new Error('empty');
     state = readHash();
+    $('a-q').value = state.q;
     render();
+    if (state.doc) { const o = document.querySelector('#a-main .open'); if (o) o.scrollIntoView({ block: 'center' }); }
   })
-  .catch(err => { console.error(err); $('a-view').innerHTML = `<p class="a-msg">${t('loadfail')}</p>`; });
+  .catch(err => { console.error(err); $('a-main').innerHTML = '<p class="a-msg">The database could not be read. Try again in a minute.</p>'; });
 })();
 </script>
 </body>
