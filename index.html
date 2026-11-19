@@ -4940,6 +4940,47 @@ document.addEventListener('DOMContentLoaded', function() {
     // A click on bare map puts the card away.
     map.on('click', e => { setTimeout(() => { if (peekSite && !(e.originalEvent && e.originalEvent.__handled)) hidePeek(); }, 0); });
 
+    // ── ownership diagrams talk to the map ──
+    // A diagram says how tall it is (the box takes that height, up to a limit,
+    // past which the diagram scrolls inside it), asks which of its names are
+    // sites on this map, and sends a click on one of those names back here.
+    // The answer goes only to the diagram that asked, and a click is honoured
+    // only from a diagram frame on this page.
+    function graphFrameOf(src) {
+        return [...document.querySelectorAll('#graph-container iframe')].find(f => f.contentWindow === src) || null;
+    }
+    function linkableFor(here) {
+        const out = {}, byOp = new Map();
+        allSites.forEach(s => {
+            if (s === here) return;
+            const uid = uidOf(s); if (!uid) return;
+            if (s.Name) out[s.Name.trim()] = uid;
+            [s.Operator, s.Company].forEach(c => {
+                c = (c || '').trim(); if (!c || c === 'Private individual') return;
+                if (!byOp.has(c)) byOp.set(c, new Set());
+                byOp.get(c).add(uid);
+            });
+        });
+        // a company is a link only when it runs exactly one site on the map
+        byOp.forEach((uids, c) => { if (uids.size === 1 && !(c in out)) out[c] = [...uids][0]; });
+        return out;
+    }
+    window.addEventListener('message', e => {
+        const d = e.data; if (!d || typeof d !== 'object') return;
+        const fr = graphFrameOf(e.source); if (!fr) return;
+        if (d.dbGraphHeight) {
+            const box = fr.parentElement;
+            box.style.height = Math.max(120, Math.min(600, Math.ceil(+d.dbGraphHeight) || 260)) + 'px';
+        }
+        if (d.dbGraphReady) {
+            try { e.source.postMessage({ dbLinkable: linkableFor(currentSite) }, '*'); } catch (err) {}
+        }
+        if (d.dbOpenSite) {
+            const site = allSites.find(s => uidOf(s) === String(d.dbOpenSite));
+            if (site) pickSite(site);
+        }
+    });
+
     // Open a record from anywhere: the card's link, a shared address.
     function openSite(site, frame) {
         if (peekSite) hidePeek(true);
