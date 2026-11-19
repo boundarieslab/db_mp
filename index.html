@@ -368,6 +368,7 @@ button,input,select{font:inherit;color:inherit}
 .media-modes{position:absolute;right:4px;top:4px;display:flex;gap:3px;z-index:3}
 .media-modes .media-toggle{position:static}
 .sb-media .slideshow-slide{pointer-events:none}
+@media (prefers-reduced-motion: no-preference){.sb-media{transition:height .2s cubic-bezier(.4,0,.2,1)}}
 .sb-media .slideshow-slide.active{pointer-events:auto;cursor:zoom-in}
 /* Before and after: two pictures of one frame; the handle wipes the later over the earlier. */
 .ba{position:absolute;inset:0;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:zoom-in}
@@ -1696,11 +1697,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.slideshowPrev = () => { if (currentImages.length > 1) { currentSlideIndex = (currentSlideIndex - 1 + currentImages.length) % currentImages.length; updateSlideshow(); } };
     window.slideshowNext = () => { if (currentImages.length > 1) { currentSlideIndex = (currentSlideIndex + 1) % currentImages.length; updateSlideshow(); } };
+    const mediaSize = {};
+    function fitMedia(el, w, h) {
+        if (!el || !w || !h || !el.clientWidth) return;
+        if (!el.dataset.base) el.dataset.base = el.clientHeight;
+        const W = el.clientWidth, base = +el.dataset.base;
+        el.style.height = Math.round(Math.min(W * 1.6, Math.max(base, W * h / w))) + 'px';
+    }
+    // Photos: the band takes the shape of the one shown.
+    function fitPhoto() {
+        const el = document.querySelector('#sb-dynamic-content .sb-media'), u = currentImages[currentSlideIndex];
+        if (!el || !u || !el.querySelector('.slideshow-slide')) return;
+        const k = safeUrl(u), known = mediaSize[k];
+        if (known) return fitMedia(el, known[0], known[1]);
+        const im = new Image();
+        im.onload = () => { mediaSize[k] = [im.naturalWidth, im.naturalHeight];
+            if (currentImages[currentSlideIndex] === u && el.isConnected) fitMedia(el, im.naturalWidth, im.naturalHeight); };
+        im.src = k;
+    }
     function updateSlideshow() {
         document.querySelectorAll('.slideshow-slide').forEach((s, i) => s.classList.toggle('active', i === currentSlideIndex));
         const cr = document.getElementById('sb-credit'); if (cr) cr.innerHTML = creditHtml(currentSlideIndex);
         const c = document.querySelector('.slideshow-counter');
         if (c) c.textContent = `${currentSlideIndex + 1} / ${currentImages.length}`;
+        fitPhoto();
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -2264,6 +2284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const el = box.querySelector('.ba-fr'), im = el.querySelector('img');
         const size = () => {
             if (!im.naturalWidth || !box.clientWidth) return;
+            fitMedia(box.closest('.sb-media'), im.naturalWidth, im.naturalHeight);
             const k = Math.min(box.clientWidth / im.naturalWidth, box.clientHeight / im.naturalHeight);
             el.style.width = Math.round(im.naturalWidth * k) + 'px'; el.style.height = Math.round(im.naturalHeight * k) + 'px';
         };
@@ -2556,6 +2577,7 @@ document.addEventListener('DOMContentLoaded', function() {
             viewer.open(currentImages.map((u, i) => ({ src: safeUrl(u), credit: creditHtml(i) })), currentSlideIndex));
         const ba = container.querySelector('.ba');
         if (ba && tn) wirePair(ba, () => viewer.open([{ pair: tn, credit: tnCreditHtml(tn) }], 0));
+        if (mediaMode === 'photo') fitPhoto();
         markDeckSelection();
         setHot(site, true);
         document.title = (site.Name ? site.Name + ' · ' : '') + 'Dirty Business Map';

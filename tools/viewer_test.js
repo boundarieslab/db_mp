@@ -52,6 +52,9 @@ const csv = [cols.join(','), ...base.split('\n').slice(1).map(l => l + ','.repea
     ok(await p.locator('.slideshow-slide').count() === 2, 'the record opens on the photos (2 slides)');
     ok(await p.locator('.media-toggle[data-media="thennow"]').count() === 1, 'with a 1937 / 2026 button');
     ok((await p.locator('.media-toggle[data-media="thennow"]').innerText()).trim() === '1937 / 2026', 'which names the two years');
+    await p.waitForTimeout(600);
+    const pm = await p.locator('.sb-media').boundingBox();
+    ok(Math.abs(pm.height - pm.width * 2 / 3) < 3, `a 3:2 photo fills the band's width; the band grows for it (${Math.round(pm.width)} × ${Math.round(pm.height)})`);
     await p.screenshot({ path: `${OUT}/${vp.name}_1_photos.png` });
 
     await p.locator('.slideshow-slide.active').click({ position: { x: 60, y: 60 } });
@@ -85,10 +88,13 @@ const csv = [cols.join(','), ...base.split('\n').slice(1).map(l => l + ','.repea
     await p.locator('.media-toggle[data-media="thennow"]').click();
     await p.waitForSelector('.ba');
     await p.waitForFunction(() => [...document.querySelectorAll('.ba img')].every(i => i.naturalWidth > 0));
+    await p.waitForTimeout(600);
     ok(/1937 Oslo 1937, Widerøes/.test(await p.locator('#sb-credit').innerText()), 'the pair shows both credits under it');
     const ba = await p.locator('.ba-fr').boundingBox();
     const mb = await p.locator('.sb-media').boundingBox();
-    ok(Math.abs(ba.height - mb.height) < 3 && ba.width < mb.width * .8, `the frame takes the photos' shape (${Math.round(ba.width)} × ${Math.round(ba.height)} in ${Math.round(mb.width)} × ${Math.round(mb.height)})`);
+    ok(Math.abs(ba.width - mb.width) < 3 && Math.abs(ba.height - Math.min(mb.width * 1.6, mb.width * 2400 / 1601)) < 3, `the pair fills the band's width and the band grows to its shape (${Math.round(ba.width)} × ${Math.round(ba.height)} in ${Math.round(mb.width)} × ${Math.round(mb.height)})`);
+    const below = await p.locator('.sb-head').boundingBox();
+    ok(below.y >= mb.y + mb.height - 1, 'the rest of the record moves down under it');
     await p.mouse.move(ba.x + ba.width * .5, ba.y + ba.height * .5);
     await p.mouse.down(); await p.mouse.move(ba.x + ba.width * .2, ba.y + ba.height * .5, { steps: 6 }); await p.mouse.up();
     const x = await p.locator('.ba-fr').evaluate(e => parseFloat(e.style.getPropertyValue('--x')));
