@@ -239,10 +239,38 @@
             .force("charge", d3.forceManyBody().strength(function (d) { return -70 - d.sites * 8; }).distanceMax(360))
             // named nodes keep room for their name
             .force("collide", d3.forceCollide().radius(function (d) { return Math.max(d.r + 9, (d.big || d.uid ? d.tw / 2 + 8 : d.r + 9)); }).strength(0.85))
-            .force("gx", d3.forceX(function (d) { return centre[d.home].x; }).strength(0.08))
-            .force("gy", d3.forceY(function (d) { return centre[d.home].y; }).strength(0.08))
+            .force("gx", d3.forceX(function (d) { return centre[d.home].x; }).strength(0.03))
+            .force("gy", d3.forceY(function (d) { return centre[d.home].y; }).strength(0.03))
+            .force("cx", d3.forceX(W / 2).strength(0.004))
+            .force("cy", d3.forceY(H / 2).strength(0.006))
+            .force("islands", islandForce())
             .alphaDecay(0.012).velocityDecay(0.35)
-            .on("tick", ticked);
+            .on("tick", ticked)
+            .on("end", function () { if (!selected) fit(); });
+
+        // Islands keep apart as wholes: each group is a disc round its nodes
+        // (names included), and where two discs overlap both groups are moved
+        // apart, so every island stays a separate white shape.
+        function islandForce() {
+            var homes;
+            function f(alpha) {
+                if (!homes) { homes = {}; nodes.forEach(function (d) { (homes[d.home] = homes[d.home] || []).push(d); }); }
+                var C = Object.keys(homes).map(function (k) {
+                    var m = homes[k], x = d3.mean(m, function (d) { return d.x; }), y = d3.mean(m, function (d) { return d.y; });
+                    var r = d3.max(m, function (d) { return Math.hypot(d.x - x, d.y - y) + d.r + ((d.big || d.uid) ? d.tw * 0.6 : 0); }) + 26;
+                    return { m: m, x: x, y: y, r: r };
+                });
+                for (var i = 0; i < C.length; i++) for (var j = i + 1; j < C.length; j++) {
+                    var a = C[i], b = C[j], dx = b.x - a.x, dy = b.y - a.y, dist = Math.hypot(dx, dy) || 1, over = a.r + b.r - dist;
+                    if (over <= 0) continue;
+                    var k = over * 0.5 * alpha * 0.9, ux = dx / dist, uy = dy / dist;
+                    var wa = b.m.length / (a.m.length + b.m.length), wb = 1 - wa;
+                    a.m.forEach(function (d) { d.vx -= ux * k * wa * 2; d.vy -= uy * k * wa * 2; });
+                    b.m.forEach(function (d) { d.vx += ux * k * wb * 2; d.vy += uy * k * wb * 2; });
+                }
+            }
+            return f;
+        }
 
         // pan and zoom; names appear as you come closer
         zoomer = d3.zoom().scaleExtent([0.25, 7]).on("zoom", function (e) { gAll.attr("transform", e.transform); labels(e.transform.k); });
@@ -274,7 +302,7 @@
     function hulls() {
         var by = {}; nodes.forEach(function (d) { if (d.group) (by[d.group] = by[d.group] || []).push(d); });
         var data = Object.keys(by).filter(function (k) { return N[k].sites >= 2 && by[k].length >= 3; }).map(function (k) {
-            var pts = []; by[k].forEach(function (d) { var p = d.r + 18; var tw = (d.big || d.uid) ? d.tw + 10 : 0; pts.push([d.x - p, d.y - p], [d.x + p + tw, d.y - p], [d.x - p, d.y + p], [d.x + p + tw, d.y + p]); });
+            var pts = []; by[k].forEach(function (d) { var p = d.r + 14; var tw = (d.big || d.uid) ? d.tw + 10 : 0; pts.push([d.x - p, d.y - p], [d.x + p + tw, d.y - p], [d.x - p, d.y + p], [d.x + p + tw, d.y + p]); });
             return { k: k, hull: d3.polygonHull(pts) };
         }).filter(function (d) { return d.hull; });
         var line = d3.line().curve(d3.curveCatmullRomClosed.alpha(1));
