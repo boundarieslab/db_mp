@@ -63,20 +63,22 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Feiring AS (Ollendorff family)", type:"p"},
+        {id:"Feiring AS", type:"div_ent"},
         {id:"Feiring Bruk AS", type:"div_ent", l:"(operator)"},
         {id:"Hobøl Massemottak", type:"receiving", l:"(Hobøl)", active:true},
         {id:"Feiring Bruk AS avd. Dal Pukkverk", type:"div_ind", l:"(Dal)"},
         {id:"Feiring Bruk AS avd. Heier Pukkverk (Enebakk)", type:"div_ind", l:"(Enebakk)"},
-        {id:"Re Pukkverk", type:"s", l:"(Sem)"}
+        {id:"Re Pukkverk", type:"s", l:"(Sem)"},
+        {id:"Ollendorff Holding AS", type:"p"}
     ];
     
     var LINKS = [
-        ["Feiring Bruk AS", "Feiring AS (Ollendorff family)"],
+        ["Feiring Bruk AS", "Feiring AS"],
         ["Hobøl Massemottak", "Feiring Bruk AS"],
         ["Feiring Bruk AS avd. Dal Pukkverk", "Feiring Bruk AS"],
         ["Feiring Bruk AS avd. Heier Pukkverk (Enebakk)", "Feiring Bruk AS"],
-        ["Re Pukkverk", "Feiring Bruk AS"]
+        ["Re Pukkverk", "Feiring Bruk AS"],
+        ["Feiring AS", "Ollendorff Holding AS"]
     ];
 
     var el = document.getElementById(containerID);

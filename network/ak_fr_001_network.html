@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Horgen miljøpark (planned) - Ownership Network</title>
+    
+    <style>
+        /* Same typeface as dirtybusiness.no and the map, served from the same
+           place, so the graphs are typographically part of the site. */
+        @font-face {
+            font-family: 'Diatype Mono';
+            src: url('https://freight.cargo.site/t/original/i/34e062220d932607590d93991273932252277d33d93566736279930922253303/DiatypeMono-Regular.woff2') format('woff2');
+            font-weight: normal; font-display: swap;
+        }
+        @font-face {
+            font-family: 'Diatype Mono';
+            src: url('https://freight.cargo.site/t/original/i/2274439092002939333902999233829283733003002928833773300022200299/DiatypeMono-Bold.woff2') format('woff2');
+            font-weight: bold; font-display: swap;
+        }
+    </style>
+    <style>
+        /* Identical frame for every graph: legend on top, graph fills the rest. */
+        .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
+        .dimmed { opacity: 0.15 !important; }
+        .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
+
+        svg { user-select: none; -webkit-user-select: none; }
+    
+        /* ── Canonical frame: identical in every graph in this repo ───────── */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+                     background: #fff; display: flex; flex-direction: column;
+                     font-family: 'Diatype Mono', 'JetBrains Mono', 'Courier New', monospace; }
+        #single-line-legend {
+            flex: 0 0 auto; position: relative; width: 100%; height: auto;
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+            gap: 5px 14px; padding: 7px 10px; box-sizing: border-box;
+            background: #fff; z-index: 100; border-bottom: 1px solid #f0f0f0;
+            font-size: 8px; color: #000; text-transform: uppercase; letter-spacing: 0.4px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .legend-item svg { width: 11px !important; height: 11px !important; flex-shrink: 0; overflow: visible; }
+        .legend-section, .legend-divider { display: none; }
+        #network-container { flex: 1 1 auto; width: 100%; min-height: 180px; height: auto;
+                             position: relative; margin: 0; }
+        #network-container svg { width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+
+<div id="single-line-legend">
+    <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="#000"/></svg> Parent group</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="#666"/></svg> Division</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><polygon points="7,1 13,13 1,13" fill="none" stroke="#666" stroke-width="1.5"/></svg> Subsidiary</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#666" stroke-width="1.5"/></svg> Affiliated site</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#00FF00" stroke-width="1.5"/><line x1="1" y1="1" x2="13" y2="13" stroke="#00FF00" stroke-width="1.5"/></svg> Construction project</div>
+    <div class="legend-item"><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="#FF0000" stroke-width="1.5"/><path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/></svg> Facility</div>
+</div>
+
+<div id="network-container"></div>
+
+<script>
+(function(){
+    var containerID = "network-container"; 
+
+    var NODES = [
+        {id:"Horgen miljøpark (planned)", type:"receiving", l:"(Horgen, Frogn)", active:true},
+        {id:"Skolt Holding AS", type:"p"},
+        {id:"Horgen Miljøpark AS", type:"div_ent", l:"(plan proposer)"},
+        {id:"Skolt Miljøpark AS", type:"div_ent", l:"(60 %)"},
+        {id:"Wetlesen Eiendom AS", type:"p", l:"(40 %)"},
+        {id:"Skolt Pukkverk AS", type:"div_ent"},
+        {id:"Vestby pukkverk", type:"s", l:"(Vestby)"},
+        {id:"Moss pukkverk", type:"s"},
+        {id:"Råde pukkverk", type:"s"},
+        {id:"Sarpsborg pukkverk", type:"s"}
+    ];
+    
+    var LINKS = [
+        ["Horgen miljøpark (planned)", "Horgen Miljøpark AS"],
+        ["Horgen Miljøpark AS", "Wetlesen Eiendom AS"],
+        ["Horgen Miljøpark AS", "Skolt Miljøpark AS"],
+        ["Vestby pukkverk", "Skolt Pukkverk AS"],
+        ["Skolt Pukkverk AS", "Skolt Holding AS"],
+        ["Skolt Miljøpark AS", "Skolt Holding AS"],
+        ["Moss pukkverk", "Skolt Pukkverk AS"],
+        ["Råde pukkverk", "Skolt Pukkverk AS"],
+        ["Sarpsborg pukkverk", "Skolt Pukkverk AS"]
+    ];
+
+    var el = document.getElementById(containerID);
+    var W, H, svg, nodes=[], links=[], parentMap={}, childMap={};
+    var time = 0, frame = 0, _raf = null, _settled = false, _labelRoom = 100;
+
+    function getStrictLineage(startNode) {
+        let pathNodes = new Set([startNode.id]);
+        let pathLinks = new Set();
+        let curr = startNode.id;
+        while(parentMap[curr]) {
+            pathLinks.add(curr + "-" + parentMap[curr]);
+            curr = parentMap[curr];
+            pathNodes.add(curr);
+        }
+        function findChildren(id) {
+            if(childMap[id]) childMap[id].forEach(c => {
+                pathNodes.add(c);
+                pathLinks.add(c + "-" + id);
+                findChildren(c);
+            });
+        }
+        findChildren(startNode.id);
+        return {nodes: pathNodes, links: pathLinks};
+    }
+
+
+    // ── Shared node vocabulary ────────────────────────────────────────────
+    // One shape set for every graph in this repo. Colours are the site's:
+    // black, grey, --col-facility #FF0000 (reception), --col-project #00FF00 (construction).
+    var DB_BLACK = "#000", DB_GREY = "#666", DB_RECEPTION = "#FF0000", DB_PROJECT = "#00FF00";
+
+    function dbShape(node) {
+        var ns = "http://www.w3.org/2000/svg";
+        // Read whichever key the data uses. Files written at different times
+        // stored the type under cargo_type: or t:, and reading only .type made
+        // every node in them fall through to the default shape.
+        var type = (node && (node.type || node.cargo_type || node.t)) || "s";
+        var g = document.createElementNS(ns, "g");
+        var r = 3.5, p = 2;
+
+        function halo(kind) {
+            var e;
+            if (kind === "tri") {
+                e = document.createElementNS(ns, "polygon");
+                e.setAttribute("points", "0,-" + (r+1+p) + " " + (r+1+p) + "," + (r+1+p) + " -" + (r+1+p) + "," + (r+1+p));
+            } else if (kind === "circle") {
+                e = document.createElementNS(ns, "circle");
+                e.setAttribute("r", r + p);
+            } else {
+                e = document.createElementNS(ns, "rect");
+                e.setAttribute("x", -(r+p)); e.setAttribute("y", -(r+p));
+                e.setAttribute("width", (r+p)*2); e.setAttribute("height", (r+p)*2);
+            }
+            e.setAttribute("fill", "#fff");
+            g.appendChild(e);
+            return e;
+        }
+        function sq(fill, stroke) {
+            var e = document.createElementNS(ns, "rect");
+            e.setAttribute("x", -r); e.setAttribute("y", -r);
+            e.setAttribute("width", r*2); e.setAttribute("height", r*2);
+            e.setAttribute("fill", fill);
+            if (stroke) { e.setAttribute("stroke", stroke); e.setAttribute("stroke-width", "1"); }
+            g.appendChild(e);
+        }
+        function tri(fill, stroke) {
+            var e = document.createElementNS(ns, "polygon");
+            e.setAttribute("points", "0,-" + (r+1) + " " + (r+1) + "," + (r+1) + " -" + (r+1) + "," + (r+1));
+            e.setAttribute("fill", fill);
+            if (stroke) { e.setAttribute("stroke", stroke); e.setAttribute("stroke-width", "1"); }
+            g.appendChild(e);
+        }
+        function halfCircle(ring) {
+            var c = document.createElementNS(ns, "circle");
+            c.setAttribute("r", r); c.setAttribute("fill", "none");
+            c.setAttribute("stroke", ring); c.setAttribute("stroke-width", "1");
+            var pa = document.createElementNS(ns, "path");
+            pa.setAttribute("fill", DB_BLACK);
+            pa.setAttribute("d", "M -" + r + " 0 A " + r + " " + r + " 0 0 0 " + r + " 0 Z");
+            g.appendChild(c); g.appendChild(pa);
+        }
+
+        if (type === "p" || type === "parent") {            // PARENT GROUP
+            halo("sq"); sq(DB_BLACK, null);
+        } else if (type === "div_ind" || type === "div" || type === "division") {  // DIVISION
+            halo("tri"); tri(DB_GREY, null);
+        } else if (type === "div_ent" || type === "subsidiary") {  // SUBSIDIARY
+            halo("tri"); tri("none", DB_GREY);
+        } else if (type === "construction" || type === "cp") {     // CONSTRUCTION PROJECT
+            halo("sq"); sq("none", DB_PROJECT);
+            var d = document.createElementNS(ns, "line");
+            d.setAttribute("x1", -r); d.setAttribute("y1", -r);
+            d.setAttribute("x2", r);  d.setAttribute("y2", r);
+            d.setAttribute("stroke", DB_PROJECT); d.setAttribute("stroke-width", "1");
+            g.appendChild(d);
+        } else if (type === "receiving" || type === "f" || type === "facility") {  // FACILITY
+            halo("circle"); halfCircle(DB_RECEPTION);
+        } else {                                            // AFFILIATED SITE
+            halo("sq"); sq("none", DB_GREY);
+        }
+
+        // "this facility": bigger than the rest, with the bold black label the
+        // renderer already gives it. The dashed ring it used to wear read as a
+        // sixth symbol in a legend that only has five.
+        if (node && node.active) g.setAttribute("transform", "scale(1.25)");
+        return g;
+    }
+
+    function createShape(type, isActive) {
+        var ns = "http://www.w3.org/2000/svg";
+        var g = document.createElementNS(ns, "g");
+        var r = 3.5; 
+        var p = 2;
+        
+        if (type === 'p') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "#000");
+            g.appendChild(rect);
+        } else if (type === 'div_ind') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "#666");
+            g.appendChild(poly);
+        } else if (type === 'div_ent') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "none");
+            poly.setAttribute("stroke", "#666"); 
+            poly.setAttribute("stroke-width", "1");
+            g.appendChild(poly);
+        } else if (type === 's') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "none");
+            rect.setAttribute("stroke", "#666"); 
+            rect.setAttribute("stroke-width", "1");
+            g.appendChild(rect);
+        } else if (type === 'receiving') { 
+            var bg = document.createElementNS(ns, "circle");
+            bg.setAttribute("r", r+p); bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var c = document.createElementNS(ns, "circle");
+            c.setAttribute("r", r); c.setAttribute("fill", "none");
+            c.setAttribute("stroke", "#FF0000"); c.setAttribute("stroke-width", "1");
+            var pa = document.createElementNS(ns, "path");
+            pa.setAttribute("fill", "#000");
+            pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
+            g.appendChild(c); g.appendChild(pa);
+        }
+
+        if(isActive) {
+            g.setAttribute("transform", "scale(1.2)");
+        }
+        return g;
+    }
+
+    function init() {
+        // Without this a window resize started a second loop on top of the
+        // first, and the maps below accumulated a duplicate set of children
+        // on every rebuild, making hover highlighting exponentially slower.
+        if (_raf) { cancelAnimationFrame(_raf); _raf = null; }
+        parentMap = {}; childMap = {}; _settled = false;
+        W = el.offsetWidth || window.innerWidth;
+        _labelRoom = Math.max(78, Math.min(200, (W || 520) * 0.26));
+        H = el.offsetHeight || 500;
+        el.innerHTML = "";
+        var ns = "http://www.w3.org/2000/svg";
+        svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+        el.appendChild(svg);
+
+        LINKS.forEach(l => {
+            parentMap[l[0]] = l[1];
+            if(!childMap[l[1]]) childMap[l[1]] = [];
+            childMap[l[1]].push(l[0]);
+        });
+
+        nodes = NODES.map(d => ({
+            ...d, x: W/2 + (Math.random()-0.5)*200, y: H/2 + (Math.random()-0.5)*200,
+            vx: 0, vy: 0, noiseOffset: Math.random() * 100
+        }));
+
+        var linkG = document.createElementNS(ns, "g"); svg.appendChild(linkG);
+        links = LINKS.map(l => {
+            var sNode = nodes.find(n => n.id === l[0]), tNode = nodes.find(n => n.id === l[1]);
+            var line = document.createElementNS(ns, "line");
+            line.setAttribute("class", "link-line");
+            line.setAttribute("stroke", "#dddddd"); line.setAttribute("stroke-width", "1");
+            linkG.appendChild(line);
+            return { s: sNode, t: tNode, el: line, id: l[0] + "-" + l[1] };
+        });
+
+        var nodeG = document.createElementNS(ns, "g"); svg.appendChild(nodeG);
+        nodes.forEach(n => {
+            var g = document.createElementNS(ns, "g");
+            g.setAttribute("class", "node-group");
+            g.style.cursor = "grab";
+
+            var hit = document.createElementNS(ns, "circle");
+            hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
+            g.appendChild(hit);
+            
+            var shape = dbShape(n);
+            shape.style.pointerEvents = "none";
+            g.appendChild(shape); n.shapeEl = shape;
+            
+            var txt = document.createElementNS(ns, "text");
+            // Full name, wrapped onto a second line if it does not fit. Cutting
+            // it with an ellipsis hid which facility a node actually was.
+            var _full = n.id + (n.l ? " " + n.l : "");
+            var _cw = n.active ? 6.1 : 5.4;   // the facility label is bold 10px, the rest 9px
+            var _maxCh = Math.max(10, Math.floor((_labelRoom - 14) / _cw));
+            // Wrap onto as many as three lines. Registered company names are long
+            // ("Feiring Bruk AS avd. Hadeland Pukkverk"), and two lines used to cut
+            // the end off the very names this graph exists to show.
+            var _lines = [], _cur = "";
+            _full.split(" ").forEach(function (w) {
+                var t = _cur ? _cur + " " + w : w;
+                if (t.length <= _maxCh || !_cur) { _cur = t; }
+                else { _lines.push(_cur); _cur = w; }
+            });
+            if (_cur) _lines.push(_cur);
+            if (_lines.length > 3) {
+                _lines = _lines.slice(0, 3);
+                _lines[2] = _lines[2].slice(0, Math.max(1, _maxCh - 1)) + "\u2026";
+            }
+            n.tLines = _lines.length;
+            _lines.forEach(function (ln, li) {
+                var ts = document.createElementNS(ns, "tspan");
+                ts.textContent = ln;
+                ts.setAttribute("x", 10);
+                ts.setAttribute("dy", li === 0 ? 0 : 10);
+                txt.appendChild(ts);
+            });
+            var _tip = document.createElementNS(ns, "title");
+            _tip.textContent = _full;
+            txt.appendChild(_tip);
+            txt.setAttribute("x", 12); txt.setAttribute("y", (_lines.length > 2 ? -7 : (_lines.length > 1 ? -2 : 3)));  // _yTop
+            txt.setAttribute("fill", n.active ? "#000" : "#666"); 
+            txt.style.font = n.active ? "600 10px 'Diatype Mono', 'Courier New', monospace" : "400 9px 'Diatype Mono', 'Courier New', monospace"; 
+            txt.style.pointerEvents = "none";
+            g.appendChild(txt); n.tEl = txt;
+
+            g.onmouseenter = () => {
+                var lineage = getStrictLineage(n);
+                nodes.forEach(node => { 
+                    node.el.classList.toggle("dimmed", !lineage.nodes.has(node.id));
+                    if(lineage.nodes.has(node.id)) {
+                        node.tEl.style.fontWeight = "bold";
+                        node.tEl.setAttribute("fill", "#000");
+                    }
+                });
+                links.forEach(link => {
+                    var isH = lineage.links.has(link.id);
+                    link.el.classList.toggle("dimmed", !isH);
+                    link.el.classList.toggle("highlight-link", isH);
+                });
+            };
+
+            g.onmouseleave = () => {
+                nodes.forEach(node => {
+                    node.el.classList.remove("dimmed");
+                    node.tEl.style.fontWeight = node.active ? "bold" : "normal";
+                    node.tEl.setAttribute("fill", node.active ? "#000" : "#666");
+                });
+                links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
+            };
+
+            g.onmousedown = (e) => { e.preventDefault(); n.dragging = true; g.style.cursor = "grabbing";
+                if (_settled && !_raf) { _settled = false; _raf = requestAnimationFrame(tick); } };
+            nodeG.appendChild(g); n.el = g;
+        });
+
+        _raf = requestAnimationFrame(tick);
+    }
+
+    function tick() {
+        time += 0.005; frame++;
+        var _moved = 0;
+        nodes.forEach(function(n){ n._px = n.x; n._py = n.y; });
+        // Geometry derived from the container, not fixed pixels, so the graph is
+        // legible in a small sidebar iframe as well as a full window.
+        var _n = nodes.length || 1;
+        var _pad = 30;
+        // Reserve a margin on each side for the labels, and keep the nodes in
+        // the band between, so a label always has somewhere to go.
+        _labelRoom = Math.max(78, Math.min(200, W * 0.26));
+        var _uw = Math.max(W - _labelRoom * 2, 110), _uh = Math.max(H - _pad * 2, 120);
+        var _cell = Math.sqrt((_uw * _uh) / _n);
+        const restLen = Math.max(26, Math.min(110, _cell * 0.95));
+        const repel = restLen * 1.05;
+        const centerG = 0.01;
+        const cool = Math.max(0, 1 - frame / 900);
+        links.forEach(l => {
+            var dx = l.t.x - l.s.x, dy = l.t.y - l.s.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
+            var force = (dist - restLen) * 0.02;
+            l.s.vx += (dx/dist)*force; l.s.vy += (dy/dist)*force;
+            l.t.vx -= (dx/dist)*force; l.t.vy -= (dy/dist)*force;
+        });
+        nodes.forEach(n => {
+            if (!n.dragging) {
+                n.vx += Math.sin(time + n.noiseOffset) * 0.04 * cool;
+                n.vy += Math.cos(time + n.noiseOffset) * 0.04 * cool;
+                n.vx += (W/2 - n.x) * centerG;
+                n.vy += (H/2 - n.y) * centerG;
+                nodes.forEach(n2 => {
+                    if(n === n2) return;
+                    var dx = n.x - n2.x, dy = n.y - n2.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                    if(dist < repel) { var f = (repel - dist) * 0.04; n.vx += (dx/dist) * f; n.vy += (dy/dist) * f; }
+                });
+                n.x += n.vx; n.y += n.vy; n.vx *= 0.88; n.vy *= 0.88;
+            }
+            var _ox = n.x; n.x = Math.max(_labelRoom, Math.min(W - _labelRoom, n.x)); if (n.x !== _ox) n.vx = 0; var _oy = n.y; n.y = Math.max(_pad, Math.min(H - _pad, n.y)); if (n.y !== _oy) n.vy = 0;
+            if(n.el) n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
+            if(n.tEl) {
+                // point the label outward, into the reserved margin
+                var _right = n.x >= W / 2;
+                var _lx = _right ? 10 : -10;
+                n.tEl.setAttribute("text-anchor", _right ? "start" : "end");
+                n.tEl.setAttribute("x", _lx);
+                var _ts = n.tEl.getElementsByTagName("tspan");
+                for (var _k = 0; _k < _ts.length; _k++) _ts[_k].setAttribute("x", _lx);
+            }
+        });
+
+        // Keep labels on the same side off the same line. Labels sit at the
+        // node's own y, so nudging the nodes apart vertically is enough.
+        //
+        // Two things kept this from ever coming to rest. It asked for a fixed
+        // gap per pair, which in a crowded graph adds up to more height than
+        // the box has, an impossible demand it went on making every frame. And
+        // it applied the whole correction each time, so a pair the springs
+        // pulled back together was shoved apart just as hard, forever. Now the
+        // demand is scaled to what fits, and half of each correction is applied
+        // per frame, which is what lets it converge.
+        (function(){
+            var RELAX = 0.5;
+            var usable = Math.max(H - _pad * 2, 1);
+            function need(a, b){ return 8 + 6 * ((a.tLines || 1) + (b.tLines || 1)); }
+            function lane(list){
+                list.sort(function(a, b){ return a.y - b.y; });
+                var wanted = 0, i;
+                for (i = 1; i < list.length; i++) wanted += need(list[i-1], list[i]);
+                var k = wanted > usable ? usable / wanted : 1;   // ask for what fits
+                for (i = 1; i < list.length; i++) {
+                    var prev = list[i-1], cur = list[i];
+                    var gap = cur.y - prev.y, want = need(prev, cur) * k;
+                    if (gap >= want) continue;
+                    var push = (want - gap) / 2 * RELAX;
+                    if (!prev.dragging) prev.y -= push;
+                    if (!cur.dragging)  cur.y  += push;
+                }
+            }
+            // Labels flip outward at the midpoint, so a pair either side of
+            // centre can still collide: one pass over the middle band, then
+            // one per side.
+            lane(nodes.filter(function(n){ return Math.abs(n.x - W / 2) < 65; }));
+            lane(nodes.filter(function(n){ return n.x < W / 2; }));
+            lane(nodes.filter(function(n){ return n.x >= W / 2; }));
+            nodes.forEach(function(n){ n.y = Math.max(_pad, Math.min(H - _pad, n.y)); });
+        })();
+
+        links.forEach(l => {
+            l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
+            l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
+        });
+        // The picture reaches a fixed point after 20-40s but the loop used to
+
+        // run forever, including behind a closed sidebar.
+
+        nodes.forEach(function(n){ _moved = Math.max(_moved, Math.abs(n.x - n._px), Math.abs(n.y - n._py)); });
+        // Stop when the picture stops changing, and stop regardless once the
+        // cooling schedule has run out. A graph that has not converged by then
+        // is not going to, and a loop that never yields is worse than a layout
+        // that is slightly tight.
+        var _dragging = nodes.some(function(n){ return n.dragging; });
+        if (!_dragging && ((_moved < 0.05 && frame > 400) || frame >= 900)) {
+
+            _raf = null; _settled = true; return;
+
+        }
+
+        _raf = requestAnimationFrame(tick);
+    }
+
+    window.addEventListener("mousemove", (e) => {
+        if (!nodes.some(function(n){ return n.dragging; })) return;
+        var rect = el.getBoundingClientRect();
+        nodes.forEach(n => { if(n.dragging) { n.x = e.clientX - rect.left; n.y = e.clientY - rect.top; n.vx = 0; n.vy = 0; }});
+    });
+    window.addEventListener("mouseup", () => nodes.forEach(n => n.dragging = false));
+    
+    setTimeout(init, 500);
+    var _rt;
+    window.addEventListener("resize", function(){
+        clearTimeout(_rt);
+        _rt = setTimeout(function(){ frame = 0; init(); }, 250);
+    });
+})();
+</script>
+<script>
+/* Colour of the facility this graph belongs to, passed by the map as ?fc=RRGGBB
+   (reception sites run yellow / orange / red / purple by status). Construction
+   projects stay green. */
+(function(){
+  var q=new URLSearchParams(location.search), fc=q.get('fc');
+  if(!fc||!/^[0-9a-fA-F]{6}$/.test(fc)) return;
+  fc='#'+fc.toUpperCase();
+  function paint(){
+    document.querySelectorAll('[stroke="#FF0000"],[fill="#FF0000"]').forEach(function(e){
+      if(e.getAttribute('stroke')==='#FF0000') e.setAttribute('stroke',fc);
+      if(e.getAttribute('fill')==='#FF0000') e.setAttribute('fill',fc);
+    });
+  }
+  document.documentElement.style.setProperty('--col-facility',fc);
+  window.addEventListener('load',function(){paint();setTimeout(paint,60);setTimeout(paint,400);});
+})();
+</script>
+</body>
+</html>

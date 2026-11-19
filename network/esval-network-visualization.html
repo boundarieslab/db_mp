@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Veidekke Esval Deponi - Ownership Network</title>
+    
     <style>
         /* Same typeface as dirtybusiness.no and the map, served from the same
            place, so the graphs are typographically part of the site. */
@@ -19,9 +20,10 @@
     </style>
     <style>
         /* Identical frame for every graph: legend on top, graph fills the rest. */
-        .node-group, .link-line { transition: opacity 0.4s ease; }
+        .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
         .dimmed { opacity: 0.15 !important; }
         .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
+
         svg { user-select: none; -webkit-user-select: none; }
     
         /* ── Canonical frame: identical in every graph in this repo ───────── */
@@ -58,6 +60,8 @@
 
 <script>
 (function(){
+    var containerID = "network-container"; 
+
     var NODES = [
         {id:"Veidekke ASA", type:"p"},
         {id:"Veidekke Industri AS", type:"div_ent"},
@@ -77,7 +81,7 @@
         ["Veidekke Sirkulær", "Veidekke Industri AS"]
     ];
 
-    var el = document.getElementById("network-container");
+    var el = document.getElementById(containerID);
     var W, H, svg, nodes=[], links=[], parentMap={}, childMap={};
     var time = 0, frame = 0, _raf = null, _settled = false, _labelRoom = 100;
 
@@ -85,8 +89,18 @@
         let pathNodes = new Set([startNode.id]);
         let pathLinks = new Set();
         let curr = startNode.id;
-        while(parentMap[curr]) { pathLinks.add(curr + "-" + parentMap[curr]); curr = parentMap[curr]; pathNodes.add(curr); }
-        function findChildren(id) { if(childMap[id]) childMap[id].forEach(c => { pathNodes.add(c); pathLinks.add(c + "-" + id); findChildren(c); }); }
+        while(parentMap[curr]) {
+            pathLinks.add(curr + "-" + parentMap[curr]);
+            curr = parentMap[curr];
+            pathNodes.add(curr);
+        }
+        function findChildren(id) {
+            if(childMap[id]) childMap[id].forEach(c => {
+                pathNodes.add(c);
+                pathLinks.add(c + "-" + id);
+                findChildren(c);
+            });
+        }
         findChildren(startNode.id);
         return {nodes: pathNodes, links: pathLinks};
     }
@@ -174,51 +188,71 @@
         return g;
     }
 
-    function createIcon(node) {
+    function createShape(type, isActive) {
         var ns = "http://www.w3.org/2000/svg";
         var g = document.createElementNS(ns, "g");
-        var r = 5.5; // Radius
+        var r = 3.5; 
+        var p = 2;
         
-        if (node.cargo_type === 'parent') {
-            if (node.cargo_sub === 'parent') {
-                var shape = document.createElementNS(ns, "rect");
-                shape.setAttribute("x", -r); shape.setAttribute("y", -r);
-                shape.setAttribute("width", r*2); shape.setAttribute("height", r*2);
-                shape.setAttribute("fill", "#000"); g.appendChild(shape);
-            } else if (node.cargo_sub.includes('division')) {
-                var shape = document.createElementNS(ns, "polygon");
-                shape.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
-                shape.setAttribute("fill", node.cargo_sub.includes('industri') ? "#666" : "none");
-                if (!node.cargo_sub.includes('industri')) { shape.setAttribute("stroke", "#666"); shape.setAttribute("stroke-width", "1"); }
-                g.appendChild(shape);
-            } else {
-                var shape = document.createElementNS(ns, "rect");
-                shape.setAttribute("x", -r); shape.setAttribute("y", -r);
-                shape.setAttribute("width", r*2); shape.setAttribute("height", r*2);
-                shape.setAttribute("fill", "none"); shape.setAttribute("stroke", "#666"); shape.setAttribute("stroke-width", "1.2");
-                g.appendChild(shape);
-            }
-        } else {
-            // --- KORREKT SIRKEL-LOGIKK ---
+        if (type === 'p') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "#000");
+            g.appendChild(rect);
+        } else if (type === 'div_ind') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "#666");
+            g.appendChild(poly);
+        } else if (type === 'div_ent') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "none");
+            poly.setAttribute("stroke", "#666"); 
+            poly.setAttribute("stroke-width", "1");
+            g.appendChild(poly);
+        } else if (type === 's') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "none");
+            rect.setAttribute("stroke", "#666"); 
+            rect.setAttribute("stroke-width", "1");
+            g.appendChild(rect);
+        } else if (type === 'receiving') { 
+            var bg = document.createElementNS(ns, "circle");
+            bg.setAttribute("r", r+p); bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var c = document.createElementNS(ns, "circle");
             c.setAttribute("r", r); c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#FF0000"); c.setAttribute("stroke-width", "1.5");
-            g.appendChild(c);
+            c.setAttribute("stroke", "#FF0000"); c.setAttribute("stroke-width", "1");
+            var pa = document.createElementNS(ns, "path");
+            pa.setAttribute("fill", "#000");
+            pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
+            g.appendChild(c); g.appendChild(pa);
+        }
 
-            var p = document.createElementNS(ns, "path");
-            p.setAttribute("fill", "#000");
-            
-            if (node.cargo_sub === 'receiving') {
-                // Halvsirkel BUK: Starter venstre (-r,0), tegner bue til høyre (r,0) under sentrum
-                p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
-            } else if (node.cargo_sub === 'producing') {
-                // Halvsirkel TOPP: Starter venstre (-r,0), tegner bue til høyre (r,0) over sentrum
-                p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 1 ${r} 0 Z`);
-            } else if (node.cargo_sub === 'mixed') {
-                // Checkerboard (To kakestykker)
-                p.setAttribute("d", `M 0 0 L -${r} 0 A ${r} ${r} 0 0 1 0 -${r} Z M 0 0 L ${r} 0 A ${r} ${r} 0 0 1 0 ${r} Z`);
-            }
-            g.appendChild(p);
+        if(isActive) {
+            g.setAttribute("transform", "scale(1.2)");
         }
         return g;
     }
@@ -231,7 +265,8 @@
         parentMap = {}; childMap = {}; _settled = false;
         W = el.offsetWidth || window.innerWidth;
         _labelRoom = Math.max(78, Math.min(200, (W || 520) * 0.26));
-        H = el.offsetHeight || 600;
+        H = el.offsetHeight || 500;
+        el.innerHTML = "";
         var ns = "http://www.w3.org/2000/svg";
         svg = document.createElementNS(ns, "svg");
         svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -255,7 +290,7 @@
             line.setAttribute("class", "link-line");
             line.setAttribute("stroke", "#dddddd"); line.setAttribute("stroke-width", "1");
             linkG.appendChild(line);
-            return { s: sNode, t: tNode, el: line };
+            return { s: sNode, t: tNode, el: line, id: l[0] + "-" + l[1] };
         });
 
         var nodeG = document.createElementNS(ns, "g"); svg.appendChild(nodeG);
@@ -267,12 +302,15 @@
             var hit = document.createElementNS(ns, "circle");
             hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
             g.appendChild(hit);
-
             
-            var icon = dbShape(n); icon.style.pointerEvents = "none";
-            g.appendChild(icon); n.shapeEl = icon;
+            var shape = dbShape(n);
+            shape.style.pointerEvents = "none";
+            g.appendChild(shape); n.shapeEl = shape;
+            
             var txt = document.createElementNS(ns, "text");
-            var _full = n.id;
+            // Full name, wrapped onto a second line if it does not fit. Cutting
+            // it with an ellipsis hid which facility a node actually was.
+            var _full = n.id + (n.l ? " " + n.l : "");
             var _cw = n.active ? 6.1 : 5.4;   // the facility label is bold 10px, the rest 9px
             var _maxCh = Math.max(10, Math.floor((_labelRoom - 14) / _cw));
             // Wrap onto as many as three lines. Registered company names are long
@@ -300,7 +338,7 @@
             var _tip = document.createElementNS(ns, "title");
             _tip.textContent = _full;
             txt.appendChild(_tip);
-             txt.setAttribute("x", 12); txt.setAttribute("y", (_lines.length > 2 ? -7 : (_lines.length > 1 ? -2 : 3)));  // _yTop
+            txt.setAttribute("x", 12); txt.setAttribute("y", (_lines.length > 2 ? -7 : (_lines.length > 1 ? -2 : 3)));  // _yTop
             txt.setAttribute("fill", n.active ? "#000" : "#666"); 
             txt.style.font = n.active ? "600 10px 'Diatype Mono', 'Courier New', monospace" : "400 9px 'Diatype Mono', 'Courier New', monospace"; 
             txt.style.pointerEvents = "none";
@@ -308,17 +346,29 @@
 
             g.onmouseenter = () => {
                 var lineage = getStrictLineage(n);
-                nodes.forEach(node => { node.el.classList.toggle("dimmed", !lineage.nodes.has(node.id)); });
+                nodes.forEach(node => { 
+                    node.el.classList.toggle("dimmed", !lineage.nodes.has(node.id));
+                    if(lineage.nodes.has(node.id)) {
+                        node.tEl.style.fontWeight = "bold";
+                        node.tEl.setAttribute("fill", "#000");
+                    }
+                });
                 links.forEach(link => {
-                    var isH = lineage.links.has(link.s.id + "-" + link.t.id) || lineage.links.has(link.t.id + "-" + link.s.id);
+                    var isH = lineage.links.has(link.id);
                     link.el.classList.toggle("dimmed", !isH);
                     link.el.classList.toggle("highlight-link", isH);
                 });
             };
+
             g.onmouseleave = () => {
-                nodes.forEach(node => node.el.classList.remove("dimmed"));
+                nodes.forEach(node => {
+                    node.el.classList.remove("dimmed");
+                    node.tEl.style.fontWeight = node.active ? "bold" : "normal";
+                    node.tEl.setAttribute("fill", node.active ? "#000" : "#666");
+                });
                 links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
             };
+
             g.onmousedown = (e) => { e.preventDefault(); n.dragging = true; g.style.cursor = "grabbing";
                 if (_settled && !_raf) { _settled = false; _raf = requestAnimationFrame(tick); } };
             nodeG.appendChild(g); n.el = g;
@@ -364,7 +414,7 @@
                 n.x += n.vx; n.y += n.vy; n.vx *= 0.88; n.vy *= 0.88;
             }
             var _ox = n.x; n.x = Math.max(_labelRoom, Math.min(W - _labelRoom, n.x)); if (n.x !== _ox) n.vx = 0; var _oy = n.y; n.y = Math.max(_pad, Math.min(H - _pad, n.y)); if (n.y !== _oy) n.vy = 0;
-            n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
+            if(n.el) n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
             if(n.tEl) {
                 // point the label outward, into the reserved margin
                 var _right = n.x >= W / 2;
@@ -413,7 +463,10 @@
             nodes.forEach(function(n){ n.y = Math.max(_pad, Math.min(H - _pad, n.y)); });
         })();
 
-        links.forEach(l => { l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y); l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y); });
+        links.forEach(l => {
+            l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
+            l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
+        });
         // The picture reaches a fixed point after 20-40s but the loop used to
 
         // run forever, including behind a closed sidebar.
@@ -438,9 +491,14 @@
         var rect = el.getBoundingClientRect();
         nodes.forEach(n => { if(n.dragging) { n.x = e.clientX - rect.left; n.y = e.clientY - rect.top; n.vx = 0; n.vy = 0; }});
     });
-    window.addEventListener("mouseup", () => nodes.forEach(n => { if(n.dragging) { n.dragging = false; n.el.style.cursor = "grab"; }}));
+    window.addEventListener("mouseup", () => nodes.forEach(n => n.dragging = false));
     
-    setTimeout(init, 400);
+    setTimeout(init, 500);
+    var _rt;
+    window.addEventListener("resize", function(){
+        clearTimeout(_rt);
+        _rt = setTimeout(function(){ frame = 0; init(); }, 250);
+    });
 })();
 </script>
 <script>

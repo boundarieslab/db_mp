@@ -63,22 +63,26 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Feiring AS (Ollendorff family)", type:"p"},
-        {id:"Feiring Bruk AS", type:"div_ent", l:"(operator)"},
+        {id:"Feiring AS", type:"div_ent"},
+        {id:"Feiring Bruk AS", type:"div_ent"},
         {id:"Re Pukkverk", type:"receiving", l:"(Sem)", active:true},
         {id:"Feiring Bruk AS avd. Dal Pukkverk", type:"div_ind", l:"(Dal)"},
         {id:"Feiring Bruk AS avd. Heier Pukkverk (Enebakk)", type:"div_ind", l:"(Enebakk)"},
         {id:"Hobøl Massemottak", type:"s", l:"(Hobøl)"},
-        {id:"Franzefoss Gjenvinning AS", type:"div_ent", l:"(same site)"}
+        {id:"Franzefoss Gjenvinning AS", type:"div_ent", l:"(same site)"},
+        {id:"Ollendorff Holding AS", type:"p"},
+        {id:"Feiring Vestfold AS", type:"div_ent", l:"(operator)"}
     ];
     
     var LINKS = [
-        ["Feiring Bruk AS", "Feiring AS (Ollendorff family)"],
-        ["Re Pukkverk", "Feiring Bruk AS"],
+        ["Feiring Bruk AS", "Feiring AS"],
         ["Feiring Bruk AS avd. Dal Pukkverk", "Feiring Bruk AS"],
         ["Feiring Bruk AS avd. Heier Pukkverk (Enebakk)", "Feiring Bruk AS"],
         ["Hobøl Massemottak", "Feiring Bruk AS"],
-        ["Franzefoss Gjenvinning AS", "Re Pukkverk"]
+        ["Franzefoss Gjenvinning AS", "Re Pukkverk"],
+        ["Re Pukkverk", "Feiring Vestfold AS"],
+        ["Feiring AS", "Ollendorff Holding AS"],
+        ["Feiring Vestfold AS", "Feiring Bruk AS"]
     ];
 
     var el = document.getElementById(containerID);

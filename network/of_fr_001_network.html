@@ -63,14 +63,16 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Borge Pukkverk AS", type:"p", l:"(operator)"},
+        {id:"Borge Pukkverk AS", type:"div_ent", l:"(operator)"},
         {id:"Borge pukkverk avfallsdeponi (Borge Massemottak)", type:"receiving", l:"(Sellebakk)", active:true},
-        {id:"Borge Pukkverk AS avd. Bygg Anlegg", type:"div_ind"}
+        {id:"Borge Pukkverk AS avd. Bygg Anlegg", type:"div_ind"},
+        {id:"Brødrene Ødegård Holding AS", type:"p"}
     ];
     
     var LINKS = [
         ["Borge pukkverk avfallsdeponi (Borge Massemottak)", "Borge Pukkverk AS avd. Bygg Anlegg"],
-        ["Borge Pukkverk AS avd. Bygg Anlegg", "Borge Pukkverk AS"]
+        ["Borge Pukkverk AS avd. Bygg Anlegg", "Borge Pukkverk AS"],
+        ["Borge Pukkverk AS", "Brødrene Ødegård Holding AS"]
     ];
 
     var el = document.getElementById(containerID);

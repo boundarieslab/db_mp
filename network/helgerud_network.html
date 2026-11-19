@@ -64,7 +64,7 @@
 
     var NODES = [
         {id:"Helgerud Inert Deponi", type:"receiving", l:"(Fosser)", active:true},
-        {id:"Helgerud Deponi AS", type:"div_ent", l:"(under avvikling)"},
+        {id:"Helgerud Deponi AS", type:"div_ent", l:"(struck off 10.11.2026)"},
         {id:"Helgerud Massemottak AS", type:"p"}
     ];
     
@@ -180,46 +180,71 @@
         return g;
     }
 
-    function createIcon(node) {
+    function createShape(type, isActive) {
         var ns = "http://www.w3.org/2000/svg";
         var g = document.createElementNS(ns, "g");
-        var r = 5.5; 
+        var r = 3.5; 
+        var p = 2;
         
-        if (node.type === 'construction') {
-            // KVADRAT MED ROSA KANT
+        if (type === 'p') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var rect = document.createElementNS(ns, "rect");
             rect.setAttribute("x", -r); rect.setAttribute("y", -r);
             rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
-            rect.setAttribute("fill", "none"); rect.setAttribute("stroke", "#00FF00"); rect.setAttribute("stroke-width", "1.5");
+            rect.setAttribute("fill", "#000");
             g.appendChild(rect);
-
-            var p = document.createElementNS(ns, "path");
-            p.setAttribute("fill", "#000");
-            
-            if (node.sub === 'receiving') {
-                // Øverste venstre trekant (ihht bilde)
-                p.setAttribute("d", `M -${r} -${r} L ${r} -${r} L -${r} ${r} Z`);
-            } else if (node.sub === 'producing') {
-                // Nederste venstre trekant (ihht bilde)
-                p.setAttribute("d", `M -${r} -${r} L -${r} ${r} L ${r} ${r} Z`);
-            } else if (node.sub === 'mixed') {
-                // Timeglass / X (ihht bilde)
-                p.setAttribute("d", `M -${r} -${r} L ${r} -${r} L 0 0 Z M -${r} ${r} L ${r} ${r} L 0 0 Z`);
-            }
-            g.appendChild(p);
-        } else {
-            // SIRKEL MED GRØNN KANT
+        } else if (type === 'div_ind') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "#666");
+            g.appendChild(poly);
+        } else if (type === 'div_ent') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "none");
+            poly.setAttribute("stroke", "#666"); 
+            poly.setAttribute("stroke-width", "1");
+            g.appendChild(poly);
+        } else if (type === 's') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "none");
+            rect.setAttribute("stroke", "#666"); 
+            rect.setAttribute("stroke-width", "1");
+            g.appendChild(rect);
+        } else if (type === 'receiving') { 
+            var bg = document.createElementNS(ns, "circle");
+            bg.setAttribute("r", r+p); bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var c = document.createElementNS(ns, "circle");
             c.setAttribute("r", r); c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#FF0000"); c.setAttribute("stroke-width", "1.5");
-            g.appendChild(c);
+            c.setAttribute("stroke", "#FF0000"); c.setAttribute("stroke-width", "1");
+            var pa = document.createElementNS(ns, "path");
+            pa.setAttribute("fill", "#000");
+            pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
+            g.appendChild(c); g.appendChild(pa);
+        }
 
-            var p = document.createElementNS(ns, "path");
-            p.setAttribute("fill", "#000");
-            if (node.sub === 'mixed') {
-                p.setAttribute("d", `M 0 0 L -${r} 0 A ${r} ${r} 0 0 1 0 -${r} Z M 0 0 L ${r} 0 A ${r} ${r} 0 0 1 0 ${r} Z`);
-            }
-            g.appendChild(p);
+        if(isActive) {
+            g.setAttribute("transform", "scale(1.2)");
         }
         return g;
     }
@@ -246,7 +271,7 @@
         });
 
         nodes = NODES.map(d => ({
-            ...d, x: W/2 + (Math.random()-0.5)*100, y: H/2 + (Math.random()-0.5)*100,
+            ...d, x: W/2 + (Math.random()-0.5)*200, y: H/2 + (Math.random()-0.5)*200,
             vx: 0, vy: 0, noiseOffset: Math.random() * 100
         }));
 
@@ -257,7 +282,7 @@
             line.setAttribute("class", "link-line");
             line.setAttribute("stroke", "#dddddd"); line.setAttribute("stroke-width", "1");
             linkG.appendChild(line);
-            return { s: sNode, t: tNode, el: line };
+            return { s: sNode, t: tNode, el: line, id: l[0] + "-" + l[1] };
         });
 
         var nodeG = document.createElementNS(ns, "g"); svg.appendChild(nodeG);
@@ -269,10 +294,11 @@
             var hit = document.createElementNS(ns, "circle");
             hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
             g.appendChild(hit);
-
             
-            var icon = dbShape(n); icon.style.pointerEvents = "none";
-            g.appendChild(icon); n.shapeEl = icon;
+            var shape = dbShape(n);
+            shape.style.pointerEvents = "none";
+            g.appendChild(shape); n.shapeEl = shape;
+            
             var txt = document.createElementNS(ns, "text");
             // Full name, wrapped onto a second line if it does not fit. Cutting
             // it with an ellipsis hid which facility a node actually was.
@@ -314,17 +340,24 @@
                 var lineage = getStrictLineage(n);
                 nodes.forEach(node => { 
                     node.el.classList.toggle("dimmed", !lineage.nodes.has(node.id));
-                    if(lineage.nodes.has(node.id)) { node.tEl.style.fontWeight = "bold"; node.tEl.setAttribute("fill", "#000"); }
+                    if(lineage.nodes.has(node.id)) {
+                        node.tEl.style.fontWeight = "bold";
+                        node.tEl.setAttribute("fill", "#000");
+                    }
                 });
                 links.forEach(link => {
-                    var isH = lineage.links.has(link.s.id + "-" + link.t.id) || lineage.links.has(link.t.id + "-" + link.s.id);
+                    var isH = lineage.links.has(link.id);
                     link.el.classList.toggle("dimmed", !isH);
                     link.el.classList.toggle("highlight-link", isH);
                 });
             };
 
             g.onmouseleave = () => {
-                nodes.forEach(node => { node.el.classList.remove("dimmed"); node.tEl.style.fontWeight = node.active ? "bold" : "normal"; node.tEl.setAttribute("fill", node.active ? "#000" : "#666"); });
+                nodes.forEach(node => {
+                    node.el.classList.remove("dimmed");
+                    node.tEl.style.fontWeight = node.active ? "bold" : "normal";
+                    node.tEl.setAttribute("fill", node.active ? "#000" : "#666");
+                });
                 links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
             };
 
@@ -354,8 +387,7 @@
         const centerG = 0.01;
         const cool = Math.max(0, 1 - frame / 900);
         links.forEach(l => {
-            var dx = l.t.x - l.s.x, dy = l.t.y - l.s.y;
-            var dist = Math.sqrt(dx*dx + dy*dy) || 1;
+            var dx = l.t.x - l.s.x, dy = l.t.y - l.s.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
             var force = (dist - restLen) * 0.02;
             l.s.vx += (dx/dist)*force; l.s.vy += (dy/dist)*force;
             l.t.vx -= (dx/dist)*force; l.t.vy -= (dy/dist)*force;
@@ -364,11 +396,17 @@
             if (!n.dragging) {
                 n.vx += Math.sin(time + n.noiseOffset) * 0.04 * cool;
                 n.vy += Math.cos(time + n.noiseOffset) * 0.04 * cool;
-                n.vx += (W/2 - n.x) * centerG; n.vy += (H/2 - n.y) * centerG;
+                n.vx += (W/2 - n.x) * centerG;
+                n.vy += (H/2 - n.y) * centerG;
+                nodes.forEach(n2 => {
+                    if(n === n2) return;
+                    var dx = n.x - n2.x, dy = n.y - n2.y, dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                    if(dist < repel) { var f = (repel - dist) * 0.04; n.vx += (dx/dist) * f; n.vy += (dy/dist) * f; }
+                });
                 n.x += n.vx; n.y += n.vy; n.vx *= 0.88; n.vy *= 0.88;
             }
             var _ox = n.x; n.x = Math.max(_labelRoom, Math.min(W - _labelRoom, n.x)); if (n.x !== _ox) n.vx = 0; var _oy = n.y; n.y = Math.max(_pad, Math.min(H - _pad, n.y)); if (n.y !== _oy) n.vy = 0;
-            n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
+            if(n.el) n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
             if(n.tEl) {
                 // point the label outward, into the reserved margin
                 var _right = n.x >= W / 2;
@@ -417,7 +455,10 @@
             nodes.forEach(function(n){ n.y = Math.max(_pad, Math.min(H - _pad, n.y)); });
         })();
 
-        links.forEach(l => { l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y); l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y); });
+        links.forEach(l => {
+            l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
+            l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
+        });
         // The picture reaches a fixed point after 20-40s but the loop used to
 
         // run forever, including behind a closed sidebar.
@@ -444,7 +485,12 @@
     });
     window.addEventListener("mouseup", () => nodes.forEach(n => n.dragging = false));
     
-    setTimeout(init, 400);
+    setTimeout(init, 500);
+    var _rt;
+    window.addEventListener("resize", function(){
+        clearTimeout(_rt);
+        _rt = setTimeout(function(){ frame = 0; init(); }, 250);
+    });
 })();
 </script>
 <script>

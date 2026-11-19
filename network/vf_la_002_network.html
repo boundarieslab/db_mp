@@ -63,14 +63,18 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Feiring AS", type:"p"},
+        {id:"Feiring AS", type:"div_ent"},
         {id:"Feiring Vestfold AS", type:"div_ent", l:"(operator)"},
-        {id:"Feiring Vestfold AS avd. Larvik Pukkverk", type:"receiving", l:"(Malerød)", active:true}
+        {id:"Feiring Vestfold AS avd. Larvik Pukkverk", type:"receiving", l:"(Malerød)", active:true},
+        {id:"Ollendorff Holding AS", type:"p"},
+        {id:"Feiring Bruk AS", type:"div_ent"}
     ];
     
     var LINKS = [
-        ["Feiring Vestfold AS", "Feiring AS"],
-        ["Feiring Vestfold AS avd. Larvik Pukkverk", "Feiring Vestfold AS"]
+        ["Feiring Vestfold AS avd. Larvik Pukkverk", "Feiring Vestfold AS"],
+        ["Feiring Vestfold AS", "Feiring Bruk AS"],
+        ["Feiring Bruk AS", "Feiring AS"],
+        ["Feiring AS", "Ollendorff Holding AS"]
     ];
 
     var el = document.getElementById(containerID);

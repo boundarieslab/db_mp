@@ -20,7 +20,6 @@
     </style>
     <style>
         /* Identical frame for every graph: legend on top, graph fills the rest. */
-        /* Overganger for utheving */
         .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
         .dimmed { opacity: 0.15 !important; }
         .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
@@ -63,34 +62,27 @@
 (function(){
     var containerID = "network-container"; 
 
-    // Hele Mr. Pukk nettverket
     var NODES = [
-        {id:"Heffalompen Holding AS", type:"p"},
-        {id:"Mr. Pukk AS", type:"div_ent"},
+        {id:"Heffalompen Holding AS", type:"p", l:"(konkurs 29.10.2026)"},
         {id:"Mr. Pukk Høland AS", type:"receiving", active:true},
-        {id:"Mr. Pukk Øst AS", type:"div_ent"},
+        {id:"Mr. Pukk Øst AS", type:"div_ent", l:"(konkurs 15.10.2026)"},
         {id:"Torperåsen AS", type:"div_ent"},
         {id:"Mr. Pukk Furuset AS", type:"div_ent"},
         {id:"Mr. Pukk Gjenvinning AS", type:"div_ent"},
         {id:"Mr. Pukk Eiendom AS", type:"div_ent"},
         {id:"Bokerøya AS", type:"div_ent"},
-        {id:"Ramnes Næringseiendom AS", type:"div_ent"},
-        {id:"Mysen Asfalt AS", type:"div_ent"},
-        {id:"Maur Tipp og Slep AS", type:"div_ent", l:"(Transport)"}
+        {id:"Mysen Asfalt AS", type:"div_ent"}
     ];
     
     var LINKS = [
-        ["Mr. Pukk AS", "Heffalompen Holding AS"],
-        ["Mr. Pukk Høland AS", "Heffalompen Holding AS"],
-        ["Mr. Pukk Øst AS", "Heffalompen Holding AS"],
-        ["Torperåsen AS", "Heffalompen Holding AS"],
-        ["Mysen Asfalt AS", "Heffalompen Holding AS"],
-        ["Maur Tipp og Slep AS", "Heffalompen Holding AS"],
         ["Mr. Pukk Eiendom AS", "Heffalompen Holding AS"],
-        ["Mr. Pukk Gjenvinning AS", "Heffalompen Holding AS"],
-        ["Mr. Pukk Furuset AS", "Mr. Pukk Gjenvinning AS"],
+        ["Mr. Pukk Gjenvinning AS", "Mr. Pukk Eiendom AS"],
+        ["Mr. Pukk Furuset AS", "Mr. Pukk Eiendom AS"],
+        ["Mr. Pukk Øst AS", "Mr. Pukk Eiendom AS"],
+        ["Mysen Asfalt AS", "Mr. Pukk Eiendom AS"],
         ["Bokerøya AS", "Mr. Pukk Eiendom AS"],
-        ["Ramnes Næringseiendom AS", "Mr. Pukk Eiendom AS"]
+        ["Mr. Pukk Høland AS", "Mr. Pukk Eiendom AS"],
+        ["Torperåsen AS", "Mr. Pukk Øst AS"]
     ];
 
     var el = document.getElementById(containerID);
@@ -200,52 +192,71 @@
         return g;
     }
 
-    function createIcon(node) {
+    function createShape(type, isActive) {
         var ns = "http://www.w3.org/2000/svg";
         var g = document.createElementNS(ns, "g");
-        var r = 6; 
+        var r = 3.5; 
+        var p = 2;
         
-        if (node.type === 'parent') {
+        if (type === 'p') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var rect = document.createElementNS(ns, "rect");
             rect.setAttribute("x", -r); rect.setAttribute("y", -r);
             rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
-            rect.setAttribute("fill", node.sub === 'operator' ? "#666" : (node.sub === 'parent' ? "#000" : "none"));
-            if (node.sub === 'dept') {
-                rect.setAttribute("stroke", "#666"); 
-                rect.setAttribute("stroke-width", "1.5");
-            }
+            rect.setAttribute("fill", "#000");
             g.appendChild(rect);
-        } else if (node.type === 'construction') {
+        } else if (type === 'div_ind') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "#666");
+            g.appendChild(poly);
+        } else if (type === 'div_ent') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "none");
+            poly.setAttribute("stroke", "#666"); 
+            poly.setAttribute("stroke-width", "1");
+            g.appendChild(poly);
+        } else if (type === 's') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var rect = document.createElementNS(ns, "rect");
             rect.setAttribute("x", -r); rect.setAttribute("y", -r);
             rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
-            rect.setAttribute("fill", "none"); 
-            rect.setAttribute("stroke", "#00FF00"); 
-            rect.setAttribute("stroke-width", "1.5");
-            var p = document.createElementNS(ns, "path");
-            p.setAttribute("fill", "#000");
-            if (node.sub === 'producing') {
-                p.setAttribute("d", `M -${r} -${r} L ${r} ${r} L -${r} ${r} Z`); 
-            } else if (node.sub === 'receiving') {
-                p.setAttribute("d", `M -${r} -${r} L ${r} -${r} L -${r} ${r} Z`); 
-            } else if (node.sub === 'mixed') {
-                p.setAttribute("d", `M -${r} -${r} L 0 0 L -${r} ${r} Z M ${r} -${r} L ${r} ${r} L 0 0 Z`); 
-            }
-            g.appendChild(rect); g.appendChild(p);
-        } else { // Facility
+            rect.setAttribute("fill", "none");
+            rect.setAttribute("stroke", "#666"); 
+            rect.setAttribute("stroke-width", "1");
+            g.appendChild(rect);
+        } else if (type === 'receiving') { 
+            var bg = document.createElementNS(ns, "circle");
+            bg.setAttribute("r", r+p); bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
             var c = document.createElementNS(ns, "circle");
             c.setAttribute("r", r); c.setAttribute("fill", "none");
-            c.setAttribute("stroke", "#FF0000"); c.setAttribute("stroke-width", "1.5");
-            var p = document.createElementNS(ns, "path");
-            p.setAttribute("fill", "#000");
-            if (node.sub === 'producing') {
-                p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 1 ${r} 0 Z`); 
-            } else if (node.sub === 'receiving') {
-                p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`); 
-            } else if (node.sub === 'mixed') {
-                p.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 1 0 -${r} L 0 0 Z M 0 0 L ${r} 0 A ${r} ${r} 0 0 1 0 ${r} Z`); 
-            }
-            g.appendChild(c); g.appendChild(p);
+            c.setAttribute("stroke", "#FF0000"); c.setAttribute("stroke-width", "1");
+            var pa = document.createElementNS(ns, "path");
+            pa.setAttribute("fill", "#000");
+            pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
+            g.appendChild(c); g.appendChild(pa);
+        }
+
+        if(isActive) {
+            g.setAttribute("transform", "scale(1.2)");
         }
         return g;
     }
@@ -283,7 +294,7 @@
             line.setAttribute("class", "link-line");
             line.setAttribute("stroke", "#dddddd"); line.setAttribute("stroke-width", "1");
             linkG.appendChild(line);
-            return { s: sNode, t: tNode, el: line };
+            return { s: sNode, t: tNode, el: line, id: l[0] + "-" + l[1] };
         });
 
         var nodeG = document.createElementNS(ns, "g"); svg.appendChild(nodeG);
@@ -295,10 +306,10 @@
             var hit = document.createElementNS(ns, "circle");
             hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
             g.appendChild(hit);
-
             
-            var icon = dbShape(n); icon.style.pointerEvents = "none";
-            g.appendChild(icon); n.shapeEl = icon;
+            var shape = dbShape(n);
+            shape.style.pointerEvents = "none";
+            g.appendChild(shape); n.shapeEl = shape;
             
             var txt = document.createElementNS(ns, "text");
             // Full name, wrapped onto a second line if it does not fit. Cutting
@@ -347,7 +358,7 @@
                     }
                 });
                 links.forEach(link => {
-                    var isH = lineage.links.has(link.s.id + "-" + link.t.id) || lineage.links.has(link.t.id + "-" + link.s.id);
+                    var isH = lineage.links.has(link.id);
                     link.el.classList.toggle("dimmed", !isH);
                     link.el.classList.toggle("highlight-link", isH);
                 });

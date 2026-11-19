@@ -78,25 +78,35 @@
         {id:"AF Offshore Decom AS", type:"div_ent"},
         {id:"AF Miljøbase Vats AS", type:"div_ent"},
         {id:"Jølsen Miljøpark", type:"receiving", active:true},
-        {id:"Jølsen Miljøpark AS", type:"div_ent"}
+        {id:"Jølsen Miljøpark AS", type:"div_ent"},
+        {id:"Betonmast Holding AS", type:"div_ent"},
+        {id:"AF Gruppen Holding AS", type:"div_ent"},
+        {id:"Esval Miljøpark Nes KF", type:"p"},
+        {id:"Gunnar Holth Grusforretning AS", type:"div_ent"},
+        {id:"Constructio AS", type:"p"}
     ];
     
     var LINKS = [
-        ["AF Gruppen Norge AS", "AF Gruppen ASA"],
-        ["AF Energi og Miljø AS", "AF Gruppen Norge AS"],
         ["AF Decom AS", "AF Energi og Miljø AS"],
         ["Jølsen Eiendom 1 AS", "Jølsen Miljøpark AS"],
         ["Jølsen Eiendom 4 AS", "Jølsen Miljøpark AS"],
-        ["Nes Miljøpark AS", "AF Decom AS"],
         ["Mepex AS", "AF Energi og Miljø AS"],
         ["AF Energi AS", "AF Energi og Miljø AS"],
-        ["AF Offshore AS", "AF Gruppen Norge AS"],
-        ["Betonmast AS", "AF Gruppen Norge AS"],
-        ["Strøm Gundersen AS", "AF Gruppen Norge AS"],
         ["AF Offshore Decom AS", "AF Offshore AS"],
-        ["AF Miljøbase Vats AS", "AF Offshore Decom AS"],
         ["Jølsen Miljøpark", "Jølsen Miljøpark AS"],
-        ["Jølsen Miljøpark AS", "AF Decom AS"]
+        ["Jølsen Miljøpark AS", "AF Decom AS"],
+        ["AF Energi og Miljø AS", "AF Gruppen ASA"],
+        ["AF Offshore AS", "AF Gruppen ASA"],
+        ["AF Miljøbase Vats AS", "AF Offshore AS"],
+        ["AF Gruppen Norge AS", "AF Gruppen ASA"],
+        ["Betonmast AS", "Betonmast Holding AS"],
+        ["Betonmast Holding AS", "AF Gruppen ASA"],
+        ["Strøm Gundersen AS", "AF Gruppen Holding AS"],
+        ["AF Gruppen Holding AS", "AF Gruppen ASA"],
+        ["Nes Miljøpark AS", "Esval Miljøpark Nes KF"],
+        ["Nes Miljøpark AS", "Gunnar Holth Grusforretning AS"],
+        ["Nes Miljøpark AS", "AF Energi og Miljø AS"],
+        ["Gunnar Holth Grusforretning AS", "Constructio AS"]
     ];
 
     var el = document.getElementById(containerID);
@@ -210,7 +220,7 @@
         var ns = "http://www.w3.org/2000/svg";
         var g = document.createElementNS(ns, "g");
         var r = 3.5; 
-        var p = 2; // padding for white background
+        var p = 2;
         
         if (type === 'p') { 
             var bg = document.createElementNS(ns, "rect");

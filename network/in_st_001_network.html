@@ -63,16 +63,22 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Gunnar Holth Grusforretning (GHG) group", type:"p"},
         {id:"Hamar Pukk og Grus AS", type:"div_ent", l:"(operator)"},
         {id:"Brynsåsen steinbrudd / massemottak", type:"receiving", l:"(Brynsvegen 489)", active:true},
-        {id:"Vang grustak", type:"s", l:"(Bjørgedalen ved Narmo)"}
+        {id:"Vang grustak", type:"s", l:"(Bjørgedalen ved Narmo)"},
+        {id:"Veidekke Industri AS", type:"div_ent", l:"(50 %)"},
+        {id:"Gunnar Holth Grusforretning AS", type:"div_ent", l:"(50 %)"},
+        {id:"Veidekke ASA", type:"p"},
+        {id:"Constructio AS", type:"p"}
     ];
     
     var LINKS = [
-        ["Hamar Pukk og Grus AS", "Gunnar Holth Grusforretning (GHG) group"],
         ["Brynsåsen steinbrudd / massemottak", "Hamar Pukk og Grus AS"],
-        ["Vang grustak", "Hamar Pukk og Grus AS"]
+        ["Vang grustak", "Hamar Pukk og Grus AS"],
+        ["Hamar Pukk og Grus AS", "Veidekke Industri AS"],
+        ["Hamar Pukk og Grus AS", "Gunnar Holth Grusforretning AS"],
+        ["Veidekke Industri AS", "Veidekke ASA"],
+        ["Gunnar Holth Grusforretning AS", "Constructio AS"]
     ];
 
     var el = document.getElementById(containerID);

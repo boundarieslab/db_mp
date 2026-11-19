@@ -67,14 +67,16 @@
         {id:"Egge 1 AS", type:"div_ent", l:"(operator)"},
         {id:"Lindum Oredalen AS", type:"div_ent"},
         {id:"Egge I - inert deponi", type:"receiving", l:"(Baneveien, Egge)", active:true},
-        {id:"Lindum Oredalen", type:"s"}
+        {id:"Lindum Oredalen", type:"s"},
+        {id:"Nimeco AS", type:"p", l:"(49 %)"}
     ];
     
     var LINKS = [
-        ["Egge 1 AS", "Lindum AS"],
         ["Lindum Oredalen AS", "Lindum AS"],
         ["Egge I - inert deponi", "Egge 1 AS"],
-        ["Lindum Oredalen", "Lindum Oredalen AS"]
+        ["Lindum Oredalen", "Lindum Oredalen AS"],
+        ["Egge 1 AS", "Nimeco AS"],
+        ["Egge 1 AS", "Lindum AS"]
     ];
 
     var el = document.getElementById(containerID);

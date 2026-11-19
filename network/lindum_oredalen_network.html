@@ -66,12 +66,11 @@
         {id:"Drammen kommune", type:"p"},
         {id:"Lindum AS", type:"div_ent"},
         {id:"Lindum Oredalen", type:"receiving", active:true},
-        {id:"Lindum Sør AS", type:"div_ent", l:"(Lillesand)"},
-        {id:"Egge 1 AS", type:"div_ent", l:"(Lier)"},
+        {id:"Libir Næring AS", type:"div_ent", l:"(51 %, Lillesand)"},
+        {id:"Egge 1 AS", type:"div_ent", l:"(51 %, Lier)"},
         {id:"Lindum Kommunalservice", type:"div_ind"},
-        {id:"Grønt Skift AS", type:"div_ent", l:"(R&D)"},
         {id:"Den Magiske Fabrikken AS", type:"div_ent", l:"(34%, Biogas)"},
-        {id:"Drammen Havn AS", type:"div_ent"},
+        {id:"Drammen Havn AS", type:"div_ent", l:"(64 %)"},
         {id:"Dpark AS", type:"div_ent"},
         {id:"Drammen Scener AS", type:"div_ent"},
         {id:"Enter Kompetanse AS", type:"div_ent"},
@@ -79,17 +78,15 @@
         {id:"Vardar AS", type:"div_ent", l:"(Energy)"},
         {id:"Drammen Eiendom KF", type:"div_ent", l:"(Municipal enterprise)"},
         {id:"Drammensbadet KF", type:"div_ent", l:"(Municipal enterprise)"},
-        {id:"Lindum Oredalen AS", type:"div_ent"}
+        {id:"Lindum Oredalen AS", type:"div_ent", l:"(operator; Lindum 51 %, Asker kommune 49 %)"},
+        {id:"Asker kommune", type:"p", l:"(49 %)"},
+        {id:"Nimeco AS", type:"p", l:"(49 %)"}
     ];
     
     var LINKS = [
-        ["Lindum AS", "Drammen kommune"],
-        ["Lindum Sør AS", "Lindum AS"],
-        ["Egge 1 AS", "Lindum AS"],
+        ["Libir Næring AS", "Lindum AS"],
         ["Lindum Kommunalservice", "Lindum AS"],
-        ["Grønt Skift AS", "Lindum AS"],
         ["Den Magiske Fabrikken AS", "Lindum AS"],
-        ["Drammen Havn AS", "Drammen kommune"],
         ["Dpark AS", "Drammen kommune"],
         ["Drammen Scener AS", "Drammen kommune"],
         ["Enter Kompetanse AS", "Drammen kommune"],
@@ -98,7 +95,12 @@
         ["Drammen Eiendom KF", "Drammen kommune"],
         ["Drammensbadet KF", "Drammen kommune"],
         ["Lindum Oredalen", "Lindum Oredalen AS"],
-        ["Lindum Oredalen AS", "Lindum AS"]
+        ["Lindum Oredalen AS", "Asker kommune"],
+        ["Lindum Oredalen AS", "Lindum AS"],
+        ["Egge 1 AS", "Nimeco AS"],
+        ["Egge 1 AS", "Lindum AS"],
+        ["Lindum AS", "Drammen kommune"],
+        ["Drammen Havn AS", "Drammen kommune"]
     ];
 
     var el = document.getElementById(containerID);

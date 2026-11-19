@@ -63,36 +63,30 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Heffalompen Holding AS", type:"p"},
-        {id:"Mr. Pukk AS", type:"div_ent"},
+        {id:"Heffalompen Holding AS", type:"p", l:"(konkurs 29.10.2026)"},
         {id:"Mr. Pukk Eiendom AS", type:"div_ent"},
         {id:"Mr. Pukk Gjenvinning AS", type:"div_ent"},
         {id:"Mysen Asfalt AS", type:"div_ent"},
-        {id:"Maur Tipp og Slep AS", type:"div_ent", l:"(Transport)"},
         {id:"Bokerøya AS", type:"div_ent"},
         {id:"Mr. Pukk Eiendom 10 AS", type:"div_ent"},
-        {id:"Ramnes Næringseiendom AS", type:"div_ent"},
         {id:"Mr. Pukk Høland AS", type:"div_ent"},
-        {id:"Mr. Pukk Øst AS", type:"div_ent"},
+        {id:"Mr. Pukk Øst AS", type:"div_ent", l:"(konkurs 15.10.2026)"},
         {id:"Torperåsen AS", type:"div_ent"},
         {id:"Mr. Pukk AS avd. Micheletveien (Furuset)", type:"receiving", active:true},
         {id:"Mr. Pukk Furuset AS", type:"div_ent"}
     ];
     
     var LINKS = [
-        ["Mr. Pukk AS", "Heffalompen Holding AS"],
+        ["Mr. Pukk AS avd. Micheletveien (Furuset)", "Mr. Pukk Furuset AS"],
         ["Mr. Pukk Eiendom AS", "Heffalompen Holding AS"],
-        ["Mr. Pukk Gjenvinning AS", "Heffalompen Holding AS"],
-        ["Maur Tipp og Slep AS", "Heffalompen Holding AS"],
-        ["Mysen Asfalt AS", "Heffalompen Holding AS"],
+        ["Mr. Pukk Gjenvinning AS", "Mr. Pukk Eiendom AS"],
+        ["Mr. Pukk Furuset AS", "Mr. Pukk Eiendom AS"],
+        ["Mr. Pukk Øst AS", "Mr. Pukk Eiendom AS"],
+        ["Mysen Asfalt AS", "Mr. Pukk Eiendom AS"],
         ["Bokerøya AS", "Mr. Pukk Eiendom AS"],
         ["Mr. Pukk Eiendom 10 AS", "Mr. Pukk Eiendom AS"],
-        ["Ramnes Næringseiendom AS", "Mr. Pukk Eiendom AS"],
-        ["Mr. Pukk Høland AS", "Mr. Pukk AS"],
-        ["Mr. Pukk Øst AS", "Mr. Pukk AS"],
-        ["Torperåsen AS", "Mr. Pukk AS"],
-        ["Mr. Pukk AS avd. Micheletveien (Furuset)", "Mr. Pukk Furuset AS"],
-        ["Mr. Pukk Furuset AS", "Mr. Pukk Gjenvinning AS"]
+        ["Mr. Pukk Høland AS", "Mr. Pukk Eiendom AS"],
+        ["Torperåsen AS", "Mr. Pukk Øst AS"]
     ];
 
     var el = document.getElementById(containerID);

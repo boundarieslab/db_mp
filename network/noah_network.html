@@ -66,27 +66,31 @@
         {id:"Gjelsten Holding AS", type:"p"},
         {id:"NOAH AS", type:"div_ent"},
         {id:"NOAH Solutions AS", type:"div_ent", l:"(Langøya)"},
-        {id:"NOAH Environment", type:"s"},
-        {id:"FRANO AS", type:"div_ent", l:"(50%, with Franzefoss)"},
-        {id:"Rekefjord Stone AS", type:"div_ent", l:"(Quarry)"},
-        {id:"Aas Gård", type:"s", l:"(50% co-owner, Engadalen)"},
-        {id:"Fabritius Gruppen", type:"s", l:"(Property)"},
+        {id:"NOAH Environment AS", type:"div_ent"},
+        {id:"FRANO AS", type:"div_ent", l:"(50 %, with Franzefoss AS)"},
+        {id:"Rekefjord Stone AS", type:"div_ent", l:"(50 %, quarry)"},
+        {id:"Fabritius Gruppen AS", type:"div_ent", l:"(Property)"},
         {id:"Profier AS", type:"div_ent", l:"(Property)"},
         {id:"NOAH Engadalen", type:"receiving", active:true},
-        {id:"NOAH Engadalen AS", type:"div_ent"}
+        {id:"NOAH Engadalen AS", type:"div_ent"},
+        {id:"Fearnley Holding AS", type:"p", l:"(12.5 %)"},
+        {id:"Fearnley Invest AS", type:"p", l:"(37.6 %)"},
+        {id:"Gjelsten Bolig AS", type:"div_ent", l:"(89 %)"}
     ];
     
     var LINKS = [
         ["NOAH AS", "Gjelsten Holding AS"],
         ["NOAH Solutions AS", "NOAH AS"],
-        ["NOAH Environment", "NOAH AS"],
-        ["FRANO AS", "NOAH Environment"],
-        ["Rekefjord Stone AS", "NOAH Environment"],
-        ["Aas Gård", "NOAH Engadalen AS"],
-        ["Fabritius Gruppen", "Gjelsten Holding AS"],
-        ["Profier AS", "Gjelsten Holding AS"],
+        ["NOAH Environment AS", "NOAH AS"],
+        ["FRANO AS", "NOAH Environment AS"],
+        ["Rekefjord Stone AS", "NOAH Environment AS"],
+        ["Fabritius Gruppen AS", "Gjelsten Holding AS"],
         ["NOAH Engadalen", "NOAH Engadalen AS"],
-        ["NOAH Engadalen AS", "NOAH Environment"]
+        ["NOAH Engadalen AS", "Fearnley Holding AS"],
+        ["NOAH Engadalen AS", "Fearnley Invest AS"],
+        ["NOAH Engadalen AS", "NOAH Environment AS"],
+        ["Profier AS", "Gjelsten Bolig AS"],
+        ["Gjelsten Bolig AS", "Gjelsten Holding AS"]
     ];
 
     var el = document.getElementById(containerID);

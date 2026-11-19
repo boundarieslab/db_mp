@@ -64,11 +64,17 @@
 
     var NODES = [
         {id:"Drammen Havn Holmen - utfylling i sjø", type:"receiving", l:"(Holmen, Drammen havn)", active:true},
-        {id:"Drammen Havn AS", type:"p"}
+        {id:"Drammen Havn AS", type:"div_ent"},
+        {id:"Lier kommune", type:"p", l:"(18 %)"},
+        {id:"Asker kommune", type:"p", l:"(18 %)"},
+        {id:"Drammen kommune", type:"p", l:"(64 %)"}
     ];
     
     var LINKS = [
-        ["Drammen Havn Holmen - utfylling i sjø", "Drammen Havn AS"]
+        ["Drammen Havn Holmen - utfylling i sjø", "Drammen Havn AS"],
+        ["Drammen Havn AS", "Lier kommune"],
+        ["Drammen Havn AS", "Asker kommune"],
+        ["Drammen Havn AS", "Drammen kommune"]
     ];
 
     var el = document.getElementById(containerID);

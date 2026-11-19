@@ -65,12 +65,24 @@
     var NODES = [
         {id:"Norsk Gjenvinning m3 AS", type:"div_ent"},
         {id:"Kopstad Massemottak AS", type:"receiving", l:"(Kopstad, by E18)", active:true},
-        {id:"Norsk Gjenvinning Norge AS", type:"p"}
+        {id:"Norsk Gjenvinning Norge AS", type:"div_ent"},
+        {id:"Mana Group AS", type:"div_ent"},
+        {id:"NG Nordic AS", type:"div_ent"},
+        {id:"NG Finco AS", type:"div_ent"},
+        {id:"NG Holdco AS", type:"div_ent"},
+        {id:"NG Midco AS", type:"div_ent"},
+        {id:"Summa Circular Holdco AS", type:"p", l:"(Summa Equity funds)"}
     ];
     
     var LINKS = [
         ["Kopstad Massemottak AS", "Norsk Gjenvinning m3 AS"],
-        ["Norsk Gjenvinning m3 AS", "Norsk Gjenvinning Norge AS"]
+        ["Norsk Gjenvinning m3 AS", "Mana Group AS"],
+        ["Mana Group AS", "NG Nordic AS"],
+        ["NG Nordic AS", "Norsk Gjenvinning Norge AS"],
+        ["Norsk Gjenvinning Norge AS", "NG Finco AS"],
+        ["NG Finco AS", "NG Holdco AS"],
+        ["NG Holdco AS", "NG Midco AS"],
+        ["NG Midco AS", "Summa Circular Holdco AS"]
     ];
 
     var el = document.getElementById(containerID);

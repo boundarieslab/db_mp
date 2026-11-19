@@ -63,12 +63,14 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Deponitomta AS", type:"p", l:"(permit holder)"},
-        {id:"Deponitomta industrideponi (Sperre Støperi)", type:"receiving", l:"(Industrigata 22, Elverum)", active:true}
+        {id:"Deponitomta AS", type:"div_ent", l:"(permit holder)"},
+        {id:"Deponitomta industrideponi (Sperre Støperi)", type:"receiving", l:"(Industrigata 22, Elverum)", active:true},
+        {id:"SMV Invest AS", type:"p"}
     ];
     
     var LINKS = [
-        ["Deponitomta industrideponi (Sperre Støperi)", "Deponitomta AS"]
+        ["Deponitomta industrideponi (Sperre Støperi)", "Deponitomta AS"],
+        ["Deponitomta AS", "SMV Invest AS"]
     ];
 
     var el = document.getElementById(containerID);

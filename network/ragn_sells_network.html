@@ -63,13 +63,13 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Ragn-Sells AB", type:"p", l:"(Sweden, Sellberg family)"},
+        {id:"Ragn-Sells AB", type:"p", l:"(Sweden)"},
         {id:"Ragn-Sells AS", type:"div_ent", l:"(Norway)"},
         {id:"Retur Næring AS", type:"div_ent"},
         {id:"Ragn-Sells Autoparts AS", type:"div_ent", l:"(Car parts)"},
         {id:"Nordstrand Steinbrudd AS", type:"div_ent"},
         {id:"Ragn-Sells Havbruk AS", type:"div_ent", l:"(Aquaculture)"},
-        {id:"Aquapro AS", type:"div_ent"},
+        {id:"Aquapro AS", type:"div_ent", l:"(85 %)"},
         {id:"Ocean Cleaning AS", type:"div_ent"},
         {id:"Ragn-Sells avd. Gardermoen", type:"receiving", active:true}
     ];
@@ -81,8 +81,8 @@
         ["Ragn-Sells Autoparts AS", "Ragn-Sells AS"],
         ["Nordstrand Steinbrudd AS", "Ragn-Sells AS"],
         ["Ragn-Sells Havbruk AS", "Ragn-Sells AS"],
-        ["Aquapro AS", "Ragn-Sells Havbruk AS"],
-        ["Ocean Cleaning AS", "Ragn-Sells Havbruk AS"]
+        ["Aquapro AS", "Ragn-Sells AS"],
+        ["Ocean Cleaning AS", "Aquapro AS"]
     ];
 
     var el = document.getElementById(containerID);

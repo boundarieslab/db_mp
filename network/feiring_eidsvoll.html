@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Feiring Bruk AS avd. Dal Pukkverk - Ownership Network</title>
+    
     <style>
         /* Same typeface as dirtybusiness.no and the map, served from the same
            place, so the graphs are typographically part of the site. */
@@ -20,10 +21,10 @@
     <style>
         /* Identical frame for every graph: legend on top, graph fills the rest. */
         .node-group, .link-line { transition: opacity 0.4s ease, stroke 0.4s ease; }
-        .dimmed { opacity: 0.1 !important; }
+        .dimmed { opacity: 0.15 !important; }
         .highlight-link { stroke: #000 !important; stroke-width: 1.2 !important; opacity: 1 !important; }
-        
-        svg { user-select: none; width: 100%; height: 100%; }
+
+        svg { user-select: none; -webkit-user-select: none; }
     
         /* ── Canonical frame: identical in every graph in this repo ───────── */
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
@@ -60,12 +61,12 @@
 <script>
 (function(){
     var containerID = "network-container"; 
+
     var NODES = [
         {id:"Ollendorff Holding AS", type:"p"},
         {id:"Feiring AS", type:"div_ent", l:"(Group)"},
         {id:"Feiring Bruk AS", type:"div_ent"},
         {id:"Feiring Bruk AS avd. Dal Pukkverk", type:"receiving", active:true},
-        {id:"Morten Grefsrud AS", type:"div_ent", l:"(INACTIVE)"},
         {id:"Feiring Bruk AS avd. Bjønndalen Bruk", type:"div_ind", l:"(INACTIVE)"},
         {id:"Feiring Bruk AS avd. Hjera Pukkverk", type:"div_ind", l:"(INACTIVE)"},
         {id:"Feiring Bruk AS avd. Hadeland Pukkverk", type:"div_ind", l:"(INACTIVE)"},
@@ -75,27 +76,24 @@
         {id:"Feiring Miljø AS", type:"div_ent"},
         {id:"Tentex AS", type:"div_ent"},
         {id:"Feiring Eiendomsinvest AS", type:"div_ent"},
-        {id:"Lundhs Aggregates AS", type:"div_ent"}
+        {id:"Lundhs Aggregates AS", type:"div_ent", l:"(50 %, Larvik)"}
     ];
     
     var LINKS = [
-        ["Feiring AS", "Ollendorff Holding AS"],
         ["Feiring Bruk AS", "Feiring AS"],
-        ["Morten Grefsrud AS", "Feiring Bruk AS"],
         ["Feiring Bruk AS avd. Bjønndalen Bruk", "Feiring Bruk AS"],
         ["Feiring Bruk AS avd. Hjera Pukkverk", "Feiring Bruk AS"],
         ["Feiring Bruk AS avd. Hadeland Pukkverk", "Feiring Bruk AS"],
-        ["Feiring Vestfold AS", "Feiring AS"],
         ["Feiring Asfalt AS", "Feiring AS"],
         ["Lierfoss Transportsentral AS", "Feiring AS"],
         ["Feiring Miljø AS", "Feiring AS"],
         ["Tentex AS", "Feiring AS"],
-        ["Feiring Eiendomsinvest AS", "Feiring AS"],
-        ["Lundhs Aggregates AS", "Feiring AS"],
-        ["Feiring Bruk AS avd. Dal Pukkverk", "Feiring Bruk AS"]
+        ["Feiring Bruk AS avd. Dal Pukkverk", "Feiring Bruk AS"],
+        ["Feiring AS", "Ollendorff Holding AS"],
+        ["Feiring Vestfold AS", "Feiring Bruk AS"],
+        ["Lundhs Aggregates AS", "Feiring Vestfold AS"],
+        ["Feiring Eiendomsinvest AS", "Ollendorff Holding AS"]
     ];
-
-    var COLORS = { p: "#000", s: "#e0e0e0", op: "#666", deponi: "#00FF00", pukk: "#00FF00", mottak: "#FF0000", inactive: "#fff" };
 
     var el = document.getElementById(containerID);
     var W, H, svg, nodes=[], links=[], parentMap={}, childMap={};
@@ -206,23 +204,71 @@
 
     function createShape(type, isActive) {
         var ns = "http://www.w3.org/2000/svg";
-        var shape;
-        if (type === 'p' || type === 'op' || type === 's' || type === 'inactive') {
-            shape = document.createElementNS(ns, "rect");
-            var size = type === 'p' ? 12 : 10;
-            shape.setAttribute("x", -size/2); shape.setAttribute("y", -size/2);
-            shape.setAttribute("width", size); shape.setAttribute("height", size);
-            if(type === 'inactive') {
-                shape.setAttribute("stroke", "#999"); shape.setAttribute("stroke-dasharray", "2,2");
-            }
-        } else if (type === 'pukk') {
-            shape = document.createElementNS(ns, "polygon");
-            shape.setAttribute("points", "-5,5 5,5 0,-5");
-        } else {
-            shape = document.createElementNS(ns, "polygon");
-            shape.setAttribute("points", "0,-6 6,0 0,6 -6,0");
+        var g = document.createElementNS(ns, "g");
+        var r = 3.5; 
+        var p = 2;
+        
+        if (type === 'p') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "#000");
+            g.appendChild(rect);
+        } else if (type === 'div_ind') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "#666");
+            g.appendChild(poly);
+        } else if (type === 'div_ent') { 
+            var bg = document.createElementNS(ns, "polygon");
+            bg.setAttribute("points", `0,-${r+1+p} ${r+1+p},${r+1+p} -${r+1+p},${r+1+p}`);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var poly = document.createElementNS(ns, "polygon");
+            poly.setAttribute("points", `0,-${r+1} ${r+1},${r+1} -${r+1},${r+1}`);
+            poly.setAttribute("fill", "none");
+            poly.setAttribute("stroke", "#666"); 
+            poly.setAttribute("stroke-width", "1");
+            g.appendChild(poly);
+        } else if (type === 's') { 
+            var bg = document.createElementNS(ns, "rect");
+            bg.setAttribute("x", -(r+p)); bg.setAttribute("y", -(r+p));
+            bg.setAttribute("width", (r+p)*2); bg.setAttribute("height", (r+p)*2);
+            bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var rect = document.createElementNS(ns, "rect");
+            rect.setAttribute("x", -r); rect.setAttribute("y", -r);
+            rect.setAttribute("width", r*2); rect.setAttribute("height", r*2);
+            rect.setAttribute("fill", "none");
+            rect.setAttribute("stroke", "#666"); 
+            rect.setAttribute("stroke-width", "1");
+            g.appendChild(rect);
+        } else if (type === 'receiving') { 
+            var bg = document.createElementNS(ns, "circle");
+            bg.setAttribute("r", r+p); bg.setAttribute("fill", "#fff");
+            g.appendChild(bg);
+            var c = document.createElementNS(ns, "circle");
+            c.setAttribute("r", r); c.setAttribute("fill", "none");
+            c.setAttribute("stroke", "#FF0000"); c.setAttribute("stroke-width", "1");
+            var pa = document.createElementNS(ns, "path");
+            pa.setAttribute("fill", "#000");
+            pa.setAttribute("d", `M -${r} 0 A ${r} ${r} 0 0 0 ${r} 0 Z`);
+            g.appendChild(c); g.appendChild(pa);
         }
-        return shape;
+
+        if(isActive) {
+            g.setAttribute("transform", "scale(1.2)");
+        }
+        return g;
     }
 
     function init() {
@@ -233,7 +279,7 @@
         parentMap = {}; childMap = {}; _settled = false;
         W = el.offsetWidth || window.innerWidth;
         _labelRoom = Math.max(78, Math.min(200, (W || 520) * 0.26));
-        H = el.offsetHeight || 650;
+        H = el.offsetHeight || 500;
         el.innerHTML = "";
         var ns = "http://www.w3.org/2000/svg";
         svg = document.createElementNS(ns, "svg");
@@ -258,7 +304,7 @@
             line.setAttribute("class", "link-line");
             line.setAttribute("stroke", "#dddddd"); line.setAttribute("stroke-width", "1");
             linkG.appendChild(line);
-            return { s: sNode, t: tNode, el: line };
+            return { s: sNode, t: tNode, el: line, id: l[0] + "-" + l[1] };
         });
 
         var nodeG = document.createElementNS(ns, "g"); svg.appendChild(nodeG);
@@ -267,14 +313,14 @@
             g.setAttribute("class", "node-group");
             g.style.cursor = "grab";
 
+            var hit = document.createElementNS(ns, "circle");
+            hit.setAttribute("r", 25); hit.setAttribute("fill", "transparent");
+            g.appendChild(hit);
             
             var shape = dbShape(n);
-            shape.setAttribute("fill", COLORS[n.type]);
-            if(n.active) { shape.setAttribute("stroke", "#000"); shape.setAttribute("stroke-width", "1.5"); shape.setAttribute("transform", "scale(1.4)"); }
-            else if(n.type !== 'inactive') { shape.setAttribute("stroke", "#fff"); shape.setAttribute("stroke-width", "1"); }
-            
+            shape.style.pointerEvents = "none";
             g.appendChild(shape); n.shapeEl = shape;
-
+            
             var txt = document.createElementNS(ns, "text");
             // Full name, wrapped onto a second line if it does not fit. Cutting
             // it with an ellipsis hid which facility a node actually was.
@@ -316,27 +362,27 @@
                 var lineage = getStrictLineage(n);
                 nodes.forEach(node => { 
                     node.el.classList.toggle("dimmed", !lineage.nodes.has(node.id));
-                    // Highlight with bold
                     if(lineage.nodes.has(node.id)) {
                         node.tEl.style.fontWeight = "bold";
                         node.tEl.setAttribute("fill", "#000");
                     }
                 });
                 links.forEach(link => {
-                    var isH = lineage.links.has(link.s.id + "-" + link.t.id) || lineage.links.has(link.t.id + "-" + link.s.id);
+                    var isH = lineage.links.has(link.id);
                     link.el.classList.toggle("dimmed", !isH);
                     link.el.classList.toggle("highlight-link", isH);
                 });
             };
+
             g.onmouseleave = () => {
                 nodes.forEach(node => {
                     node.el.classList.remove("dimmed");
-                    // Reset to original font weight
                     node.tEl.style.fontWeight = node.active ? "bold" : "normal";
                     node.tEl.setAttribute("fill", node.active ? "#000" : "#666");
                 });
                 links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
             };
+
             g.onmousedown = (e) => { e.preventDefault(); n.dragging = true; g.style.cursor = "grabbing";
                 if (_settled && !_raf) { _settled = false; _raf = requestAnimationFrame(tick); } };
             nodeG.appendChild(g); n.el = g;
@@ -382,7 +428,7 @@
                 n.x += n.vx; n.y += n.vy; n.vx *= 0.88; n.vy *= 0.88;
             }
             var _ox = n.x; n.x = Math.max(_labelRoom, Math.min(W - _labelRoom, n.x)); if (n.x !== _ox) n.vx = 0; var _oy = n.y; n.y = Math.max(_pad, Math.min(H - _pad, n.y)); if (n.y !== _oy) n.vy = 0;
-            n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
+            if(n.el) n.el.setAttribute("transform", `translate(${n.x},${n.y})`);
             if(n.tEl) {
                 // point the label outward, into the reserved margin
                 var _right = n.x >= W / 2;
@@ -431,7 +477,10 @@
             nodes.forEach(function(n){ n.y = Math.max(_pad, Math.min(H - _pad, n.y)); });
         })();
 
-        links.forEach(l => { l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y); l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y); });
+        links.forEach(l => {
+            l.el.setAttribute("x1", l.s.x); l.el.setAttribute("y1", l.s.y);
+            l.el.setAttribute("x2", l.t.x); l.el.setAttribute("y2", l.t.y);
+        });
         // The picture reaches a fixed point after 20-40s but the loop used to
 
         // run forever, including behind a closed sidebar.
@@ -458,7 +507,12 @@
     });
     window.addEventListener("mouseup", () => nodes.forEach(n => n.dragging = false));
     
-    setTimeout(init, 400);
+    setTimeout(init, 500);
+    var _rt;
+    window.addEventListener("resize", function(){
+        clearTimeout(_rt);
+        _rt = setTimeout(function(){ frame = 0; init(); }, 250);
+    });
 })();
 </script>
 <script>

@@ -63,14 +63,14 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Lindum AS (Drammen kommune)", type:"p"},
+        {id:"Drammen kommune", type:"p"},
         {id:"Lindum AS", type:"div_ent", l:"(operator)"},
         {id:"Lindum AS avd. Drammen - avfallsdeponi", type:"receiving", l:"(Lerpeveien)", active:true},
         {id:"Renovasjonsselskapet for Drammensregionen IKS (RfD)", type:"div_ind", l:"(same site)"}
     ];
     
     var LINKS = [
-        ["Lindum AS", "Lindum AS (Drammen kommune)"],
+        ["Lindum AS", "Drammen kommune"],
         ["Lindum AS avd. Drammen - avfallsdeponi", "Lindum AS"],
         ["Renovasjonsselskapet for Drammensregionen IKS (RfD)", "Lindum AS avd. Drammen - avfallsdeponi"]
     ];

@@ -63,24 +63,34 @@
     var containerID = "network-container"; 
 
     var NODES = [
-        {id:"Norsk Gjenvinning Norge AS", type:"p"},
+        {id:"Norsk Gjenvinning Norge AS", type:"div_ent"},
         {id:"Norsk Gjenvinning AS avd. Kongsvinger", type:"div_ind", l:"(operator)"},
         {id:"Norsk Gjenvinning AS avd. Øra", type:"div_ind"},
         {id:"Norsk Gjenvinning AS", type:"div_ent"},
         {id:"Norsk Gjenvinning AS avd. Larvik", type:"div_ind"},
         {id:"Korperud fyllplass", type:"receiving", active:true},
         {id:"Norsk Gjenvinning avfallsanlegg Grinda", type:"s"},
-        {id:"Norsk Gjenvinning AS avd. ØGAS", type:"div_ind"}
+        {id:"Norsk Gjenvinning AS avd. ØGAS", type:"div_ind"},
+        {id:"NG Nordic AS", type:"div_ent"},
+        {id:"NG Finco AS", type:"div_ent"},
+        {id:"NG Holdco AS", type:"div_ent"},
+        {id:"NG Midco AS", type:"div_ent"},
+        {id:"Summa Circular Holdco AS", type:"p", l:"(Summa Equity funds)"}
     ];
     
     var LINKS = [
-        ["Norsk Gjenvinning AS", "Norsk Gjenvinning Norge AS"],
         ["Norsk Gjenvinning AS avd. Øra", "Norsk Gjenvinning AS"],
         ["Norsk Gjenvinning AS avd. Larvik", "Norsk Gjenvinning AS"],
         ["Norsk Gjenvinning AS avd. Kongsvinger", "Norsk Gjenvinning AS"],
         ["Norsk Gjenvinning avfallsanlegg Grinda", "Norsk Gjenvinning AS avd. Larvik"],
         ["Korperud fyllplass", "Norsk Gjenvinning AS avd. Kongsvinger"],
-        ["Norsk Gjenvinning AS avd. ØGAS", "Norsk Gjenvinning AS"]
+        ["Norsk Gjenvinning AS avd. ØGAS", "Norsk Gjenvinning AS"],
+        ["Norsk Gjenvinning AS", "NG Nordic AS"],
+        ["NG Nordic AS", "Norsk Gjenvinning Norge AS"],
+        ["Norsk Gjenvinning Norge AS", "NG Finco AS"],
+        ["NG Finco AS", "NG Holdco AS"],
+        ["NG Holdco AS", "NG Midco AS"],
+        ["NG Midco AS", "Summa Circular Holdco AS"]
     ];
 
     var el = document.getElementById(containerID);
