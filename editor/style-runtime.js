@@ -269,6 +269,10 @@
         [/sb-desc$/, ['height', 'max-height']],
         [/sb-head$/, ['height', 'max-height']],
         [/#sb-title$/, ['height', 'max-height']],
+        // the tool bar and the panes under it are one module, as wide as the tool bar's buttons
+        // need: widths fixed in pixels left the panes narrower than the module, the list cut
+        // off on the right and a scroll bar standing in the middle
+        [/(^|\s)#bar(\s|$)|\.toolbar$|\.drawer$|\.bar-scroll$|-panel(\s|$)|-panel\s.*\.(in|pad)$|\.pane(\s|$)/, ['width', 'max-width', 'min-width']],
         // the legend chips sit where the head puts them; shifted, they vanished behind its edge
         [/#deck-chips\s+button\.chip$/, ['left', 'right', 'top', 'bottom', 'position']]
     ];
