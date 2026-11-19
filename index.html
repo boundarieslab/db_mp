@@ -536,6 +536,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 #site-table tfoot .sig{font-weight:400}
 #site-table tbody tr{cursor:pointer}
 #site-table tbody tr:hover td,#site-table tbody tr.hot td{background:#fafafa}
+#site-table tbody tr.flow-sel td{background:#f2f2f2}
 #site-table tbody tr.pick td{background:#e9e9e9}
 #site-table tbody tr.sel td{background:var(--sel)}
 #site-table tbody tr.sel td:first-child{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:var(--hl,.5px)}
@@ -6189,7 +6190,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let allFlows = [];
     let flowsReady = false;
     let hotFlowId = null;          // one id, or several joined by commas (a shared road)
-    const hotIds = () => String(hotFlowId || '').split(',').filter(Boolean);
+    let selFlowId = null;          // the flow picked by a click; stays until cleared
+    const hotIds = () => [...new Set(String(hotFlowId || '').split(',')
+                                     .concat(selFlowId ? [selFlowId] : []).filter(Boolean))];
     let flowSort = { key: 'Volume_m3', dir: -1 };
     // Line treatment follows what the source records. A delivery on record, or one
     // under way, is drawn solid; a receiver named in a plan, a permit application or a
@@ -6395,6 +6398,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function focusFlows(uid) {
         flowFocus = uid || null;
+        if (uid) selFlowId = null;
         paintFlows();
     }
 
@@ -6434,36 +6438,13 @@ document.addEventListener('DOMContentLoaded', function() {
           { 'line-color': '#ffffff', 'line-width': 2.4, 'line-dasharray': [0.1, 2.2] }, { 'line-cap': 'round' });
         // The two ends of a hovered flow: the same symbol, larger, over the map's own.
         ensureFlowEnds();
-        // Hover and click work on the network: a stretch carries the ids of its flows.
-        const fidAt = e => { const ft = e.features && e.features[0]; if (!ft) return null;
-            return ft.properties.fid || String(ft.properties.fids || '').split(',')[0] || null; };
-        // Hover: every flow on the stretch under the pointer.
-        const fidsAt = e => { const ft = e.features && e.features[0]; if (!ft) return null;
-            return ft.properties.fid || ft.properties.fids || null; };
-        NET_IDS.concat(PICK_IDS).forEach(id => {
-            map.on('mousemove', id, e => {
-                if (toolBusy()) return;
-                const fids = fidsAt(e); if (!fids) return;
-                map.getCanvas().style.cursor = 'pointer';
-                hotFlow(fids);
-                const fs = fids.split(',').map(id => allFlows.find(x => x.FlowUID === id)).filter(Boolean);
-                if (fs.length) updateStatus(fs.map(f => f.__fromName + ' → ' + f.__toName).join(' · '));
-            });
-            map.on('mouseleave', id, () => {
-                if (!toolBusy()) map.getCanvas().style.cursor = '';
-                hotFlow(null);
-            });
-            map.on('click', id, e => {
-                if (toolBusy()) return;
-                const f = allFlows.find(x => x.FlowUID === fidAt(e));
-                if (!f) return;
-                if (deckScope !== 'flow') selectTab('flow');
-                if (deckSize === 'closed') setDeckSize('half');
-                frameFlow(f);
-            });
-        });
+        // Picking works on an invisible 14 px band along each flow's own route.
+        if (!map.getLayer('flow-hit')) map.addLayer({ id: 'flow-hit', type: 'line', source: 'flows',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 14 } }, before);
         if (!flowBound) {
             flowBound = true;
+            bindFlowPicking();
             let t = null;
             map.on('zoomend', () => {
                 clearTimeout(t);
@@ -6475,6 +6456,92 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         flowsReady = true;
         applyFlowFilter();
+    }
+
+    // Distance in pixels from the pointer to a flow's line on screen.
+    function pxToLine(pt, coords) {
+        let best = Infinity, prev = null;
+        coords.forEach(c => {
+            const q = map.project(c);
+            if (prev) {
+                const dx = q.x - prev.x, dy = q.y - prev.y, l2 = dx * dx + dy * dy;
+                let k = l2 ? ((pt.x - prev.x) * dx + (pt.y - prev.y) * dy) / l2 : 0;
+                k = Math.max(0, Math.min(1, k));
+                best = Math.min(best, Math.hypot(pt.x - (prev.x + k * dx), pt.y - (prev.y + k * dy)));
+            }
+            prev = q;
+        });
+        return best;
+    }
+    // The flow under the pointer: none if a site symbol is there (the site comes first);
+    // the flow already hot if it is still under the pointer; otherwise the nearest.
+    function flowAt(pt) {
+        if (!map.getLayer('flow-hit') || map.getLayoutProperty('flow-hit', 'visibility') === 'none') return null;
+        const box = [[pt.x - 7, pt.y - 7], [pt.x + 7, pt.y + 7]];
+        const onSite = map.getLayer('site-sym') && map.queryRenderedFeatures(box, { layers: ['site-sym'] }).length;
+        if (onSite) return null;
+        const ids = [...new Set(map.queryRenderedFeatures(box, { layers: ['flow-hit'] }).map(f => f.properties.fid))]
+            .filter(id => { const f = allFlows.find(x => x.FlowUID === id); return f && flowShown(f); });
+        if (!ids.length) return null;
+        if (hotFlowId && ids.includes(hotFlowId)) return hotFlowId;
+        let best = null, bd = Infinity;
+        ids.forEach(id => {
+            const f = allFlows.find(x => x.FlowUID === id); if (!f) return;
+            const d = pxToLine(pt, flowPath(f));
+            if (d < bd) { bd = d; best = id; }
+        });
+        return best;
+    }
+    function bindFlowPicking() {
+        let leaveT = null;
+        map.on('mousemove', e => {
+            if (!flowsReady || toolBusy()) return;
+            const id = flowAt(e.point);
+            if (id) {
+                clearTimeout(leaveT); leaveT = null;
+                map.getCanvas().style.cursor = 'pointer';
+                if (id !== hotFlowId) {
+                    hotFlow(id);
+                    const f = allFlows.find(x => x.FlowUID === id);
+                    if (f) updateStatus(f.__fromName + ' → ' + f.__toName);
+                }
+            } else if (hotFlowId && !leaveT) {
+                // let go only after a short pause, so a pointer that slips off the line
+                // for a moment does not drop the flow
+                leaveT = setTimeout(() => {
+                    leaveT = null;
+                    map.getCanvas().style.cursor = '';
+                    hotFlow(null);
+                }, 180);
+            }
+        });
+        map.on('click', e => {
+            if (!flowsReady || toolBusy() || (e.originalEvent && e.originalEvent.__handled)) return;
+            const id = flowAt(e.point);
+            if (id) {
+                if (e.originalEvent) e.originalEvent.__handled = true;
+                const f = allFlows.find(x => x.FlowUID === id);
+                if (!f) return;
+                if (deckScope !== 'flow') selectTab('flow');
+                if (deckSize === 'closed') setDeckSize('half');
+                frameFlow(f);
+            } else if (selFlowId) {
+                selectFlow(null);
+            }
+        });
+    }
+    // A clicked flow stays selected: its line lifted, its two ends enlarged.
+    function selectFlow(id) {
+        if ((id || null) === selFlowId) return;
+        selFlowId = id || null;
+        if (deckScope === 'flow') {
+            deckBody.querySelectorAll('tr.flow-sel').forEach(r => r.classList.remove('flow-sel'));
+            if (selFlowId) {
+                const r = deckBody.querySelector('tr[data-flow="' + CSS.escape(selFlowId) + '"]');
+                if (r) r.classList.add('flow-sel');
+            }
+        }
+        if (typeof hotFlowId !== 'undefined') paintFlows();
     }
 
     function hotFlow(id) {
@@ -6490,7 +6557,7 @@ document.addEventListener('DOMContentLoaded', function() {
         paintFlows();
     }
 
-    // The ends of the hovered flows, drawn again at 1.9 times the size over the map's
+    // The ends of the hovered or selected flows, drawn again at 1.35 times the size over the map's
     // own symbols. A symbol layer cannot grow by feature state, so this is a second
     // layer filtered on the ends' ids.
     function ensureFlowEnds() {
@@ -6498,13 +6565,13 @@ document.addEventListener('DOMContentLoaded', function() {
         map.addLayer({ id: 'flow-end-sym', type: 'symbol', source: 'sites',
             filter: ['in', ['get', 'uid'], ['literal', []]],
             layout: { 'icon-image': ['get', 'sym'],
-                      'icon-size': ['interpolate', ['linear'], ['zoom'], 6, 0.76, 15, 1.25],
+                      'icon-size': ['interpolate', ['linear'], ['zoom'], 6, 0.54, 15, 0.89],
                       'icon-allow-overlap': true, 'icon-ignore-placement': true,
                       'icon-anchor': 'center' } });
     }
 
     function frameFlow(f, fromRow) {
-        hotFlow(f.FlowUID);
+        selectFlow(f.FlowUID);
         if (!f.__xy) { updateStatus(t('flows_nogeo')); return; }
         const b = new maplibregl.LngLatBounds();
         b.extend([num(f.__from.Longitude), num(f.__from.Latitude)]);
@@ -6527,7 +6594,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let mine = true;
         try { mine = currentTab === 'flow' || currentTab === 'all'; } catch (err) {}
         if (flowsReady) {
-            FLOW_LAYERS.concat(['flow-end-sym']).forEach(id => {
+            if (!mine) selFlowId = null;
+            FLOW_LAYERS.concat(['flow-end-sym', 'flow-hit']).forEach(id => {
                 if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', show.flow.on && mine ? 'visible' : 'none');
             });
             refreshFlowSources();
