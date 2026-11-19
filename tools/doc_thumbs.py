@@ -12,9 +12,11 @@ keeps what is already there.
 
 Names of private people are blacked out before the page is turned into a
 picture, so the picture never holds them. On each first page the script looks
-in the upper part (the address block) for a line that reads like a person's
-name, with no company or public-body word in it, and blacks out that line and
-the address lines right under it. What it blacks out is written to
+in the address block for a letter sent to a private person: a line that reads
+like a person's name, first in its block, followed by a home address. It
+blacks out the name and the address wherever they appear on the page.
+Officials and company staff, named in their work (under "Saksbehandler", under
+a company name, as contact persons), are left as they are. What it blacks out is written to
 data/doc_redact.csv, one row per text:
 
     DocID,Text,Redact,Why
@@ -89,21 +91,29 @@ def lines_of(page):
 
 
 def people_on(page):
-    """Texts in the address block that look like a private person and their address."""
+    """A private person the letter is addressed to: in the address block, a line that reads
+    like a name, standing first in its block (no company, office or label just above it)
+    and followed by a street or postcode line. Names of officials and of company staff,
+    which sit under a label or a company, are left as they are."""
     found, lines = [], lines_of(page)
     top = page.rect.height * 0.45
     for i, (text, box) in enumerate(lines):
         if box.y1 > top or not NAME.match(text) or NOT_A_PERSON.search(text):
             continue
-        found.append(text)
+        above = [b2 for t2, b2 in lines[:i] if abs(b2.x0 - box.x0) < 20 and 0 <= box.y0 - b2.y1 < 18]
+        if above:  # under a company, an office or a label such as "Saksbehandler:" - a person at work
+            continue
+        block = []
         last = box
         for t2, b2 in lines[i + 1:i + 4]:  # the address right under the name
             if abs(b2.x0 - box.x0) < 20 and 0 <= b2.y0 - last.y1 < 18 and ADDRESS.search(t2) \
-                    and not NOT_A_PERSON.search(t2.replace('Oslo', '')):
-                found.append(t2)
+                    and not re.search(r'postboks|pb\.', t2, re.I):
+                block.append(t2)
                 last = b2
             else:
                 break
+        if block:  # a name with a home address: a private person
+            found += [text] + block
     return found
 
 
