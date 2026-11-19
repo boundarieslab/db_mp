@@ -10,7 +10,7 @@
         src: url('https://freight.cargo.site/t/original/i/34e062220d932607590d93991273932252277d33d93566736279930922253303/DiatypeMono-Regular.woff2') format('woff2');
         font-weight: normal; font-display: swap;
     }
-    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff;
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #f4f2ee;
                  font-family: 'Diatype Mono', 'Courier New', monospace; color: #000; }
     #net { position: absolute; inset: 0; }
     #net svg { width: 100%; height: 100%; display: block; user-select: none; }
@@ -43,21 +43,22 @@
     #card .chain li + li::before { content: "↑ "; color: #bbb; }
 
     #legend { position: absolute; left: 12px; bottom: 10px; display: flex; gap: 14px; align-items: center;
-              font-size: 7px; color: #777; text-transform: uppercase; letter-spacing: .5px; z-index: 2; }
+              font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: .5px; z-index: 2; }
     #legend span { display: flex; align-items: center; gap: 4px; }
     #legend svg { width: 9px; height: 9px; overflow: visible; }
-    #hint { position: absolute; right: 12px; bottom: 10px; font-size: 8px; color: #aaa; z-index: 2; }
+    #hint { position: absolute; right: 12px; bottom: 10px; font-size: 9px; color: #888; z-index: 2; }
 
-    .hull { fill: #000; fill-opacity: .028; stroke: #000; stroke-opacity: .10; stroke-width: .5; }
-    .hull-label { font-size: 9px; fill: #999; letter-spacing: .4px; text-transform: uppercase; pointer-events: none; }
-    .lk { stroke: #cfcfcf; stroke-width: .6; fill: none; }
+    .hull { fill: #fff; stroke: none; }
+    .hull-label { font-size: 10px; fill: #8a8a8a; letter-spacing: .6px; text-transform: uppercase; pointer-events: none; }
+    .lk { stroke: #bdbdbd; stroke-width: .7; fill: none; }
     .lk.same { stroke-dasharray: 2 2; }
     .lk.hot { stroke: #000; stroke-width: 1; stroke-dasharray: 3 3; animation: flow 1s linear infinite; }
     @keyframes flow { to { stroke-dashoffset: -6; } }
     .nd { cursor: pointer; }
-    .nd text { font-size: 8px; fill: #555; paint-order: stroke; stroke: #fff; stroke-width: 2.8px; stroke-linejoin: round; pointer-events: none; }
-    .nd.site text { fill: #00f; }
-    .nd.big text { fill: #000; font-size: 9px; }
+    .nd text { font-size: 9px; fill: #222; paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+    .nd.loose text { stroke: #f4f2ee; }
+    .nd.site text { fill: #00f; font-size: 9px; }
+    .nd.big text { fill: #000; font-size: 10px; }
     .fade { opacity: .1; transition: opacity .25s; }
     .nd, .lk { transition: opacity .25s; }
 </style>
@@ -190,8 +191,8 @@
         svg = d3.select(el).append("svg");
         gAll = svg.append("g");
         hullG = gAll.append("g");
-        var r = function (d) { return d.uid ? 4 : 3 + Math.sqrt(d.sites) * 2.2; };
-        nodes.forEach(function (d) { d.r = r(d); d.text = shortName(d.name); d.big = !d.uid && d.sites >= 3; });
+        var r = function (d) { return d.uid ? 4.6 : 3.6 + Math.sqrt(d.sites) * 2.6; };
+        nodes.forEach(function (d) { d.r = r(d); d.text = shortName(d.name); d.big = !d.uid && d.sites >= 3; d.tw = d.text.length * 5.6; });
 
         // Each owner that holds several sites gets its own place, laid out on a
         // spiral by size so the groups do not overlap; owners of a single site
@@ -201,10 +202,10 @@
         var centre = {}, acc = 0;
         order.forEach(function (gk, i) {
             acc += groups[gk];
-            var a = i * 2.39996, rad = i ? 44 * Math.sqrt(acc) : 0;
+            var a = i * 2.39996, rad = i ? 62 * Math.sqrt(acc) : 0;
             centre[gk] = { x: W / 2 + Math.cos(a) * rad * 1.25, y: H / 2 + Math.sin(a) * rad * 0.85 };
         });
-        var outer = 44 * Math.sqrt(acc + 30);
+        var outer = 62 * Math.sqrt(acc + 40);
         // the loose chains: one place per chain (its top owner), spread round the outside
         var loose = {}; nodes.forEach(function (d) { if (!d.group) { var t = ancestors(d.id).filter(function (a) { return !(up[a] || []).length; })[0] || d.id; d.chain = t; loose[t] = 1; } });
         Object.keys(loose).forEach(function (t, i, all) {
@@ -216,7 +217,7 @@
 
         lk = gAll.append("g").selectAll("line").data(links).join("line").attr("class", function (d) { return "lk" + (d.same ? " same" : ""); });
         nd = gAll.append("g").selectAll("g").data(nodes).join("g")
-            .attr("class", function (d) { return "nd" + (d.uid ? " site" : "") + (d.big ? " big" : ""); });
+            .attr("class", function (d) { return "nd" + (d.uid ? " site" : "") + (d.big ? " big" : "") + (d.group ? "" : " loose"); });
         nd.each(function (d) {
             var s = d3.select(this), rr = d.r;
             if (d.uid) {
@@ -230,14 +231,14 @@
                 s.append("polygon").attr("points", "0," + -t + " " + t + "," + t + " " + -t + "," + t)
                     .attr("fill", d.type === "div_ind" ? "#666" : "#fff").attr("stroke", "#666").attr("stroke-width", .9);
             }
-            s.append("text").attr("x", rr + 4).attr("y", 3).text(d.text);
+            s.append("text").attr("x", rr + 5).attr("y", 3.2).text(d.text);
         });
 
         sim = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(function (d) { return d.id; }).distance(function (l) { return l.same ? 18 : 26 + l.target.r; }).strength(0.6))
-            .force("charge", d3.forceManyBody().strength(function (d) { return -40 - d.sites * 6; }).distanceMax(300))
+            .force("link", d3.forceLink(links).id(function (d) { return d.id; }).distance(function (l) { return l.same ? 26 : 40 + l.target.r; }).strength(0.5))
+            .force("charge", d3.forceManyBody().strength(function (d) { return -70 - d.sites * 8; }).distanceMax(360))
             // named nodes keep room for their name
-            .force("collide", d3.forceCollide().radius(function (d) { return d.big ? Math.max(d.r + 6, d.text.length * 2.9) : d.r + 6; }).strength(0.8))
+            .force("collide", d3.forceCollide().radius(function (d) { return Math.max(d.r + 9, (d.big || d.uid ? d.tw / 2 + 8 : d.r + 9)); }).strength(0.85))
             .force("gx", d3.forceX(function (d) { return centre[d.home].x; }).strength(0.08))
             .force("gy", d3.forceY(function (d) { return centre[d.home].y; }).strength(0.08))
             .alphaDecay(0.012).velocityDecay(0.35)
@@ -273,14 +274,14 @@
     function hulls() {
         var by = {}; nodes.forEach(function (d) { if (d.group) (by[d.group] = by[d.group] || []).push(d); });
         var data = Object.keys(by).filter(function (k) { return N[k].sites >= 2 && by[k].length >= 3; }).map(function (k) {
-            var pts = []; by[k].forEach(function (d) { var p = d.r + 10; pts.push([d.x - p, d.y - p], [d.x + p, d.y - p], [d.x - p, d.y + p], [d.x + p, d.y + p]); });
+            var pts = []; by[k].forEach(function (d) { var p = d.r + 18; var tw = (d.big || d.uid) ? d.tw + 10 : 0; pts.push([d.x - p, d.y - p], [d.x + p + tw, d.y - p], [d.x - p, d.y + p], [d.x + p + tw, d.y + p]); });
             return { k: k, hull: d3.polygonHull(pts) };
         }).filter(function (d) { return d.hull; });
         var line = d3.line().curve(d3.curveCatmullRomClosed.alpha(1));
         hullG.selectAll("path").data(data, function (d) { return d.k; }).join("path").attr("class", "hull").attr("d", function (d) { return line(d.hull); });
         hullG.selectAll("text").data(data, function (d) { return d.k; }).join("text").attr("class", "hull-label")
             .attr("x", function (d) { return d3.min(d.hull, function (p) { return p[0]; }) + 4; })
-            .attr("y", function (d) { return d3.min(d.hull, function (p) { return p[1]; }) - 4; })
+            .attr("y", function (d) { return d3.min(d.hull, function (p) { return p[1]; }) + 14; }).attr("x", function (d) { return d3.min(d.hull, function (p) { return p[0]; }) + 16; })
             .text(function (d) { return shortName(N[d.k].name); });
     }
 
@@ -291,8 +292,8 @@
         nd.select("text").style("display", function (d) {
             if (selected || d._hot) return d._show ? null : "none";
             if (d.big) return null;
-            if (d.uid) return k > 0.9 ? null : "none";
-            return k > 1.8 ? null : "none";
+            if (d.uid) return k > 0.75 ? null : "none";
+            return k > 1.4 ? null : "none";
         });
     }
 
