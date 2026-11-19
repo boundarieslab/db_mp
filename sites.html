@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sites · Dirty Business</title>
+<meta name="description" content="The index of every published site in the Dirty Business database: reception and extraction sites and construction projects in the Oslo region, by kind, status, period, kommune, owner and the material we hold on each.">
+<meta property="og:title" content="Dirty Business — index of sites">
+<meta property="og:description" content="Every published reception site, quarry and construction project, with its photographs, figures and sources.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   dirtybusiness.no — the index of sites.
+   After the Atlas des Régions Naturelles: an index column on the left, terms
+   in groups, a light grotesque for the terms and its regular weight, in
+   capitals, for the group names. No rules, no boxes, no rounded corners.
+   Colour belongs to the data: the status colours of the map, and red for
+   what is chosen.
+   Every value here can be changed in the editor (sites.html?edit).
+   ========================================================================== */
+@font-face{font-family:PlexMono;src:url(assets/fonts/plex-mono-400.woff2) format('woff2');font-weight:400;font-display:swap}
+:root{
+  --ink:#000;
+  --sub:#8a8a8a;         /* secondary text, terms with no site under the choice */
+  --pick:#FF0000;        /* what is chosen: chip, term, kommune */
+  --link:#0000FF;        /* a figure that opens its source */
+  --light:"Work Sans",Helvetica,Arial,sans-serif;
+  --fs:14px;             /* terms */
+  --lh:1.72;             /* ARN's line: 24 px over 14 px */
+  --fs-small:11px;
+  --pad:26px;            /* the page's edge */
+  --nav:29%;             /* the index column */
+  --gap:44px;            /* between groups */
+  --thumb:190px;         /* smallest result card */
+}
+*{box-sizing:border-box;border-radius:0}
+html,body{margin:0;padding:0;background:#fff;color:var(--ink)}
+body{font:300 var(--fs)/var(--lh) var(--light);-webkit-font-smoothing:antialiased;letter-spacing:.01em}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;letter-spacing:inherit}
+.cap{font-weight:400;text-transform:uppercase;letter-spacing:.04em}
+.mono{font-family:PlexMono,ui-monospace,monospace;font-size:var(--fs-small);letter-spacing:0}
+[hidden]{display:none!important}
+:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
+
+/* ---------- frame ---------- */
+#atlas{display:grid;grid-template-columns:var(--nav) 1fr;min-height:100vh;padding:var(--pad) var(--pad) 0}
+#a-nav{position:sticky;top:var(--pad);align-self:start;padding-right:24px}
+#a-title{font-weight:300;font-size:30px;line-height:1.05;letter-spacing:-.005em;margin:0 0 54px}
+#a-title small{display:block;font-size:var(--fs-small);letter-spacing:.04em;margin-top:12px;color:var(--sub);text-transform:uppercase;font-weight:400}
+#a-nav .nv{display:block;margin:0 0 30px;text-align:left}
+#a-nav .nv:hover,#a-nav .nv.on{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:.5px}
+#a-lang{margin-top:56px;font-size:var(--fs-small)}
+#a-lang button{margin-right:10px;color:var(--sub)}
+#a-lang button.on{color:var(--ink)}
+#a-main{min-width:0;padding-bottom:80px}
+
+/* ---------- the top lines: label and terms on one line ---------- */
+.a-top{margin:0 0 var(--gap)}
+.a-top .ln{display:block}
+.a-top .ln .cap{margin-right:.35em}
+.a-top .t+.t::before{content:", ";color:var(--ink)}
+
+/* ---------- groups of terms ---------- */
+.a-cols{display:grid;grid-template-columns:1fr 1fr;column-gap:40px}
+.grp{margin:0 0 var(--gap);break-inside:avoid}
+.grp h3{margin:0;font:inherit}
+.grp .t{display:block;text-align:left}
+.grp .t.sub{padding-left:1.4em}
+.t{cursor:pointer}
+.t:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:.5px}
+.t.on{color:var(--pick)}
+.t.none{color:var(--sub);cursor:default;text-decoration:none}
+.more{color:var(--sub);display:block;text-align:left}
+
+/* ---------- chosen terms ---------- */
+.a-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 30px;min-height:0}
+.chip{border:1px solid var(--pick);color:var(--pick);padding:0 6px;line-height:22px;font-size:13px;white-space:nowrap}
+.chip b{font-weight:300;margin-left:6px}
+.a-count{color:var(--sub);font-size:var(--fs-small);text-transform:uppercase;letter-spacing:.04em;font-weight:400}
+.a-clear{color:var(--sub);font-size:var(--fs-small);text-transform:uppercase;letter-spacing:.04em;font-weight:400}
+.a-clear:hover{color:var(--ink)}
+
+/* ---------- results ---------- */
+.a-res{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--thumb),1fr));gap:34px 22px}
+.card{display:block;min-width:0;text-align:left}
+.card .im{display:block;aspect-ratio:4/3;background:#fff;overflow:hidden;position:relative}
+.card .im img{width:100%;height:100%;object-fit:cover;display:block;filter:grayscale(1);transition:filter .2s}
+.card:hover .im img{filter:none}
+.card .im svg{width:100%;height:100%;display:block}
+.card .nm{display:flex;align-items:center;gap:6px;margin-top:8px;line-height:1.35}
+.card .nm svg{flex:0 0 auto}
+.card .ds{display:block;color:var(--sub);font-size:var(--fs-small);line-height:1.4;margin-top:2px}
+.card:hover .nm span{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:.5px}
+
+/* ---------- kommune map ---------- */
+#a-kmap{display:block;width:auto;max-width:100%;height:auto;max-height:calc(100vh - 2 * var(--pad) - 60px);margin:0 0 30px}
+#a-kmap path{fill:#fff;stroke:#b9b9b9;stroke-width:.5px;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+#a-kmap path.has{stroke:var(--ink);cursor:pointer}
+#a-kmap path.has:hover{fill:#e6e6e6}
+#a-kmap path.on,#a-kmap path.on:hover{fill:var(--pick)}
+#a-kmap circle{stroke:#000;stroke-width:.4px;vector-effect:non-scaling-stroke;pointer-events:none}
+#a-ktip{position:fixed;pointer-events:none;background:#fff;border:1px solid var(--ink);padding:0 6px;line-height:22px;font-size:13px;display:none;z-index:5}
+
+/* ---------- colour and pictograms ---------- */
+.a-sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:26px 22px}
+.a-sw .t{display:flex;align-items:center;gap:12px}
+.a-sw .dot{width:34px;height:34px;flex:0 0 34px;border:3px solid;border-radius:50%}
+.a-sw .sq{width:34px;height:34px;flex:0 0 34px;border:3px solid}
+.a-pic{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:26px 22px}
+.a-pic .t{display:block;text-align:left}
+.a-pic img{width:100%;aspect-ratio:4/3;object-fit:contain;display:block}
+.a-pic .t span{display:block;margin-top:4px;line-height:1.35}
+
+/* ---------- A to Z ---------- */
+.a-az{column-width:230px;column-gap:30px}
+.a-az .lt{break-after:avoid;margin:18px 0 0}
+.a-az .lt:first-child{margin-top:0}
+.a-az .t{display:block;text-align:left;break-inside:avoid;line-height:1.5;padding:1px 0}
+.a-az .t small{color:var(--sub);font-size:var(--fs-small)}
+
+/* ---------- one site ---------- */
+.a-site{max-width:1100px}
+.a-site .hd{margin:0 0 26px}
+.a-site h1{font-weight:300;font-size:30px;line-height:1.1;margin:0;letter-spacing:-.005em}
+.a-site h1 .mono{margin-left:10px;color:var(--sub);vertical-align:middle}
+.a-site .wh{margin-top:6px}
+.a-site .st{display:flex;align-items:center;gap:7px;margin-top:2px}
+.a-cols2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);column-gap:40px;align-items:start}
+.a-media .big{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#fff}
+.a-media .cr{font-size:var(--fs-small);color:var(--sub);line-height:1.45;margin:6px 0 0;min-height:16px}
+.a-media .cr a:hover{color:var(--ink)}
+.a-media .strip{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.a-media .strip button{width:62px;height:46px;overflow:hidden;opacity:.55}
+.a-media .strip button.on,.a-media .strip button:hover{opacity:1}
+.a-media .strip img{width:100%;height:100%;object-fit:cover;display:block}
+.a-desc{margin:0 0 24px;max-width:62ch}
+.a-fig{margin:0 0 24px}
+.a-fig h3{margin:0 0 2px;font:inherit}
+.a-fig .r{display:grid;grid-template-columns:42% 1fr;column-gap:14px;line-height:1.5;padding:2px 0}
+.a-fig .r .k{font-size:var(--fs-small);text-transform:uppercase;letter-spacing:.04em;font-weight:400;padding-top:2px}
+.a-fig .r .v{min-width:0;overflow-wrap:anywhere}
+.a-fig .r .v a,.a-links a{color:var(--link)}
+.a-fig .r .v a:hover,.a-links a:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:.5px}
+.a-sec{margin:48px 0 0}
+.a-sec>h3{margin:0 0 10px;font:inherit}
+.a-outline svg{display:block;width:100%;max-width:560px;height:auto}
+.a-key{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:var(--fs-small);color:var(--sub);margin-top:8px}
+.a-key i{display:inline-block;width:22px;height:0;vertical-align:middle;margin-right:6px}
+.a-graph iframe{display:block;width:100%;height:420px;border:0}
+.a-list .r{display:block;line-height:1.5;padding:2px 0}
+.a-list .r .mono{color:var(--sub);margin-right:8px}
+.a-links a{display:block;line-height:1.6;overflow-wrap:anywhere}
+.a-go{display:inline-block;margin-top:26px}
+.a-go:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:.5px}
+.a-msg{color:var(--sub)}
+
+/* ---------- phone ---------- */
+@media (max-width:760px){
+  :root{--pad:16px;--gap:30px;--thumb:140px;--fs:13px}
+  #atlas{grid-template-columns:1fr}
+  #a-nav{position:static;padding:0 0 18px}
+  #a-title{font-size:24px;margin-bottom:20px}
+  #a-nav .nv{display:inline-block;margin:0 16px 8px 0}
+  #a-lang{margin-top:8px}
+  .a-cols,.a-cols2{grid-template-columns:1fr}
+  .a-fig .r{grid-template-columns:40% 1fr}
+  .a-graph iframe{height:320px}
+}
+</style>
+</head>
+<body>
+<div id="atlas">
+  <nav id="a-nav" aria-label="Index">
+    <h1 id="a-title"><span data-en="Index of sites" data-no="Register over steder">Index of sites</span><small id="a-tally"></small></h1>
+    <button class="nv cap" data-go="terms" data-en="Index" data-no="Register">Index</button>
+    <button class="nv cap" data-go="kommuner" data-en="Index of kommuner" data-no="Kommuneregister">Index of kommuner</button>
+    <button class="nv cap" data-go="colour" data-en="Status colour" data-no="Statusfarge">Status colour</button>
+    <button class="nv cap" data-go="picto" data-en="Pictograms" data-no="Piktogrammer">Pictograms</button>
+    <button class="nv cap" data-go="az" data-en="Sites A–Z" data-no="Steder A–Å">Sites A–Z</button>
+    <div id="a-lang" class="cap"><button data-lang="en" class="on">EN</button><button data-lang="no">NO</button></div>
+  </nav>
+  <main id="a-main">
+    <div class="a-chips" id="a-chips"></div>
+    <div id="a-view"><p class="a-msg" id="a-msg">Loading the database…</p></div>
+  </main>
+</div>
+<div id="a-ktip"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<!-- The editor (sites.html?edit) saves this page's look into editor/sites-style.js, apart from the map's. -->
+<script>window.__DB_STYLE_CFG = {
+  name: 'sites', page: 'sites.html', key: 'db-style-draft-sites', global: '__DB_SITES_STYLE',
+  path: 'editor/sites-style.js', nomap: true,
+  parts: [
+    ['#a-nav', 'Index column'], ['#a-title', 'Title'], ['#a-nav .nv', 'Index links'], ['#a-lang', 'Language'],
+    ['#a-main', 'Main area'], ['.a-chips', 'Chosen terms'], ['.chip', 'Chip'],
+    ['.a-top', 'Top lines'], ['.a-cols', 'Term columns'], ['.grp', 'Group of terms'], ['.grp h3', 'Group name'], ['.t', 'Term'],
+    ['.a-res', 'Results'], ['.card', 'Site card'], ['.card .im', 'Card picture'], ['.card .nm', 'Card name'], ['.card .ds', 'Card line'],
+    ['#a-kmap', 'Kommune map'], ['.a-sw', 'Status colours'], ['.a-pic', 'Pictograms'], ['.a-az', 'A–Z list'],
+    ['.a-site', 'Site page'], ['.a-site h1', 'Site name'], ['.a-media', 'Photographs'], ['.a-desc', 'Description'],
+    ['.a-fig', 'Figures'], ['.a-fig .r .k', 'Figure label'], ['.a-fig .r .v', 'Figure value'],
+    ['.a-outline', 'Outline drawing'], ['.a-graph', 'Ownership diagram'], ['.a-sec', 'Section'], ['.a-go', 'Link to the map'],
+    ['body', 'Page']
+  ]
+};</script>
+<script type="application/json" id="db-style">{}</script>
+<script src="editor/sites-style.js"></script>
+<script src="editor/style-runtime.js"></script>
+<script>
+(function () {
+'use strict';
+// ─────────────────────────────────────────────────────────────────────────
+// Sources. The same published sheet the map reads, and the map's own files.
+// ─────────────────────────────────────────────────────────────────────────
+const SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub';
+const FACILITIES_CSV = SHEET + '?output=csv';
+const PROJECTS_CSV = SHEET + '?gid=529338597&single=true&output=csv';
+const FILES = { polys: 'data/facility_polygons.geojson', kommuner: 'data/kommuner.geojson',
+                terrain: 'data/dod_sites.json', flows: 'data/flows.csv' };
+// "Open on the map": the map page of dirtybusiness.no, with the site in the address.
+const MAP_LINK = 'https://dirtybusiness.no/#site=';
+const GRAPH_BASE = 'https://boundarieslab.github.io/db_mp/network/';
+
+// ─────────────────────────────────────────────────────────────────────────
+// Words
+// ─────────────────────────────────────────────────────────────────────────
+const W = {
+  family: ['Family', 'Familie'], reception: ['Reception', 'Mottak'], extraction: ['Extraction', 'Uttak'], construction: ['Construction', 'Anlegg'],
+  status: ['Status', 'Status'], period: ['Started', 'Startet'], type: ['Type', 'Type'], ptype: ['Construction projects', 'Anleggsprosjekter'],
+  kommune: ['Kommune', 'Kommune'], owner: ['Owner', 'Eier'], material: ['Material held', 'Materiale'], authority: ['Permit from', 'Tillatelse fra'],
+  st_active: ['active', 'i drift'], st_old: ['closed or finished', 'nedlagt eller ferdig'], st_future: ['planned', 'planlagt'],
+  st_contaminated: ['contaminated masses', 'forurensede masser'], st_unknown: ['no status', 'ukjent'],
+  m_photo: ['Photographs', 'Fotografier'], m_graph: ['Ownership diagram', 'Eierskapsdiagram'], m_outline: ['Outline', 'Omriss'],
+  m_dod: ['Terrain change', 'Terrengendring'], m_flow: ['Documented flows', 'Dokumenterte strømmer'], m_news: ['Newspaper articles', 'Avisartikler'],
+  p_unknown: ['year not known', 'år ukjent'], others: ['others', 'andre'], more: ['more', 'flere'], fewer: ['fewer', 'færre'],
+  sites: ['sites', 'steder'], site1: ['site', 'sted'], clear: ['clear', 'tøm'], none: ['No site answers all of these.', 'Ingen steder passer alle disse.'],
+  sitesTally: ['reception and extraction sites', 'mottaks- og uttakssteder'], projTally: ['construction projects', 'anleggsprosjekter'],
+  pickK: ['Choose a kommune on the map.', 'Velg en kommune i kartet.'],
+  operator: ['Operator', 'Driver'], company: ['Company', 'Selskap'], orgnr: ['Org. nr.', 'Org.nr.'], parent: ['Owner', 'Eier'],
+  place: ['Place', 'Sted'], coords: ['Coordinates', 'Koordinater'], area: ['Area', 'Areal'], water: ['Water recipient', 'Resipient'],
+  capyr: ['Capacity a year', 'Kapasitet per år'], captot: ['Capacity in total', 'Total kapasitet'], extyr: ['Extraction a year', 'Uttak per år'],
+  exttot: ['Extraction in total', 'Totalt uttak'], acc: ['Masses accepted', 'Masser mottatt'], prod: ['Masses produced', 'Masser produsert'],
+  codes: ['Waste codes', 'Avfallskoder'], cont: ['Contaminants', 'Forurensning'], risk: ['Environmental risk', 'Miljørisiko'],
+  permit: ['Permit', 'Tillatelse'], start: ['Start year', 'Startår'], until: ['Valid until', 'Gyldig til'], lifetime: ['Expected lifetime', 'Forventet levetid'],
+  verified: ['Last verified', 'Sist kontrollert'],
+  s_who: ['Who', 'Hvem'], s_where: ['Where', 'Hvor'], s_how: ['How much', 'Hvor mye'], s_env: ['Environment', 'Miljø'], s_perm: ['Permit', 'Tillatelse'],
+  s_outline: ['Outline', 'Omriss'], s_graph: ['Ownership', 'Eierskap'], s_dod: ['Terrain change', 'Terrengendring'], s_flow: ['Flows', 'Massestrømmer'],
+  s_news: ['In the newspapers', 'I avisene'], s_src: ['Sources', 'Kilder'],
+  k_allowed: ['permitted or licensed', 'tillatt eller konsesjon'], k_observed: ['worked ground', 'berørt areal'],
+  k_property: ['property', 'eiendom'], k_planned: ['planned', 'planlagt'],
+  map: ['Open on the map', 'Åpne i kartet'], back: ['Index', 'Register'], noimg: ['No photograph yet.', 'Ingen fotografi ennå.'],
+  website: ['Website', 'Nettside'], permitdoc: ['Permit document', 'Tillatelsesdokument'], source: ['Source', 'Kilde'],
+  diagram: ['open the diagram', 'åpne diagrammet'], to: ['to', 'til'], from: ['from', 'fra'], photo: ['Photo', 'Foto'],
+  dep: ['deposited', 'påfylt'], exc: ['excavation/erosion', 'utgraving/erosjon'], loadfail: ['The database could not be read. Try again in a minute.', 'Databasen kunne ikke leses. Prøv igjen om et minutt.'],
+  notfound: ['There is no published site with this code.', 'Det finnes ikke noe publisert sted med denne koden.']
+};
+let lang = 'en';
+try { lang = new URLSearchParams(location.search).get('lang') || localStorage.getItem('db-sites-lang') || 'en'; } catch (e) {}
+if (lang !== 'no') lang = 'en';
+const t = k => (W[k] || [k, k])[lang === 'no' ? 1 : 0];
+
+// ─────────────────────────────────────────────────────────────────────────
+// Helpers, as in the map
+// ─────────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ESC[c]);
+const safeUrl = v => { const u = String(v == null ? '' : v).trim(); return /^(https?:\/\/|\/|\.\/|#)/i.test(u) ? u : ''; };
+const num = v => parseFloat(String(v == null ? '' : v).replace(',', '.'));
+const isPub = r => /^(true|yes|1)$/i.test(String(r.Published == null ? '' : r.Published).trim());
+const uidOf = s => (s && (s.UID || s.fid)) || '';
+const host = u => u.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
+const fmt = n => Math.round(n).toLocaleString('nb-NO').replace(/ /g, ' ');
+const approx = n => { const a = Math.abs(n); if (!a) return '0'; const p = Math.pow(10, Math.max(0, Math.floor(Math.log10(a)) - 1)); return fmt(Math.round(a / p) * p); };
+const coll = new Intl.Collator('nb');
+
+// Status, as the map classifies it (index.html, statusClass).
+const RX_FUTURE = /\b(planned|planlagt|proposed|foresl|future|framtid|fremtid|under bygging|hearing|høring|horing|søknad|soknad|to come|kommende|regulert)/;
+const RX_OLD    = /\b(inactive|inaktiv|closed|lukket|nedlagt|historical|historisk|avsluttet|ferdig|complete|finished|etterdrift|ended)/;
+const RX_ACTIVE = /\b(active|aktiv|operating|i drift|drift|open|pågår|pagar|under way|ongoing|still receiv)/;
+const RX_CONT   = /(spesialdeponi|farlig avfall|jordvask|soil washing|forurensede masser|contaminated soil treatment)/;
+function statusClass(site) {
+  const cat = site.__cat;
+  const own = String(site.StatusClass || '').toLowerCase().trim();
+  if (own) {
+    if (/cont|forur|purple/.test(own)) return cat === 'facility' ? 'contaminated' : 'active';
+    if (/old|closed|nedlagt|finish|ferdig|done/.test(own)) return 'old';
+    if (/future|plan|come|komm/.test(own)) return 'future';
+    if (/activ|aktiv|way|pågår/.test(own)) return 'active';
+  }
+  if (cat === 'facility' && RX_CONT.test([site.Type, site.Subtype, site.Name].join(' ').toLowerCase())) return 'contaminated';
+  const v = String(site.Status || '').toLowerCase().trim();
+  if (!v) return 'unknown';
+  const head = v.split(/[\s(;,:]/)[0];
+  if (RX_ACTIVE.test(head)) return 'active';
+  if (RX_OLD.test(head)) return 'old';
+  if (RX_FUTURE.test(head)) return 'future';
+  if (/still receiv/.test(v)) return 'active';
+  if (RX_FUTURE.test(v)) return 'future';
+  if (RX_OLD.test(v)) return 'old';
+  if (RX_ACTIVE.test(v)) return 'active';
+  return 'unknown';
+}
+const COL = {
+  facility: { active: '#FF0000', future: '#0000FF', old: '#FFD400', contaminated: '#B300FF', unknown: '#FFFFFF' },
+  project:  { active: '#00FF00', future: '#95FF00', old: '#00B218', unknown: '#FFFFFF', contaminated: '#00FF00' }
+};
+const colourOf = s => COL[s.__cat][s.__cls] || '#FFFFFF';
+const STATUS_WORD = {
+  facility: { active: ['receiving now', 'mottar nå'], future: ['planned', 'planlagt'], old: ['closed', 'nedlagt'], contaminated: ['contaminated', 'forurenset'], unknown: ['no status', 'ukjent'] },
+  project:  { active: ['under way', 'pågår'], future: ['planned', 'planlagt'], old: ['finished', 'ferdig'], unknown: ['no status', 'ukjent'], contaminated: ['under way', 'pågår'] }
+};
+const rawStatus = s => { const r = String(s.Status || '').trim(); const w = STATUS_WORD[s.__cat][s.__cls][0];
+  return !r || r.toLowerCase() === w || r.toLowerCase().split(/[\s(]/)[0] === w.split(' ')[0] || /^(active|closed|historical|inactive)$/i.test(r) ? '' : r.slice(0, 80); };
+const statusWord = s => STATUS_WORD[s.__cat][s.__cls][lang === 'no' ? 1 : 0];
+function actsOf(s) {
+  const a = String(s.Activities || '').toLowerCase();
+  if (a.trim()) return { rec: /recep|mottak/.test(a), ext: /extract|uttak/.test(a) };
+  const ty = (String(s.Type || '') + ' ' + String(s.Subtype || '')).toLowerCase();
+  return { rec: true, ext: /pukkverk|grustak|massetak|steinbrudd/.test(ty) || !!String(s.ExtractionAnnual || s.ExtractionTotal || '').trim() };
+}
+// The table's symbols: circle a site, square a project; the black part is the way the masses go.
+function direction(s) {
+  if (s.__cat === 'project') {
+    const sr = String(s['source /reception'] || s['source/reception'] || '').toLowerCase();
+    if (sr.includes('source') && sr.includes('reception')) return 'mixed';
+    if (sr.includes('source') || sr.includes('produc')) return 'producing';
+    if (sr.includes('reception') || sr.includes('receiv')) return 'receiving';
+    return 'mixed';
+  }
+  const ty = String(s.Type || '').toLowerCase();
+  if (ty.includes('pukkverk')) return 'producing';
+  if (ty.includes('deponi') || ty.includes('massemottak')) return 'receiving';
+  return 'mixed';
+}
+function symbol(s, size) {
+  const z = size || 13, c0 = colourOf(s), c = c0 === '#FFFFFF' ? '#4A4A4A' : c0, d = direction(s);
+  if (s.__cat === 'project') {
+    const f = d === 'producing' ? '<polygon points="1,15 15,15 1,1" fill="#000"/>' : d === 'receiving' ? '<polygon points="15,1 15,15 1,1" fill="#000"/>'
+            : '<polygon points="1,1 8,8 1,15" fill="#000"/><polygon points="15,1 8,8 15,15" fill="#000"/>';
+    return `<svg width="${z}" height="${z}" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="14" height="14" fill="#fff" stroke="${c}" stroke-width="2"/>${f}</svg>`;
+  }
+  const f = d === 'producing' ? '<path d="M1,8 A7,7 0 0,1 15,8 Z" fill="#000"/>' : d === 'receiving' ? '<path d="M1,8 A7,7 0 0,0 15,8 Z" fill="#000"/>'
+          : '<path d="M8,1 A7,7 0 0,1 15,8 L8,8 Z" fill="#000"/><path d="M8,15 A7,7 0 0,1 1,8 L8,8 Z" fill="#000"/>';
+  return `<svg width="${z}" height="${z}" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#fff" stroke="${c}" stroke-width="2"/>${f}</svg>`;
+}
+
+// Pictograms (picto_grammar/): what kind of ground a site makes.
+const PICTO = {
+  f_pukkverk: ['Quarry', 'Pukkverk'], f_pv_massemottak: ['Quarry that receives masses', 'Pukkverk med massemottak'],
+  f_pv_renemasser: ['Quarry, clean masses', 'Pukkverk, rene masser'], f_massemottak: ['Mass reception', 'Massemottak'],
+  f_mm_inert: ['Mass reception, inert', 'Massemottak, inert'], f_mm_inter: ['Mass reception, in the sea', 'Massemottak i sjø'],
+  f_mm_knusing: ['Crushing and storage', 'Knusing og mellomlagring'], f_mm_rene: ['Clean masses', 'Rene masser'],
+  f_d_ordinaert: ['Landfill, ordinary waste', 'Deponi, ordinært avfall'], f_d_inert: ['Landfill, inert waste', 'Deponi, inert avfall'],
+  f_d_ordinaert_inert: ['Landfill, ordinary and inert', 'Deponi, ordinært og inert'],
+  f_d_ordinaert_inert_forurenset: ['Landfill, ordinary, inert and contaminated', 'Deponi, ordinært, inert og forurenset'],
+  f_d_inter: ['Landfill, intermediate', 'Deponi, mellomnivå'], f_d_kommunalt: ['Municipal landfill', 'Kommunalt deponi'],
+  f_d_sortering: ['Landfill with sorting', 'Deponi med sortering'], f_d_gjevenning: ['Landfill with recycling', 'Deponi med gjenvinning'],
+  f_gjevenning: ['Recycling', 'Gjenvinning'],
+  cp_s_bolig: ['Housing, gives masses', 'Bolig, gir masser'], cp_s_industri: ['Industry, gives masses', 'Industri, gir masser'],
+  cp_s_infrastruktur: ['Infrastructure, gives masses', 'Infrastruktur, gir masser'], cp_s_land_bruk: ['Land use, gives masses', 'Landbruk, gir masser'],
+  cp_s_naering: ['Commerce, gives masses', 'Næring, gir masser'], cp_s_offentlig: ['Public building, gives masses', 'Offentlig bygg, gir masser'],
+  cp_r_bolig: ['Housing, takes masses', 'Bolig, tar imot masser'], cp_r_industri: ['Industry, takes masses', 'Industri, tar imot masser'],
+  cp_r_infrastruktur: ['Infrastructure, takes masses', 'Infrastruktur, tar imot masser'], cp_r_land_bruk: ['Land use, takes masses', 'Landbruk, tar imot masser'],
+  cp_r_naering: ['Commerce, takes masses', 'Næring, tar imot masser'], cp_r_offentlig: ['Public building, takes masses', 'Offentlig bygg, tar imot masser']
+};
+function pictoOf(s) {
+  const k = [s.Type, s.Subtype, s.Name].join(' ').toLowerCase();
+  if (s.__cat === 'project') {
+    const sec = /bolig|hous/.test(k) ? 'bolig' : /industri/.test(k) ? 'industri' : /land|landbruk|jord/.test(k) && !/vei|bane/.test(k) ? 'land_bruk'
+              : /næring|naering|kontor|commerc|handel/.test(k) ? 'naering' : /offentlig|sykehus|skole|public|regjering|kvartal|bygg/.test(k) ? 'offentlig' : 'infrastruktur';
+    return 'cp_' + (direction(s) === 'receiving' ? 'r' : 's') + '_' + sec;
+  }
+  if (/pukkverk|steinbrudd|grustak|massetak/.test(k)) return /massemottak|mottak/.test(k) ? 'f_pv_massemottak' : /rene/.test(k) ? 'f_pv_renemasser' : 'f_pukkverk';
+  if (/deponi|fyllplass|fylling/.test(k)) {
+    if (/gjenvinn/.test(k)) return 'f_d_gjevenning';
+    if (/sorter/.test(k)) return 'f_d_sortering';
+    if (/forurens|pfas|spesial/.test(k)) return 'f_d_ordinaert_inert_forurenset';
+    if (/ordin/.test(k) && /inert/.test(k)) return 'f_d_ordinaert_inert';
+    if (/ordin/.test(k)) return 'f_d_ordinaert';
+    if (/inert/.test(k)) return 'f_d_inert';
+    if (/intermed/.test(k)) return 'f_d_inter';
+    return 'f_d_kommunalt';
+  }
+  if (/gjenvinn|omlast|behandling/.test(k)) return 'f_gjevenning';
+  if (/sjø|sjo|utfylling/.test(k)) return 'f_mm_inter';
+  if (/knus|mellomlag/.test(k)) return 'f_mm_knusing';
+  if (/inert/.test(k)) return 'f_mm_inert';
+  if (/rene/.test(k)) return 'f_mm_rene';
+  return 'f_massemottak';
+}
+
+// Permit authorities, grouped by the body that gives such permits today.
+function authorityOf(s) {
+  const a = String(s.PermitAuthority || '').toLowerCase();
+  if (!a.trim()) return '';
+  if (/statsforvalter|fylkesmann/.test(a)) return 'Statsforvalteren';
+  if (/dirmin|dmf|bergvesen|mineralforvaltning/.test(a)) return 'DMF';
+  if (/miljødirektorat|miljodirektorat|klif|sft|forurensningstilsyn/.test(a)) return 'Miljødirektoratet';
+  if (/kommune/.test(a)) return 'Kommune';
+  return '';
+}
+const AUTH_WORD = { Statsforvalteren: ['Statsforvalteren', 'Statsforvalteren'], DMF: ['Directorate of Mining (DMF)', 'Direktoratet for mineralforvaltning'],
+                    'Miljødirektoratet': ['Miljødirektoratet', 'Miljødirektoratet'], Kommune: ['The kommune', 'Kommunen'] };
+
+// Started: in periods, as the Atlas does its époques.
+const PERIODS = [['–1945', 0, 1945], ['1946–1975', 1946, 1975], ['1976–2000', 1976, 2000], ['2001–2015', 2001, 2015], ['2016–', 2016, 9999]];
+function periodOf(s) {
+  const m = /\b(1[89]\d\d|20\d\d)\b/.exec(String(s.StartYear || ''));
+  if (!m) return 'unknown';
+  const y = +m[1];
+  const p = PERIODS.find(p => y >= p[1] && y <= p[2]);
+  return p ? p[0] : 'unknown';
+}
+// Owners: the companies named in ParentCompany, without their shares.
+function ownersOf(s) {
+  return String(s.ParentCompany || '').split(/\s\/\s|\s\+\s|;/).map(x => x.replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim())
+    .filter(x => x && x.length > 1);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Data
+// ─────────────────────────────────────────────────────────────────────────
+let SITES = [], BYUID = {}, POLYS = {}, KOM = [], KBOX = null, TERRAIN = {}, FLOWS = [];
+const parseCsv = (url, text) => new Promise((res, rej) => Papa.parse(text != null ? text : url, {
+  download: text == null, header: true, skipEmptyLines: true, transformHeader: h => h.trim(), complete: res, error: rej }));
+const getJson = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
+const getText = u => fetch(u).then(r => r.ok ? r.text() : '').catch(() => '');
+
+// Point in polygon, for the kommune a site lies in.
+function inRing(x, y, ring) {
+  let ins = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) ins = !ins;
+  }
+  return ins;
+}
+function inGeom(x, y, g) {
+  const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
+  return polys.some(p => inRing(x, y, p[0]) && !p.slice(1).some(h => inRing(x, y, h)));
+}
+
+function prepare(f, p, polys, kom, terr, flowText) {
+  const tag = cat => r => { r.__cat = cat; r.__cls = statusClass(r); return r; };
+  SITES = [...f.filter(r => uidOf(r) && isPub(r)).map(tag('facility')), ...p.filter(r => uidOf(r) && isPub(r)).map(tag('project'))];
+  BYUID = {}; SITES.forEach(s => { BYUID[uidOf(s)] = s; });
+  // outlines
+  POLYS = {};
+  ((polys || {}).features || []).forEach(ft => { const u = ft.properties.uid; (POLYS[u] = POLYS[u] || []).push(ft); });
+  // kommuner
+  KOM = ((kom || {}).features || []).map(ft => ({ nr: ft.properties.nr, n: ft.properties.n, g: ft.geometry }));
+  // terrain change clusters joined to a site
+  TERRAIN = {};
+  ((terr || {}).sites || []).forEach(d => { if (d.fac && d.fac.uid) (TERRAIN[d.fac.uid] = TERRAIN[d.fac.uid] || []).push(d); });
+  // published flows
+  FLOWS = flowText;
+  SITES.forEach(s => {
+    const x = num(s.Longitude), y = num(s.Latitude);
+    s.__xy = Number.isFinite(x) && Number.isFinite(y) ? [x, y] : null;
+    let k = s.__xy ? KOM.find(k => inGeom(x, y, k.g)) : null;
+    if (!k) k = KOM.find(k => coll.compare(k.n, String(s.Municipality || '').trim()) === 0);
+    s.__k = k ? k.nr : '';
+    s.__kn = k ? k.n : String(s.Municipality || '').trim();
+    s.__fam = s.__cat === 'project' ? ['construction'] : [actsOf(s).rec ? 'reception' : null, actsOf(s).ext ? 'extraction' : null].filter(Boolean);
+    s.__per = periodOf(s);
+    s.__own = ownersOf(s);
+    s.__auth = authorityOf(s);
+    s.__pic = pictoOf(s);
+    s.__img = String(s.Images || '').split(',').map(u => safeUrl(u.trim())).filter(Boolean);
+    s.__graph = /^(true|yes|1)$/i.test(String(s.GraphPublished || '').trim()) && !!String(s.GraphURL || '').trim();
+    s.__flows = FLOWS.filter(fl => fl.FromUID === uidOf(s) || fl.ToUID === uidOf(s));
+    s.__mat = [s.__img.length ? 'm_photo' : null, s.__graph ? 'm_graph' : null, POLYS[uidOf(s)] ? 'm_outline' : null,
+               TERRAIN[uidOf(s)] ? 'm_dod' : null, s.__flows.length ? 'm_flow' : null,
+               String(s.NewsArticles || '').trim() ? 'm_news' : null].filter(Boolean);
+  });
+  SITES.sort((a, b) => coll.compare(String(a.Name || ''), String(b.Name || '')));
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Facets: what can be chosen, and what each site answers to
+// ─────────────────────────────────────────────────────────────────────────
+const FACETS = {
+  fam:  { label: 'family',    of: s => s.__fam, word: v => t(v) },
+  st:   { label: 'status',    of: s => [s.__cls], word: v => t('st_' + v) },
+  per:  { label: 'period',    of: s => [s.__per], word: v => v === 'unknown' ? t('p_unknown') : v },
+  ty:   { label: 'type',      of: s => s.__cat === 'facility' && s.Type ? [String(s.Type).trim()] : [], word: v => v },
+  pty:  { label: 'ptype',     of: s => s.__cat === 'project' && s.Type ? [String(s.Type).trim()] : [], word: v => v },
+  k:    { label: 'kommune',   of: s => s.__k ? [s.__k] : [], word: v => (KOM.find(k => k.nr === v) || {}).n || v },
+  own:  { label: 'owner',     of: s => s.__own, word: v => v },
+  mat:  { label: 'material',  of: s => s.__mat, word: v => t(v) },
+  auth: { label: 'authority', of: s => s.__auth ? [s.__auth] : [], word: v => (AUTH_WORD[v] || [v, v])[lang === 'no' ? 1 : 0] },
+  pic:  { label: 'pictogram', of: s => [s.__pic], word: v => (PICTO[v] || [v, v])[lang === 'no' ? 1 : 0] }
+};
+let state = { v: 'terms', f: {}, site: '' };   // f: facet → value
+const matches = (s, f) => Object.keys(f).every(k => FACETS[k] && FACETS[k].of(s).includes(f[k]));
+const chosen = () => SITES.filter(s => matches(s, state.f));
+function valuesOf(key, order) {
+  const n = {};
+  SITES.forEach(s => FACETS[key].of(s).forEach(v => { n[v] = (n[v] || 0) + 1; }));
+  const vs = Object.keys(n);
+  if (order) return order.filter(v => vs.includes(v));
+  return vs.sort((a, b) => coll.compare(FACETS[key].word(a), FACETS[key].word(b)));
+}
+// How many sites a term would leave, given the other terms already chosen.
+function countWith(key, v) {
+  const f = Object.assign({}, state.f, { [key]: v });
+  return SITES.filter(s => matches(s, f)).length;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Address: #site=UID, or #v=view&fam=…&k=…
+// ─────────────────────────────────────────────────────────────────────────
+function readHash() {
+  const o = { v: 'terms', f: {}, site: '' };
+  location.hash.replace(/^#/, '').split('&').forEach(kv => {
+    const i = kv.indexOf('='); if (i < 1) return;
+    const k = kv.slice(0, i); let v = kv.slice(i + 1); try { v = decodeURIComponent(v); } catch (e) {}
+    if (k === 'site') o.site = v; else if (k === 'v') o.v = v; else if (FACETS[k]) o.f[k] = v;
+  });
+  if (o.site) o.v = 'site';
+  return o;
+}
+function go(next, push) {
+  state = Object.assign({ v: 'terms', f: {}, site: '' }, next);
+  const parts = [];
+  if (state.v === 'site') parts.push('site=' + encodeURIComponent(state.site));
+  else {
+    if (state.v !== 'terms') parts.push('v=' + state.v);
+    Object.keys(state.f).forEach(k => parts.push(k + '=' + encodeURIComponent(state.f[k])));
+  }
+  const h = parts.length ? '#' + parts.join('&') : location.pathname + location.search;
+  if (push !== false) history.pushState(null, '', h);
+  render();
+  window.scrollTo(0, 0);
+}
+window.addEventListener('popstate', () => { state = readHash(); render(); });
+
+// ─────────────────────────────────────────────────────────────────────────
+// Drawing an outline
+// ─────────────────────────────────────────────────────────────────────────
+const LINE = {
+  allowed:   'fill="none" stroke="#000" stroke-width="1"',
+  observed:  'fill="#000" fill-opacity=".09" stroke="none"',
+  property:  'fill="none" stroke="#9a9a9a" stroke-width=".75" stroke-dasharray="3 2"',
+  expansion: 'fill="none" stroke="#0000FF" stroke-width="1" stroke-dasharray="4 2"',
+  planned:   'fill="none" stroke="#0000FF" stroke-width="1" stroke-dasharray="4 2"'
+};
+const DRAW_ORDER = ['observed', 'property', 'allowed', 'expansion', 'planned'];
+function outlineSvg(s, w, h, withScale) {
+  const fts = (POLYS[uidOf(s)] || []).filter(f => LINE[f.properties.pcls]);
+  if (!fts.length) return '';
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  const lat0 = s.__xy ? s.__xy[1] : 60, kx = Math.cos(lat0 * Math.PI / 180) * 111320, ky = 110540;
+  const rings = f => (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates).flat();
+  fts.forEach(f => rings(f).forEach(r => r.forEach(([x, y]) => {
+    const X = x * kx, Y = -y * ky; x0 = Math.min(x0, X); x1 = Math.max(x1, X); y0 = Math.min(y0, Y); y1 = Math.max(y1, Y);
+  })));
+  const pad = 0.08, bw = x1 - x0 || 1, bh = y1 - y0 || 1;
+  const sc = Math.min(w * (1 - 2 * pad) / bw, h * (1 - 2 * pad) / bh);
+  const ox = (w - bw * sc) / 2, oy = (h - bh * sc) / 2;
+  const P = ([x, y]) => ((x * kx - x0) * sc + ox).toFixed(1) + ',' + ((-y * ky - y0) * sc + oy).toFixed(1);
+  const paths = DRAW_ORDER.map(cls => fts.filter(f => f.properties.pcls === cls).map(f =>
+    `<path d="${rings(f).map(r => 'M' + r.map(P).join('L') + 'Z').join('')}" ${LINE[cls]} fill-rule="evenodd" vector-effect="non-scaling-stroke"/>`).join('')).join('');
+  let bar = '';
+  if (withScale) {
+    const m = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000].reverse().find(v => v * sc <= w * 0.25) || 10;
+    const L = m * sc, bx = 2, by = h - 10;
+    bar = `<g font-family="PlexMono,monospace" font-size="9" fill="#000"><rect x="${bx}" y="${by}" width="${(L / 2).toFixed(1)}" height="3" fill="#000"/><rect x="${(bx + L / 2).toFixed(1)}" y="${by}" width="${(L / 2).toFixed(1)}" height="3" fill="#fff" stroke="#000" stroke-width=".5"/><text x="${(bx + L + 5).toFixed(1)}" y="${by + 4}">${m >= 1000 ? m / 1000 + ' km' : m + ' m'}</text></g>`;
+  }
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${paths}${bar}</svg>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Views
+// ─────────────────────────────────────────────────────────────────────────
+const term = (key, v, extra) => {
+  const on = state.f[key] === v, n = on ? 1 : countWith(key, v);
+  return `<button class="t${on ? ' on' : ''}${n ? '' : ' none'}${extra || ''}" data-k="${key}" data-val="${esc(v)}"${n ? '' : ' disabled'}>${esc(FACETS[key].word(v))}</button>`;
+};
+const group = (key, vals, cap) => {
+  if (!vals.length) return '';
+  const head = `<h3 class="cap">${esc(t(FACETS[key].label))}</h3>`;
+  if (!cap || vals.length <= cap || openMore[key]) {
+    return `<div class="grp">${head}${vals.map(v => term(key, v)).join('')}${cap && vals.length > cap ? `<button class="more" data-more="${key}">${t('fewer')}</button>` : ''}</div>`;
+  }
+  return `<div class="grp">${head}${vals.slice(0, cap).map(v => term(key, v)).join('')}<button class="more" data-more="${key}">${t('more')} (${vals.length - cap})</button></div>`;
+};
+const openMore = {};
+const line = (key, vals) => vals.length ? `<span class="ln"><span class="cap">${esc(t(FACETS[key].label))}</span>${vals.map(v => term(key, v)).join('')}</span>` : '';
+
+function viewTerms() {
+  const top = `<div class="a-top">${line('fam', valuesOf('fam', ['reception', 'extraction', 'construction']))}${line('st', valuesOf('st', ['active', 'future', 'old', 'contaminated', 'unknown']))}${line('per', valuesOf('per', PERIODS.map(p => p[0]).concat('unknown')))}</div>`;
+  const own = valuesOf('own').filter(v => SITES.filter(s => s.__own.includes(v)).length >= 2);
+  const c1 = group('ty', valuesOf('ty')) + group('pty', valuesOf('pty')) + group('auth', valuesOf('auth', ['Statsforvalteren', 'Miljødirektoratet', 'DMF', 'Kommune'])) + group('mat', valuesOf('mat', ['m_photo', 'm_graph', 'm_outline', 'm_dod', 'm_flow', 'm_news']));
+  const c2 = group('k', valuesOf('k')) + group('own', own, 16);
+  const any = Object.keys(state.f).length;
+  return top + (any ? results() : '') + `<div class="a-cols"${any ? ' style="margin-top:var(--gap)"' : ''}><div>${c1}</div><div>${c2}</div></div>`;
+}
+function card(s) {
+  const img = s.__img[0], out = img ? '' : outlineSvg(s, 400, 300, false);
+  const pic = img ? `<img src="${esc(img)}" alt="" loading="lazy">`
+            : out || `<img src="picto_grammar/${s.__pic}.png" alt="" loading="lazy" style="object-fit:contain;filter:none">`;
+  return `<a class="card" href="#site=${encodeURIComponent(uidOf(s))}" data-site="${esc(uidOf(s))}"><span class="im">${pic}</span>` +
+    `<span class="nm">${symbol(s)}<span>${esc(s.Name || uidOf(s))}</span></span>` +
+    `<span class="ds">${esc([s.__kn, s.Type].filter(Boolean).join(' · '))}</span></a>`;
+}
+function results() {
+  const rs = chosen();
+  if (!rs.length) return `<p class="a-msg">${t('none')}</p>`;
+  return `<div class="a-res">${rs.map(card).join('')}</div>`;
+}
+
+function viewKommuner() {
+  const lat0 = 60, kx = Math.cos(lat0 * Math.PI / 180);
+  const P = ([x, y]) => (x * kx * 100).toFixed(2) + ',' + (-y * 100).toFixed(2);
+  const others = Object.assign({}, state.f); delete others.k;
+  const has = new Set(SITES.filter(s => matches(s, others)).map(s => s.__k).filter(Boolean));
+  const any = new Set(SITES.map(s => s.__k).filter(Boolean));
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  const paths = KOM.map(k => {
+    const polys = k.g.type === 'Polygon' ? [k.g.coordinates] : k.g.coordinates;
+    const d = polys.map(p => p.map(r => {
+      // the frame holds every kommune with a site, whatever is chosen
+      if (any.has(k.nr)) r.forEach(([x, y]) => { const X = x * kx * 100, Y = -y * 100; x0 = Math.min(x0, X); x1 = Math.max(x1, X); y0 = Math.min(y0, Y); y1 = Math.max(y1, Y); });
+      return 'M' + r.map(P).join('L') + 'Z';
+    }).join('')).join('');
+    const cls = (has.has(k.nr) ? 'has' : '') + (state.f.k === k.nr ? ' on' : '');
+    return `<path d="${d}" class="${cls}" data-nr="${k.nr}" data-n="${esc(k.n)}"/>`;
+  }).join('');
+  const mx = (x1 - x0) * 0.03, my = (y1 - y0) * 0.03; x0 -= mx; x1 += mx; y0 -= my; y1 += my;
+  const dots = SITES.filter(s => s.__xy && matches(s, others)).map(s => `<circle cx="${(s.__xy[0] * kx * 100).toFixed(2)}" cy="${(-s.__xy[1] * 100).toFixed(2)}" r="1.6" fill="${colourOf(s)}"/>`).join('');
+  const svg = `<svg id="a-kmap" preserveAspectRatio="xMinYMin meet" viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${(x1 - x0).toFixed(1)} ${(y1 - y0).toFixed(1)}" role="img" aria-label="${esc(t('kommune'))}">${paths}${dots}</svg>`;
+  return svg + (state.f.k ? results() : `<p class="a-msg">${t('pickK')}</p>`);
+}
+function viewColour() {
+  const row = (cat, k) => {
+    const n = SITES.filter(s => s.__cat === cat && s.__cls === k).length; if (!n) return '';
+    const c = COL[cat][k] === '#FFFFFF' ? '#4A4A4A' : COL[cat][k];
+    return `<button class="t" data-col="${cat}|${k}"><span class="${cat === 'project' ? 'sq' : 'dot'}" style="border-color:${c}"></span><span>${esc(STATUS_WORD[cat][k][lang === 'no' ? 1 : 0])}<br><span class="a-count">${n} ${t(n === 1 ? 'site1' : 'sites')}</span></span></button>`;
+  };
+  return `<div class="grp"><h3 class="cap">${t('reception')} · ${t('extraction')}</h3></div><div class="a-sw">${['active', 'future', 'old', 'contaminated', 'unknown'].map(k => row('facility', k)).join('')}</div>` +
+         `<div class="grp" style="margin-top:var(--gap)"><h3 class="cap">${t('construction')}</h3></div><div class="a-sw">${['active', 'future', 'old', 'unknown'].map(k => row('project', k)).join('')}</div>`;
+}
+function viewPicto() {
+  const vals = Object.keys(PICTO).filter(p => SITES.some(s => s.__pic === p));
+  return `<div class="a-pic">${vals.map(p => `<button class="t${state.f.pic === p ? ' on' : ''}" data-k="pic" data-val="${p}" data-to="terms"><img src="picto_grammar/${p}.png" alt="" loading="lazy"><span>${esc(PICTO[p][lang === 'no' ? 1 : 0])}</span></button>`).join('')}</div>`;
+}
+function viewAz() {
+  let cur = '', out = '';
+  SITES.forEach(s => {
+    const L = (String(s.Name || '?').trim()[0] || '?').toUpperCase();
+    if (L !== cur) { cur = L; out += `<div class="lt cap">${esc(L)}</div>`; }
+    out += `<a class="t" href="#site=${encodeURIComponent(uidOf(s))}">${esc(s.Name || uidOf(s))} <small>${esc(s.__kn)}</small></a>`;
+  });
+  return `<div class="a-az">${out}</div>`;
+}
+
+// One site: everything we hold on it.
+function fieldSources(s) {
+  const m = {};
+  String(s.FieldSources || '').split(/\s;\s/).forEach(p => { const i = p.indexOf('='); if (i < 1) return; const u = safeUrl(p.slice(i + 1).trim()); if (/^https?:/i.test(u)) m[p.slice(0, i).trim()] = u; });
+  return m;
+}
+function resolveGraph(u) {
+  u = String(u || '').trim();
+  const m = /([a-z0-9_]+_network\.html)/i.exec(u);
+  return m ? GRAPH_BASE + m[1].toLowerCase() : (/^https:\/\//.test(u) ? u : '');
+}
+function viewSite() {
+  const s = BYUID[state.site];
+  if (!s) return `<p class="a-msg">${t('notfound')}</p>`;
+  const FS = fieldSources(s);
+  const val = (v, f) => { v = String(v == null ? '' : v).trim(); if (!v) return ''; return FS[f] ? `<a href="${esc(FS[f])}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v); };
+  const unit = (v, u) => { v = String(v == null ? '' : v).trim(); u = String(u || '').trim(); return v && u && v !== '-' && v !== '–' ? v + ' ' + u : v; };
+  const r = (k, html) => html ? `<div class="r"><span class="k">${t(k)}</span><span class="v">${html}</span></div>` : '';
+  const block = (k, rows) => rows ? `<div class="a-fig"><h3 class="cap">${t(k)}</h3>${rows}</div>` : '';
+  const desc = lang === 'no' ? (s.Description_NO || s.Description) : (s.Description || s.Description_NO);
+  const credits = String(s.ImageCredits || '').split(' | ').map(c => { const m = /^(.*?)\s*(https?:\/\/\S+)\s*$/.exec(c.trim()); return m ? { text: m[1], href: safeUrl(m[2]) } : { text: c.trim(), href: '' }; });
+  const credit = i => { const c = credits[i]; if (!c || !c.text) return ''; return `${t('photo')}: ` + (c.href ? `<a href="${esc(c.href)}" target="_blank" rel="noopener noreferrer">${esc(c.text)}</a>` : esc(c.text)); };
+  const imgs = s.__img;
+  const media = imgs.length
+    ? `<img class="big" id="a-big" src="${esc(imgs[0])}" alt="${esc(s.Name || '')}"><p class="cr" id="a-cr">${credit(0)}</p>` +
+      (imgs.length > 1 ? `<div class="strip">${imgs.map((u, i) => `<button class="${i ? '' : 'on'}" data-img="${i}" aria-label="${i + 1}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join('')}</div>` : '')
+    : (outlineSvg(s, 640, 480, true) || `<img class="big" src="picto_grammar/${s.__pic}.png" alt="" style="object-fit:contain">`) + `<p class="cr">${t('noimg')}</p>`;
+  const coords = s.__xy ? s.__xy[1].toFixed(5) + ', ' + s.__xy[0].toFixed(5) : '';
+  const area = num(String(s.Area_m2 || '').replace(/[\s ]/g, ''));
+  const figs =
+    block('s_who', r('company', esc(s.Company)) + r('operator', esc(s.Operator)) + r('orgnr', esc(s.OrgNr)) + r('parent', esc(s.ParentCompany))) +
+    block('s_where', r('place', esc([s.Place, s.__kn, s.County].filter(Boolean).join(', '))) + r('coords', esc(coords)) +
+      r('area', Number.isFinite(area) ? val(fmt(area) + ' m²', 'Area_m2') : '') + r('water', val(s.WaterRecipient, 'WaterRecipient'))) +
+    block('s_how', r('capyr', val(unit(s.AnnualCapacity, s.AnnualCapacityUnit || s.CapacityUnit), 'AnnualCapacity')) +
+      r('captot', val(unit(s.TotalCapacity, s.TotalCapacityUnit), 'TotalCapacity')) +
+      r('extyr', val(unit(s.ExtractionAnnual, s.ExtractionAnnualUnit), 'ExtractionAnnual')) +
+      r('exttot', val(unit(s.ExtractionTotal, s.ExtractionTotalUnit), 'ExtractionTotal')) +
+      r('acc', val(s.MassesAccepted, 'MassesAccepted')) + r('prod', val(s.MassesProduced, 'MassesProduced'))) +
+    block('s_env', r('codes', esc(s.WasteCodes)) + r('cont', esc(s.Contaminants)) + r('risk', val(s.EnvironmentalRisk, 'EnvironmentalRisk'))) +
+    block('s_perm', r('permit', val(s.PermitRef, 'PermitRef')) + r('authority', esc(s.PermitAuthority)) + r('start', val(s.StartYear, 'StartYear')) +
+      r('until', val(s.PermitValidUntil, 'PermitValidUntil')) + r('lifetime', val(s.ExpectedLifetime, 'ExpectedLifetime')) + r('verified', esc(s.LastVerified)));
+
+  // sections under the two columns
+  const sec = (k, body) => body ? `<div class="a-sec"><h3 class="cap">${t(k)}</h3>${body}</div>` : '';
+  const pcls = new Set((POLYS[uidOf(s)] || []).map(f => f.properties.pcls));
+  const keyItem = (cls, w, css) => pcls.has(cls) ? `<span><i style="border-top:${css}"></i>${t(w)}</span>` : '';
+  const outline = imgs.length && POLYS[uidOf(s)] ? `<div class="a-outline">${outlineSvg(s, 640, 400, true)}</div>` : '';
+  const outlineKey = POLYS[uidOf(s)] ? `<div class="a-key">${keyItem('allowed', 'k_allowed', '1px solid #000')}${keyItem('observed', 'k_observed', '6px solid rgba(0,0,0,.09)')}${keyItem('property', 'k_property', '1px dashed #9a9a9a')}${pcls.has('expansion') || pcls.has('planned') ? `<span><i style="border-top:1px dashed #00f"></i>${t('k_planned')}</span>` : ''}</div>` : '';
+  const graph = s.__graph ? resolveGraph(s.GraphURL) : '';
+  const graphHtml = graph ? `<div class="a-graph"><iframe src="${esc(graph + (s.__cat === 'facility' ? (graph.includes('?') ? '&' : '?') + 'fc=' + colourOf(s).slice(1) : ''))}" title="${esc(s.Name || '')}" sandbox="allow-scripts" referrerpolicy="no-referrer" loading="lazy"></iframe></div><div class="a-links"><a href="${esc(graph)}" target="_blank" rel="noopener noreferrer">↗ ${t('diagram')}</a></div>` : '';
+  const dod = (TERRAIN[uidOf(s)] || []).map(d => `<div class="r"><span class="mono">${esc(d.id)}</span>${esc(d.place || d.kommune)} · ${esc(d.years)} · +${approx(d.dep || 0)} m³ ${t('dep')} · −${approx(d.exc || 0)} m³ ${t('exc')}</div>`).join('');
+  const flows = s.__flows.map(fl => {
+    const out = fl.FromUID === uidOf(s), other = out ? fl.ToUID : fl.FromUID, o = BYUID[other];
+    const name = o ? `<a href="#site=${encodeURIComponent(other)}">${esc(o.Name)}</a>` : esc(out ? fl.ToName : fl.FromName);
+    const vol = Number.isFinite(num(fl.Volume_m3)) ? fmt(num(fl.Volume_m3)) + ' ' + esc(fl.VolumeUnit || 'm³') : '';
+    const src = safeUrl(fl.SourceURL);
+    return `<div class="r"><span class="mono">${esc(fl.FlowUID)}</span>${t(out ? 'to' : 'from')} ${name}${vol ? ' · ' + (src ? `<a href="${esc(src)}" target="_blank" rel="noopener noreferrer" style="color:var(--link)">${vol}</a>` : vol) : ''}${fl.MassType ? ' · ' + esc(fl.MassType) : ''}</div>`;
+  }).join('');
+  const news = String(s.NewsArticles || '').split(/\s;\s|\s\|\s|\s+(?=https?:)/).map(u => safeUrl(u.trim())).filter(Boolean)
+    .map(u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">↗ ${esc(host(u))}</a>`).join('');
+  const links = [safeUrl(s.Website) ? `<a href="${esc(safeUrl(s.Website))}" target="_blank" rel="noopener noreferrer">↗ ${t('website')}</a>` : '',
+                 safeUrl(s.PermitDocuments) ? `<a href="${esc(safeUrl(s.PermitDocuments))}" target="_blank" rel="noopener noreferrer">↗ ${t('permitdoc')}</a>` : '',
+                 ...String(s.Sources || '').split(/\s;\s|\s+(?=https?:)/).map(u => safeUrl(u.trim())).filter(Boolean)
+                   .map(u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">↗ ${t('source')} · ${esc(host(u))}</a>`)].join('');
+
+  const fam = s.__fam.map(f => `<button class="t" data-k="fam" data-val="${f}" style="display:inline">${t(f)}</button>`).join(', ');
+  return `<article class="a-site">
+    <div class="hd">
+      <h1>${esc(s.Name || uidOf(s))}<span class="mono">${esc(uidOf(s))}</span></h1>
+      <div class="wh">${s.__k ? `<button class="t" data-k="k" data-val="${esc(s.__k)}" style="display:inline">${esc(s.__kn)}</button>` : esc(s.__kn)}${s.Type ? ' · ' + `<button class="t" data-k="${s.__cat === 'project' ? 'pty' : 'ty'}" data-val="${esc(String(s.Type).trim())}" style="display:inline">${esc(s.Type)}</button>` : ''}${s.Subtype ? ', ' + esc(s.Subtype) : ''} · ${fam}</div>
+      <div class="st">${symbol(s)}<span>${esc(statusWord(s))}${rawStatus(s) ? ' · ' + esc(rawStatus(s)) : ''}</span></div>
+    </div>
+    <div class="a-cols2">
+      <div class="a-media">${media}</div>
+      <div>${desc ? `<p class="a-desc">${esc(desc)}</p>` : ''}${figs}</div>
+    </div>
+    ${sec('s_outline', outline ? outline + outlineKey : (POLYS[uidOf(s)] && !imgs.length ? outlineKey : ''))}
+    ${sec('s_graph', graphHtml)}
+    ${sec('s_dod', dod ? `<div class="a-list">${dod}</div>` : '')}
+    ${sec('s_flow', flows ? `<div class="a-list">${flows}</div>` : '')}
+    ${sec('s_news', news ? `<div class="a-links">${news}</div>` : '')}
+    ${sec('s_src', links ? `<div class="a-links">${links}</div>` : '')}
+    <a class="a-go cap" href="${esc(MAP_LINK + encodeURIComponent(uidOf(s)))}" target="_top">${t('map')} →</a>
+  </article>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Render
+// ─────────────────────────────────────────────────────────────────────────
+function chips() {
+  const ks = Object.keys(state.f);
+  if (!ks.length || state.v === 'site') { $('a-chips').innerHTML = ''; return; }
+  const n = chosen().length;
+  $('a-chips').innerHTML = ks.map(k => `<button class="chip" data-drop="${k}">${esc(FACETS[k].word(state.f[k]))}<b>×</b></button>`).join('') +
+    `<span class="a-count">${n} ${t(n === 1 ? 'site1' : 'sites')}</span>` + (ks.length > 1 ? `<button class="a-clear" data-clear>${t('clear')}</button>` : '');
+}
+function render() {
+  document.documentElement.lang = lang === 'no' ? 'no' : 'en';
+  document.querySelectorAll('[data-en]').forEach(el => { el.textContent = el.getAttribute('data-' + lang) || el.getAttribute('data-en'); });
+  document.querySelectorAll('#a-lang button').forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
+  document.querySelectorAll('#a-nav .nv').forEach(b => b.classList.toggle('on', b.dataset.go === state.v));
+  const nF = SITES.filter(s => s.__cat === 'facility').length, nP = SITES.length - nF;
+  $('a-tally').textContent = `${nF} ${t('sitesTally')} · ${nP} ${t('projTally')}`;
+  chips();
+  const v = { terms: viewTerms, kommuner: viewKommuner, colour: viewColour, picto: viewPicto, az: viewAz, site: viewSite }[state.v] || viewTerms;
+  $('a-view').innerHTML = v();
+  const s = state.v === 'site' ? BYUID[state.site] : null;
+  document.title = (s ? s.Name + ' · ' : '') + (lang === 'no' ? 'Steder' : 'Sites') + ' · Dirty Business';
+}
+
+// One listener for the whole page.
+document.addEventListener('click', e => {
+  const el = e.target.closest('button,a,path');
+  if (!el || document.documentElement.classList.contains('dbx-sel') || document.documentElement.classList.contains('dbx-txt')) return;
+  if (el.dataset.go) { go({ v: el.dataset.go, f: state.f }); return; }
+  if (el.dataset.lang) { lang = el.dataset.lang; try { localStorage.setItem('db-sites-lang', lang); } catch (x) {} render(); return; }
+  if (el.dataset.drop) { const f = Object.assign({}, state.f); delete f[el.dataset.drop]; go({ v: state.v === 'site' ? 'terms' : state.v, f }); return; }
+  if (el.hasAttribute('data-clear')) { go({ v: state.v, f: {} }); return; }
+  if (el.dataset.more) { openMore[el.dataset.more] = !openMore[el.dataset.more]; render(); return; }
+  if (el.dataset.col) { const [cat, k] = el.dataset.col.split('|'); go({ v: 'terms', f: { fam: cat === 'project' ? 'construction' : (state.f.fam && state.f.fam !== 'construction' ? state.f.fam : 'reception'), st: k } }); return; }
+  if (el.dataset.k && !el.disabled) {
+    const f = Object.assign({}, state.f), k = el.dataset.k, v = el.dataset.val;
+    if (f[k] === v && state.v !== 'site') delete f[k]; else f[k] = v;
+    go({ v: state.v === 'kommuner' && k === 'k' ? 'kommuner' : 'terms', f }); return;
+  }
+  if (el.tagName === 'path' && el.classList.contains('has')) {
+    const f = Object.assign({}, state.f);
+    if (f.k === el.dataset.nr) delete f.k; else f.k = el.dataset.nr;
+    go({ v: 'kommuner', f }, true); return;
+  }
+  if (el.dataset.img) {
+    const i = +el.dataset.img, s = BYUID[state.site];
+    $('a-big').src = s.__img[i];
+    document.querySelectorAll('.a-media .strip button').forEach(b => b.classList.toggle('on', b === el));
+    const credits = String(s.ImageCredits || '').split(' | ');
+    const c = credits[i] || '', m = /^(.*?)\s*(https?:\/\/\S+)\s*$/.exec(c.trim());
+    $('a-cr').innerHTML = c.trim() ? t('photo') + ': ' + (m && safeUrl(m[2]) ? `<a href="${esc(m[2])}" target="_blank" rel="noopener noreferrer">${esc(m[1])}</a>` : esc(c.trim())) : '';
+    return;
+  }
+  if (el.tagName === 'A' && /^#site=/.test(el.getAttribute('href') || '')) {
+    e.preventDefault();
+    go({ v: 'site', site: decodeURIComponent(el.getAttribute('href').slice(6)), f: state.f });
+  }
+});
+// The kommune's name under the pointer.
+document.addEventListener('mousemove', e => {
+  const tip = $('a-ktip');
+  const p = e.target.closest && e.target.closest('#a-kmap path');
+  if (!p) { tip.style.display = 'none'; return; }
+  const n = SITES.filter(s => s.__k === p.dataset.nr).length;
+  tip.textContent = p.dataset.n + (n ? ' · ' + n : '');
+  tip.style.display = 'block'; tip.style.left = (e.clientX + 12) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
+});
+
+// ─────────────────────────────────────────────────────────────────────────
+// Load
+// ─────────────────────────────────────────────────────────────────────────
+Promise.all([parseCsv(FACILITIES_CSV), parseCsv(PROJECTS_CSV), getJson(FILES.polys), getJson(FILES.kommuner), getJson(FILES.terrain), getText(FILES.flows)])
+  .then(([f, p, polys, kom, terr, flowsCsv]) => parseCsv(null, flowsCsv || '').then(fl => [f, p, polys, kom, terr, fl]))
+  .then(([f, p, polys, kom, terr, fl]) => {
+    const flows = (fl.data || []).filter(isPub);
+    prepare(f.data || [], p.data || [], polys, kom, terr, flows);
+    if (!SITES.length) throw new Error('empty');
+    state = readHash();
+    render();
+  })
+  .catch(err => { console.error(err); $('a-view').innerHTML = `<p class="a-msg">${t('loadfail')}</p>`; });
+})();
+</script>
+</body>
+</html>

@@ -25,8 +25,13 @@
 
     const Q = new URLSearchParams(location.search);
     const EDIT = Q.has('edit');
-    const PAGE_MODE = !document.getElementById('map');        // e.g. the Cargo page, through the bookmarklet
-    const KEY = PAGE_MODE ? 'db-style-draft-page' : 'db-style-draft';
+    // A page of our own other than the map (sites.html) says so in window.__DB_STYLE_CFG:
+    // its own draft, its own saved file and global, its own list of parts, no map.
+    const CFG = (window.__DB_STYLE_CFG && typeof window.__DB_STYLE_CFG === 'object') ? window.__DB_STYLE_CFG : null;
+    const PAGE_MODE = !CFG && !document.getElementById('map');        // e.g. the Cargo page, through the bookmarklet
+    const KEY = CFG && CFG.key ? CFG.key : (PAGE_MODE ? 'db-style-draft-page' : 'db-style-draft');
+    const GLOBAL = CFG && CFG.global ? CFG.global : '__DB_SITE_STYLE';
+    const NOMAP = PAGE_MODE || !!(CFG && CFG.nomap);
     const MEDIA = { all: '', desktop: '(min-width:761px)', phone: '(max-width:760px)' };
 
     // ── state ────────────────────────────────────────────────────────────
@@ -44,7 +49,7 @@
         return s;
     }
     function readBaked() {
-        const pub = window.__DB_SITE_STYLE;
+        const pub = window[GLOBAL];
         if (pub && typeof pub === 'object' && Object.keys(pub).length) {
             try { return norm(JSON.parse(JSON.stringify(pub))); } catch (e) {}
         }
@@ -499,7 +504,7 @@
     const own = (o, k) => !!o && Object.prototype.hasOwnProperty.call(o, k);
     const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
     function loadMapFile() {
-        if (PAGE_MODE || !window.fetch) return;
+        if (NOMAP || !window.fetch) return;
         const q = EDIT ? '?v=' + Date.now() : '';
         Promise.all(['data/map-style.json', 'data/maputnik/baseline.json'].map(u => fetch(u + q).then(r => r.ok ? r.json() : null).catch(() => null)))
             .then(([st, base]) => {
@@ -702,7 +707,7 @@
     function apply() { if (!queued) { queued = true; requestAnimationFrame(applyNow); } }
 
     const api = {
-        EDIT, PAGE_MODE, KEY, MEDIA, BAKED,
+        EDIT, PAGE_MODE, NOMAP, CFG: CFG || {}, GLOBAL, KEY, MEDIA, BAKED,
         get state() { return S; },
         set state(v) { S = norm(v); apply(); },
         get off() { return OFF; },
@@ -711,7 +716,7 @@
         layers: REG,
         get mapFile() { return FILE; },
         apply, applyNow, applyCss, applyDom, buildCss, remapValue, colorKey, remapColorText, collectRules, rules: RULES, norm, blank, ownText, origText: el => { const o = T_ORIG.get(el); const c = ownText(el); return o && c === o.to ? o.from : c; }, layerIds: () => MAP ? layerIds() : [], get origBefore() { return ORIG_BEFORE; },
-        get published() { return !!(window.__DB_SITE_STYLE && Object.keys(window.__DB_SITE_STYLE).length); },
+        get published() { return !!(window[GLOBAL] && Object.keys(window[GLOBAL]).length); },
         saveDraft() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} },
         clearDraft() { try { localStorage.removeItem(KEY); } catch (e) {} }
     };

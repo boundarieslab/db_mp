@@ -38,6 +38,13 @@
     // ── small helpers ───────────────────────────────────────────────────
     const S = () => R.state;
     const PAGE = R.PAGE_MODE;
+    // sites.html and any other page of ours: its parts, its file, no map.
+    const CFG = R.CFG || {};
+    const NOMAP = PAGE || !!R.NOMAP;
+    const STYLE_PATH = CFG.path || 'editor/site-style.js';
+    const STYLE_GLOBAL = R.GLOBAL || '__DB_SITE_STYLE';
+    const PAGE_FILE = CFG.page || 'index.html';
+    const PUB_AT = 'dbx-pub-at' + (CFG.name ? '-' + CFG.name : '');
     const $ = (s, r) => (r || document).querySelector(s);
     function h(tag, a, ...kids) {
         const el = document.createElement(tag);
@@ -339,7 +346,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
     // ═════════════════════════════════════════════════════════════════════
     // PICKING PARTS OF THE PAGE
     // ═════════════════════════════════════════════════════════════════════
-    const PARTS = PAGE ? [
+    const PARTS = CFG.parts ? CFG.parts : PAGE ? [
         ['iframe', 'Map frame'], ['header', 'Header'], ['nav', 'Navigation'], ['body', 'Page']
     ] : [
         ['#bar', 'Tools and drawer'], ['#bar .toolbar', 'Tool strip'], ['#bar .drawer', 'Drawer'],
@@ -1158,7 +1165,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
     const bar = ui('div', { id: 'dbx-bar' });
     document.body.appendChild(bar);
     keepKeys(bar);
-    const DOCK_TABS = PAGE ? ['OUTLINE', 'TYPE', 'COLOUR', 'LINES', 'CSS', 'SAVE'] : ['OUTLINE', 'MAP', 'TYPE', 'COLOUR', 'LINES', 'CSS', 'SAVE'];
+    const DOCK_TABS = NOMAP ? ['OUTLINE', 'TYPE', 'COLOUR', 'LINES', 'CSS', 'SAVE'] : ['OUTLINE', 'MAP', 'TYPE', 'COLOUR', 'LINES', 'CSS', 'SAVE'];
     let dockTab = LS.get('dbx-dock', '');
     if (dockTab && DOCK_TABS.indexOf(dockTab) < 0) dockTab = '';
     const stable = o => JSON.stringify(o, (k, v) => v && typeof v === 'object' && !Array.isArray(v) ? Object.keys(v).sort().reduce((a, kk) => { a[kk] = v[kk]; return a; }, {}) : v);
@@ -1465,7 +1472,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
             return h('div', { class: 'dbx-li' + (entry ? ' set' : ''), title: where ? [...where].join('\n') : '' },
                 h('span', { class: 'dbx-sw', style: 'flex:0 0 22px' }, h('i', { style: 'background:' + r.k + ';right:50%' }), h('i', { style: 'background:' + (to || r.k) + ';left:50%' })),
                 h('span', { class: 'nm' }, names.length ? names.join(', ') : h('span', { class: 'dbx-mono' }, r.k), h('small', null, (r.c.ui ? r.c.ui + ' page' : '') + (r.c.ui && r.c.map ? ' · ' : '') + (r.c.map ? r.c.map + ' map' : ''))),
-                c, t, entry ? cb(uiOn, 'page', 'ui') : null, entry && !PAGE ? cb(mp, 'map', 'map') : null, x(entry, () => { delete s.colors[r.k]; commit(); renderDock(); }));
+                c, t, entry ? cb(uiOn, 'page', 'ui') : null, entry && !NOMAP ? cb(mp, 'map', 'map') : null, x(entry, () => { delete s.colors[r.k]; commit(); renderDock(); }));
         };
         if (named.length) { out.push(h('div', { class: 'dbx-h' }, 'NAMED COLOURS')); named.forEach(r => out.push(line(r))); }
         out.push(h('div', { class: 'dbx-h' }, 'EVERY OTHER COLOUR'));
@@ -1493,7 +1500,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
             scrub(r.firstChild, i); out.push(r);
         });
         out.push(h('div', { class: 'dbx-note' }, 'Every border, rule and outline on the page that has this weight. 0.5 px is the half-pixel the page uses on most frames. Drag a name sideways to change it.'));
-        if (!PAGE) {
+        if (!NOMAP) {
             out.push(h('div', { class: 'dbx-h' }, 'MAP LINES'));
             out.push(mapLineAll());
             out.push(h('div', { class: 'dbx-note' }, 'Each map line on its own, and every other property of the map: ', h('button', { class: 'dbx-btn', onclick: () => openDock('MAP') }, 'MAP')));
@@ -1635,7 +1642,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
     }
     // Re-list when the map gains or loses layers (not on every repaint).
     (function watchLayers() {
-        if (PAGE) return;
+        if (NOMAP) return;
         let tries = 0;
         const t = setInterval(() => {
             const m = R.map;
@@ -1908,11 +1915,11 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
             }
             step(75, 'Writing the style…');
             const iso = new Date().toISOString();
-            const body = '/* The site\'s look, saved by the site editor (index.html?edit) on ' + iso + '.\n   Applied by editor/style-runtime.js. {} means the page as written. */\nwindow.__DB_SITE_STYLE = ' + JSON.stringify(st) + ';\n';
-            await putFile(GH.path, b64text(body), 'Site style: ' + summary(st));
+            const body = '/* The look of ' + PAGE_FILE + ', saved by the site editor (' + PAGE_FILE + '?edit) on ' + iso + '.\n   Applied by editor/style-runtime.js. {} means the page as written. */\nwindow.' + STYLE_GLOBAL + ' = ' + JSON.stringify(st) + ';\n';
+            await putFile(STYLE_PATH, b64text(body), 'Site style: ' + summary(st));
             if (!empty) { R.state = st; R.saveDraft(); }
             pubSnap = stable(R.norm(clone(st)));
-            LS.set('dbx-pub-at', iso);
+            LS.set(PUB_AT, iso);
             commit();
             pub = { busy: false, pct: 100, msg: empty ? 'The site will show the page as written.' : 'Saved to the site.', ok: true, live: 'waiting' };
             step(100, pub.msg);
@@ -1931,7 +1938,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
     function watchLive(iso) {
         if (/^(localhost|127\.|\[::1\])/.test(location.hostname)) { pub.live = 'local'; if (dockTab === 'SAVE') renderDock(); return; }
         const t0 = Date.now();
-        const url = new URL(GH.path, location.href.replace(/[^\/]*([?#].*)?$/, '')).href;
+        const url = new URL(STYLE_PATH, location.href.replace(/[^\/]*([?#].*)?$/, '')).href;
         const tick = () => fetch(url + '?t=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.text() : '').catch(() => '').then(t => {
             if (t.indexOf(iso) >= 0) { pub.live = 'live'; toast('Your changes are on the site now.', 4000); if (dockTab === 'SAVE') renderDock(); renderBar(); return; }
             if (Date.now() - t0 > 6 * 60e3) { pub.live = 'slow'; if (dockTab === 'SAVE') renderDock(); return; }
@@ -1944,13 +1951,13 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
         const s = S();
         const out = [];
         const d = dirty();
-        const at = LS.get('dbx-pub-at', '');
+        const at = LS.get(PUB_AT, '');
         if (!PAGE) {
-            const loads = !!document.querySelector('script[src*="site-style.js"]');
+            const loads = !!document.querySelector('script[src*="' + STYLE_PATH.split('/').pop() + '"]');
             out.push(h('div', { class: 'dbx-mode' },
                 h('div', null, h('b', null, d ? 'Your draft is not on the site yet.' : 'Your draft is what the site shows.')),
                 h('div', { class: 'dbx-note', style: 'margin:2px 0 0' }, countChanges(s) + ' changes in the draft' + (at ? ' · last saved to the site ' + new Date(at).toLocaleString() : '') + '.')));
-            if (!loads) out.push(h('div', { class: 'dbx-note dbx-err' }, 'This copy of index.html does not load editor/site-style.js yet, so the site will not show what is saved. Put the new index.html in the site first.'));
+            if (!loads) out.push(h('div', { class: 'dbx-note dbx-err' }, 'This copy of ' + PAGE_FILE + ' does not load ' + STYLE_PATH + ' yet, so the site will not show what is saved. Put the new ' + PAGE_FILE + ' in the site first.'));
             const go = h('button', { class: 'dbx-btn big on', style: 'width:100%;margin-top:4px', disabled: pub.busy || !ghReady() || !d, onclick: () => publish() }, pub.busy ? 'SAVING…' : 'SAVE TO SITE');
             out.push(go);
             if (pub.busy || pub.msg) {
@@ -1966,7 +1973,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
             const inp = (k, ph, type) => { const i = h('input', { class: 'dbx-t dbx-mono', value: GH[k] || '', placeholder: ph, type: type || 'text', spellcheck: false, autocomplete: 'off' }); i.addEventListener('change', () => { GH[k] = i.value.trim(); saveGH(); renderDock(); renderBar(); }); return i; };
             const tmsg = h('div', { class: 'dbx-note' });
             conn.appendChild(h('div', { class: 'in' },
-                h('div', { class: 'dbx-note' }, 'SAVE TO SITE writes one file, ', h('span', { class: 'dbx-mono' }, GH.path), ', into the site’s repository on GitHub, and GitHub puts it online. For that the editor needs a key from you, made once:'),
+                h('div', { class: 'dbx-note' }, 'SAVE TO SITE writes one file, ', h('span', { class: 'dbx-mono' }, STYLE_PATH), ', into the site’s repository on GitHub, and GitHub puts it online. For that the editor needs a key from you, made once:'),
                 h('div', { class: 'dbx-note' }, '1. Open ', h('a', { href: 'https://github.com/settings/personal-access-tokens/new', target: '_blank', rel: 'noopener' }, 'github.com → new fine-grained token'), '.', h('br'),
                     '2. Repository access: ', h('b', null, 'Only select repositories → ' + GH.repo), '.', h('br'),
                     '3. Permissions → Repository → ', h('b', null, 'Contents: Read and write'), '.', h('br'),
@@ -1993,12 +2000,12 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
         const msg = h('div', { class: 'dbx-note' });
         file.addEventListener('change', () => {
             const f = file.files[0]; if (!f) return;
-            f.text().then(t => { try { if (/__DB_SITE_STYLE/.test(t)) t = t.slice(t.indexOf('=', t.indexOf('__DB_SITE_STYLE')) + 1, t.lastIndexOf(';')); R.state = JSON.parse(t); commit(); render(); toast('Style file opened.'); } catch (e) { msg.textContent = 'That is not a style file.'; } });
+            f.text().then(t => { try { if (/window\.__DB_\w*STYLE\s*=/.test(t)) t = t.slice(t.indexOf('=', t.search(/window\.__DB_\w*STYLE/)) + 1, t.lastIndexOf(';')); R.state = JSON.parse(t); commit(); render(); toast('Style file opened.'); } catch (e) { msg.textContent = 'That is not a style file.'; } });
         });
         const json = () => JSON.stringify(s, null, 1);
         out.push(h('div', { class: 'dbx-h' }, 'AS A FILE'),
             h('div', { class: 'dbx-row', style: 'gap:4px;flex-wrap:wrap' },
-                h('button', { class: 'dbx-btn', onclick: () => download(PAGE ? 'dirtybusiness-cargo-style-' + today() + '.json' : 'dirtybusiness-style-' + today() + '.json', json()) }, 'download'),
+                h('button', { class: 'dbx-btn', onclick: () => download(PAGE ? 'dirtybusiness-cargo-style-' + today() + '.json' : 'dirtybusiness-' + (CFG.name ? CFG.name + '-' : '') + 'style-' + today() + '.json', json()) }, 'download'),
                 h('button', { class: 'dbx-btn', onclick: () => { navigator.clipboard.writeText(json()).then(() => toast('Copied.')); } }, 'copy'),
                 h('button', { class: 'dbx-btn', onclick: () => file.click() }, 'open a style file…'), file), msg);
         if (PAGE) {
