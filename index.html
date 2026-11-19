@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Dirty Business Map</title>
+    <meta name="description" content="Where the Oslo region's excavated masses go: reception sites, extraction sites, construction projects, terrain change and documented flows, each figure linked to its source.">
+    <meta property="og:title" content="Dirty Business — the Oslo region's excavated masses">
+    <meta property="og:description" content="Reception and extraction sites, construction projects, terrain change since 2007 and documented mass flows, each figure linked to its source.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://dirtybusiness.no/">
+    <meta name="twitter:card" content="summary">
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
 
     <style>
@@ -1843,6 +1849,11 @@ document.addEventListener('DOMContentLoaded', function() {
         fpnote: { en: "outline: footprint", no: "omriss: anleggsområde" },
         loading: { en: "LOADING DATA…", no: "LASTER DATA…" },
         sites: { en: "SITES ON THE MAP", no: "STEDER PÅ KARTET" },
+        st_facility: { en: "RECEPTION SITES ON THE MAP", no: "MOTTAK PÅ KARTET" },
+        st_extract: { en: "EXTRACTION SITES ON THE MAP", no: "UTTAK PÅ KARTET" },
+        st_project: { en: "CONSTRUCTION PROJECTS ON THE MAP", no: "BYGGEPROSJEKTER PÅ KARTET" },
+        st_dod: { en: "CHANGE CLUSTERS IN {n} KOMMUNER", no: "ENDRINGSKLYNGER I {n} KOMMUNER" },
+        st_flow: { en: "FLOWS ON THE MAP", no: "STRØMMER PÅ KARTET" },
         shown: { en: "SHOWN", no: "VIST" },
         of: { en: "OF", no: "AV" },
         loadfail: { en: "COULD NOT LOAD DATA. TRY RELOADING", no: "KUNNE IKKE LASTE DATA. LAST INN PÅ NYTT" },
@@ -1958,7 +1969,7 @@ document.addEventListener('DOMContentLoaded', function() {
         t_noname: { en: "no name on the map", no: "uten navn på kartet" },
         tb_fac: { en: "facility in the database", no: "anlegg i databasen" },
         tb_proj: { en: "construction project in the database", no: "byggeprosjekt i databasen" },
-        tb_plan: { en: "name of the reguleringsplan", no: "navn på reguleringsplanen" },
+        tb_plan: { en: "reguleringsplan", no: "reguleringsplan" },
         tb_cover: { en: "land cover on the map (N50)", no: "arealdekke på kartet (N50)" },
         cv_quarry: { en: "quarry or pit", no: "steinbrudd eller massetak" },
         cv_ind: { en: "industrial ground", no: "industriområde" },
@@ -3072,10 +3083,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!statusStrip) return;
         if (message) { statusStrip.textContent = message; clearTimeout(updateStatus._t);
                        if (allSites.length) updateStatus._t = setTimeout(() => updateStatus(), 4000); return; }
-        const mapped = allSites.filter(hasXY);
-        const total = mapped.length;
-        const shown = mapped.filter(passes).length;
-        let s = shown === total ? `${total} ${t('sites')}` : `${shown} ${t('of')} ${total} ${t('shown')}`;
+        // The line follows the open tab: what that tab draws, counted.
+        let s, sheet = '';
+        try { sheet = isDodSheet() ? 'dod' : isFlowSheet() ? 'flow' : ''; } catch (err) { sheet = ''; }
+        if (sheet === 'dod') s = `${allTerrain.length} ${t('st_dod').replace('{n}', DOD_RUNS.length)}`;
+        else if (sheet === 'flow') s = `${allFlows.filter(f => f.__xy && flowPasses(f)).length} ${t('st_flow')}`;
+        else {
+            let scope = 'all';
+            try { scope = deckSelection ? 'all' : deckScope; } catch (err) { scope = 'all'; }
+            const mapped = allSites.filter(x => hasXY(x) && inScope(x, scope));
+            const total = mapped.length;
+            const shown = mapped.filter(passes).length;
+            const label = scope === 'all' ? t('sites') : t('st_' + scope);
+            s = shown === total ? `${total} ${label}` : `${shown} ${t('of')} ${total} ${t('shown')}`;
+        }
         if (deckSelection) s += ` · ${deckSelection.size} ${t('selected')}`;
         s += pickLine();
         statusStrip.textContent = s;
@@ -3377,6 +3398,8 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('data/dod_sites.json').then(x => x.ok ? x.json() : { sites: [] }).then(j => {
         const ids = DOD_RUNS.map(x => x.id);
         allTerrain = (j.sites || []).filter(d => ids.includes(d.run)).map(d => { d.__cat = 'dod'; return d; });
+        // The TERRAIN CHANGE tab counts its clusters, as the other tabs count their rows.
+        try { $('count-runs').textContent = allTerrain.length; updateStatus(); } catch (err) {}
         if (isDodSheet()) renderDeck();
     }).catch(err => console.error('terrain sites failed:', err));
     // A row of the sheet is a cluster, and so is every change on the map: each
@@ -4601,7 +4624,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $('count-extract').textContent = f.filter(s => actsOf(s).ext).length;
         $('count-projects').textContent = p.length;
         $('count-all').textContent = f.length + p.length;
-        $('count-runs').textContent = DOD_RUNS.length;
+        $('count-runs').textContent = allTerrain.length || DOD_RUNS.length;
         if (typeof updateFlowCounts === 'function') updateFlowCounts();
         $('count-fac-mapped').textContent = f.filter(hasXY).length + ' / ' + f.length;
         $('count-proj-mapped').textContent = p.filter(hasXY).length + ' / ' + p.length;
@@ -5840,6 +5863,7 @@ document.addEventListener('DOMContentLoaded', function() {
             rawCounts.flow = (r.data || []).filter(x => x.FlowUID || x.FromUID || x.ToUID).length;
             allFlows = tagFlows(r.data || []);
             updateFlowCounts();
+            try { updateStatus(); } catch (err) {}
             whenStyleReady(ensureFlowLayers);
             if (deckScope === 'flow') renderFlowDeck(); else renderSheetKey(baseRows());
         }).catch(err => {
