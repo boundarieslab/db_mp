@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cutive+Mono&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#000;--sub:#808080;--red:#FF0000;--cell:100px;--obj:60px;--nav:170px}
+:root{--ink:#000;--sub:#808080;--red:#FF0000;--frame:#bdbdbd;--cell:180px;--obj:164px;--nav:170px}
 *{box-sizing:border-box}
 html,body{margin:0;background:#fff;color:var(--ink)}
 body{font:12px/17px 'Cutive Mono','Courier New',monospace;-webkit-font-smoothing:antialiased}
@@ -30,15 +30,18 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cu
 #a-main{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:28px}
 .sec{display:flex;flex-direction:column;gap:10px}
 .sec-t{align-self:flex-start;animation:fade .5s ease .25s both}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cell),1fr));gap:16px 8px}
-.obj{display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--ink);min-width:0;transition:opacity .25s}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cell),1fr));gap:22px 14px}
+.obj{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--ink);min-width:0;transition:opacity .25s}
 .obj.dim{opacity:.1}
-.obj .im{display:flex;align-items:center;justify-content:center;width:var(--obj);height:calc(var(--obj) * .8)}
-.obj .im img{display:block;max-width:100%;max-height:100%;filter:grayscale(1)}
-.obj .lb{max-width:100%;padding:0 3px;text-align:center;overflow-wrap:anywhere;font-size:11px;line-height:14px}
+.obj .im{display:flex;align-items:center;justify-content:center;width:var(--obj);max-width:100%;height:calc(var(--obj) * .8)}
+.obj .im img{display:block;max-width:100%;max-height:100%}
+.obj .im.no{border:1px solid var(--frame)}
+.obj .lb{max-width:100%;padding:0 3px;text-align:center;overflow-wrap:anywhere;font-size:10px;line-height:13px;color:var(--sub)}
+.obj:hover .lb{color:var(--ink)}
 .open{grid-column:1/-1;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:6px 0 18px}
 .open .pic{cursor:zoom-out;display:block;max-width:100%}
 .open .pic img{display:block;max-width:100%;max-height:62vh}
+.open .pic .no{display:flex;align-items:center;justify-content:center;width:min(480px,80vw);height:min(360px,60vw);border:1px solid var(--frame)}
 .open .tt{max-width:560px}
 .open .tm{max-width:560px;color:var(--sub)}
 .open .tm span{white-space:nowrap}
@@ -50,7 +53,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cu
 .a-msg{color:var(--sub);margin:0}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.sec-t{animation:none}.obj{transition:none}}
-@media (max-width:640px){#atlas{padding:12px;gap:16px}#a-nav{flex-basis:100%;position:static;max-height:none}:root{--cell:84px;--obj:52px}}
+@media (max-width:640px){#atlas{padding:12px;gap:16px}#a-nav{flex-basis:100%;position:static;max-height:none}:root{--cell:132px;--obj:120px}}
 </style>
 </head>
 <body>
@@ -302,11 +305,11 @@ function glide(prev) {
 // ─────────────────────────────────────────────────────────────────────────
 const svgIcon = (d, z, w) => `<svg width="${z}" height="${z}" viewBox="0 0 32 32" aria-hidden="true"><path d="${d}" fill="#fff" stroke="#000" stroke-width="${w}"/></svg>`;
 function obj(d) {
-  const pic = d.__img ? `<img src="${esc(d.__img)}" alt="" loading="lazy" decoding="async">` : svgIcon(d.__icon, 36, .8);
-  return `<a class="obj" href="#doc=${encodeURIComponent(d.DocID)}" data-id="${esc(d.DocID)}" data-doc="${esc(d.DocID)}" title="${esc(d.Title)}"><span class="im">${pic}</span><span class="lb">${esc(d.__label)}</span></a>`;
+  const pic = d.__img ? `<img src="${esc(d.__img)}" alt="" loading="lazy" decoding="async">` : svgIcon(d.__icon, 22, 1);
+  return `<a class="obj" href="#doc=${encodeURIComponent(d.DocID)}" data-id="${esc(d.DocID)}" data-doc="${esc(d.DocID)}" title="${esc(d.Title)}"><span class="im${d.__img ? '' : ' no'}">${pic}</span><span class="lb">${esc(d.__label)}</span></a>`;
 }
 function opened(d) {
-  const pic = d.__img ? `<img src="${esc(d.__img)}" alt="${esc(d.Title)}">` : svgIcon(d.__icon, 120, .4);
+  const pic = d.__img ? `<img src="${esc(d.__img)}" alt="${esc(d.Title)}">` : `<span class="no">${svgIcon(d.__icon, 32, .8)}</span>`;
   const terms = [].concat(d.__siteNames.map(v => ['site', v]), d.__dec ? [['dec', d.__dec]] : [], d.__k.map(v => ['k', v]),
                           d.Class ? [['cls', d.Class]] : [], d.__arch ? [['arch', d.__arch]] : [], d.__net.map(v => ['net', v]));
   const tm = terms.map(([c, v], i) => {
@@ -382,7 +385,9 @@ document.addEventListener('error', e => {
   const img = e.target;
   if (!img || img.tagName !== 'IMG') return;
   const box = img.closest('[data-id]'), d = box && BYID[box.dataset.id];
-  if (d) img.outerHTML = box.classList.contains('open') ? svgIcon(d.__icon, 120, .4) : svgIcon(d.__icon, 36, .8);
+  if (!d) return;
+  if (box.classList.contains('open')) img.outerHTML = `<span class="no">${svgIcon(d.__icon, 32, .8)}</span>`;
+  else { img.parentNode.classList.add('no'); img.outerHTML = svgIcon(d.__icon, 22, 1); }
 }, true);
 $('a-q').addEventListener('input', e => { state.q = e.target.value; search(); writeHash(); });
 window.addEventListener('hashchange', () => { const o = readHash(); if (['by', 'g', 'doc', 'q'].some(k => o[k] !== state[k])) { state = o; $('a-q').value = state.q; render(); } });
