@@ -10,7 +10,11 @@ expansion are carried with their areas (firm 0), for the record window.
 
 The map draws two outlines per site, made here and carrying no area:
   allowed   the outer edge of everything permitted or licensed (reguleringsplan
-            fields and mining licence joined, nothing drawn inside it)
+            fields and mining licence joined, nothing drawn inside it). Where
+            fields and licences are tagged use = "extraction", extraction needs
+            both, so that part of the edge is where the plan's raw-material
+            fields and the DMF licence overlap (rule agreed 2026-11-19); where a
+            site has only one of the two, that one is used
   planned   the outer edge of the planned expansion
 "Worked outside permitted" is never published. Needs shapely and pyproj.
 """
@@ -42,6 +46,23 @@ def outer(geoms):
     parts = [Polygon(p.exterior).simplify(0.5) for p in polys(u) if p.area >= MIN_M2]
     return transform(TO_DEG, MultiPolygon(parts)) if parts else None
 
+def both(a, b):
+    """Where both sets of shapes lie, in degrees; None if they do not overlap."""
+    i = unary_union([transform(TO_M, g).buffer(0) for g in a]).intersection(unary_union([transform(TO_M, g).buffer(0) for g in b]))
+    i = unary_union([p for p in polys(i) if p.area >= MIN_M2]) if not i.is_empty else i
+    return None if i.is_empty else transform(TO_DEG, i)
+
+def allowed(uid, d):
+    xp, xl = d.get("permitted_x", []), d.get("licence_x", [])
+    core = xp + xl
+    if xp and xl:
+        g = both(xp, xl)
+        if g is None:
+            print("note:", uid, "plan fields and licence do not overlap; both kept")
+        else:
+            core = [g]
+    return core + d.get("permitted", []) + d.get("licence", [])
+
 def main():
     fs = json.load(open(SRC, encoding="utf-8"))["features"]
     out = []; by = collections.defaultdict(lambda: collections.defaultdict(list)); names = {}
@@ -53,9 +74,10 @@ def main():
              "firm": 1 if p["pcls"] == "worked" else 0, "pcls": KEEP[p["pcls"]], "note": p.get("note", "")}
         if p.get("shared"): q["shared"] = p["shared"]
         out.append({"type": "Feature", "properties": q, "geometry": {"type": f["geometry"]["type"], "coordinates": rnd(f["geometry"]["coordinates"])}})
-        by[p["uid"]][p["pcls"]].append(shape(f["geometry"])); names[p["uid"]] = p["n"]
+        key = p["pcls"] + ("_x" if p.get("use") == "extraction" and p["pcls"] in ("permitted", "licence") else "")
+        by[p["uid"]][key].append(shape(f["geometry"])); names[p["uid"]] = p["n"]
     for uid, d in by.items():
-        for cls, src in (("allowed", d.get("permitted", []) + d.get("licence", [])), ("planned", d.get("expansion", []))):
+        for cls, src in (("allowed", allowed(uid, d)), ("planned", d.get("expansion", []))):
             g = outer(src) if src else None
             if g is None: continue
             out.append({"type": "Feature", "properties": {"uid": uid, "pid": uid + "_" + cls, "n": names[uid], "firm": 0, "pcls": cls},
