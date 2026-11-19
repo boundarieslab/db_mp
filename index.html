@@ -835,13 +835,13 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                           <div class="grp-body"><div class="in">
                               <label class="row" for="base-sat">
                                   <span class="nm"><b data-en="Satellite" data-no="Satellitt">Satellite</b><span class="src">Esri World Imagery</span></span>
-                                  <input type="radio" name="basemap" id="base-sat" value="satellite" checked></label>
+                                  <input type="radio" name="basemap" id="base-sat" value="satellite"></label>
                               <label class="row" for="base-gray">
                                   <span class="nm"><b data-en="Map, grey" data-no="Kart, grått">Map, grey</b><span class="src">Kartverket topograatone</span></span>
                                   <input type="radio" name="basemap" id="base-gray" value="graytone"></label>
                               <label class="row" for="base-relief">
-                                  <span class="nm"><b data-en="Relief" data-no="Relieff">Relief</b><span class="src" data-en="Kartverket, shaded terrain 1 m, with the aerial photo faint over it" data-no="Kartverket, skyggerelieff 1 m, med flyfoto svakt over">Kartverket, shaded terrain 1 m, with the aerial photo faint over it</span></span>
-                                  <input type="radio" name="basemap" id="base-relief" value="relief"></label>
+                                  <span class="nm"><b data-en="Relief" data-no="Relieff">Relief</b><span class="src" data-en="Kartverket, shaded terrain 1 m, with the aerial photo in black and white over it" data-no="Kartverket, skyggerelieff 1 m, med flyfoto i svart-hvitt over">Kartverket, shaded terrain 1 m, with the aerial photo in black and white over it</span></span>
+                                  <input type="radio" name="basemap" id="base-relief" value="relief" checked></label>
                               <label class="row" for="base-bym">
                                   <span class="nm"><b data-en="Oslo aerial survey" data-no="Oslo flyfoto">Oslo aerial survey</b>
                                       <span class="src" data-en="Bymiljøetaten. Sharper, but stops at the city boundary" data-no="Bymiljøetaten. Skarpere, men stopper ved bygrensen">Bymiljøetaten. Sharper, but stops at the city boundary</span></span>
@@ -1359,6 +1359,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const MAX_ZOOM = 19;
     const T = 256;
     const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+    const BASE_PHOTO = 50;      // the black-and-white photograph over the relief, the default background
     const WAYBACK_URL = r => `https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/WMTS/1.0.0/default028mm/MapServer/tile/${r}/{z}/{y}/{x}`;
 
     const style = {
@@ -1413,15 +1414,15 @@ document.addEventListener('DOMContentLoaded', function() {
             // The relief background, bottom to top: a grey ground (so a tile that has
             // not come is never a black hole), the relief shaded here from the 10 m
             // model at every zoom, and Kartverket's 1 m shading over it close in.
-            { id: 'relief-ground', type: 'background', layout: { visibility: 'none' }, paint: { 'background-color': '#c4c4c4' } },
-            { id: 'relief-shade', type: 'hillshade', source: 'relief-dem', layout: { visibility: 'none' },
+            { id: 'relief-ground', type: 'background', layout: { visibility: 'visible' }, paint: { 'background-color': '#c4c4c4' } },
+            { id: 'relief-shade', type: 'hillshade', source: 'relief-dem', layout: { visibility: 'visible' },
               paint: { 'hillshade-illumination-direction': 315, 'hillshade-illumination-anchor': 'map', 'hillshade-exaggeration': 0.8,
                        'hillshade-shadow-color': '#000000', 'hillshade-highlight-color': '#ffffff', 'hillshade-accent-color': '#000000' } },
-            { id: 'relief',     type: 'raster', source: 'relief',     minzoom: 12, layout: { visibility: 'none' },
+            { id: 'relief',     type: 'raster', source: 'relief',     minzoom: 12, layout: { visibility: 'visible' },
               paint: { 'raster-contrast': 0.45, 'raster-fade-duration': dur(200),
                        'raster-opacity': ['interpolate', ['linear'], ['zoom'], 12, 0, 13, 1] } },
             { id: 'satellite',  type: 'raster', source: 'satellite',  layout: { visibility: 'visible' },
-              paint: { 'raster-fade-duration': dur(200) } },
+              paint: { 'raster-fade-duration': dur(200), 'raster-saturation': -1, 'raster-opacity': BASE_PHOTO / 100 } },
             { id: 'bym',        type: 'raster', source: 'bym',        layout: { visibility: 'none' } },
             { id: 'historical', type: 'raster', source: 'historical', layout: { visibility: 'none' },
               paint: { 'raster-fade-duration': dur(200) } }
@@ -1531,11 +1532,19 @@ document.addEventListener('DOMContentLoaded', function() {
             ['relief-ground', 'relief-shade', 'relief'].forEach(id => setVis(id, v === 'relief'));
             setVis('satellite', v === 'satellite' || v === 'relief');
             map.setPaintProperty('satellite', 'raster-saturation', v === 'relief' ? -1 : 0);
-            map.setPaintProperty('satellite', 'raster-opacity', v === 'relief' ? photoOpacity / 100 : 1);
+            map.setPaintProperty('satellite', 'raster-opacity', v === 'relief' ? photoNow() / 100 : 1);
             setVis('bym', v === 'bym');
         });
     });
-    let photoOpacity = 30;      // the photograph over the relief, set from the terrain panel
+    let photoOpacity = 30;      // the photograph over the relief in TERRAIN CHANGE, set from the terrain panel
+    let inTerrainTab = false;
+    // The default background is the relief with the photograph over it at half;
+    // TERRAIN CHANGE lays it fainter, so the colours of the change read.
+    const photoNow = () => inTerrainTab ? photoOpacity : BASE_PHOTO;
+    function setPhoto() {
+        const base = (document.querySelector('input[name="basemap"]:checked') || {}).value;
+        if (base === 'relief') whenStyle(() => map.setPaintProperty('satellite', 'raster-opacity', photoNow() / 100));
+    }
     // The terrain tab brings the relief with it, and gives the earlier background back.
     let baseBeforeRelief = null;
     function setBase(v) {
@@ -1546,6 +1555,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function reliefForTab(tab) {
         const now = (document.querySelector('input[name="basemap"]:checked') || {}).value;
+        if (inTerrainTab !== (tab === 'dod')) { inTerrainTab = tab === 'dod'; setPhoto(); }
         if (tab === 'dod') { if (now !== 'relief') { baseBeforeRelief = now; setBase('relief'); } }
         else if (baseBeforeRelief) { if (now === 'relief') setBase(baseBeforeRelief); baseBeforeRelief = null; }
     }
@@ -2239,7 +2249,7 @@ document.addEventListener('DOMContentLoaded', function() {
                    Math.round(map.getBearing()), Math.round(map.getPitch())].join('/');
         const l = [];
         const base = (document.querySelector('input[name="basemap"]:checked') || {}).value;
-        if (base && base !== 'satellite') l.push(base);
+        if (base && base !== 'relief') l.push(base);      // the relief is the default background
         if ($('filter-dod').checked) l.push('dod');
         if (terrainBox.checked) l.push('3d');
         if (hsOn) l.push('light');
@@ -2253,8 +2263,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function applyView(h) {
         if (h.l) {
             const l = h.l.split(',');
-            const radio = l.find(x => x === 'graytone' || x === 'bym' || x === 'relief');
-            if (radio) { const r = $('base-' + (radio === 'graytone' ? 'gray' : radio)); r.checked = true; r.dispatchEvent(new Event('change')); }
+            const radio = l.find(x => x === 'graytone' || x === 'bym' || x === 'relief' || x === 'satellite');
+            if (radio) { const r = $('base-' + (radio === 'graytone' ? 'gray' : radio === 'satellite' ? 'sat' : radio)); r.checked = true; r.dispatchEvent(new Event('change')); }
             // Older links name single runs (dod-<id>); every run is drawn together now.
             if (l.some(x => x === 'dod' || x.indexOf('dod-') === 0) && !dodOn()) {
                 try { if (currentTab !== 'dod' && currentTab !== 'all') selectTab('all', true); } catch (err) {}
@@ -2642,7 +2652,7 @@ document.addEventListener('DOMContentLoaded', function() {
             photoOpacity = +e.target.value;
             $('dod-photo-val').textContent = photoOpacity + '%';
             const base = (document.querySelector('input[name="basemap"]:checked') || {}).value;
-            if (base === 'relief') map.setPaintProperty('satellite', 'raster-opacity', photoOpacity / 100);
+            if (base === 'relief' && inTerrainTab) map.setPaintProperty('satellite', 'raster-opacity', photoOpacity / 100);
         });
         document.querySelectorAll('input[name="dod-dtm"]').forEach(r => r.addEventListener('change', e => { dodDtm = e.target.value; syncDodExtras(); }));
         $('dod-contours').addEventListener('change', e => { dodContours = e.target.checked; syncDodExtras(); });
