@@ -7,15 +7,17 @@ for f in sorted(glob.glob(d+'/*.html')):
     g=parse(f); ids=[n['id'] for n in g['nodes']]; S=set(ids)
     errs=[]
     if len(ids)!=len(S): errs.append('dup ids')
-    for a,b in g['links']:
+    for l in g['links']:
+        a,b=l[0],l[1]
         if a not in S or b not in S: errs.append(f'dangling {a}>{b}')
     if sum(1 for n in g['nodes'] if n.get('active'))!=1: errs.append('active!=1')
-    linked={x for l in g['links'] for x in l}
+    linked={x for l in g['links'] for x in l[:2]}
     iso=[i for i in ids if i not in linked and len(ids)>1]
     if iso: errs.append('isolated '+str(iso))
     # cycles
     par={}
-    for a,b in g['links']: par.setdefault(a,[]).append(b)
+    for l in g['links']:
+        if len(l)==2: par.setdefault(l[0],[]).append(l[1])   # flow links are not ownership
     def cyc(n,seen):
         if n in seen: return True
         return any(cyc(p,seen|{n}) for p in par.get(n,[]))

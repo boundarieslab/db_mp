@@ -54,6 +54,7 @@
     <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#666" stroke-width="1.5"/></svg> Affiliated site</div>
     <div class="legend-item"><svg viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" fill="none" stroke="#00FF00" stroke-width="1.5"/><line x1="1" y1="1" x2="13" y2="13" stroke="#00FF00" stroke-width="1.5"/></svg> Construction project</div>
     <div class="legend-item"><svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="#FF0000" stroke-width="1.5"/><path d="M1,7 A6,6 0 0,0 13,7 Z" fill="#000"/></svg> Facility</div>
+    <div class="legend-item" id="lg-flow" style="display:none"><svg viewBox="0 0 14 14"><line x1="1" y1="7" x2="13" y2="7" stroke="#999999" stroke-width="1.5" stroke-dasharray="3 2"/></svg> Mass flow</div>
 </div>
 
 <div id="network-container"></div>
@@ -313,6 +314,7 @@
         el.appendChild(svg);
 
         LINKS.forEach(l => {
+            if (l[2]) return;  /* flow links v1 */
             parentMap[l[0]] = l[1];
             if(!childMap[l[1]]) childMap[l[1]] = [];
             childMap[l[1]].push(l[0]);
@@ -329,6 +331,7 @@
             var line = document.createElementNS(ns, "line");
             line.setAttribute("class", "link-line");
             line.setAttribute("stroke", "#dddddd"); line.setAttribute("stroke-width", "1");
+            if (l[2]) { line.setAttribute("stroke", "#999999"); line.setAttribute("stroke-dasharray", "3 2"); }
             linkG.appendChild(line);
             return { s: sNode, t: tNode, el: line, id: l[0] + "-" + l[1] };
         });
@@ -557,18 +560,19 @@
     function focusGraph() {
         // Keep the site, everything above it, what sits on the same site, and
         // every company or site that is itself in the database, with its owners.
-        var up = {}; LINKS.forEach(function (l) { (up[l[0]] = up[l[0]] || []).push(l[1]); });
+        var up = {}; LINKS.forEach(function (l) { if (!l[2]) (up[l[0]] = up[l[0]] || []).push(l[1]); });
         var keep = {};
         function climb(id, d) { if (keep[id] === 2 || d > 30) return; keep[id] = 2; (up[id] || []).forEach(function (p) { climb(p, d + 1); }); }
         var act = NODES.find(function (n) { return n.active; });
         if (!act) return;
         climb(act.id, 0);
-        LINKS.forEach(function (l) { if (l[1] === act.id) keep[l[0]] = keep[l[0]] || 1; });
+        LINKS.forEach(function (l) { if (l[1] === act.id && !l[2]) keep[l[0]] = keep[l[0]] || 1; });
+        LINKS.forEach(function (l) { if (l[2] && (l[0] === act.id || l[1] === act.id)) climb(l[0] === act.id ? l[1] : l[0], 0); });
         NODES.forEach(function (n) { if (LINKABLE[n.id]) climb(n.id, 0); });
         NODES = NODES.filter(function (n) { return keep[n.id]; });
         LINKS = LINKS.filter(function (l) { return keep[l[0]] && keep[l[1]]; });
     }
-    function start() { if (_started) return; _started = true; if (LINKABLE) focusGraph(); init(); markLinks(); }
+    function start() { if (_started) return; _started = true; if (LINKS.some(function (l) { return l[2]; })) { var lf = document.getElementById("lg-flow"); if (lf) lf.style.display = ""; } if (LINKABLE) focusGraph(); init(); markLinks(); }
     window.addEventListener("message", function (e) {
         if (e.data && e.data.dbLinkable && !_started) { LINKABLE = e.data.dbLinkable; start(); }
     });
