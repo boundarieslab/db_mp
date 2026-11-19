@@ -193,7 +193,8 @@
         Object.keys(names).forEach(function (g) {
             var inner = nodes.filter(function (n) { return n.group === g && (up[n.id] || []).length >= 2; })
                              .sort(function (a, b) { return b.sites - a.sites; })[0];
-            names[g] = inner ? inner.name : N[g].name;
+            // the shared company names the group only when it holds most of the group's sites (ROAF)
+            names[g] = inner && inner.sites >= 0.6 * N[g].sites ? inner.name : N[g].name;
         });
         islandName = function (g) { return typeof names[g] === "string" ? names[g] : N[g].name; };
         $("status").textContent = "";
@@ -282,6 +283,7 @@
         legend(order, gsize);
         search();
         names();
+        setTimeout(function () { if (!selected) fit(); }, 4500);
     }
 
     function ticked() {
