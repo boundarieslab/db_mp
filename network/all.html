@@ -165,9 +165,10 @@
         nodes = Object.keys(N).filter(function (k) { return keep[k]; }).map(function (k) { return N[k]; });
         links = Object.keys(L).map(function (k) { return L[k]; })
             .filter(function (l) { return keep[l.source] && keep[l.target]; })
-            .map(function (l) { return { source: l.source, target: l.target, same: !!N[l.target].uid && keep[l.source] === 2 }; });
+            .map(function (l) { return { source: l.source, target: l.target, same: !!N[l.target].uid }; });
+        // ownership only: "on the same site" is drawn, but is not ownership
         up = {}; down = {};
-        links.forEach(function (l) { (up[l.source] = up[l.source] || []).push(l.target); (down[l.target] = down[l.target] || []).push(l.source); });
+        links.forEach(function (l) { if (l.same) return; (up[l.source] = up[l.source] || []).push(l.target); (down[l.target] = down[l.target] || []).push(l.source); });
         // sites each node holds, and its group (the top owner above it that holds the most sites)
         nodes.forEach(function (n) { n.held = sitesUnder(n.id).filter(function (s) { return s !== n.id; }); n.sites = n.held.length; });
         nodes.forEach(function (n) {
@@ -200,10 +201,10 @@
         var centre = {}, acc = 0;
         order.forEach(function (gk, i) {
             acc += groups[gk];
-            var a = i * 2.39996, rad = i ? 34 * Math.sqrt(acc) : 0;
+            var a = i * 2.39996, rad = i ? 44 * Math.sqrt(acc) : 0;
             centre[gk] = { x: W / 2 + Math.cos(a) * rad * 1.25, y: H / 2 + Math.sin(a) * rad * 0.85 };
         });
-        var outer = 34 * Math.sqrt(acc + 30);
+        var outer = 44 * Math.sqrt(acc + 30);
         // the loose chains: one place per chain (its top owner), spread round the outside
         var loose = {}; nodes.forEach(function (d) { if (!d.group) { var t = ancestors(d.id).filter(function (a) { return !(up[a] || []).length; })[0] || d.id; d.chain = t; loose[t] = 1; } });
         Object.keys(loose).forEach(function (t, i, all) {
