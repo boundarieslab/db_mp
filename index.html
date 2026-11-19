@@ -44,7 +44,7 @@
   --row:25px;
   --gut:10px;        /* one gutter, and the page's left edge         */
   --rail:34px;
-  --bar:342px;       /* THE MODULE: tool bar and every pane share it */
+  --bar:368px;       /* THE MODULE: tool bar and every pane share it */
   --ctl:34px;        /* compass and zoom: one width in the corner    */
   --frame-top:35px;  /* the site header the map runs underneath.     */
                      /* The map is full-bleed; only the chrome is    */
@@ -286,10 +286,9 @@ button,input,select{font:inherit;color:inherit}
    switches a box with a cross in it. Set in the face of the table and the label. No rule
    between the parts, only air. Grey and black, and the sliders in pure blue. */
 #dod-panel{font:11px "Cutive Mono","Courier New",monospace;font-synthesis:none;color:#000}
-#dod-panel .dp-head{display:none}
 #dod-panel.off > .dp-body > :not(.dp-show){opacity:.35;pointer-events:none}
 #dod-panel[hidden]{display:none}
-#dod-panel .dp-head{display:flex;align-items:center;justify-content:space-between;height:20px;padding:0 6px 0 3px;background:#fff;font-size:12px;cursor:move;user-select:none}
+#dod-panel .dp-head{display:none;align-items:center;justify-content:space-between;height:20px;padding:0 6px 0 3px;background:#fff;font-size:12px;cursor:move;user-select:none}
 #dod-panel .dp-head button{width:16px;height:16px;border:0;background:none;font:400 17px/14px "Cutive Mono","Courier New",monospace;color:#000;cursor:pointer;padding:0}
 #dod-panel .dp-body{padding:2px 4px 2px}
 #dod-panel.folded .dp-body{display:none}
@@ -1534,7 +1533,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // outlines of other sources are still on their way.
     function whenStyleIn(fn) { if (map.style && map.style._loaded) fn(); else whenStyleReady(fn); }
     function whenStyleReady(fn, tries) {
-        if (map.isStyleLoaded()) { fn(); return; }
+        // Once the style has loaded (the map's 'load'), sources and layers can be
+        // added: isStyleLoaded() also waits for every tile in flight, and with the
+        // relief and the photo streaming in it could stay false for good, so terrain
+        // change was never drawn.
+        if (styleReady || map.isStyleLoaded()) { fn(); return; }
         // A page opened in a background tab does not draw, and its style stays
         // unfinished for as long as it is hidden: after a while stop polling and
         // wait for the map to come to rest instead of giving up.
