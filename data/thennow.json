@@ -1,0 +1,16 @@
+{
+ "OS_OS_007": {
+  "before": {
+   "src": "data/thennow/OS_OS_007_1937.jpg",
+   "year": "1937",
+   "credit": "Oslo 1937, Widerøes Flyveselskap / Norge i bilder (Kartverket, Geovekst og kommunene)",
+   "href": "https://norgeibilder.no/?wkid=25833&xmin=267100&xmax=268989&ymin=6639714&ymax=6642546"
+  },
+  "after": {
+   "src": "data/thennow/OS_OS_007_2026.jpg",
+   "year": "2026",
+   "credit": "Oslo vår 2026, Oslo kommune / Norge i bilder (Kartverket, Geovekst og kommunene)",
+   "href": "https://norgeibilder.no/?wkid=25833&xmin=267100&xmax=268989&ymin=6639714&ymax=6642546"
+  }
+ }
+}
