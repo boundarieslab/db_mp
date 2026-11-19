@@ -11,7 +11,8 @@
 # Bundle: every network link is tagged with the flows that use it; consecutive links with
 # the same set of flows are merged into one stretch. The map draws the stretches at rest
 # and a single flow's own route when it is picked.
-# Every published row of data/flows.csv is routed; its Transport column says 'road' or 'sea'.
+# Every published row of data/flows.csv is routed; its Transport column says 'road', 'sea'
+# (a barge leg) or 'road+sea' (truck to a quay, then barge; quay and fjord waypoints in _legs).
 # The end points (tools/flow_points.json) are the points the map uses: sheet coordinates, or
 # the point a project takes from data/project_geometries.geojson. A new end needs a line there.
 import csv, json, math, sys, networkx as nx
@@ -56,6 +57,9 @@ def snap(pt):
     return nodes[best], hav(P[best], pt)
 
 PTS = json.load(open(PTS_JSON, encoding='utf-8'))
+# '_legs': per flow, the quay a truck leg ends at ('via') and the waypoints of the barge leg
+# ('sea'), so a sea leg follows the fjord instead of crossing land.
+LEGS = PTS.pop('_legs', {})
 FLOWS = [{'fid': r['FlowUID'], 'from': r['FromUID'].strip(), 'to': r['ToUID'].strip(),
           'mode': (r.get('Transport') or 'road').strip() or 'road', 'outcome': r['Outcome'].strip().lower()}
          for r in csv.DictReader(open(FLOWS_CSV, encoding='utf-8'))
@@ -68,8 +72,14 @@ legs = {}                  # fid -> list of (kind, payload)
 for fl in FLOWS:
     fid, fr, to, mode = fl['fid'], fl['from'], fl['to'], fl['mode']
     A, B = tuple(PTS[fr]), tuple(PTS[to])
+    leg = LEGS.get(fid, {})
+    seaB = None
+    if mode == 'road+sea':                      # truck to a quay, then barge
+        seaB = [tuple(leg['via'])] + [tuple(q) for q in leg.get('sea', [])] + [B]
+        B = tuple(leg['via'])
     if mode == 'sea':
-        coords = [A, B]; km = hav(A, B)/1000; sa = sb = 0; path = []
+        coords = [A] + [tuple(q) for q in leg.get('sea', [])] + [B]
+        km = sum(hav(a, b) for a, b in zip(coords, coords[1:]))/1000; sa = sb = 0; path = []
     else:
         na, sa = snap(A); nb, sb = snap(B)
         path = nx.shortest_path(G, na, nb, weight='t')
@@ -81,13 +91,24 @@ for fl in FLOWS:
             use.setdefault(frozenset((u, v)), set()).add(fid)
         coords.append(B)
         km = (sa + sb + nx.path_weight(G, path, weight='L'))/1000
+    sea_from = 0
+    if seaB:
+        sea_from = len(coords) - 1
+        coords += seaB[1:]
+        km += sum(hav(a, b) for a, b in zip(seaB, seaB[1:]))/1000
     legs[fid] = dict(A=A, B=B, path=path, mode=mode, na=path[0] if path else None,
-                     nb=path[-1] if path else None)
+                     nb=path[-1] if path else None, seaB=seaB, sea=coords if mode == 'sea' else None)
     mins = (nx.path_weight(G, path, weight='t')/60) if path else None
-    ls = LineString(coords).simplify(0.00008)
-    feats.append({'type': 'Feature', 'properties': {'fid': fid, 'mode': mode, 'km': round(km, 1),
-                  'min': round(mins) if mins else None, 'snap_from_m': round(sa), 'snap_to_m': round(sb)},
-                  'geometry': {'type': 'LineString', 'coordinates': [[round(x, 6), round(y, 6)] for x, y in ls.coords]}})
+    if sea_from:
+        r1 = list(LineString(coords[:sea_from + 1]).simplify(0.00008).coords)
+        out_coords = r1 + coords[sea_from + 1:]; sea_from = len(r1) - 1
+    else:
+        out_coords = list(LineString(coords).simplify(0.00008).coords) if mode != 'sea' else coords
+    props = {'fid': fid, 'mode': mode, 'km': round(km, 1), 'min': round(mins) if mins else None,
+             'snap_from_m': round(sa), 'snap_to_m': round(sb)}
+    if sea_from: props['sea_from'] = sea_from
+    feats.append({'type': 'Feature', 'properties': props,
+                  'geometry': {'type': 'LineString', 'coordinates': [[round(x, 6), round(y, 6)] for x, y in out_coords]}})
     print(fid, mode, round(km, 1), 'km', (round(mins) if mins else '-'), 'min', 'snap', round(sa), round(sb), 'm')
 
 json.dump({'type': 'FeatureCollection', 'name': 'flow_routes',
@@ -125,18 +146,19 @@ for u, v in H.edges:
 # the straight joins and sea legs, one per flow
 for fid, L in legs.items():
     if L['mode'] == 'sea':
-        net.append(([L['A'], L['B']], frozenset([fid]), 'sea'))
+        net.append((L['sea'], frozenset([fid]), 'sea'))
     else:
         net.append(([L['A'], pos[L['na']]], frozenset([fid])))
         net.append(([pos[L['nb']], L['B']], frozenset([fid])))
+        if L['seaB']: net.append((L['seaB'], frozenset([fid]), 'sea'))
 out = []
 for item in net:
     c, key = item[0], item[1]; mode = item[2] if len(item) > 2 else 'road'
     if len(c) < 2: continue
-    ls = LineString(c).simplify(0.00008)
+    ls = LineString(c).simplify(0.00008) if mode != 'sea' else LineString(c)
     outc = sorted({o for o in (next(x['outcome'] for x in FLOWS if x['fid'] == f) for f in key)})
     out.append({'type': 'Feature', 'properties': {'n': len(key), 'fids': ','.join(sorted(key)), 'mode': mode,
-                'solid': any(o in ('received', 'in progress', 'contracted') for o in outc)},
+                'solid': any(o in ('received', 'in progress') for o in outc)},
                 'geometry': {'type': 'LineString', 'coordinates': [[round(x, 6), round(y, 6)] for x, y in ls.coords]}})
 json.dump({'type': 'FeatureCollection', 'name': 'flow_net',
            'basis': 'The flow routes merged: a stretch used by several flows is one line, tagged with the flows on it.',

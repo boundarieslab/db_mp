@@ -6130,7 +6130,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const o = String(f.Outcome || '').trim().toLowerCase();
         return /receiv|progress|under way|pågår|mottatt/.test(o) ? 'received' : 'designated';
     };
-    const flowSea = f => { const r = flowRoute[f.FlowUID]; return !!(r && r.mode === 'sea'); };
+    // A flow with any leg by barge says so in the table; a flow that is only a barge leg
+    // is drawn dotted all through.
+    const flowSea = f => { const r = flowRoute[f.FlowUID]; return !!(r && /sea/.test(r.mode || '')); };
 
     function tagFlows(rows) {
         const byUid = new Map(allSites.map(s => [uidOf(s), s]));
@@ -6207,12 +6209,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Every drawn flow, on its own route: the layer a pick or a hover lifts.
     function flowFeatures() {
-        return { type: 'FeatureCollection', features: allFlows.filter(f => f.__xy).map(f => ({
-            type: 'Feature', id: f.FlowUID,
-            geometry: { type: 'LineString', coordinates: flowPath(f) },
-            properties: { fid: f.FlowUID, ev: f.__ev, sea: flowSea(f) ? 1 : 0,
-                          from: f.FromUID, to: f.ToUID,
-                          lbl: f.__fromName + ' → ' + f.__toName } })) };
+        const out = [];
+        allFlows.filter(f => f.__xy).forEach(f => {
+            const r = flowRoute[f.FlowUID], path = flowPath(f);
+            const props = sea => ({ fid: f.FlowUID, ev: f.__ev, sea: sea, from: f.FromUID, to: f.ToUID,
+                                    lbl: f.__fromName + ' → ' + f.__toName });
+            const k = r && r.seaFrom > 0 && r.seaFrom < path.length - 1 ? r.seaFrom : -1;
+            if (k > 0) {
+                out.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: path.slice(0, k + 1) }, properties: props(0) });
+                out.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: path.slice(k) }, properties: props(1) });
+            } else {
+                out.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: path },
+                           properties: props(r && r.mode === 'sea' ? 1 : 0) });
+            }
+        });
+        return { type: 'FeatureCollection', features: out };
     }
 
     // The network at rest: each stretch counts only the flows switched on. A stretch
@@ -6453,7 +6464,7 @@ document.addEventListener('DOMContentLoaded', function() {
             flowRoute = {};
             ((routes && routes.features) || []).forEach(ft => {
                 const p = ft.properties || {};
-                if (p.fid && ft.geometry) flowRoute[p.fid] = { mode: p.mode, km: p.km, coords: ft.geometry.coordinates };
+                if (p.fid && ft.geometry) flowRoute[p.fid] = { mode: p.mode, km: p.km, seaFrom: p.sea_from || 0, coords: ft.geometry.coordinates };
             });
             rawCounts.flow = (r.data || []).filter(x => x.FlowUID || x.FromUID || x.ToUID).length;
             allFlows = tagFlows(r.data || []);
