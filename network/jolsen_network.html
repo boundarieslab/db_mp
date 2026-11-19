@@ -339,7 +339,7 @@
             // Full name, wrapped onto a second line if it does not fit. Cutting
             // it with an ellipsis hid which facility a node actually was.
             var _full = n.id + (n.l ? " " + n.l : "");
-            var _cw = n.active ? 6.1 : 5.4;   // the facility label is bold 10px, the rest 9px
+            var _cw = n.active ? 5.5 : 4.85;   // the facility label is bold 10px, the rest 9px
             var _maxCh = Math.max(10, Math.floor((_labelRoom - 14) / _cw));
             // Wrap onto as many as three lines. Registered company names are long
             // ("Feiring Bruk AS avd. Hadeland Pukkverk"), and two lines used to cut
@@ -357,15 +357,15 @@
                 var ts = document.createElementNS(ns, "tspan");
                 ts.textContent = ln;
                 ts.setAttribute("x", 10);
-                ts.setAttribute("dy", li === 0 ? 0 : 10);
+                ts.setAttribute("dy", li === 0 ? 0 : 9);
                 txt.appendChild(ts);
             });
             var _tip = document.createElementNS(ns, "title");
             _tip.textContent = _full;
             txt.appendChild(_tip);
-            txt.setAttribute("x", 12); txt.setAttribute("y", 3 - 5 * (_lines.length - 1));  // _yTop
+            txt.setAttribute("x", 12); txt.setAttribute("y", 3 - 4.5 * (_lines.length - 1));  // _yTop
             txt.setAttribute("fill", n.active ? "#000" : "#666"); 
-            txt.style.font = n.active ? "600 10px 'Diatype Mono', 'Courier New', monospace" : "400 9px 'Diatype Mono', 'Courier New', monospace"; 
+            txt.style.font = n.active ? "600 9px 'Diatype Mono', 'Courier New', monospace" : "400 8px 'Diatype Mono', 'Courier New', monospace"; 
             txt.style.pointerEvents = "none";
             g.appendChild(txt); n.tEl = txt;
 
@@ -485,7 +485,7 @@
         (function(){
             var RELAX = 0.5;
             var usable = Math.max(H - _pad * 2, 1);
-            function need(a, b){ return 8 + 6 * ((a.tLines || 1) + (b.tLines || 1)); }
+            function need(a, b){ return 7 + 5.5 * ((a.tLines || 1) + (b.tLines || 1)); }
             function lane(list){
                 list.sort(function(a, b){ return a.y - b.y; });
                 var wanted = 0, i;
