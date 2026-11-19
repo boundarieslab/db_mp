@@ -194,6 +194,8 @@ function prepare(f, p, d, kom, th, au, ln) {
     r.__arch = String(r.Archive || '').trim();
     r.__by = String(r.Creator || '').trim() || String(au[r.DocID] || '').trim();
     r.__link = r.DocID in ln ? safeUrl(ln[r.DocID]) : safeUrl(r.Link);
+    r.__lost = r.DocID in ln && !r.__link;                  // gone from the web, no archived copy
+    r.__archived = /web\.archive\.org/.test(r.__link);   // opened from the Internet Archive
     r.__siteNames = r.__sites.map(s => String(s.Name || '').trim()).filter(Boolean);
     r.__ty = uniq(r.__sites.map(s => s.__ty).filter(Boolean));
     r.__icon = ICON[KIND[r.Class] || 'page'];
@@ -308,7 +310,8 @@ function opened(d) {
     // who made it: the source is always named (åndsverkloven § 25)
     (d.__by ? `<div class="by">${esc(d.__by)}</div>` : '') +
     (tm ? `<div class="tm">${tm}</div>` : '') +
-    `<div class="ln">${note}${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">document ↗</a>` : ''}` +
+    `<div class="ln">${note}${d.__lost ? '<span class="note">no longer available online</span>' : ''}` +
+    `${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${d.__archived ? 'archived copy ↗' : 'document ↗'}</a>` : ''}` +
     `${site ? `<a href="${esc(MAP_LINK + encodeURIComponent(uidOf(site)))}" target="_top">map →</a>` : ''}<button data-close>close ×</button></div></div>`;
 }
 function grid(ds, shown) {
