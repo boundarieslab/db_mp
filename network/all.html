@@ -10,54 +10,82 @@
         src: url('https://freight.cargo.site/t/original/i/34e062220d932607590d93991273932252277d33d93566736279930922253303/DiatypeMono-Regular.woff2') format('woff2');
         font-weight: normal; font-display: swap;
     }
-    @font-face {
-        font-family: 'Diatype Mono';
-        src: url('https://freight.cargo.site/t/original/i/2274439092002939333902999233829283733003002928833773300022200299/DiatypeMono-Bold.woff2') format('woff2');
-        font-weight: bold; font-display: swap;
-    }
     html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #fff;
-                 font-family: 'Diatype Mono', 'Courier New', monospace; }
-    #net { position: absolute; inset: 0 0 24px 0; }
-    #net svg { width: 100%; height: 100%; display: block; cursor: grab; user-select: none; }
-    #net svg:active { cursor: grabbing; }
-    #legend { position: absolute; left: 0; right: 0; bottom: 0; height: 24px; box-sizing: border-box;
-              display: flex; align-items: center; gap: 4px 14px; padding: 0 14px; background: #fff;
-              font-size: 7px; color: #777; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; overflow: hidden; }
-    #legend .it { display: flex; align-items: center; gap: 4px; }
-    #legend svg { width: 8px; height: 8px; overflow: visible; }
-    #legend .note { margin-left: auto; text-transform: none; letter-spacing: 0; color: #999; }
-    #status { position: absolute; top: 10px; left: 14px; font-size: 9px; color: #999; }
-    .lk { stroke: #dcdcdc; stroke-width: .6; fill: none; }
+                 font-family: 'Diatype Mono', 'Courier New', monospace; color: #000; }
+    #net { position: absolute; inset: 0; }
+    #net svg { width: 100%; height: 100%; display: block; user-select: none; }
+    #status { position: absolute; top: 50%; left: 0; right: 0; text-align: center; font-size: 10px; color: #999; }
+
+    /* search, top left */
+    #find { position: absolute; top: 12px; left: 12px; width: 230px; background: #fff; border: .5px solid #000; z-index: 3; }
+    #find input { width: 100%; box-sizing: border-box; border: 0; padding: 6px 8px; font: 10px 'Diatype Mono', 'Courier New', monospace; outline: none; }
+    #find ul { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow: auto; border-top: .5px solid #ddd; }
+    #find ul:empty { display: none; }
+    #find li { padding: 4px 8px; font-size: 9px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #find li:hover, #find li.on { background: #f2f2f2; }
+    #find li small { color: #999; margin-left: 6px; }
+
+    /* the window for what was clicked, top right */
+    #card { position: absolute; top: 12px; right: 12px; width: 270px; max-height: calc(100% - 60px); overflow: auto;
+            background: #fff; border: .5px solid #000; z-index: 3; font-size: 10px; display: none; }
+    #card.on { display: block; }
+    #card .hd { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-bottom: .5px solid #000;
+                font-size: 8px; letter-spacing: .5px; text-transform: uppercase; }
+    #card .hd button { border: 0; background: none; font: 14px/10px 'Diatype Mono', monospace; cursor: pointer; padding: 0; }
+    #card h1 { font-size: 12px; font-weight: normal; margin: 10px 10px 2px; line-height: 1.3; }
+    #card .kind { margin: 0 10px 8px; color: #777; font-size: 9px; }
+    #card h2 { font-size: 8px; font-weight: normal; letter-spacing: .5px; text-transform: uppercase; color: #777; margin: 10px 10px 4px; }
+    #card ol, #card ul { margin: 0 10px 10px; padding: 0; list-style: none; }
+    #card li { padding: 2px 0; line-height: 1.35; }
+    #card li .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1px solid; box-sizing: border-box; }
+    #card a { color: #00f; text-decoration: none; cursor: pointer; }
+    #card .chain li { color: #444; }
+    #card .chain li + li::before { content: "↑ "; color: #bbb; }
+
+    #legend { position: absolute; left: 12px; bottom: 10px; display: flex; gap: 14px; align-items: center;
+              font-size: 7px; color: #777; text-transform: uppercase; letter-spacing: .5px; z-index: 2; }
+    #legend span { display: flex; align-items: center; gap: 4px; }
+    #legend svg { width: 9px; height: 9px; overflow: visible; }
+    #hint { position: absolute; right: 12px; bottom: 10px; font-size: 8px; color: #aaa; z-index: 2; }
+
+    .hull { fill: #000; fill-opacity: .028; stroke: #000; stroke-opacity: .10; stroke-width: .5; }
+    .hull-label { font-size: 9px; fill: #999; letter-spacing: .4px; text-transform: uppercase; pointer-events: none; }
+    .lk { stroke: #cfcfcf; stroke-width: .6; fill: none; }
     .lk.same { stroke-dasharray: 2 2; }
-    text { font-size: 8px; fill: #666; paint-order: stroke; stroke: #fff; stroke-width: 2.6px; stroke-linejoin: round; pointer-events: none; }
-    text.site { fill: #00f; font-size: 8.5px; }
-    text.top { fill: #000; font-size: 9px; }
+    .lk.hot { stroke: #000; stroke-width: 1; stroke-dasharray: 3 3; animation: flow 1s linear infinite; }
+    @keyframes flow { to { stroke-dashoffset: -6; } }
     .nd { cursor: pointer; }
-    .dim { opacity: .12; }
-    .lk.on { stroke: #000; stroke-width: .9; }
+    .nd text { font-size: 8px; fill: #555; paint-order: stroke; stroke: #fff; stroke-width: 2.8px; stroke-linejoin: round; pointer-events: none; }
+    .nd.site text { fill: #00f; }
+    .nd.big text { fill: #000; font-size: 9px; }
+    .fade { opacity: .1; transition: opacity .25s; }
+    .nd, .lk { transition: opacity .25s; }
 </style>
 </head>
 <body>
 <div id="net"></div>
-<div id="status">Loading the published diagrams…</div>
+<div id="status">Reading the published diagrams…</div>
+<div id="find"><input id="q" placeholder="Find a company or site" autocomplete="off"><ul id="res"></ul></div>
+<div id="card"></div>
 <div id="legend">
-    <span class="it"><svg viewBox="-5 -5 10 10"><rect x="-4" y="-4" width="8" height="8" fill="#000"/></svg>Parent group</span>
-    <span class="it"><svg viewBox="-5 -5 10 10"><polygon points="0,-4.5 4.5,4.5 -4.5,4.5" fill="#666"/></svg>Division</span>
-    <span class="it"><svg viewBox="-5 -5 10 10"><polygon points="0,-4.5 4.5,4.5 -4.5,4.5" fill="none" stroke="#666"/></svg>Subsidiary</span>
-    <span class="it"><svg viewBox="-5 -5 10 10"><circle r="4" fill="none" stroke="#FF0000"/><path d="M-4,0 A4,4 0 0,0 4,0 Z" fill="#000"/></svg>Site, active</span>
-    <span class="it"><svg viewBox="-5 -5 10 10"><circle r="4" fill="none" stroke="#FFD400"/><path d="M-4,0 A4,4 0 0,0 4,0 Z" fill="#000"/></svg>Closed</span>
-    <span class="note" id="count"></span>
+    <span><svg viewBox="-5 -5 10 10"><rect x="-4" y="-4" width="8" height="8" fill="#000"/></svg>Owner</span>
+    <span><svg viewBox="-5 -5 10 10"><polygon points="0,-4.5 4.5,4.5 -4.5,4.5" fill="none" stroke="#666"/></svg>Company</span>
+    <span><svg viewBox="-5 -5 10 10"><polygon points="0,-4.5 4.5,4.5 -4.5,4.5" fill="#666"/></svg>Division</span>
+    <span><svg viewBox="-5 -5 10 10"><circle r="4" fill="none" stroke="#FF0000"/><path d="M-4,0 A4,4 0 0,0 4,0 Z" fill="#000"/></svg>Site active</span>
+    <span><svg viewBox="-5 -5 10 10"><circle r="4" fill="none" stroke="#FFD400"/><path d="M-4,0 A4,4 0 0,0 4,0 Z" fill="#000"/></svg>Closed</span>
+    <span>Size = sites held</span>
 </div>
+<div id="hint">drag · scroll to zoom · click to follow a company</div>
+
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script>
-/* One network of every published site and the companies that own it.
-   Built in the page from the published diagrams of db_database, so it follows
-   the table: a site appears only when its row is published and its diagram
-   released. A site's name opens it on the map. */
+/* Every published site and the companies and public bodies that own it, as one
+   living network. Built in the page from the released diagrams of db_database,
+   so it follows the table. */
 (function () {
     var SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-8G0vL1F7xG1WKn_ADmwwfSARan/pub?output=csv";
     var MAP = "../index.html#site=";
-    var status = document.getElementById("status");
+    var $ = function (id) { return document.getElementById(id); };
 
     function parseCSV(s) {
         var R = [], r = [], f = "", q = false;
@@ -88,32 +116,29 @@
         if (d.length > 1 && !/\b(AS|ASA|IKS|KF|ANS)$/.test(d[0])) t = d[0];
         return t || id;
     }
-    var RANK = { receiving: 5, p: 4, div_ent: 3, div_ind: 2, s: 1 };
     function colour(st) {
         st = (st || "").toLowerCase();
         if (/planned/.test(st)) return "#0000FF";
         if (/closed|historical|inactive/.test(st)) return "#FFD400";
         return "#FF0000";
     }
+    var RANK = { receiving: 5, p: 4, div_ent: 3, div_ind: 2, s: 1 };
 
     fetch(SHEET).then(function (r) { return r.text(); }).then(function (csv) {
-        var rows = parseCSV(csv).filter(function (r) {
-            return /^true$/i.test(r.Published) && /^true$/i.test(r.GraphPublished) && r.GraphURL;
-        });
-        var byName = {};
-        parseCSV(csv).filter(function (r) { return /^true$/i.test(r.Published); })
-            .forEach(function (r) { byName[r.Name.trim()] = r; });
-        status.textContent = "Reading " + rows.length + " diagrams…";
+        var all = parseCSV(csv), pub = all.filter(function (r) { return /^true$/i.test(r.Published); });
+        var rows = pub.filter(function (r) { return /^true$/i.test(r.GraphPublished) && r.GraphURL; });
+        var byName = {}; pub.forEach(function (r) { byName[r.Name.trim()] = r; });
         return Promise.all(rows.map(function (r) {
             var file = r.GraphURL.split("/").pop();
             return fetch(file).then(function (x) { return x.ok ? x.text() : ""; })
                 .then(function (t) { return { row: r, g: readGraph(t), file: file }; })
                 .catch(function () { return { row: r, g: null }; });
         })).then(function (gs) { build(gs, byName); });
-    }).catch(function () { status.textContent = "The table could not be read."; });
+    }).catch(function () { $("status").textContent = "The table could not be read."; });
 
+    var N, nodes, links, up, down;
     function build(gs, byName) {
-        var N = {}, L = {}, up = {};
+        N = {}; var L = {};
         function key(id, file) { return id === "Private individual" ? id + " · " + file : id; }
         gs.forEach(function (x) {
             if (!x.g) return;
@@ -121,118 +146,230 @@
                 var k = key(n.id, x.file), o = N[k];
                 if (!o) o = N[k] = { id: k, name: n.id, type: n.type || "s" };
                 if ((RANK[n.type] || 0) > (RANK[o.type] || 0)) o.type = n.type;
-                if (n.active) { o.uid = x.row.UID; o.st = x.row.Status; o.type = "receiving"; }
+                if (n.active) { o.uid = x.row.UID; o.row = x.row; o.type = "receiving"; }
             });
             x.g.links.forEach(function (l) {
                 var a = key(l[0], x.file), b = key(l[1], x.file), k = a + "\u0001" + b;
-                if (!N[a] || !N[b] || L[k]) return;
-                L[k] = { source: a, target: b };
+                if (N[a] && N[b] && !L[k]) L[k] = { source: a, target: b };
             });
         });
-        // other sites named in a diagram are sites too, when they are published
         Object.keys(N).forEach(function (k) {
             var n = N[k], r = byName[n.name];
-            if (r && !n.uid) { n.uid = r.UID; n.st = r.Status; n.type = "receiving"; }
+            if (r && !n.uid) { n.uid = r.UID; n.row = r; n.type = "receiving"; }
         });
-        // keep the sites, everything above them, and what sits on a site
-        Object.keys(L).forEach(function (k) { var l = L[k]; (up[l.source] = up[l.source] || []).push(l.target); });
+        var upK = {}; Object.keys(L).forEach(function (k) { var l = L[k]; (upK[l.source] = upK[l.source] || []).push(l.target); });
         var keep = {};
-        function climb(id, d) { if (keep[id] || d > 40) return; keep[id] = 1; (up[id] || []).forEach(function (p) { climb(p, d + 1); }); }
+        function climb(id, d) { if (keep[id] || d > 40) return; keep[id] = 1; (upK[id] || []).forEach(function (p) { climb(p, d + 1); }); }
         Object.keys(N).forEach(function (k) { if (N[k].uid) climb(k, 0); });
         Object.keys(L).forEach(function (k) { var l = L[k]; if (N[l.target].uid && !keep[l.source]) keep[l.source] = 2; });
-        var nodes = Object.keys(N).filter(function (k) { return keep[k]; }).map(function (k) { return N[k]; });
-        var links = Object.keys(L).map(function (k) { return L[k]; })
+        nodes = Object.keys(N).filter(function (k) { return keep[k]; }).map(function (k) { return N[k]; });
+        links = Object.keys(L).map(function (k) { return L[k]; })
             .filter(function (l) { return keep[l.source] && keep[l.target]; })
             .map(function (l) { return { source: l.source, target: l.target, same: !!N[l.target].uid && keep[l.source] === 2 }; });
-        // how many sites sit under each company: the groups that hold several are named on the drawing
-        var down = {}; links.forEach(function (l) { (down[l.target] = down[l.target] || []).push(l.source); });
+        up = {}; down = {};
+        links.forEach(function (l) { (up[l.source] = up[l.source] || []).push(l.target); (down[l.target] = down[l.target] || []).push(l.source); });
+        // sites each node holds, and its group (the top owner above it that holds the most sites)
+        nodes.forEach(function (n) { n.held = sitesUnder(n.id).filter(function (s) { return s !== n.id; }); n.sites = n.held.length; });
         nodes.forEach(function (n) {
-            var seen = {}, c = 0, st = [n.id];
-            while (st.length) { var x = st.pop(); if (seen[x]) continue; seen[x] = 1; if (N[x].uid && x !== n.id) c++; (down[x] || []).forEach(function (y) { st.push(y); }); }
-            n.sites = c;
-            n.top = !up[n.id] || !(up[n.id] || []).some(function (p) { return keep[p]; });
+            var tops = ancestors(n.id).filter(function (a) { return !(up[a] || []).length; });
+            if (!(up[n.id] || []).length) tops.push(n.id);
+            var best = null; tops.forEach(function (t) { if (!best || N[t].sites > N[best].sites) best = t; });
+            n.group = best && N[best].sites >= 2 ? best : null;
         });
-        status.textContent = "";
-        document.getElementById("count").textContent = nodes.filter(function (n) { return n.uid; }).length + " sites · " +
-            nodes.filter(function (n) { return !n.uid; }).length + " companies and bodies · hover a company to see what it holds; a blue name opens the site on the map";
-        draw(nodes, links);
+        $("status").textContent = "";
+        draw();
+    }
+    function reach(id, M) { var s = {}, st = [id], out = []; while (st.length) { var x = st.pop(); if (s[x]) continue; s[x] = 1; out.push(x); (M[x] || []).forEach(function (y) { st.push(y); }); } return out; }
+    function ancestors(id) { return reach(id, up).filter(function (x) { return x !== id; }); }
+    function sitesUnder(id) { return reach(id, down).filter(function (x) { return N[x].uid; }); }
+
+    var svg, zoomer, gAll, nd, lk, hullG, sim, W, H, selected = null;
+    function draw() {
+        var el = $("net"); W = el.clientWidth; H = el.clientHeight;
+        svg = d3.select(el).append("svg");
+        gAll = svg.append("g");
+        hullG = gAll.append("g");
+        var r = function (d) { return d.uid ? 4 : 3 + Math.sqrt(d.sites) * 2.2; };
+        nodes.forEach(function (d) { d.r = r(d); d.text = shortName(d.name); d.big = !d.uid && d.sites >= 3; });
+
+        // group centres on a ring, the largest groups first, so each becomes an island
+        var groups = {}; nodes.forEach(function (d) { if (d.group) groups[d.group] = (groups[d.group] || 0) + 1; });
+        var order = Object.keys(groups).sort(function (a, b) { return groups[b] - groups[a]; });
+        var centre = {};
+        order.forEach(function (gk, i) {
+            var a = i * 2.39996, rad = 60 + 38 * Math.sqrt(i + 1) * 3;   // a sunflower spiral
+            centre[gk] = { x: W / 2 + Math.cos(a) * rad, y: H / 2 + Math.sin(a) * rad * 0.75 };
+        });
+        nodes.forEach(function (d) { var c = centre[d.group] || { x: W / 2, y: H / 2 }; d.x = c.x + (Math.random() - .5) * 40; d.y = c.y + (Math.random() - .5) * 40; });
+
+        lk = gAll.append("g").selectAll("line").data(links).join("line").attr("class", function (d) { return "lk" + (d.same ? " same" : ""); });
+        nd = gAll.append("g").selectAll("g").data(nodes).join("g")
+            .attr("class", function (d) { return "nd" + (d.uid ? " site" : "") + (d.big ? " big" : ""); });
+        nd.each(function (d) {
+            var s = d3.select(this), rr = d.r;
+            if (d.uid) {
+                s.append("circle").attr("r", rr + 1.8).attr("fill", "#fff");
+                s.append("circle").attr("r", rr).attr("fill", "none").attr("stroke", colour(d.row && d.row.Status)).attr("stroke-width", 1.1);
+                s.append("path").attr("d", "M" + -rr + ",0 A" + rr + "," + rr + " 0 0,0 " + rr + ",0 Z").attr("fill", "#000");
+            } else if (d.type === "p" || !(up[d.id] || []).length) {
+                s.append("rect").attr("x", -rr).attr("y", -rr).attr("width", 2 * rr).attr("height", 2 * rr).attr("fill", "#000");
+            } else {
+                var t = rr * 1.15;
+                s.append("polygon").attr("points", "0," + -t + " " + t + "," + t + " " + -t + "," + t)
+                    .attr("fill", d.type === "div_ind" ? "#666" : "#fff").attr("stroke", "#666").attr("stroke-width", .9);
+            }
+            s.append("text").attr("x", rr + 4).attr("y", 3).text(d.text);
+        });
+
+        sim = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(function (d) { return d.id; }).distance(function (l) { return l.same ? 18 : 26 + l.target.r; }).strength(0.6))
+            .force("charge", d3.forceManyBody().strength(function (d) { return -40 - d.sites * 6; }).distanceMax(300))
+            .force("collide", d3.forceCollide().radius(function (d) { return d.r + 5; }))
+            .force("gx", d3.forceX(function (d) { return (centre[d.group] || { x: W / 2 }).x; }).strength(function (d) { return d.group ? 0.06 : 0.02; }))
+            .force("gy", d3.forceY(function (d) { return (centre[d.group] || { y: H / 2 }).y; }).strength(function (d) { return d.group ? 0.06 : 0.02; }))
+            .alphaDecay(0.012).velocityDecay(0.35)
+            .on("tick", ticked);
+
+        // pan and zoom; names appear as you come closer
+        zoomer = d3.zoom().scaleExtent([0.25, 7]).on("zoom", function (e) { gAll.attr("transform", e.transform); labels(e.transform.k); });
+        svg.call(zoomer).on("dblclick.zoom", null);
+        svg.on("click", function (e) { if (e.target === svg.node()) select(null); });
+        setTimeout(fit, 2500);
+
+        // drag a node; the rest follows
+        nd.call(d3.drag()
+            .on("start", function (e, d) { if (!e.active) sim.alphaTarget(0.15).restart(); d.fx = d.x; d.fy = d.y; })
+            .on("drag", function (e, d) { d.fx = e.x; d.fy = e.y; })
+            .on("end", function (e, d) { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }));
+        nd.on("mouseenter", function (e, d) { if (!selected) hot(d); })
+          .on("mouseleave", function () { if (!selected) hot(null); })
+          .on("click", function (e, d) { e.stopPropagation(); select(d); });
+
+        search();
+        labels(1);
     }
 
-    function draw(nodes, links) {
-        var el = document.getElementById("net"), W = el.clientWidth, H = el.clientHeight;
-        var svg = d3.select(el).append("svg").attr("viewBox", [0, 0, W, H]);
-        var g = svg.append("g");
-        nodes.forEach(function (n) {
-            n.label = n.uid || n.sites >= 2 || (n.top && n.sites >= 1);
-            n.text = shortName(n.name);
-            n.w = n.label ? Math.min(150, n.text.length * 5) + 10 : 10;
-        });
-        var sim = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(function (d) { return d.id; }).distance(function (l) { return l.same ? 22 : 34; }).strength(0.7))
-            .force("charge", d3.forceManyBody().strength(-90).distanceMax(400))
-            .force("collide", d3.forceCollide().radius(function (d) { return d.label ? d.w / 2 + 3 : 7; }).strength(0.9))
-            .force("x", d3.forceX(W / 2).strength(0.035))
-            .force("y", d3.forceY(H / 2).strength(0.05))
-            .stop();
-        for (var i = 0; i < 500; i++) sim.tick();
+    function ticked() {
+        lk.attr("x1", function (d) { return d.source.x; }).attr("y1", function (d) { return d.source.y; })
+          .attr("x2", function (d) { return d.target.x; }).attr("y2", function (d) { return d.target.y; });
+        nd.attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
+        hulls();
+    }
 
-        var lk = g.append("g").selectAll("line").data(links).join("line")
-            .attr("class", function (d) { return "lk" + (d.same ? " same" : ""); })
-            .attr("x1", function (d) { return d.source.x; }).attr("y1", function (d) { return d.source.y; })
-            .attr("x2", function (d) { return d.target.x; }).attr("y2", function (d) { return d.target.y; });
-        var nd = g.append("g").selectAll("g").data(nodes).join("g")
-            .attr("class", "nd").attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
-        nd.each(function (d) {
-            var s = d3.select(this), r = 3.2;
-            if (d.uid) {
-                s.append("circle").attr("r", r + 1.6).attr("fill", "#fff");
-                s.append("circle").attr("r", r).attr("fill", "none").attr("stroke", colour(d.st)).attr("stroke-width", 1);
-                s.append("path").attr("d", "M" + -r + ",0 A" + r + "," + r + " 0 0,0 " + r + ",0 Z").attr("fill", "#000");
-            } else if (d.type === "p") {
-                s.append("rect").attr("x", -r).attr("y", -r).attr("width", 2 * r).attr("height", 2 * r).attr("fill", "#000");
-            } else if (d.type === "div_ind") {
-                s.append("polygon").attr("points", "0," + -(r + 1) + " " + (r + 1) + "," + (r + 1) + " " + -(r + 1) + "," + (r + 1)).attr("fill", "#666");
-            } else if (d.type === "s") {
-                s.append("rect").attr("x", -r).attr("y", -r).attr("width", 2 * r).attr("height", 2 * r).attr("fill", "#fff").attr("stroke", "#666");
-            } else {
-                s.append("polygon").attr("points", "0," + -(r + 1) + " " + (r + 1) + "," + (r + 1) + " " + -(r + 1) + "," + (r + 1))
-                    .attr("fill", "#fff").attr("stroke", "#666");
-            }
-            s.append("title").text(d.name + (d.uid ? " (open on the map)" : d.sites ? " · " + d.sites + " site" + (d.sites > 1 ? "s" : "") : ""));
-            s.append("text").attr("x", 7).attr("y", 3)
-                .attr("class", d.uid ? "site" : (d.sites >= 2 || d.top) ? "top" : "")
-                .text(d.text).style("display", d.label ? null : "none");
-        });
+    // a faint shape round each group that holds several sites, named after its owner
+    function hulls() {
+        var by = {}; nodes.forEach(function (d) { if (d.group) (by[d.group] = by[d.group] || []).push(d); });
+        var data = Object.keys(by).filter(function (k) { return N[k].sites >= 2 && by[k].length >= 3; }).map(function (k) {
+            var pts = []; by[k].forEach(function (d) { var p = d.r + 10; pts.push([d.x - p, d.y - p], [d.x + p, d.y - p], [d.x - p, d.y + p], [d.x + p, d.y + p]); });
+            return { k: k, hull: d3.polygonHull(pts) };
+        }).filter(function (d) { return d.hull; });
+        var line = d3.line().curve(d3.curveCatmullRomClosed.alpha(1));
+        hullG.selectAll("path").data(data, function (d) { return d.k; }).join("path").attr("class", "hull").attr("d", function (d) { return line(d.hull); });
+        hullG.selectAll("text").data(data, function (d) { return d.k; }).join("text").attr("class", "hull-label")
+            .attr("x", function (d) { return d3.min(d.hull, function (p) { return p[0]; }) + 4; })
+            .attr("y", function (d) { return d3.min(d.hull, function (p) { return p[1]; }) - 4; })
+            .text(function (d) { return shortName(N[d.k].name); });
+    }
 
-        // hover: the node, all it holds and all that holds it
-        var upM = {}, downM = {};
-        links.forEach(function (l) { (upM[l.source.id] = upM[l.source.id] || []).push(l.target.id); (downM[l.target.id] = downM[l.target.id] || []).push(l.source.id); });
-        function reach(id, M) { var s = {}, st = [id]; while (st.length) { var x = st.pop(); if (s[x]) continue; s[x] = 1; (M[x] || []).forEach(function (y) { st.push(y); }); } return s; }
-        nd.on("mouseenter", function (e, d) {
-            var a = reach(d.id, upM), b = reach(d.id, downM);
-            nd.classed("dim", function (n) { return !a[n.id] && !b[n.id]; })
-              .select("text").style("display", function (n) { return (a[n.id] || b[n.id] || n.label) ? null : "none"; });
-            lk.classed("dim", function (l) { return !((a[l.source.id] && a[l.target.id]) || (b[l.source.id] && b[l.target.id])); })
-              .classed("on", function (l) { return (a[l.source.id] && a[l.target.id]) || (b[l.source.id] && b[l.target.id]); });
-        }).on("mouseleave", function () {
-            nd.classed("dim", false).select("text").style("display", function (n) { return n.label || zk > 1.8 ? null : "none"; });
-            lk.classed("dim", false).classed("on", false);
-        }).on("click", function (e, d) {
-            if (d.uid) { try { window.top.location.href = new URL(MAP + encodeURIComponent(d.uid), location.href).href; } catch (err) { location.href = MAP + d.uid; } }
+    // names by zoom: owners of several sites always, sites from a little closer, everything close up
+    var zk = 1;
+    function labels(k) {
+        zk = k;
+        nd.select("text").style("display", function (d) {
+            if (selected || d._hot) return d._show ? null : "none";
+            if (d.big) return null;
+            if (d.uid) return k > 0.9 ? null : "none";
+            return k > 1.8 ? null : "none";
         });
+    }
 
-        // pan and zoom; every name shows once zoomed in
-        var zk = 1;
-        var zoom = d3.zoom().scaleExtent([0.3, 6]).on("zoom", function (e) {
-            g.attr("transform", e.transform); zk = e.transform.k;
-            nd.select("text").style("display", function (n) { return n.label || zk > 1.8 ? null : "none"; });
+    // hover: what a company holds and who holds it, the chain running from owner to site
+    function hot(d) {
+        if (!d) {
+            nd.classed("fade", false).each(function (n) { n._hot = n._show = false; });
+            lk.classed("fade", false).classed("hot", false);
+            labels(zk); return;
+        }
+        var a = {}, b = {};
+        ancestors(d.id).concat([d.id]).forEach(function (x) { a[x] = 1; });
+        reach(d.id, down).forEach(function (x) { b[x] = 1; });
+        nd.classed("fade", function (n) { return !a[n.id] && !b[n.id]; })
+          .each(function (n) { n._hot = true; n._show = !!(a[n.id] || b[n.id]); });
+        lk.classed("fade", function (l) { return !((a[l.source.id] && a[l.target.id]) || (b[l.source.id] && b[l.target.id])); })
+          .classed("hot", function (l) { return (a[l.source.id] && a[l.target.id]) || (b[l.source.id] && b[l.target.id]); });
+        labels(zk);
+    }
+
+    // click: centre it, keep its chain lit, and open its window
+    function select(d) {
+        selected = d;
+        if (!d) { hot(null); $("card").className = ""; return; }
+        hot(d);
+        var t = d3.zoomTransform(svg.node()), k = Math.max(t.k, 1.6);
+        svg.transition().duration(650).call(zoomer.transform, d3.zoomIdentity.translate(W / 2 - 140 - d.x * k, H / 2 - d.y * k).scale(k));
+        card(d);
+    }
+
+    function card(d) {
+        var c = $("card"), html = "";
+        var kind = d.uid ? "Site · " + ((d.row && d.row.Status) || "") + (d.row && d.row.Municipality ? " · " + d.row.Municipality : "")
+                 : (!(up[d.id] || []).length ? "Owner" : d.type === "div_ind" ? "Division" : "Company") + (d.sites ? " · holds " + d.sites + " site" + (d.sites > 1 ? "s" : "") : "");
+        html += '<div class="hd"><span>' + (d.uid ? "Site" : "Ownership") + '</span><button type="button" aria-label="Close">×</button></div>';
+        html += "<h1>" + esc(shortName(d.name)) + "</h1><div class='kind'>" + esc(kind) + "</div>";
+        if (d.uid) html += "<ul><li><a data-uid='" + esc(d.uid) + "'>Open on the map ↗</a></li></ul>";
+        var chain = []; var cur = d.id, guard = 0;
+        while ((up[cur] || []).length && guard++ < 20) { cur = up[cur][up[cur].length - 1]; chain.push(cur); }
+        if (chain.length) html += "<h2>Owned through</h2><ol class='chain'>" + chain.map(function (x) { return "<li><a data-node='" + esc(x) + "'>" + esc(shortName(N[x].name)) + "</a></li>"; }).join("") + "</ol>";
+        var co = (up[d.id] || []).slice(0, -1);
+        if (co.length) html += "<h2>Also owned by</h2><ul>" + co.map(function (x) { return "<li><a data-node='" + esc(x) + "'>" + esc(shortName(N[x].name)) + "</a></li>"; }).join("") + "</ul>";
+        if (d.held && d.held.length) {
+            html += "<h2>Sites held</h2><ul>" + d.held.map(function (x) {
+                var n = N[x]; return "<li><span class='dot' style='border-color:" + colour(n.row && n.row.Status) + "'></span><a data-node='" + esc(x) + "'>" + esc(shortName(n.name)) + "</a></li>";
+            }).join("") + "</ul>";
+        }
+        c.innerHTML = html; c.className = "on";
+        c.querySelector("button").onclick = function () { select(null); };
+        c.querySelectorAll("a[data-node]").forEach(function (a) { a.onclick = function () { select(N[a.getAttribute("data-node")]); }; });
+        c.querySelectorAll("a[data-uid]").forEach(function (a) { a.onclick = function () { openMap(a.getAttribute("data-uid")); }; });
+    }
+    function openMap(uid) {
+        var u = new URL(MAP + encodeURIComponent(uid), location.href).href;
+        try { window.top.location.href = u; } catch (e) { location.href = u; }
+    }
+    function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+    function fit() {
+        var x0 = d3.min(nodes, function (n) { return n.x; }) - 40, x1 = d3.max(nodes, function (n) { return n.x; }) + 120;
+        var y0 = d3.min(nodes, function (n) { return n.y; }) - 40, y1 = d3.max(nodes, function (n) { return n.y; }) + 40;
+        var k = Math.min(W / (x1 - x0), (H - 40) / (y1 - y0), 2);
+        svg.transition().duration(900).call(zoomer.transform, d3.zoomIdentity.translate(W / 2 - k * (x0 + x1) / 2, H / 2 - k * (y0 + y1) / 2).scale(k));
+    }
+
+    // search: a company or site by any part of its name
+    function search() {
+        var q = $("q"), res = $("res"), list = nodes.slice().sort(function (a, b) { return b.sites - a.sites; }), cur = -1;
+        function show() {
+            var v = q.value.trim().toLowerCase(); cur = -1;
+            if (!v) { res.innerHTML = ""; return; }
+            var hits = list.filter(function (n) { return n.name.toLowerCase().indexOf(v) >= 0; }).slice(0, 12);
+            res.innerHTML = hits.map(function (n, i) {
+                return "<li data-i='" + i + "'>" + esc(shortName(n.name)) + "<small>" + (n.uid ? "site" : n.sites ? n.sites + " sites" : "") + "</small></li>";
+            }).join("");
+            res.querySelectorAll("li").forEach(function (li, i) { li.onclick = function () { pick(hits[i]); }; });
+            res._hits = hits;
+        }
+        function pick(n) { res.innerHTML = ""; q.value = shortName(n.name); select(n); }
+        q.addEventListener("input", show);
+        q.addEventListener("keydown", function (e) {
+            var h = res._hits || [];
+            if (e.key === "ArrowDown") { cur = Math.min(h.length - 1, cur + 1); }
+            else if (e.key === "ArrowUp") { cur = Math.max(0, cur - 1); }
+            else if (e.key === "Enter" && h.length) { pick(h[Math.max(0, cur)]); return; }
+            else if (e.key === "Escape") { res.innerHTML = ""; return; }
+            else return;
+            e.preventDefault();
+            res.querySelectorAll("li").forEach(function (li, i) { li.classList.toggle("on", i === cur); });
         });
-        svg.call(zoom);
-        // frame the whole network
-        var x0 = d3.min(nodes, function (n) { return n.x; }) - 20, x1 = d3.max(nodes, function (n) { return n.x + (n.label ? n.w : 10); }) + 20;
-        var y0 = d3.min(nodes, function (n) { return n.y; }) - 20, y1 = d3.max(nodes, function (n) { return n.y; }) + 20;
-        var k = Math.min(W / (x1 - x0), H / (y1 - y0), 2);
-        svg.call(zoom.transform, d3.zoomIdentity.translate(W / 2 - k * (x0 + x1) / 2, H / 2 - k * (y0 + y1) / 2).scale(k));
     }
 })();
 </script>
