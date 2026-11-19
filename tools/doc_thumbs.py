@@ -10,8 +10,25 @@ keeps what is already there.
     python tools/doc_thumbs.py            # only documents without a picture yet
     python tools/doc_thumbs.py --again    # redo every PDF
 
-Then commit assets/docs/ and data/doc_thumbs.json and push.
+Names of private people are blacked out before the page is turned into a
+picture, so the picture never holds them. On each first page the script looks
+in the upper part (the address block) for a line that reads like a person's
+name, with no company or public-body word in it, and blacks out that line and
+the address lines right under it. What it blacks out is written to
+data/doc_redact.csv, one row per text:
+
+    DocID,Text,Redact,Why
+    PA_0003,Ola Nordmann,1,auto
+    PA_0003,Storgata 12,1,auto
+
+Set Redact to 0 to leave a text visible (a company it took for a person), or
+add a row with Redact 1 for anything else to black out (a name it missed),
+then run again with --again. Every occurrence of the text on the page is
+covered.
+
+Then commit assets/docs/, data/doc_thumbs.json and data/doc_redact.csv and push.
 """
+import re
 import csv
 import io
 import json
@@ -21,13 +38,19 @@ import time
 import urllib.request
 
 try:
-    import fitz  # PyMuPDF
+    import pymupdf as fitz  # PyMuPDF 1.24 and later
 except ImportError:
+    try:
+        import fitz  # older PyMuPDF
+    except ImportError:
+        fitz = None
+if fitz is None:
     sys.exit('PyMuPDF is missing: run  pip install pymupdf  and try again.')
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'assets', 'docs')
 LIST = os.path.join(ROOT, 'data', 'doc_thumbs.json')
+REDACT = os.path.join(ROOT, 'data', 'doc_redact.csv')
 SHEET = ('https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-'
          '8G0vL1F7xG1WKn_ADmwwfSARan/pub?gid=187064250&single=true&output=csv')
 CLASSES = {'Permit', 'Permit application', 'Mining licence', 'Inspection report', 'Report', 'Government document'}
@@ -41,12 +64,86 @@ def get(url, timeout=60):
         return r.read()
 
 
-def first_page(pdf_bytes):
+# A line that reads like a person's name: two to four capitalised words or initials.
+NAME = re.compile(r"^(?:[A-ZÆØÅ][a-zæøåäöüé]+|[A-ZÆØÅ]\.)(?:[ -](?:[A-ZÆØÅ][a-zæøåäöüé]+|[A-ZÆØÅ]\.|von|van|de|af)){1,3}$")
+# Words that make a line a company, a public body or a heading, not a person.
+NOT_A_PERSON = re.compile(
+    r"\b(as|asa|ans|da|ks|iks|kf|sa|ba|kommune|fylkeskommune|statsforvalteren|fylkesmannen|direktorat\w*|"
+    r"departement\w*|etat\w*|milj\w*|avfall\w*|pukk\w*|grus\w*|masse\w*|deponi\w*|eiendom\w*|holding|gruppen|"
+    r"group|norge|norway|bane|vegvesen|nor|consult|multiconsult|cowi|ngi|sweco|ramb\w*|asplan|norconsult|"
+    r"entrepren\w*|anlegg|vedlegg|tillatelse|vedtak|s\u00f8knad|h\u00f8ring|oversendelse|avdeling|seksjon|postboks|"
+    r"saksbehandler|deres|v\u00e5r|ref|dato|telefon|side|kopi|mottaker\w*|innhold|rapport|notat|sak|"
+    r"oslo|viken|akershus|vestfold|telemark|innlandet|buskerud|\u00f8stfold)\b", re.I)
+ADDRESS = re.compile(r"\d")
+
+
+def lines_of(page):
+    out = []
+    for block in page.get_text('dict')['blocks']:
+        for line in block.get('lines', []):
+            text = ' '.join(sp['text'] for sp in line['spans']).strip()
+            text = re.sub(r'\s+', ' ', text)
+            if text:
+                out.append((text, fitz.Rect(line['bbox'])))
+    return out
+
+
+def people_on(page):
+    """Texts in the address block that look like a private person and their address."""
+    found, lines = [], lines_of(page)
+    top = page.rect.height * 0.45
+    for i, (text, box) in enumerate(lines):
+        if box.y1 > top or not NAME.match(text) or NOT_A_PERSON.search(text):
+            continue
+        found.append(text)
+        last = box
+        for t2, b2 in lines[i + 1:i + 4]:  # the address right under the name
+            if abs(b2.x0 - box.x0) < 20 and 0 <= b2.y0 - last.y1 < 18 and ADDRESS.search(t2) \
+                    and not NOT_A_PERSON.search(t2.replace('Oslo', '')):
+                found.append(t2)
+                last = b2
+            else:
+                break
+    return found
+
+
+def read_rules():
+    rules = {}
+    if os.path.exists(REDACT):
+        with open(REDACT, encoding='utf-8', newline='') as f:
+            for r in csv.DictReader(f):
+                rules.setdefault(r['DocID'].strip(), {})[r['Text'].strip()] = (r.get('Redact', '1').strip() != '0',
+                                                                              r.get('Why', '').strip() or 'manual')
+    return rules
+
+
+def write_rules(rules):
+    with open(REDACT, 'w', encoding='utf-8', newline='') as f:
+        w = csv.writer(f)
+        w.writerow(['DocID', 'Text', 'Redact', 'Why'])
+        for did in sorted(rules):
+            for text, (on, why) in sorted(rules[did].items()):
+                w.writerow([did, text, 1 if on else 0, why])
+
+
+def first_page(pdf_bytes, did, rules):
+    """The first page as a JPEG, with private names blacked out; returns (jpeg, (texts covered, scanned))."""
     doc = fitz.open(stream=pdf_bytes, filetype='pdf')
     page = doc[0]
+    mine = rules.setdefault(did, {})
+    for text in people_on(page):
+        mine.setdefault(text, (True, 'auto'))
+    covered = 0
+    for text, (on, _) in mine.items():
+        if not on:
+            continue
+        for r in page.search_for(text):
+            page.draw_rect(r + (-1.5, -1, 1.5, 1), color=(0, 0, 0), fill=(0, 0, 0), overlay=True)
+            covered += 1
     zoom = WIDTH / page.rect.width
     pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
-    return pix.tobytes('jpg', jpg_quality=72)
+    scanned = not page.get_text().strip()  # a scanned page has no text to find names in
+    return pix.tobytes('jpg', jpg_quality=72), (covered, scanned)
 
 
 def main():
@@ -56,11 +153,13 @@ def main():
     if os.path.exists(LIST):
         with open(LIST, encoding='utf-8') as f:
             thumbs = json.load(f)
+    rules = read_rules()
     rows = list(csv.DictReader(io.StringIO(get(SHEET).decode('utf-8'))))
     todo = [r for r in rows
             if r.get('Class') in CLASSES and str(r.get('Published', '')).strip().upper() == 'TRUE'
             and str(r.get('Link', '')).startswith('http')]
     made = skipped = failed = 0
+    scans = []
     for i, r in enumerate(todo, 1):
         did = r['DocID'].strip()
         path = os.path.join(OUT, did + '.jpg')
@@ -73,19 +172,28 @@ def main():
                 skipped += 1
                 print(f'[{i}/{len(todo)}] {did}: not a PDF, left without a picture')
                 continue
+            jpg, (covered, scanned) = first_page(data, did, rules)
+            if scanned:
+                scans.append(did)
             with open(path, 'wb') as f:
-                f.write(first_page(data))
+                f.write(jpg)
             thumbs[did] = 'assets/docs/' + did + '.jpg'
             made += 1
-            print(f'[{i}/{len(todo)}] {did}: done')
+            print(f'[{i}/{len(todo)}] {did}: done' + (f', {covered} text(s) blacked out' if covered else '')
+                  + (', SCANNED: look at it yourself' if scanned else ''))
         except Exception as e:  # one broken link should not stop the rest
             failed += 1
             print(f'[{i}/{len(todo)}] {did}: failed ({e})')
         time.sleep(0.5)
+    write_rules(rules)
     with open(LIST, 'w', encoding='utf-8') as f:
         json.dump(dict(sorted(thumbs.items())), f, ensure_ascii=False, indent=0)
     print(f'\n{made} new pictures, {skipped} links that are not PDFs, {failed} failed. '
-          f'{len(thumbs)} documents now have a picture in data/doc_thumbs.json.')
+          f'{len(thumbs)} documents now have a picture in data/doc_thumbs.json. '
+          f'Check data/doc_redact.csv for what was blacked out.')
+    if scans:
+        print('Scanned pages, where no name can be found automatically - open these pictures and look:',
+              ', '.join(scans))
 
 
 if __name__ == '__main__':
