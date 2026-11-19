@@ -259,7 +259,8 @@
                 .distance(function (l) { return l.source.home !== l.target.home ? 180 : 16 + l.target.r * 2; })
                 .strength(function (l) { return l.source.home !== l.target.home ? 0.01 : 0.6; }))
             .force("charge", d3.forceManyBody().strength(function (d) { return -14 - d.sites * 3; }).distanceMax(220))
-            .force("collide", d3.forceCollide().radius(function (d) { return d.r + 2.5; }))
+            // a lit chain opens out so that each of its names has room
+            .force("collide", d3.forceCollide().radius(function (d) { return lit && lit[d.id] ? Math.max(d.r + 3, d.text.length * 2.9 / Math.sqrt(zk)) : d.r + 2.5; }).strength(0.9))
             .force("gx", d3.forceX(function (d) { return centre[d.home].x; }).strength(0.05))
             .force("gy", d3.forceY(function (d) { return centre[d.home].y; }).strength(0.05))
             .alphaDecay(0.015).velocityDecay(0.4)
@@ -291,6 +292,7 @@
           .attr("x2", function (d) { return d.target.x; }).attr("y2", function (d) { return d.target.y; });
         nd.attr("cx", function (d) { return d.x; }).attr("cy", function (d) { return d.y; });
         labelG.selectAll("text").attr("x", function (d) { return d.x + d.r + 4 / zk; }).attr("y", function (d) { return d.y + 3 / zk; });
+        if (selected && sim.alpha() > 0.05 && Date.now() - (ticked._t || 0) > 120) { ticked._t = Date.now(); follow(); }
     }
 
     // Names: the main groups' owners always; the rest only under the cursor or along a lit thread.
@@ -311,18 +313,29 @@
     }
 
     // the thread: everything above a node and everything it holds
-    function thread(d) {
-        if (!d) { lit = null; nd.classed("fade", false); lk.classed("fade", false).classed("on", false); return; }
+    function thread(d, open) {
+        if (!d) {
+            var was = !!lit; lit = null; nd.classed("fade", false); lk.classed("fade", false).classed("on", false);
+            if (was && sim) { sim.force("collide").initialize(nodes); sim.alpha(0.25).restart(); }
+            return;
+        }
         lit = {}; ancestors(d.id).concat(reach(d.id, down)).forEach(function (x) { lit[x] = 1; }); lit[d.id] = 1;
         nd.classed("fade", function (n) { return !lit[n.id]; });
         lk.classed("fade", function (l) { return !(lit[l.source.id] && lit[l.target.id]); })
           .classed("on", function (l) { return lit[l.source.id] && lit[l.target.id]; });
+        if (open && sim) { sim.force("collide").initialize(nodes); sim.alpha(0.35).restart(); }
     }
 
+    // keep the clicked chain in view while it opens out
+    function follow() {
+        if (!selected) return;
+        var k = d3.zoomTransform(svg.node()).k;
+        svg.call(zoomer.transform, d3.zoomIdentity.translate(W / 2 - 140 - selected.x * k, H / 2 - selected.y * k).scale(k));
+    }
     function select(d) {
         selected = d;
         if (!d) { thread(null); names(); $("card").className = ""; return; }
-        thread(d); names();
+        thread(d, true); names();
         var t = d3.zoomTransform(svg.node()), k = Math.max(t.k, 2);
         svg.transition().duration(650).call(zoomer.transform, d3.zoomIdentity.translate(W / 2 - 140 - d.x * k, H / 2 - d.y * k).scale(k));
         card(d);
