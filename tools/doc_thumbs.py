@@ -164,6 +164,13 @@ def county_body(found):
     return head + ' i ' + ' '.join(out).strip(' ,.;:') if out else ''
 
 
+def whole(name):
+    """A county name broken over two letterhead lines, made whole again."""
+    if re.match(r'Statsforvalteren i \u00d8stfold, Buskerud', name):
+        return 'Statsforvalteren i \u00d8stfold, Buskerud, Oslo og Akershus'
+    return name
+
+
 def tidy(name):
     name = re.sub(r'\s+', ' ', name).strip(' ,.-')
     if name[:1].islower():
@@ -203,8 +210,10 @@ def issuer_of(page, cls):
                 if not m:
                     continue
                 found = county_body(m.group(0)) if ' i ' in m.group(0)[:20] else m.group(0)
-                if found and len(found) >= .6 * len(line):  # the line is the name, not a sentence
-                    return tidy(found)
+                # the line is the name (a letterhead or footer line, which may go on with an
+                # address or "med Bergmesteren for Svalbard"), not a sentence that cites it
+                if found and (m.start() <= 2 or len(found) >= .6 * len(line)):
+                    return whole(tidy(found))
         for rx, name in FOOTER_MAIL:
             if re.search(rx, text, re.I):
                 return name
