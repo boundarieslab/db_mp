@@ -259,7 +259,13 @@
         [/#sb-minimap$/, ['width', 'max-width', 'left', 'right']],
         [/#sb-minimap\s.*aerial$/, ['left', 'right', 'top', 'bottom', 'width', 'height']],
         [/sb-media$/, ['width', 'max-width']],
-        [/graph-head$/, ['width', 'max-width']]
+        [/graph-head$/, ['width', 'max-width']],
+        // text whose length changes from site to site: a fixed height let it run over the next part
+        [/sb-desc$/, ['height', 'max-height']],
+        [/sb-head$/, ['height', 'max-height']],
+        [/#sb-title$/, ['height', 'max-height']],
+        // the legend chips sit where the head puts them; shifted, they vanished behind its edge
+        [/#deck-chips\s+button\.chip$/, ['left', 'right', 'top', 'bottom', 'position']]
     ];
     function ruleCss(rule, forCargo) {
         const keep = KEEP.filter(k => k[0].test(String(rule.sel || '').trim())).reduce((a, k) => a.concat(k[1]), []);
