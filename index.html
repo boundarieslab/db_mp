@@ -4245,11 +4245,11 @@ document.addEventListener('DOMContentLoaded', function() {
             cols.forEach(c => {
                 const td = document.createElement('td');
                 td.dataset.key = c.key;
-                if (c.fold) { td.classList.add('fold'); td.innerHTML = '<div class="fd">' + (c.html ? c.html(r) : esc(c.text(r))) + '</div>'; }
+                if (c.fold) { td.innerHTML = '<div class="fd">' + (c.html ? c.html(r) : esc(c.text(r))) + '</div>'; }
                 else if (c.html) td.innerHTML = c.html(r); else td.textContent = c.text(r);
                 const tip = c.title ? c.title(r) : c.text(r);
                 if (tip && !c.bar) td.title = tip;
-                td.className = [c.num ? 'num' : '', c.cls || '', c.bar ? 'bar' : ''].join(' ').trim();
+                td.className = [c.num ? 'num' : '', c.cls || '', c.bar ? 'bar' : '', c.fold ? 'fold' : ''].join(' ').trim();
                 if (cur.id === id && cur.key === c.key) td.classList.add('cur');
                 tr.appendChild(td);
             });
