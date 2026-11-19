@@ -260,7 +260,7 @@
                 .strength(function (l) { return l.source.home !== l.target.home ? 0.01 : 0.6; }))
             .force("charge", d3.forceManyBody().strength(function (d) { return -14 - d.sites * 3; }).distanceMax(220))
             // a lit chain opens out so that each of its names has room
-            .force("collide", d3.forceCollide().radius(function (d) { return lit && lit[d.id] ? Math.max(d.r + 3, d.text.length * 2.9 / Math.sqrt(zk)) : d.r + 2.5; }).strength(0.9))
+            .force("collide", d3.forceCollide().radius(function (d) { return lit && lit[d.id] ? Math.max(d.r + 3, d.text.length * 2.9 / zk) : d.r + 2.5; }).strength(0.9))
             .force("gx", d3.forceX(function (d) { return centre[d.home].x; }).strength(0.05))
             .force("gy", d3.forceY(function (d) { return centre[d.home].y; }).strength(0.05))
             .alphaDecay(0.015).velocityDecay(0.4)
@@ -306,8 +306,8 @@
         t.exit().remove();
         t.enter().append("text").merge(t)
             .attr("class", function (d) { return "nm" + (d.uid ? " site" : "") + (d.main && !lit ? " main" : ""); })
-            .style("font-size", function (d) { return ((d.main && !lit) ? 11 : 9) / Math.sqrt(zk) + "px"; })
-            .style("stroke-width", 3 / Math.sqrt(zk) + "px")
+            .style("font-size", function (d) { return ((d.main && !lit) ? 11 : 9) / zk + "px"; })
+            .style("stroke-width", 3 / zk + "px")
             .attr("x", function (d) { return d.x + d.r + 4 / zk; }).attr("y", function (d) { return d.y + 3 / zk; })
             .text(function (d) { return d.text; });
     }
