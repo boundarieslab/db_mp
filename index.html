@@ -2010,7 +2010,7 @@ document.addEventListener('DOMContentLoaded', function() {
         area: { en: "Area", no: "Areal" },
         geom: { en: "Drawn as", no: "Tegnet som" },
         g_line: { en: "line", no: "linje" }, g_perimeter: { en: "perimeter", no: "omriss" },
-        gb_alignment: { en: "alignment", no: "trasé" }, gb_building: { en: "building", no: "bygning" },
+        gb_alignment: { en: "alignment", no: "trasé" }, gb_building: { en: "building", no: "bygning" }, gb_plan: { en: "plan area", no: "planområde" },
         gb_site: { en: "construction site", no: "byggeplass" }, gb_sites: { en: "construction sites", no: "byggeplasser" },
         wat: { en: "Water recipient", no: "Vannresipient" },
         cap: { en: "CAPACITY & MATERIALS", no: "KAPASITET OG MASSER" },
@@ -2565,10 +2565,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const geomText = s => {
             const g = s.__geom;
             if (!g) return '';
-            const w = { 'alignment': 'gb_alignment', 'building': 'gb_building', 'construction site': 'gb_site', 'construction sites': 'gb_sites' }[g.basis];
+            const w = { 'alignment': 'gb_alignment', 'building': 'gb_building', 'construction site': 'gb_site', 'construction sites': 'gb_sites', 'plan area': 'gb_plan' }[g.basis];
             return [t(g.kind === 'line' ? 'g_line' : 'g_perimeter'),
                     g.kind !== 'line' && Number.isFinite(+g.a) ? fmt(+g.a) + ' m²' : '',
-                    w ? t(w) : (g.basis || ''), 'OpenStreetMap'].filter(Boolean).join(' · ');
+                    w ? t(w) : (g.basis || ''), g.srcname || 'OpenStreetMap'].filter(Boolean).join(' · ');
         };
         // A bare figure is written the same way everywhere: thousands spaced, m2 and m3 as m² and m³.
         const unitW = u => String(u || '').trim().replace(/\bm2\b/g, 'm²').replace(/\bm3\b/g, 'm³');
