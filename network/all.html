@@ -137,7 +137,7 @@
         })).then(function (gs) { build(gs, byName); });
     }).catch(function () { $("status").textContent = "The table could not be read."; });
 
-    var N, nodes, links, up, down;
+    var N, nodes, links, up, down, islandName;
     function build(gs, byName) {
         N = {}; var L = {};
         function key(id, file) { return id === "Private individual" ? id + " · " + file : id; }
@@ -172,12 +172,35 @@
         links.forEach(function (l) { if (l.same) return; (up[l.source] = up[l.source] || []).push(l.target); (down[l.target] = down[l.target] || []).push(l.source); });
         // sites each node holds, and its group (the top owner above it that holds the most sites)
         nodes.forEach(function (n) { n.held = sitesUnder(n.id).filter(function (s) { return s !== n.id; }); n.sites = n.held.length; });
+        // An owner whose sites are all held by a bigger owner too joins that
+        // owner's island (the kommuner that own ROAF together form one island);
+        // owners that only share some sites (a joint venture) keep their own.
+        var tops = nodes.filter(function (n) { return !(up[n.id] || []).length; });
+        var held = {}; tops.forEach(function (t) { held[t.id] = {}; t.held.forEach(function (x) { held[t.id][x] = 1; }); });
+        var rep = {};
+        tops.forEach(function (t) {
+            var best = t;
+            tops.forEach(function (u) {
+                if (u === t || u.sites < t.sites || !t.sites) return;
+                if (t.held.every(function (x) { return held[u.id][x]; }) && (u.sites > best.sites || (u.sites === best.sites && u.id < best.id))) best = u;
+            });
+            rep[t.id] = best.id;
+        });
         nodes.forEach(function (n) {
-            var tops = ancestors(n.id).filter(function (a) { return !(up[a] || []).length; });
-            if (!(up[n.id] || []).length) tops.push(n.id);
-            var best = null; tops.forEach(function (t) { if (!best || N[t].sites > N[best].sites) best = t; });
+            var ts = ancestors(n.id).filter(function (a) { return !(up[a] || []).length; });
+            if (!(up[n.id] || []).length) ts.push(n.id);
+            var best = null; ts.forEach(function (t) { t = rep[t]; if (!best || N[t].sites > N[best].sites) best = t; });
             n.group = best && N[best].sites >= 2 ? best : null;
         });
+        // the island's name: its owner, or, when several owners share it, the company they hold together
+        var names = {};
+        Object.keys(rep).forEach(function (t) { if (rep[t] !== t) names[rep[t]] = 1; });
+        Object.keys(names).forEach(function (g) {
+            var inner = nodes.filter(function (n) { return n.group === g && (up[n.id] || []).length >= 2; })
+                             .sort(function (a, b) { return b.sites - a.sites; })[0];
+            names[g] = inner ? inner.name : N[g].name;
+        });
+        islandName = function (g) { return typeof names[g] === "string" ? names[g] : N[g].name; };
         $("status").textContent = "";
         draw();
     }
@@ -311,7 +334,7 @@
         hullG.selectAll("text").data(data, function (d) { return d.k; }).join("text").attr("class", "hull-label")
             .attr("x", function (d) { return d3.min(d.hull, function (p) { return p[0]; }) + 4; })
             .attr("y", function (d) { return d3.min(d.hull, function (p) { return p[1]; }) + 14; }).attr("x", function (d) { return d3.min(d.hull, function (p) { return p[0]; }) + 16; })
-            .text(function (d) { return shortName(N[d.k].name); });
+            .text(function (d) { return shortName(islandName(d.k)); });
     }
 
     // names by zoom: owners of several sites always, sites from a little closer, everything close up
