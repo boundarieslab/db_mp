@@ -4,7 +4,7 @@ Reads the Documents tab of db_database, downloads every published permit,
 application, inspection report, report and government document whose link is
 a PDF, and saves its first page as assets/docs/<DocID>.jpg. The list of
 pictures the index uses is data/doc_thumbs.json; this script adds to it and
-keeps what is already there (the ownership diagrams and zoning plans).
+keeps what is already there.
 
     pip install pymupdf
     python tools/doc_thumbs.py            # only documents without a picture yet
@@ -30,7 +30,7 @@ OUT = os.path.join(ROOT, 'assets', 'docs')
 LIST = os.path.join(ROOT, 'data', 'doc_thumbs.json')
 SHEET = ('https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-'
          '8G0vL1F7xG1WKn_ADmwwfSARan/pub?gid=187064250&single=true&output=csv')
-CLASSES = {'Permit', 'Permit application', 'Inspection report', 'Report', 'Government document'}
+CLASSES = {'Permit', 'Permit application', 'Mining licence', 'Inspection report', 'Report', 'Government document'}
 WIDTH = 480
 AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) dirtybusiness.no index'
 

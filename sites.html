@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Index · Dirty Business</title>
-<meta name="description" content="The index of every document Dirty Business holds on the reception sites, quarries and construction projects of the Oslo region: photographs, aerials, newspaper articles, permits, plans, register entries, ownership diagrams and terrain-change sheets, by class, site, kommune, period and archive.">
+<meta name="description" content="The index of every document Dirty Business holds on the reception sites, quarries and construction projects of the Oslo region: photographs, aerials, newspaper articles, permits and reports, by class, site, kommune, period and archive.">
 <meta property="og:title" content="Dirty Business — index of documents">
 <meta property="og:description" content="Photographs, permits, plans, newspaper articles and registers on the Oslo region's excavated masses, arranged by site, class, decade, kommune, type of site, archive and corporate network.">
 <meta property="og:type" content="website">
@@ -36,6 +36,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cu
 .obj .im{display:flex;align-items:center;justify-content:center;width:var(--obj);max-width:100%;height:calc(var(--obj) * .8)}
 .obj .im img{display:block;max-width:100%;max-height:100%}
 .obj .im.no{border:1px solid var(--frame)}
+/* first pages of permits and reports: a hairline round the sheet */
+img.pg{box-shadow:0 0 0 .5px var(--ink)}
 .obj .lb{max-width:100%;padding:0 3px;text-align:center;overflow-wrap:anywhere;font-size:10px;line-height:13px;color:var(--sub)}
 .obj:hover .lb{color:var(--ink)}
 .open{grid-column:1/-1;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:6px 0 18px}
@@ -92,8 +94,8 @@ const FACILITIES_CSV = SHEET + '?output=csv';
 const PROJECTS_CSV = SHEET + '?gid=529338597&single=true&output=csv';
 const DOCUMENTS_CSV = SHEET + '?gid=187064250&single=true&output=csv';
 const KOMMUNER = 'data/kommuner.geojson';
-// Pictures made for documents that have none in the sheet: the ownership diagrams,
-// the zoning plans drawn as their outline, and the first page of the PDFs (tools/doc_thumbs.py).
+// Pictures made for documents that have none in the sheet: the first page of the PDFs
+// (tools/doc_thumbs.py).
 const THUMBS = 'data/doc_thumbs.json';
 const MAP_LINK = 'https://dirtybusiness.no/#site=';
 
@@ -102,8 +104,8 @@ const CLASS_ORDER = ['Photograph', 'Aerial photograph', 'Newspaper article', 'Pe
   'Zoning plan', 'Register entry', 'Company record', 'Public record', 'Ownership diagram', 'Terrain change', 'Report', 'Government document',
   'Government page', 'Public notice', 'Municipal page', 'Company page'];
 // Classes left out of the index: register and web entries with nothing to look at.
-const HIDDEN = new Set(['Terrain change', 'Company page', 'Company record', 'Register entry', 'Public record',
-  'Municipal page', 'Government page', 'Public notice', 'Mining licence']);
+const HIDDEN = new Set(['Terrain change', 'Ownership diagram', 'Zoning plan', 'Company page', 'Company record',
+  'Register entry', 'Public record', 'Municipal page', 'Government page', 'Public notice']);
 // A document without a picture is drawn as one line icon of its kind.
 const ICON = {
   photo: 'M4 7h24v18H4z M4 21l7-7 6 6 4-4 7 7 M20 11h3v3h-3z',
@@ -121,36 +123,6 @@ const KIND = {
   'Public record': 'card', 'Ownership diagram': 'tree', 'Terrain change': 'terrain', 'Report': 'page', 'Government document': 'page',
   'Government page': 'web', 'Public notice': 'web', 'Municipal page': 'web', 'Company page': 'web'
 };
-// Corporate networks: a site belongs to a network when its owner, operator or
-// parent company (or a project's builder) names one of these groups.
-const NETWORKS = [
-  ['AF Gruppen', /\baf (gruppen|decom|anlegg|ghella|miljøbase|miljobase)\b/],
-  ['Acciona Ghella', /acciona|\bghella\b/],
-  ['Brødrene Ødegård', /brødrene ødegård|brodrene odegard/],
-  ['Bulk Industrial Real Estate', /bulk industrial/],
-  ['Egge Massedeponi', /\begge\b/],
-  ['Eidos Eiendomsutvikling', /\beidos\b/],
-  ['Feiring', /feiring/],
-  ['Franzefoss', /franzefoss/],
-  ['Gunnar Holth', /gunnar holth/],
-  ['Helgerud Massemottak', /helgerud/],
-  ['HENT', /\bhent\b/],
-  ['Herstua', /herstua/],
-  ['Kjeldaas', /kjeldaas/],
-  ['Leif Grimsrud', /grimsrud/],
-  ['Lindum', /lindum/],
-  ['Mr. Pukk', /mr\.? ?pukk/],
-  ['NOAH', /\bnoah\b/],
-  ['Norsk Gjenvinning', /norsk gjenvinning|mana group|ng nordic/],
-  ['NRC Group', /\bnrc\b/],
-  ['OSU', /\bosu\b/],
-  ['Ragn-Sells', /ragn.?sells/],
-  ['Skanska', /skanska/],
-  ['State road builders', /statens vegvesen|nye veier|bane nor/],
-  ['Veidekke', /veidekke/],
-  ['Wethal', /wethal/],
-  ['Public owners (kommuner)', /kommune|\biks\b|\bkf\b|etaten|\bvav\b|statsbygg/]
-];
 
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -197,8 +169,6 @@ function prepare(f, p, d, kom, th) {
     let k = kByName(s.Municipality);
     if (!k && Number.isFinite(x) && Number.isFinite(y)) k = KOM.find(k => inGeom(x, y, k.g));
     s.__kn = k ? k.n : String(s.Municipality || '').trim();
-    const who = fold([s.ParentCompany, s.Operator, s.Company].join(' '));
-    s.__net = NETWORKS.filter(([, rx]) => rx.test(who)).map(([n]) => n);
     s.__ty = String(s.Type || '').trim();
   });
   // Documents: published, and tied to a published site or to none.
@@ -219,7 +189,6 @@ function prepare(f, p, d, kom, th) {
     r.__arch = String(r.Archive || '').trim();
     r.__siteNames = r.__sites.map(s => String(s.Name || '').trim()).filter(Boolean);
     r.__ty = uniq(r.__sites.map(s => s.__ty).filter(Boolean));
-    r.__net = uniq(r.__sites.flatMap(s => s.__net));
     r.__icon = ICON[KIND[r.Class] || 'page'];
     const where = r.__siteNames[0] ? short(r.__siteNames[0]) : (r.__k[0] || '');
     r.__label = [where, r.__year].filter(Boolean).join(' ');
@@ -229,13 +198,13 @@ function prepare(f, p, d, kom, th) {
   BYID = {}; HAY = {};
   DOCS.forEach(r => {
     BYID[r.DocID] = r;
-    HAY[r.DocID] = fold([r.Class, r.Title, r.__year, r.__siteNames.join(' '), r.__k.join(' '), r.__ty.join(' '), r.__arch, r.__net.join(' '), r.Creator].join(' '));
+    HAY[r.DocID] = fold([r.Class, r.Title, r.__year, r.__siteNames.join(' '), r.__k.join(' '), r.__ty.join(' '), r.__arch, r.Creator].join(' '));
   });
 }
 const uniq = a => [...new Set(a)];
 
 // ─────────────────────────────────────────────────────────────────────────
-// The ways to arrange the documents. Corporate network stands apart, last.
+// The ways to arrange the documents.
 // ─────────────────────────────────────────────────────────────────────────
 const CATS = [
   { id: 'site', label: 'Site', of: d => d.__siteNames },
@@ -243,8 +212,7 @@ const CATS = [
   { id: 'dec', label: 'Decade', of: d => d.__dec ? [d.__dec] : [], dec: true },
   { id: 'k', label: 'Kommune', of: d => d.__k },
   { id: 'ty', label: 'Type of site', of: d => d.__ty },
-  { id: 'arch', label: 'Archive', of: d => d.__arch ? [d.__arch] : [] },
-  { id: 'net', label: 'Corporate network', of: d => d.__net, gap: true }
+  { id: 'arch', label: 'Archive', of: d => d.__arch ? [d.__arch] : [] }
 ];
 const catOf = id => CATS.find(c => c.id === id);
 function groupsOf(cat) {
@@ -312,13 +280,15 @@ function glide(prev) {
 // ─────────────────────────────────────────────────────────────────────────
 const svgIcon = (d, z, w) => `<svg width="${z}" height="${z}" viewBox="0 0 32 32" aria-hidden="true"><path d="${d}" fill="#fff" stroke="#000" stroke-width="${w}"/></svg>`;
 function obj(d) {
-  const pic = d.__img ? `<img src="${esc(d.__img)}" alt="" loading="lazy" decoding="async">` : svgIcon(d.__icon, 22, 1);
+  const pg = /^assets\/docs\//.test(d.__img) ? ' class="pg"' : '';
+  const pic = d.__img ? `<img${pg} src="${esc(d.__img)}" alt="" loading="lazy" decoding="async">` : svgIcon(d.__icon, 22, 1);
   return `<a class="obj" href="#doc=${encodeURIComponent(d.DocID)}" data-id="${esc(d.DocID)}" data-doc="${esc(d.DocID)}" title="${esc(d.Title)}"><span class="im${d.__img ? '' : ' no'}">${pic}</span><span class="lb">${esc(d.__label)}</span></a>`;
 }
 function opened(d) {
-  const pic = d.__img ? `<img src="${esc(d.__img)}" alt="${esc(d.Title)}">` : `<span class="no">${svgIcon(d.__icon, 32, .8)}</span>`;
+  const pg = /^assets\/docs\//.test(d.__img) ? ' class="pg"' : '';
+  const pic = d.__img ? `<img${pg} src="${esc(d.__img)}" alt="${esc(d.Title)}">` : `<span class="no">${svgIcon(d.__icon, 32, .8)}</span>`;
   const terms = [].concat(d.__siteNames.map(v => ['site', v]), d.__dec ? [['dec', d.__dec]] : [], d.__k.map(v => ['k', v]),
-                          d.Class ? [['cls', d.Class]] : [], d.__arch ? [['arch', d.__arch]] : [], d.__net.map(v => ['net', v]));
+                          d.Class ? [['cls', d.Class]] : [], d.__arch ? [['arch', d.__arch]] : []);
   const tm = terms.map(([c, v], i) => {
     const on = state.by === c && state.g === v;
     return `<span><button class="${c === 'k' ? 'k' : ''}${on ? ' on' : ''}" data-term="${c}" data-val="${esc(v)}">${esc(v)}</button>${i < terms.length - 1 ? ', ' : ''}</span>`;
