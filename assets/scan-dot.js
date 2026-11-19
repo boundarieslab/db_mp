@@ -14,11 +14,14 @@
       'z-index:2147483647;transform:translate(-100px,-100px);';
     document.body.appendChild(d);
     document.documentElement.classList.add('has-scan-dot');
+    var embedded = window.parent !== window, inside = false;
     document.addEventListener('mousemove', function (e) {
       d.style.transform = 'translate(' + e.clientX + 'px,' + e.clientY + 'px)';
       d.style.display = '';
+      /* Tell the Cargo page around this map to hide its own dot while the mouse is in here */
+      if (embedded && !inside) { inside = true; try { window.parent.postMessage({ scanDot: 'inside' }, '*'); } catch (err) {} }
     }, { passive: true });
-    document.documentElement.addEventListener('mouseleave', function () { d.style.display = 'none'; });
+    document.documentElement.addEventListener('mouseleave', function () { d.style.display = 'none'; inside = false; });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
