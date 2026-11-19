@@ -87,8 +87,19 @@ def patch(s):
                   """        _rt = setTimeout(function(){ if (Math.abs((el.offsetWidth || 0) - (W || 0)) < 2) return; frame = 0; init(); markLinks(); }, 250);""")
     return s
 
+def small_names(s):
+    """Names one step smaller: 8 px for companies, 9 px for the site."""
+    s = s.replace("var _cw = n.active ? 6.1 : 5.4;", "var _cw = n.active ? 5.5 : 4.85;")
+    s = s.replace("\"600 10px 'Diatype Mono', 'Courier New', monospace\" : \"400 9px 'Diatype Mono', 'Courier New', monospace\"",
+                  "\"600 9px 'Diatype Mono', 'Courier New', monospace\" : \"400 8px 'Diatype Mono', 'Courier New', monospace\"")
+    s = s.replace("""ts.setAttribute("dy", li === 0 ? 0 : 10);""", """ts.setAttribute("dy", li === 0 ? 0 : 9);""")
+    s = s.replace("""txt.setAttribute("y", 3 - 5 * (_lines.length - 1));""", """txt.setAttribute("y", 3 - 4.5 * (_lines.length - 1));""")
+    s = s.replace("function need(a, b){ return 8 + 6 * ((a.tLines || 1) + (b.tLines || 1)); }",
+                  "function need(a, b){ return 7 + 5.5 * ((a.tLines || 1) + (b.tLines || 1)); }")
+    return s
+
 if __name__ == '__main__':
     for f in sys.argv[1:]:
-        s = open(f).read(); t = patch(s)
+        s = open(f).read(); t = small_names(patch(s))
         if t != s: open(f, 'w').write(t)
         print(f, 'patched' if t != s else 'unchanged', t.count('setTimeout(start'), t.count('markLinks(); }, 250'))

@@ -285,6 +285,18 @@
         return g;
     }
 
+    /* compact v1 */
+    function shortName(n) {
+        var t = String(n.id).replace(/\s*\([^)]*\)/g, "").replace(/\s+/g, " ").trim();
+        // "Øra avfallsplass - deponi" -> "Øra avfallsplass", but not when the
+        // part before the dash is a company ("Sirkula IKS - Heggvin ...")
+        var d = t.split(" - ");
+        if (d.length > 1 && !/\b(AS|ASA|IKS|KF|ANS)$/.test(d[0])) t = d[0];
+        // a share only when the note is one: "(51 %)", "(50 %, with ...)"
+        var m = (n.l || "").match(/^\(\s*(\d[\d.,]*)\s?%/);
+        if (m && !n.active) t += " " + m[1] + " %";
+        return t || n.id;
+    }
     function init() {
         // Without this a window resize started a second loop on top of the
         // first, and the maps below accumulated a duplicate set of children
@@ -338,14 +350,14 @@
             var txt = document.createElementNS(ns, "text");
             // Full name, wrapped onto a second line if it does not fit. Cutting
             // it with an ellipsis hid which facility a node actually was.
-            var _full = n.id + (n.l ? " " + n.l : "");
-            var _cw = n.active ? 6.1 : 5.4;   // the facility label is bold 10px, the rest 9px
+            var _full = n.id + (n.l ? " " + n.l : ""), _show = shortName(n);
+            var _cw = n.active ? 5.5 : 4.85;   // the facility label is bold 10px, the rest 9px
             var _maxCh = Math.max(10, Math.floor((_labelRoom - 14) / _cw));
             // Wrap onto as many as three lines. Registered company names are long
             // ("Feiring Bruk AS avd. Hadeland Pukkverk"), and two lines used to cut
             // the end off the very names this graph exists to show.
             var _lines = [], _cur = "";
-            _full.split(" ").forEach(function (w) {
+            _show.split(" ").forEach(function (w) {
                 var t = _cur ? _cur + " " + w : w;
                 if (t.length <= _maxCh || !_cur) { _cur = t; }
                 else { _lines.push(_cur); _cur = w; }
@@ -357,15 +369,15 @@
                 var ts = document.createElementNS(ns, "tspan");
                 ts.textContent = ln;
                 ts.setAttribute("x", 10);
-                ts.setAttribute("dy", li === 0 ? 0 : 10);
+                ts.setAttribute("dy", li === 0 ? 0 : 9);
                 txt.appendChild(ts);
             });
             var _tip = document.createElementNS(ns, "title");
             _tip.textContent = _full;
             txt.appendChild(_tip);
-            txt.setAttribute("x", 12); txt.setAttribute("y", 3 - 5 * (_lines.length - 1));  // _yTop
+            txt.setAttribute("x", 12); txt.setAttribute("y", 3 - 4.5 * (_lines.length - 1));  // _yTop
             txt.setAttribute("fill", n.active ? "#000" : "#666"); 
-            txt.style.font = n.active ? "600 10px 'Diatype Mono', 'Courier New', monospace" : "400 9px 'Diatype Mono', 'Courier New', monospace"; 
+            txt.style.font = n.active ? "600 9px 'Diatype Mono', 'Courier New', monospace" : "400 8px 'Diatype Mono', 'Courier New', monospace"; 
             txt.style.pointerEvents = "none";
             g.appendChild(txt); n.tEl = txt;
 
@@ -375,7 +387,7 @@
                     node.el.classList.toggle("dimmed", !lineage.nodes.has(node.id));
                     if(lineage.nodes.has(node.id)) {
                         node.tEl.style.fontWeight = "bold";
-                        node.tEl.setAttribute("fill", "#000");
+                        node.tEl.setAttribute("fill", node._link ? "#00f" : "#000");
                     }
                 });
                 links.forEach(link => {
@@ -389,7 +401,7 @@
                 nodes.forEach(node => {
                     node.el.classList.remove("dimmed");
                     node.tEl.style.fontWeight = node.active ? "bold" : "normal";
-                    node.tEl.setAttribute("fill", node.active || node._link ? "#000" : "#666");
+                    node.tEl.setAttribute("fill", node._link ? "#00f" : (node.active ? "#000" : "#666"));
                 });
                 links.forEach(link => link.el.classList.remove("dimmed", "highlight-link"));
             };
@@ -485,7 +497,7 @@
         (function(){
             var RELAX = 0.5;
             var usable = Math.max(H - _pad * 2, 1);
-            function need(a, b){ return 8 + 6 * ((a.tLines || 1) + (b.tLines || 1)); }
+            function need(a, b){ return 7 + 5.5 * ((a.tLines || 1) + (b.tLines || 1)); }
             function lane(list){
                 list.sort(function(a, b){ return a.y - b.y; });
                 var wanted = 0, i;
@@ -570,8 +582,7 @@
         nodes.forEach(function (n) {
             var uid = LINKABLE[n.id];
             if (!uid || n.active || !n.el) return;
-            n.tEl.setAttribute("text-decoration", "underline");
-            n.tEl.setAttribute("fill", "#000");
+            n.tEl.setAttribute("fill", "#00f");
             n._link = uid; n.el.style.cursor = "pointer";
             var tip = n.tEl.querySelector("title"); if (tip) tip.textContent += " (open on the map)";
             n.el.addEventListener("mousedown", function (e) { n._down = [e.clientX, e.clientY]; });
