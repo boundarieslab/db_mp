@@ -340,6 +340,11 @@ button,input,select{font:inherit;color:inherit}
 .share-btn{background:#fff;border:.5px solid var(--frame);cursor:pointer;font-size:9px;letter-spacing:.1em;padding:1px 5px;font-weight:500}
 .share-btn:hover{background:var(--sel)}
 .sb-scroll-area{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden!important}
+/* long descriptions in the table keep to one line, so rows stay one line high and the
+   half table shows more of them; the row under the pointer or chosen opens in full.
+   Names are never folded. */
+#site-table td.fold .fd{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden;white-space:normal}
+#site-table tr:hover td.fold .fd,#site-table tr.sel td.fold .fd{-webkit-line-clamp:unset;display:block}
 /* Scroll bars: a thin grey line, no arrows, no track, darker under the pointer.
    For the record window, the panes under the tool bar and the table. */
 .sb-scroll-area::-webkit-scrollbar,.bar-scroll::-webkit-scrollbar,#deck .deck-scroll::-webkit-scrollbar{width:5px;height:5px}
@@ -635,7 +640,10 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 #peek-card.away{visibility:hidden}
 #peek-card .im{width:100%;height:160px;background:#f3f3f3 center/cover no-repeat;border:.5px solid var(--rule);position:relative;overflow:hidden}
 #peek-card .cp{font-size:10px;padding:4px 1px 1px;display:flex;gap:6px;align-items:baseline}
-#peek-card .cp .swatch{align-self:center}
+#peek-card .cp .swatch,#peek-card .cp .ring{align-self:center;flex:0 0 auto}
+#hover-card .cp .ring{align-self:center;flex:0 0 auto}
+.kring{display:inline-flex;width:12px;justify-content:center}
+.status-badge .ring{margin-right:6px;vertical-align:-1px}
 #peek-card .cp span{color:var(--sub);font-size:9px;font-family:PlexMono,monospace;margin-left:auto;white-space:nowrap}
 #peek-card .pk-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px;padding-top:5px;border-top:.5px solid var(--hair)}
 #peek-open{background:none;border:0;padding:0;cursor:pointer;color:#00f;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase}
@@ -776,7 +784,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                 title="Drag a box to select the sites inside it" aria-label="Select an area"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h2v1h-2zM3 0h2v1h-2zM6 0h2v1h-2zM9 0h2v1h-2zM12 0h2v1h-2zM0 2h1v1h-1zM12 2h1v1h-1zM0 3h1v1h-1zM12 3h1v1h-1zM0 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM7 6h1v1h-1zM12 6h1v1h-1zM7 7h2v1h-2zM0 8h1v1h-1zM7 8h3v1h-3zM12 8h1v1h-1zM0 9h1v1h-1zM7 9h4v1h-4zM12 9h1v1h-1zM7 10h5v1h-5zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h3v1h-3zM7 12h2v1h-2zM10 12h2v1h-2zM10 13h2v1h-2zM11 14h2v1h-2z"/></svg></button>
         <button type="button" class="btn" id="btn-flat"
                 data-title-en="Look straight down, north up" data-title-no="Se rett ned, nord opp"
-                title="Look straight down, north up" aria-label="Reset the view"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM7 1h2v1h-2zM7 2h2v1h-2zM7 3h2v1h-2zM4 4h8v1h-8zM5 5h6v1h-6zM6 6h4v1h-4zM7 7h2v1h-2zM7 9h2v1h-2zM5 10h2v1h-2zM9 10h2v1h-2zM3 11h2v1h-2zM11 11h2v1h-2zM1 12h2v1h-2zM13 12h2v1h-2zM3 13h2v1h-2zM11 13h2v1h-2zM5 14h2v1h-2zM9 14h2v1h-2zM7 15h2v1h-2z"/></svg></button>
+                title="Look straight down, north up" aria-label="Reset the view"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM7 1h2v1h-2zM6 2h4v1h-4zM6 3h4v1h-4zM5 4h6v1h-6zM5 5h6v1h-6zM4 6h8v1h-8zM4 7h8v1h-8zM4 8h1v1h-1zM11 8h1v1h-1zM5 9h1v1h-1zM10 9h1v1h-1zM5 10h1v1h-1zM10 10h1v1h-1zM6 11h1v1h-1zM9 11h1v1h-1zM6 12h1v1h-1zM9 12h1v1h-1zM7 13h2v1h-2zM7 14h2v1h-2z"/></svg></button>
         <button type="button" class="btn" id="btn-share"
                 data-title-en="Copy a link to this exact view" data-title-no="Kopier en lenke til akkurat denne visningen"
                 title="Copy a link to this exact view" aria-label="Copy a link to this view"><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 0h3v1h-3zM9 1h5v1h-5zM9 2h5v1h-5zM7 3h2v1h-2zM10 3h3v1h-3zM5 4h2v1h-2zM2 5h3v1h-3zM1 6h5v1h-5zM1 7h5v1h-5zM2 8h3v1h-3zM5 9h2v1h-2zM7 10h2v1h-2zM10 10h3v1h-3zM9 11h5v1h-5zM9 12h5v1h-5zM10 13h3v1h-3z"/></svg></button>
@@ -1044,7 +1052,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 0h1v1h-1zM7 0h1v1h-1zM13 0h1v1h-1zM2 1h1v1h-1zM7 1h1v1h-1zM12 1h1v1h-1zM3 2h1v1h-1zM11 2h1v1h-1zM6 3h3v1h-3zM5 4h5v1h-5zM1 5h2v1h-2zM4 5h7v1h-7zM12 5h2v1h-2zM5 6h5v1h-5zM6 7h3v1h-3zM10 9h1v1h-1zM9 10h3v1h-3zM7 11h2v1h-2zM12 11h2v1h-2zM5 12h2v1h-2zM14 12h1v1h-1zM3 13h2v1h-2zM15 13h1v1h-1zM1 14h2v1h-2zM0 15h16v1h-16z"/></svg></dt><dd data-en="shade the ground and turn the light" data-no="skyggelegg bakken og drei lyset">shade the ground and turn the light</dd>
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h1v1h-1zM0 1h1v1h-1zM0 2h1v1h-1zM10 2h2v1h-2zM0 3h1v1h-1zM9 3h1v1h-1zM12 3h1v1h-1zM0 4h1v1h-1zM3 4h2v1h-2zM8 4h1v1h-1zM13 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM5 5h1v1h-1zM7 5h1v1h-1zM14 5h1v1h-1zM0 6h2v1h-2zM6 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM0 8h1v1h-1zM0 9h1v1h-1zM0 10h1v1h-1zM0 11h1v1h-1zM0 12h1v1h-1zM0 13h1v1h-1zM0 14h16v1h-16z"/></svg></dt><dd data-en="cross section along a line, with CSV and SVG" data-no="tverrsnitt langs en linje, med CSV og SVG">cross section along a line, with CSV and SVG</dd>
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 0h2v1h-2zM3 0h2v1h-2zM6 0h2v1h-2zM9 0h2v1h-2zM12 0h2v1h-2zM0 2h1v1h-1zM12 2h1v1h-1zM0 3h1v1h-1zM12 3h1v1h-1zM0 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM7 6h1v1h-1zM12 6h1v1h-1zM7 7h2v1h-2zM0 8h1v1h-1zM7 8h3v1h-3zM12 8h1v1h-1zM0 9h1v1h-1zM7 9h4v1h-4zM12 9h1v1h-1zM7 10h5v1h-5zM0 11h2v1h-2zM3 11h2v1h-2zM6 11h2v1h-2zM9 11h3v1h-3zM7 12h2v1h-2zM10 12h2v1h-2zM10 13h2v1h-2zM11 14h2v1h-2z"/></svg></dt><dd data-en="drag a box; the table lists what is inside" data-no="dra en boks; tabellen viser det som er inni">drag a box; the table lists what is inside</dd>
-                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM7 1h2v1h-2zM7 2h2v1h-2zM7 3h2v1h-2zM4 4h8v1h-8zM5 5h6v1h-6zM6 6h4v1h-4zM7 7h2v1h-2zM7 9h2v1h-2zM5 10h2v1h-2zM9 10h2v1h-2zM3 11h2v1h-2zM11 11h2v1h-2zM1 12h2v1h-2zM13 12h2v1h-2zM3 13h2v1h-2zM11 13h2v1h-2zM5 14h2v1h-2zM9 14h2v1h-2zM7 15h2v1h-2z"/></svg></dt><dd data-en="flat, north up" data-no="flatt, nord opp">flat, north up</dd>
+                        <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M7 0h2v1h-2zM7 1h2v1h-2zM6 2h4v1h-4zM6 3h4v1h-4zM5 4h6v1h-6zM5 5h6v1h-6zM4 6h8v1h-8zM4 7h8v1h-8zM4 8h1v1h-1zM11 8h1v1h-1zM5 9h1v1h-1zM10 9h1v1h-1zM5 10h1v1h-1zM10 10h1v1h-1zM6 11h1v1h-1zM9 11h1v1h-1zM6 12h1v1h-1zM9 12h1v1h-1zM7 13h2v1h-2zM7 14h2v1h-2z"/></svg></dt><dd data-en="flat, north up" data-no="flatt, nord opp">flat, north up</dd>
                         <dt><svg class="px" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 0h3v1h-3zM9 1h5v1h-5zM9 2h5v1h-5zM7 3h2v1h-2zM10 3h3v1h-3zM5 4h2v1h-2zM2 5h3v1h-3zM1 6h5v1h-5zM1 7h5v1h-5zM2 8h3v1h-3zM5 9h2v1h-2zM7 10h2v1h-2zM10 10h3v1h-3zM9 11h5v1h-5zM9 12h5v1h-5zM10 13h3v1h-3z"/></svg></dt><dd data-en="copy a link to this exact view" data-no="kopier en lenke til denne visningen">copy a link to this exact view</dd>
                     </dl>
                     <h4 data-en="THE TABLE" data-no="TABELLEN">THE TABLE</h4>
@@ -2545,14 +2553,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     g.kind !== 'line' && Number.isFinite(+g.a) ? fmt(+g.a) + ' m²' : '',
                     w ? t(w) : (g.basis || ''), 'OpenStreetMap'].filter(Boolean).join(' · ');
         };
-        const withUnit = (v, u) => { v = String(v == null ? '' : v).trim(); u = String(u || '').trim(); return v && u && !isNA(v) ? v + ' ' + u : v; };
+        // A bare figure is written the same way everywhere: thousands spaced, m2 and m3 as m² and m³.
+        const unitW = u => String(u || '').trim().replace(/\bm2\b/g, 'm²').replace(/\bm3\b/g, 'm³');
+        const numW = v => /^\d{4,}(\.\d+)?$/.test(v) ? fmt(Math.trunc(+v)) + (v.includes('.') ? v.slice(v.indexOf('.')) : '') : v;
+        const withUnit = (v, u) => {
+            v = String(v == null ? '' : v).trim(); u = unitW(u);
+            const m = v.match(/^(\d{4,}(?:\.\d+)?)\s*(m2|m3|tonn|tonnes?|t)?$/i);
+            if (m) v = numW(m[1]) + (m[2] ? ' ' + unitW(m[2]) : '');
+            return v && u && !isNA(v) && !/\s(m²|m³|t|tonn|tonnes?)$/i.test(v) ? v + ' ' + u : v;
+        };
         const coords = hasCoords ? lat.toFixed(5) + ', ' + lon.toFixed(5) : '';
         const place = [site.Municipality, site.County].map(x => String(x || '').trim()).filter(Boolean).join(', ');
         const area = qty(site.Area_m2);
 
         container.innerHTML = `<div class="sb-media">${media}</div><div class="sb-credit" id="sb-credit">${mediaMode === 'photo' ? creditHtml(currentSlideIndex) : mediaMode === 'thennow' && tn ? tnCreditHtml(tn) : ''}</div>
             <div class="sb-head">
-                <span class="status-badge"><span class="swatch" style="background:${ci.col}"></span>${esc(ci[currentLang].toUpperCase())}${rawStatus(site, ci) ? ' · ' + esc(rawStatus(site, ci).slice(0, 60)) : ''}</span>
+                <span class="status-badge">${site.__cat === 'facility' ? ring(ci.col) : `<span class="swatch" style="background:${ci.col}"></span>`}${esc(ci[currentLang].toUpperCase())}${rawStatus(site, ci) ? ' · ' + esc(rawStatus(site, ci).slice(0, 60)) : ''}</span>
                 <h1 id="sb-title">${esc(site.Name || t('untitled'))}<span class="sb-uid">${esc(uidOf(site))}</span></h1>
                 <div class="sb-location">${esc(place)}${place && site.Type ? ' · ' : ''}${esc(site.Type || '')}${site.Subtype ? ', ' + esc(site.Subtype) : ''}</div>
             </div>
@@ -3396,8 +3412,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const firm = hasWorked.size;
             $('count-footprints').textContent = new Set(gj.features.map(f => f.properties.uid)).size;
             const note = $('footprint-note');
-            const en = `${firm} ${t2('fpfirm', 'en')}, ${gj.features.filter(f => !/^(allowed|planned)$/.test(f.properties.pcls)).length - firm} ${t2('fpngu', 'en')}`;
-            const no = `${firm} ${t2('fpfirm', 'no')}, ${gj.features.filter(f => !/^(allowed|planned)$/.test(f.properties.pcls)).length - firm} ${t2('fpngu', 'no')}`;
+            // The count beside it is sites with any outline; the note says what kinds there are.
+            const lines = gj.features.filter(f => !/^(allowed|planned)$/.test(f.properties.pcls)).length - firm;
+            const en = `sites with an outline: worked ground traced for ${firm}, and ${lines} plan, licence, register and property lines`;
+            const no = `anlegg med omriss: tolket driftsområde for ${firm}, og ${lines} plan-, konsesjons-, register- og eiendomsomriss`;
             note.setAttribute('data-en', en); note.setAttribute('data-no', no);
             note.textContent = currentLang === 'no' ? no : en;
             fpState = 2;
@@ -3713,20 +3731,20 @@ document.addEventListener('DOMContentLoaded', function() {
           present: s => !!capNow(s) },
         // The record's other fields. The first three show by default; the rest
         // are one tick away in the COLUMNS list, as in a spreadsheet.
-        { key: 'MassesAccepted', nophone: true, th: 'th_mat', w: 260, filter: true, text: s => s.MassesAccepted || '' },
+        { key: 'MassesAccepted', nophone: true, th: 'th_mat', w: 260, filter: true, fold: true, text: s => s.MassesAccepted || '' },
         { key: 'Area_m2', nophone: true, th: 'th_area', w: 160, num: true,
           text: s => { const a = areaOf(s); return a ? fmt(a.v) : ''; },
           html: s => { const a = areaOf(s); return a ? fmt(a.v) + ' <span class="nd">' + esc(pclsWord(a.cls)) + '</span>' : ''; },
           title: s => { const a = areaOf(s); return a ? fmt(a.v) + ' m² · ' + pclsWord(a.cls) : ''; },
           sort: s => { const a = areaOf(s); return a ? a.v : NaN; }, present: s => !!areaOf(s), nosum: true },
-        { key: 'PermitRef', nophone: true, th: 'th_plan', w: 220, text: s => s.PermitRef || '' },
-        { key: 'PermitAuthority', nophone: true, opt: true, th: 'th_auth', w: 220, filter: true, text: s => s.PermitAuthority || '' },
+        { key: 'PermitRef', nophone: true, th: 'th_plan', w: 220, fold: true, text: s => s.PermitRef || '' },
+        { key: 'PermitAuthority', nophone: true, opt: true, th: 'th_auth', w: 220, filter: true, fold: true, text: s => s.PermitAuthority || '' },
         { key: 'County', nophone: true, opt: true, th: 'th_county', w: 110, filter: true, text: s => s.County || '' },
         { key: 'ParentCompany', nophone: true, opt: true, th: 'th_parent', w: 180, filter: true, text: s => s.ParentCompany || '' },
         { key: 'OrgNr', nophone: true, opt: true, th: 'th_org', w: 120, text: s => s.OrgNr || '' },
         { key: 'Subtype', nophone: true, opt: true, th: 'th_sub', w: 180, filter: true, text: s => s.Subtype || '' },
-        { key: 'Contaminants', nophone: true, opt: true, th: 'th_cont', w: 240, text: s => s.Contaminants || '' },
-        { key: 'WaterRecipient', nophone: true, opt: true, th: 'th_water', w: 180, text: s => s.WaterRecipient || '' },
+        { key: 'Contaminants', nophone: true, opt: true, th: 'th_cont', w: 240, fold: true, text: s => s.Contaminants || '' },
+        { key: 'WaterRecipient', nophone: true, opt: true, th: 'th_water', w: 180, fold: true, text: s => s.WaterRecipient || '' },
         { key: 'StartYear', nophone: true, opt: true, th: 'th_start', w: 90, num: true, nosum: true,
           text: s => String(s.StartYear || '').replace(/\.0$/, ''), sort: s => qty(s.StartYear),
           html: s => srcLink(esc(String(s.StartYear || '').replace(/\.0$/, '')), srcOf(s, 'StartYear')) },
@@ -3797,7 +3815,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { key: '__what', th: 'th_twhat', w: 360, nophone: true, keep: true, text: d => terrainWhat(d)[0],
           html: d => { const w = terrainWhat(d); return esc(w[0]) + (w[1] ? ' <span class="nd">· ' + esc(w[1]) + '</span>' : ''); },
           title: d => terrainWhat(d).filter(Boolean).join(' · ') },
-        { key: '__type', th: 'th_ttype', w: 300, nophone: true, filter: true, keep: true, text: d => t('ty_' + d.ty),
+        { key: '__type', th: 'th_ttype', w: 300, nophone: true, filter: true, keep: true, fold: true, text: d => t('ty_' + d.ty),
           html: d => esc(t('ty_' + d.ty)) + ' <span class="nd">· ' + esc(t('fm_' + d.fm)) + '</span>',
           title: d => t('ty_' + d.ty) + ' · ' + t('fm_' + d.fm) },
         { key: 'dep', th: 'th_tdep', w: 140, pw: 84, num: true, keep: true, approx: '+', text: d => d.dep ? '+' + approx(d.dep) : '0',
@@ -4227,7 +4245,8 @@ document.addEventListener('DOMContentLoaded', function() {
             cols.forEach(c => {
                 const td = document.createElement('td');
                 td.dataset.key = c.key;
-                if (c.html) td.innerHTML = c.html(r); else td.textContent = c.text(r);
+                if (c.fold) { td.classList.add('fold'); td.innerHTML = '<div class="fd">' + (c.html ? c.html(r) : esc(c.text(r))) + '</div>'; }
+                else if (c.html) td.innerHTML = c.html(r); else td.textContent = c.text(r);
                 const tip = c.title ? c.title(r) : c.text(r);
                 if (tip && !c.bar) td.title = tip;
                 td.className = [c.num ? 'num' : '', c.cls || '', c.bar ? 'bar' : ''].join(' ').trim();
@@ -4855,14 +4874,21 @@ document.addEventListener('DOMContentLoaded', function() {
         peekSite = site;
         hideHover();
         setHot(site, true);
+        fillPeek(site);
+        const opening = deckSize === 'closed' && !phone();
+        if (opening) setDeckSize('half');
         markDeckSelection();
         focusFlows(uidOf(site));
-        fillPeek(site);
+        // after the table has opened, so the map is framed at its real size;
         // room on the right for the label: its width, its point and a margin
-        if (hasXY(site)) frameSite(site, null, 0, (peekCard.offsetWidth || 258) + 40); else updateStatus(t('nocoords'));
-        peekCard.hidden = false;
-        placePeek();
-        requestAnimationFrame(() => peekCard.classList.add('on'));
+        const go = () => {
+            if (peekSite !== site) return;
+            if (hasXY(site)) frameSite(site, null, 0, (peekCard.offsetWidth || 258) + 40); else updateStatus(t('nocoords'));
+            peekCard.hidden = false;
+            placePeek();
+            requestAnimationFrame(() => peekCard.classList.add('on'));
+        };
+        if (opening) setTimeout(go, 300); else go();
     }
     function fillPeek(site) {
         const uid = uidOf(site);
@@ -4874,7 +4900,7 @@ document.addEventListener('DOMContentLoaded', function() {
         else aerialShown = aerial(im, site, 240, 160);
         if (!imgs.length && !aerialShown) im.innerHTML = `<div class="no-images">${t('noimg')}</div>`;
         peekCard.querySelector('.cp').innerHTML =
-            `<span class="swatch" style="background:${colourOf(site)}"></span>${esc(site.Name || t('untitled'))}` +
+            (site.__cat === 'facility' ? ring(colourOf(site)) : `<span class="swatch" style="background:${colourOf(site)}"></span>`) + `${esc(site.Name || t('untitled'))}` +
             `<span>${esc(uid)}${aerialShown ? ' · ' + t('aerialshort') : ''}</span>`;
         $('peek-open').textContent = t('peek_open');
         peekCard.setAttribute('aria-label', site.Name || uid);
@@ -5064,7 +5090,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else aerialShown = aerial(im, site, 240, 160);
             if (!imgs.length && !aerialShown) im.innerHTML = `<div class="no-images">${t('noimg')}</div>`;
             hoverCard.querySelector('.cp').innerHTML =
-                `<span class="swatch" style="background:${colourOf(site)}"></span>${esc(site.Name || t('untitled'))}` +
+                (site.__cat === 'facility' ? ring(colourOf(site)) : `<span class="swatch" style="background:${colourOf(site)}"></span>`) + `${esc(site.Name || t('untitled'))}` +
                 `<span>${esc(uid)}${aerialShown ? ' · ' + t('aerialshort') : ''}</span>`;
             hoverCard.dataset.img = imgs.length || aerialShown ? '1' : '';
         }
@@ -5235,7 +5261,8 @@ document.addEventListener('DOMContentLoaded', function() {
             h += `<div class="kr" style="font-weight:500;letter-spacing:.06em;font-size:10px">${t(cat === 'facility' ? 'recep_key' : 'projects')}</div>`;
             CLASSES[cat].forEach(ci => {
                 const n = allSites.filter(s => s.__cat === cat && s.__cls === ci.k).length;
-                h += `<div class="kr"><span class="swatch" style="background:${ci.col}"></span><span>${esc(ci[currentLang])}</span><span class="ct">${n}</span></div>`;
+                if (!n) return;   // an empty class has nothing to explain
+                h += `<div class="kr">${cat === 'facility' ? '<span class="kring">' + ring(ci.col) + '</span>' : `<span class="swatch" style="background:${ci.col}"></span>`}<span>${esc(ci[currentLang])}</span><span class="ct">${n}</span></div>`;
             });
         });
         h += '<div class="key-sep"></div>' +
