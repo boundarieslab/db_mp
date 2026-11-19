@@ -235,7 +235,8 @@
         });
 
         sim = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(function (d) { return d.id; }).distance(function (l) { return l.same ? 26 : 40 + l.target.r; }).strength(0.5))
+            .force("link", d3.forceLink(links).id(function (d) { return d.id; }).distance(function (l) { return l.source.home !== l.target.home ? 220 : l.same ? 26 : 40 + l.target.r; })
+                .strength(function (l) { return l.source.home !== l.target.home ? 0.012 : 0.5; }))
             .force("charge", d3.forceManyBody().strength(function (d) { return -70 - d.sites * 8; }).distanceMax(360))
             // named nodes keep room for their name
             .force("collide", d3.forceCollide().radius(function (d) { return Math.max(d.r + 9, (d.big || d.uid ? d.tw / 2 + 8 : d.r + 9)); }).strength(0.85))
@@ -263,10 +264,10 @@
                 for (var i = 0; i < C.length; i++) for (var j = i + 1; j < C.length; j++) {
                     var a = C[i], b = C[j], dx = b.x - a.x, dy = b.y - a.y, dist = Math.hypot(dx, dy) || 1, over = a.r + b.r - dist;
                     if (over <= 0) continue;
-                    var k = over * 0.5 * alpha * 0.9, ux = dx / dist, uy = dy / dist;
+                    var k = over * (0.04 + alpha * 0.5), ux = dx / dist, uy = dy / dist;
                     var wa = b.m.length / (a.m.length + b.m.length), wb = 1 - wa;
-                    a.m.forEach(function (d) { d.vx -= ux * k * wa * 2; d.vy -= uy * k * wa * 2; });
-                    b.m.forEach(function (d) { d.vx += ux * k * wb * 2; d.vy += uy * k * wb * 2; });
+                    a.m.forEach(function (d) { d.vx -= ux * k * wa; d.vy -= uy * k * wa; });
+                    b.m.forEach(function (d) { d.vx += ux * k * wb; d.vy += uy * k * wb; });
                 }
             }
             return f;
