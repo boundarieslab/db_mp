@@ -92,12 +92,18 @@ const FACILITIES_CSV = SHEET + '?output=csv';
 const PROJECTS_CSV = SHEET + '?gid=529338597&single=true&output=csv';
 const DOCUMENTS_CSV = SHEET + '?gid=187064250&single=true&output=csv';
 const KOMMUNER = 'data/kommuner.geojson';
+// Pictures made for documents that have none in the sheet: the ownership diagrams,
+// the zoning plans drawn as their outline, and the first page of the PDFs (tools/doc_thumbs.py).
+const THUMBS = 'data/doc_thumbs.json';
 const MAP_LINK = 'https://dirtybusiness.no/#site=';
 
 // The classes of document, in the order they are listed.
 const CLASS_ORDER = ['Photograph', 'Aerial photograph', 'Newspaper article', 'Permit', 'Permit application', 'Mining licence', 'Inspection report',
   'Zoning plan', 'Register entry', 'Company record', 'Public record', 'Ownership diagram', 'Terrain change', 'Report', 'Government document',
   'Government page', 'Public notice', 'Municipal page', 'Company page'];
+// Classes left out of the index: register and web entries with nothing to look at.
+const HIDDEN = new Set(['Terrain change', 'Company page', 'Company record', 'Register entry', 'Public record',
+  'Municipal page', 'Government page', 'Public notice', 'Mining licence']);
 // A document without a picture is drawn as one line icon of its kind.
 const ICON = {
   photo: 'M4 7h24v18H4z M4 21l7-7 6 6 4-4 7 7 M20 11h3v3h-3z',
@@ -152,7 +158,7 @@ const NETWORKS = [
 const $ = id => document.getElementById(id);
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ESC[c]);
-const safeUrl = v => { const u = String(v == null ? '' : v).trim(); return /^(https?:\/\/|\/|\.\/|data\/|#)/i.test(u) ? u : ''; };
+const safeUrl = v => { const u = String(v == null ? '' : v).trim(); return /^(https?:\/\/|\/|\.\/|data\/|assets\/|#)/i.test(u) ? u : ''; };
 const num = v => parseFloat(String(v == null ? '' : v).replace(',', '.'));
 const isTrue = v => /^(true|yes|1)$/i.test(String(v == null ? '' : v).trim());
 const uidOf = s => (s && (s.UID || s.fid)) || '';
@@ -181,7 +187,7 @@ const inGeom = (x, y, g) => (g.type === 'Polygon' ? [g.coordinates] : g.type ===
   .some(p => inRing(x, y, p[0]) && !p.slice(1).some(h => inRing(x, y, h)));
 const kByName = n => KOM.find(k => coll.compare(k.n, String(n || '').trim()) === 0);
 
-function prepare(f, p, d, kom) {
+function prepare(f, p, d, kom, th) {
   const tag = cat => r => { r.__cat = cat; return r; };
   SITES = [...f.filter(r => uidOf(r) && isTrue(r.Published)).map(tag('facility')), ...p.filter(r => uidOf(r) && isTrue(r.Published)).map(tag('project'))];
   BYUID = {}; SITES.forEach(s => { BYUID[uidOf(s)] = s; });
@@ -196,7 +202,8 @@ function prepare(f, p, d, kom) {
     s.__ty = String(s.Type || '').trim();
   });
   // Documents: published, and tied to a published site or to none.
-  DOCS = d.filter(r => r.DocID && isTrue(r.Published)).map(r => {
+  th = th || {};
+  DOCS = d.filter(r => r.DocID && isTrue(r.Published) && !HIDDEN.has(String(r.Class || '').trim())).map(r => {
     const named = String(r.Sites || '').split(/[;,]/).map(x => x.trim()).filter(Boolean);
     r.__sites = named.filter(u => BYUID[u]).map(u => BYUID[u]);
     if (named.length && !r.__sites.length) return null;
@@ -205,7 +212,7 @@ function prepare(f, p, d, kom) {
     r.__dec = r.__year ? Math.floor(r.__year / 10) * 10 + 's' : '';
     r.__acc = String(r.Access || 'open').trim().toLowerCase() || 'open';
     const img = safeUrl(r.Image);
-    r.__img = img && r.__acc === 'open' ? img : '';
+    r.__img = r.__acc === 'open' ? (img || safeUrl(th[r.DocID])) : '';
     const ks = new Set(r.__sites.map(s => s.__kn).filter(Boolean));
     String(r.Kommune || '').split(/[;,/]/).forEach(n => { const k = kByName(n); if (k) ks.add(k.n); else if (n.trim() && !r.__sites.length) ks.add(n.trim()); });
     r.__k = [...ks];
@@ -392,9 +399,9 @@ document.addEventListener('error', e => {
 $('a-q').addEventListener('input', e => { state.q = e.target.value; search(); writeHash(); });
 window.addEventListener('hashchange', () => { const o = readHash(); if (['by', 'g', 'doc', 'q'].some(k => o[k] !== state[k])) { state = o; $('a-q').value = state.q; render(); } });
 
-Promise.all([parseCsv(FACILITIES_CSV), parseCsv(PROJECTS_CSV), parseCsv(DOCUMENTS_CSV), getJson(KOMMUNER)])
-  .then(([f, p, d, kom]) => {
-    prepare(f.data || [], p.data || [], d.data || [], kom);
+Promise.all([parseCsv(FACILITIES_CSV), parseCsv(PROJECTS_CSV), parseCsv(DOCUMENTS_CSV), getJson(KOMMUNER), getJson(THUMBS)])
+  .then(([f, p, d, kom, th]) => {
+    prepare(f.data || [], p.data || [], d.data || [], kom, th);
     if (!DOCS.length) throw new Error('empty');
     state = readHash();
     $('a-q').value = state.q;
