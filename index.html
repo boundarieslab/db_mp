@@ -323,7 +323,7 @@ button,input,select{font:inherit;color:inherit}
 .pin::after{top:6px;left:1px;height:.5px;width:10px}
 
 /* ---------- site window, top right ---------- */
-#sidebar{position:absolute;right:10px;top:calc(var(--frame-top) + 10px);width:400px;background:#fff;
+#sidebar{position:absolute;right:10px;top:calc(var(--frame-top) + 10px);bottom:10px;width:400px;background:#fff;
   border:.5px solid var(--frame);z-index:24;display:flex;flex-direction:column;
   max-height:calc(100% - var(--frame-top) - 20px);
   transition:opacity .2s ease-out,transform .22s var(--ease),visibility 0s .22s}
@@ -340,6 +340,15 @@ button,input,select{font:inherit;color:inherit}
 .share-btn{background:#fff;border:.5px solid var(--frame);cursor:pointer;font-size:9px;letter-spacing:.1em;padding:1px 5px;font-weight:500}
 .share-btn:hover{background:var(--sel)}
 .sb-scroll-area{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden!important}
+/* Scroll bars: a thin grey line, no arrows, no track, darker under the pointer.
+   For the record window, the panes under the tool bar and the table. */
+.sb-scroll-area::-webkit-scrollbar,.bar-scroll::-webkit-scrollbar,#deck .deck-scroll::-webkit-scrollbar{width:5px;height:5px}
+.sb-scroll-area::-webkit-scrollbar-track,.bar-scroll::-webkit-scrollbar-track,#deck .deck-scroll::-webkit-scrollbar-track{background:transparent}
+.sb-scroll-area::-webkit-scrollbar-thumb,.bar-scroll::-webkit-scrollbar-thumb,#deck .deck-scroll::-webkit-scrollbar-thumb{background:#cfcfcf;border-radius:0}
+.sb-scroll-area::-webkit-scrollbar-thumb:hover,.bar-scroll::-webkit-scrollbar-thumb:hover,#deck .deck-scroll::-webkit-scrollbar-thumb:hover{background:#8a8a8a}
+.sb-scroll-area::-webkit-scrollbar-button,.bar-scroll::-webkit-scrollbar-button,#deck .deck-scroll::-webkit-scrollbar-button{display:none;width:0;height:0}
+.sb-scroll-area::-webkit-scrollbar-corner,.bar-scroll::-webkit-scrollbar-corner,#deck .deck-scroll::-webkit-scrollbar-corner{background:transparent}
+@supports not selector(::-webkit-scrollbar){.sb-scroll-area,.bar-scroll,#deck .deck-scroll{scrollbar-width:thin;scrollbar-color:#cfcfcf transparent}}
 /* The picture band: the whole facility with some ground around it. */
 .sb-media{position:relative;height:196px;background:#f3f3f3;border-bottom:.5px solid var(--hair);overflow:hidden}
 .slideshow-slide{position:absolute;inset:0;background:#f3f3f3 center/contain no-repeat;opacity:0;transition:opacity .25s}
@@ -575,10 +584,17 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 #hover-card .cp .swatch{align-self:center}
 #hover-card .cp span{color:var(--sub);font-size:9px;font-family:PlexMono,monospace;margin-left:auto;white-space:nowrap}
 /* the pinned card: the hover card held at the site, with the way into the record */
-#peek-card{position:absolute;z-index:22;background:#fff;border:.5px solid var(--frame);padding:4px;width:250px;
+#peek-card{position:absolute;z-index:22;background:#fff;border:.5px solid var(--frame);padding:4px;width:250px;--tx:50%;
   opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s var(--ease)}
 #peek-card.on{opacity:1;transform:none}
 #peek-card[hidden]{display:none}
+/* the point: a small triangle under the label, on the symbol; above it when the label hangs below */
+#peek-card::before,#peek-card::after{content:"";position:absolute;left:var(--tx);width:0;height:0;border:solid transparent;pointer-events:none}
+#peek-card::before{top:100%;margin-left:-7px;border-width:7px 7px 0;border-top-color:var(--frame)}
+#peek-card::after{top:100%;margin-left:-6px;margin-top:-.5px;border-width:6px 6px 0;border-top-color:#fff}
+#peek-card.below::before{top:auto;bottom:100%;border-width:0 7px 7px;border-color:transparent transparent var(--frame)}
+#peek-card.below::after{top:auto;bottom:100%;margin-top:0;margin-bottom:-.5px;border-width:0 6px 6px;border-color:transparent transparent #fff}
+#peek-card.away{visibility:hidden}
 #peek-card .im{width:100%;height:160px;background:#f3f3f3 center/cover no-repeat;border:.5px solid var(--rule);position:relative;overflow:hidden}
 #peek-card .cp{font-size:10px;padding:4px 1px 1px;display:flex;gap:6px;align-items:baseline}
 #peek-card .cp .swatch{align-self:center}
@@ -1782,11 +1798,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // small to read, so clicking a marker you are already looking at does
     // not throw the view away — and clicking a six-pixel dot at national
     // zoom does take you to it.
-    function frameSite(site, mode) {
+    // lift: pixels the site sits below the middle, to leave room for its label above
+    function frameSite(site, mode, lift) {
         const b = siteBox(site);
         if (!b) { updateStatus(t('nocoords')); return; }
         if (mode === 'auto' && !worthFraming(b)) return;
-        const opts = { padding: centredPadding(), maxZoom: 17.5, duration: dur(1100), essential: true };
+        const pad = centredPadding();
+        if (lift) {
+            const sum = pad.top + pad.bottom;
+            pad.bottom = Math.max(20, pad.bottom - lift);
+            pad.top = sum - pad.bottom;
+        }
+        const opts = { padding: pad, maxZoom: 17.5, duration: dur(1100), essential: true };
         if (terrainBox && terrainBox.checked) {
             // In 3D, keep the tilt and turn you chose; only move the camera.
             const cam = map.cameraForBounds(b, { padding: opts.padding, maxZoom: opts.maxZoom,
@@ -4540,8 +4563,8 @@ document.addEventListener('DOMContentLoaded', function() {
         setHot(site, true);
         markDeckSelection();
         focusFlows(uidOf(site));
-        if (hasXY(site)) frameSite(site); else updateStatus(t('nocoords'));
         fillPeek(site);
+        if (hasXY(site)) frameSite(site, null, 120); else updateStatus(t('nocoords'));
         peekCard.hidden = false;
         placePeek();
         requestAnimationFrame(() => peekCard.classList.add('on'));
@@ -4561,21 +4584,26 @@ document.addEventListener('DOMContentLoaded', function() {
         $('peek-open').textContent = t('peek_open');
         peekCard.setAttribute('aria-label', site.Name || uid);
     }
-    // Beside the site, on the side with room, and with it while the map moves.
+    // A label on the symbol: above it, its point on the symbol, and with it while the
+    // map moves. Below the symbol only when there is no room above.
+    const PEEK_GAP = 14;                          // from the symbol's centre to the tip of the point
     function placePeek() {
         if (!peekSite || peekCard.hidden) return;
         const box = map.getContainer(), W = box.clientWidth, H = box.clientHeight;
-        const w = peekCard.offsetWidth || 250, h = peekCard.offsetHeight || 220, GAP = 22, pad = 10;
-        const b = siteBox(peekSite);
-        if (!b) { peekCard.style.left = pad + 'px'; peekCard.style.top = (H - h - pad) + 'px'; return; }
-        const east = map.project([b[2], (b[1] + b[3]) / 2]), west = map.project([b[0], (b[1] + b[3]) / 2]);
-        const cy = (map.project([b[0], b[3]]).y + map.project([b[0], b[1]]).y) / 2;
-        let left = east.x + GAP;
-        if (left + w > W - pad) left = west.x - w - GAP;
-        left = Math.max(pad, Math.min(left, W - w - pad));
+        const w = peekCard.offsetWidth || 250, h = peekCard.offsetHeight || 220, pad = 8, TIP = 7;
+        const lat = num(peekSite.Latitude), lon = num(peekSite.Longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) { peekCard.classList.add('away'); return; }
+        const q = map.project([lon, lat]);
+        const seen = q.x >= 0 && q.x <= W && q.y >= 0 && q.y <= H;
+        peekCard.classList.toggle('away', !seen);
+        if (!seen) return;
         const tb = document.querySelector('#bar .toolbar');
-        const top0 = tb ? tb.getBoundingClientRect().bottom - box.getBoundingClientRect().top + 8 : pad;
-        const top = Math.max(top0, Math.min(Math.round(cy - h / 2), H - h - pad));
+        const top0 = tb ? tb.getBoundingClientRect().bottom - box.getBoundingClientRect().top + 6 : pad;
+        let top = q.y - PEEK_GAP - TIP - h, below = false;
+        if (top < top0) { top = q.y + PEEK_GAP + TIP; below = true; }
+        let left = Math.max(pad, Math.min(q.x - w / 2, W - w - pad));
+        peekCard.classList.toggle('below', below);
+        peekCard.style.setProperty('--tx', Math.max(12, Math.min(w - 12, q.x - left)) + 'px');
         peekCard.style.left = Math.round(left) + 'px';
         peekCard.style.top = Math.round(top) + 'px';
     }

@@ -250,11 +250,11 @@
     // ── generated rules: variables, typefaces, single elements ──────────
     const POS = /^(left|top|right|bottom)$/;
     // Some measures are the page's to keep, whatever a saved rule says: the record
-    // window ends above the table (its height may be set, never past that), and its
+    // window runs from under the header to just above the table, rising and falling with it, and its
     // picture and graph run the full width of the window. Pinned in pixels they
     // overran the table, left the picture short and pushed a sideways scrollbar in.
     const KEEP = [
-        [/(^|\s)#sidebar$/, ['max-height', 'bottom']],
+        [/(^|\s)#sidebar$/, ['height', 'max-height', 'bottom']],
         [/sb-scroll-area$/, ['height', 'max-height', 'width', 'max-width']],
         [/#sb-minimap$/, ['width', 'max-width', 'left', 'right']],
         [/#sb-minimap\s.*aerial$/, ['left', 'right', 'top', 'bottom', 'width', 'height']],
