@@ -81,8 +81,10 @@ def patch(s):
 
     function tick() {""", 1)
     # a rebuild (window resize) re-marks the links
+    # only a change of width starts the layout again; the record window
+    # changing its height as it loads used to restart it before it settled
     s = s.replace("""        _rt = setTimeout(function(){ frame = 0; init(); }, 250);""",
-                  """        _rt = setTimeout(function(){ frame = 0; init(); markLinks(); }, 250);""")
+                  """        _rt = setTimeout(function(){ if (Math.abs((el.offsetWidth || 0) - (W || 0)) < 2) return; frame = 0; init(); markLinks(); }, 250);""")
     return s
 
 if __name__ == '__main__':
