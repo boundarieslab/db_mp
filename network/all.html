@@ -332,8 +332,9 @@
         var line = d3.line().curve(d3.curveCatmullRomClosed.alpha(1));
         hullG.selectAll("path").data(data, function (d) { return d.k; }).join("path").attr("class", "hull").attr("d", function (d) { return line(d.hull); });
         hullG.selectAll("text").data(data, function (d) { return d.k; }).join("text").attr("class", "hull-label")
-            .attr("x", function (d) { return d3.min(d.hull, function (p) { return p[0]; }) + 4; })
-            .attr("y", function (d) { return d3.min(d.hull, function (p) { return p[1]; }) + 14; }).attr("x", function (d) { return d3.min(d.hull, function (p) { return p[0]; }) + 16; })
+            .attr("text-anchor", "middle")
+            .attr("x", function (d) { return d3.mean(d.hull, function (p) { return p[0]; }); })
+            .attr("y", function (d) { return d3.min(d.hull, function (p) { return p[1]; }) + 16; })
             .text(function (d) { return shortName(islandName(d.k)); });
     }
 
