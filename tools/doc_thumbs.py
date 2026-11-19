@@ -36,8 +36,13 @@ data/doc_authors.json; for an application, the applicant after "Søker:" or
 the sheet. The index shows it under the title when the sheet's Creator column
 is empty; a Creator in the sheet always wins.
 
-Then commit assets/docs/, data/doc_thumbs.json, data/doc_redact.csv and
-data/doc_authors.json and push.
+A link that no longer works is looked up in the Internet Archive; when a copy
+is there, the picture is made from it and the index opens that copy
+(data/doc_links.json). When there is none, the index shows the document
+without a link until the Link column in the sheet is corrected.
+
+Then commit assets/docs/ and the data/doc_*.json and data/doc_redact.csv
+files, and push.
 """
 import re
 import csv
@@ -46,6 +51,7 @@ import json
 import os
 import sys
 import time
+import urllib.parse
 import urllib.request
 
 try:
@@ -63,6 +69,8 @@ OUT = os.path.join(ROOT, 'assets', 'docs')
 LIST = os.path.join(ROOT, 'data', 'doc_thumbs.json')
 REDACT = os.path.join(ROOT, 'data', 'doc_redact.csv')
 AUTHORS = os.path.join(ROOT, 'data', 'doc_authors.json')
+# Documents whose own address is dead: the copy in the Internet Archive, or '' when there is none.
+LINKS = os.path.join(ROOT, 'data', 'doc_links.json')
 SHEET = ('https://docs.google.com/spreadsheets/d/e/2PACX-1vS1KaVHKy2zLYGg4Urbhm2zjZkmuATNvIqJOxuECuU0wdickEExV-'
          '8G0vL1F7xG1WKn_ADmwwfSARan/pub?gid=187064250&single=true&output=csv')
 CLASSES = {'Permit', 'Permit application', 'Mining licence', 'Inspection report', 'Report', 'Government document'}
@@ -264,6 +272,36 @@ def first_page(pdf_bytes, did, rules, cls=''):
     return pix.tobytes('jpg', jpg_quality=72), (covered, scanned, issuer_of(page, cls))
 
 
+def archived(url):
+    """The newest copy of a document in the Internet Archive: (bytes, address to open it) or (None, '')."""
+    try:
+        j = json.loads(get('https://archive.org/wayback/available?url=' + urllib.parse.quote(url, safe=''), 30))
+        snap = (j.get('archived_snapshots') or {}).get('closest') or {}
+        if snap.get('available'):
+            ts = snap['timestamp']
+            return get(f'https://web.archive.org/web/{ts}id_/{url}'), f'https://web.archive.org/web/{ts}/{url}'
+    except Exception:  # noqa: BLE001
+        pass
+    return None, ''
+
+
+def fetch(url):
+    """The document, from its own address or, if that is dead, from the Internet Archive.
+    Returns (bytes, address to show in the index: '' for its own, the archive copy, or None when lost)."""
+    try:
+        return get(url), ''
+    except Exception as first:  # noqa: BLE001
+        if '://prep.' in url:  # a staging address that went private: try the public one
+            try:
+                return get(url.replace('://prep.', '://www.')), url.replace('://prep.', '://www.')
+            except Exception:  # noqa: BLE001
+                pass
+        data, link = archived(url)
+        if data:
+            return data, link
+        raise first
+
+
 def main():
     again = '--again' in sys.argv
     os.makedirs(OUT, exist_ok=True)
@@ -276,6 +314,10 @@ def main():
     if os.path.exists(AUTHORS):
         with open(AUTHORS, encoding='utf-8') as f:
             authors = json.load(f)
+    links = {}
+    if os.path.exists(LINKS):
+        with open(LINKS, encoding='utf-8') as f:
+            links = json.load(f)
     rows = list(csv.DictReader(io.StringIO(get(SHEET).decode('utf-8'))))
     todo = [r for r in rows
             if r.get('Class') in CLASSES and str(r.get('Published', '')).strip().upper() == 'TRUE'
@@ -289,7 +331,15 @@ def main():
             thumbs[did] = 'assets/docs/' + did + '.jpg'
             continue
         try:
-            data = get(r['Link'].strip())
+            try:
+                data, moved = fetch(r['Link'].strip())
+            except Exception:
+                links[did] = ''  # dead and not archived: the index shows no link
+                raise
+            if moved:
+                links[did] = moved
+            else:
+                links.pop(did, None)
             if not data.lstrip()[:5].startswith(b'%PDF'):
                 skipped += 1
                 print(f'[{i}/{len(todo)}] {did}: not a PDF, left without a picture')
@@ -305,13 +355,17 @@ def main():
                 f.write(jpg)
             thumbs[did] = 'assets/docs/' + did + '.jpg'
             made += 1
-            print(f'[{i}/{len(todo)}] {did}: done' + (f', {covered} text(s) blacked out' if covered else '')
+            print(f'[{i}/{len(todo)}] {did}: done' + (' from the Internet Archive' if 'web.archive.org' in moved else
+                                                        ' from the public address' if moved else '')
+                  + (f', {covered} text(s) blacked out' if covered else '')
                   + (', SCANNED: look at it yourself' if scanned else ''))
         except Exception as e:  # one broken link should not stop the rest
             failed += 1
-            print(f'[{i}/{len(todo)}] {did}: failed ({e})')
+            print(f'[{i}/{len(todo)}] {did}: failed ({e}), not in the Internet Archive either')
         time.sleep(0.5)
     write_rules(rules)
+    with open(LINKS, 'w', encoding='utf-8') as f:
+        json.dump(dict(sorted(links.items())), f, ensure_ascii=False, indent=0)
     with open(AUTHORS, 'w', encoding='utf-8') as f:
         json.dump(dict(sorted(authors.items())), f, ensure_ascii=False, indent=0)
     with open(LIST, 'w', encoding='utf-8') as f:
