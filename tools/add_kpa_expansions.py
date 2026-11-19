@@ -5,6 +5,10 @@ data/facility_polygons.geojson with tools/make_published_polygons.py.
 
     python tools/add_kpa_expansions.py            # fetch, add, rebuild
     python tools/add_kpa_expansions.py --dry-run  # fetch and report only
+    python tools/add_kpa_expansions.py --from-file kpa_outlines.geojson --published UID,UID,...
+        # no network: the areas from a GeoJSON already fetched (WGS84, properties
+        # uid, objid, layer, kommunenummer, plan, arealformal, arealbruksstatus,
+        # omradenavn, beskrivelse, area_m2) and the published sites as given
 
 Each area is one feature of the national plan register (NAP, DiBK), layer
 kparealformalomrade (kdparealformalomrade where marked), with arealbruksstatus 2
@@ -124,29 +128,51 @@ def published_uids():
     rows = list(csv.DictReader(io.StringIO(get(SHEET).decode("utf-8"))))
     return {r["UID"] for r in rows if r.get("Published", "").strip().upper() == "TRUE"}
 
+def arg(name):
+    return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else None
+
+def from_file(path):
+    """objid -> (feature in the fetch format, layer), geometry already in WGS84."""
+    out = {}
+    for f in json.load(open(path, encoding="utf-8"))["features"]:
+        p = f["properties"]
+        q = {"objid": p["objid"], "arealplanId.kommunenummer": p["kommunenummer"],
+             "arealplanId.planidentifikasjon": p["plan"], "områdenavn": p.get("omradenavn"),
+             "beskrivelse": p.get("beskrivelse"), "arealformål": p["arealformal"],
+             "arealbruksstatus": p["arealbruksstatus"], "_area": p["area_m2"]}
+        out[str(p["objid"])] = ({"properties": q, "geometry": f["geometry"]}, p["layer"])
+    return out
+
 def main():
     dry = "--dry-run" in sys.argv
     doc = json.load(open(METHOD, encoding="utf-8"))
     have = {f["properties"]["pid"] for f in doc["features"]}
-    pub = published_uids()
+    known = {f["properties"]["uid"]: f["properties"]["n"] for f in doc["features"]}   # keep a site's own name
+    cache = from_file(arg("--from-file")) if arg("--from-file") else None
+    pub = set(arg("--published").split(",")) if arg("--published") is not None else published_uids()
     added, missing = [], []
     for uid, (name, spec) in AREAS.items():
         for n, item in enumerate(spec.split(","), 1):
             objid, x, y = item.split(); pid = "%s_expansion_kpa_%s" % (uid, objid.rstrip("d"))
             if pid in have:
                 continue
-            f, layer = fetch(objid, int(x), int(y))
+            if cache is not None:
+                f, layer = cache.get(objid.rstrip("d"), (None, None))
+            else:
+                f, layer = fetch(objid, int(x), int(y))
             if f is None:
                 missing.append(pid); continue
             p = f["properties"]
-            g = transform(TO_DEG, shape(f["geometry"]))
-            area = round(shape(f["geometry"]).area)
+            if cache is not None:   # already WGS84, area measured at fetch time
+                g = shape(f["geometry"]); area = round(p["_area"])
+            else:
+                g = transform(TO_DEG, shape(f["geometry"])); area = round(shape(f["geometry"]).area)
             what = " ".join(v for v in (p.get("områdenavn") or "", p.get("beskrivelse") or "") if v).strip()
             note = "KPA %s/%s %s (arealformål %s, arealbruksstatus %s; kommuneplan sweep 2026-11-19)" % (
                 p.get("arealplanId.kommunenummer"), p.get("arealplanId.planidentifikasjon"), what, p.get("arealformål"),
                 p.get("arealbruksstatus"))
             added.append({"type": "Feature", "properties": {
-                "uid": uid, "pid": pid, "n": name, "src": "NAP kommuneplan (%s)" % layer, "a": area, "firm": 0,
+                "uid": uid, "pid": pid, "n": known.get(uid, name), "src": "NAP kommuneplan (%s)" % layer, "a": area, "firm": 0,
                 "pcls": "expansion", "note": " ".join(note.split()), "shared": "", "stage": "KPA", "conf": "",
                 "publish": 1 if uid in pub else 0}, "geometry": {"type": g.geom_type, "coordinates": rnd(mapping(g)["coordinates"])}})
     print(len(added), "areas fetched;", sum(f["properties"]["publish"] for f in added), "on published sites;",
