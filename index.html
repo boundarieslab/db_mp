@@ -3297,6 +3297,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Marker size at zoom 6 and 15 (set 20 Nov at 1.15× the earlier 0.40 / 0.66).
     const SYM_SIZE_AT = [0.46, 0.76];
     const SYM_SIZE = ['interpolate', ['linear'], ['zoom'], 6, SYM_SIZE_AT[0], 15, SYM_SIZE_AT[1]];
+    const SYM_HOT = 1.35;                   // the hovered marker, against the others
 
     let fpData = null, fpState = 0, sitesReady = false;
     let pgData = null;
@@ -3406,16 +3407,24 @@ document.addEventListener('DOMContentLoaded', function() {
             filter: F_PAPER,
             paint: { 'line-color': PAPER_COL, 'line-width': ['case', HOVER, 1.5, 1] } }, before);
 
-        // Hover is a ring, not a glow: it appears only under the marker the
-        // pointer is on, and has no radius at all otherwise.
+        // Hover makes the marker itself larger (site-sym-hot, below); this
+        // layer stays as the invisible hit area it always was, with no ring.
         map.addLayer({ id: 'site-hot', type: 'circle', source: 'sites',
             paint: { 'circle-color': 'rgba(0,0,0,0)',
                      'circle-radius': ['case', HOVER, 13, 0],
                      'circle-stroke-color': '#111',
-                     'circle-stroke-width': ['case', HOVER, 1, 0] } }, before);
+                     'circle-stroke-width': 0 } }, before);
         map.addLayer({ id: 'site-sym', type: 'symbol', source: 'sites',
             layout: { 'icon-image': ['get', 'sym'],
                       'icon-size': SYM_SIZE,
+                      'icon-allow-overlap': true, 'icon-ignore-placement': true,
+                      'icon-anchor': 'center' } }, before);
+        // The hovered site, drawn again over the others at 1.35 times the size.
+        // Layout sizes cannot read feature-state, so a filter picks the site.
+        map.addLayer({ id: 'site-sym-hot', type: 'symbol', source: 'sites',
+            filter: ['==', ['get', 'uid'], ''],
+            layout: { 'icon-image': ['get', 'sym'],
+                      'icon-size': ['interpolate', ['linear'], ['zoom'], 6, SYM_SIZE_AT[0] * SYM_HOT, 15, SYM_SIZE_AT[1] * SYM_HOT],
                       'icon-allow-overlap': true, 'icon-ignore-placement': true,
                       'icon-anchor': 'center' } }, before);
 
@@ -3573,6 +3582,7 @@ document.addEventListener('DOMContentLoaded', function() {
             map.setFilter('fp-exp', ['all', F_EXP, f]);
             FP_LAYERS.forEach(id => setVis(id, fpOn));
             PT_LAYERS.forEach(id => map.setFilter(id, f));
+            if (map.getLayer('site-sym-hot')) map.setFilter('site-sym-hot', ['all', f, ['==', ['get', 'uid'], hotUid || '']]);
         }
         if (currentSite && !passes(currentSite)) setHot(null);
         updateStatus();
@@ -5099,6 +5109,7 @@ document.addEventListener('DOMContentLoaded', function() {
                           map.setFeatureState({ source: 'sites', id: hotUid }, { hot: false }); }
             if (want)   { map.setFeatureState({ source: 'fp', id: want }, { hot: true });
                           map.setFeatureState({ source: 'sites', id: want }, { hot: true }); }
+            if (map.getLayer('site-sym-hot')) map.setFilter('site-sym-hot', ['all', mapFilter(), ['==', ['get', 'uid'], want || '']]);
         }
         deckBody.querySelectorAll('tr.hot').forEach(r => r.classList.remove('hot'));
         if (uid) { const r = deckBody.querySelector(`tr[data-uid="${CSS.escape(uid)}"]`); if (r) r.classList.add('hot'); }
@@ -6781,6 +6792,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (map.getSource('fp')) map.getSource('fp').setData(fpFeatures());
             if (map.getLayer('site-sym')) map.setLayoutProperty('site-sym', 'icon-size',
                 ['interpolate', ['linear'], ['zoom'], 6, SYM_SIZE_AT[0] * size, 15, SYM_SIZE_AT[1] * size]);
+            if (map.getLayer('site-sym-hot')) map.setLayoutProperty('site-sym-hot', 'icon-size',
+                ['interpolate', ['linear'], ['zoom'], 6, SYM_SIZE_AT[0] * size * SYM_HOT, 15, SYM_SIZE_AT[1] * size * SYM_HOT]);
             try { renderDeck(); } catch (e) {} try { renderKey(); } catch (e) {} try { renderChips(); } catch (e) {}
         };
         const row = (label, input) => { const r = document.createElement('label');
