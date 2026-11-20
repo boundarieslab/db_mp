@@ -1,4 +1,4 @@
-"""Add plan-area outlines for the construction-project rows of 20 Nov 2026 (VI_033, VI_035, VI_036, VI_037, VI_038) to data/project_geometries.geojson.
+"""Add plan-area outlines for the construction-project rows of 20 Nov 2026 (VI_033, VI_035, VI_036, VI_037, VI_038, VI_040) to data/project_geometries.geojson.
 
 Input, saved on the day in tools/project_outlines_2026-11-20.json: the plan area (RpOmråde) of each
 project's regulation plan, read from the national plan register (Nasjonal arealplanbase, DiBK,
@@ -15,7 +15,7 @@ exec(_src[_src.index('def dec('):_src.index('NAMES =')])   # the same decoding, 
 
 NAMES = {'VI_033': 'Holmenga Nord: uttak av fjell for næringsareal', 'VI_035': 'Holmestrand næringspark (Bentsrud)',
          'VI_036': 'E134 Saggrenda–Elgsjø', 'VI_037': 'Vestfoldbanen: Nykirke–Barkåker (dobbeltspor)',
-         'VI_038': 'E18 Retvet–Vinterbro'}
+         'VI_038': 'E18 Retvet–Vinterbro', 'VI_040': 'Rema Distribunal Østlandet'}
 NOTES = {'VI_033': 'The plan Holmenga nord, del av gbnr. 97/1; the same ground as facility AK_EI_007.',
          'VI_035': 'The plan crosses the kommune border: the Holmestrand part and the Tønsberg part are drawn together.',
          'VI_036': 'Two plans for one road: Kongsberg 522R and Notodden 201904, drawn together.',
@@ -23,10 +23,13 @@ NOTES = {'VI_033': 'The plan Holmenga nord, del av gbnr. 97/1; the same ground a
                    'kommune\'s 20160037 (now split between Horten and Tønsberg) and the former Tønsberg kommune\'s 20160146. '
                    'They include the permanent deposit areas D1, D7, D13 and D18.',
          'VI_038': 'Two plans for one road, drawn together: Ås 286 (two parts) and Nordre Follo 201402 (former Ski). '
-                   'They include the massedeponi areas; the separate «Ny jord» farmland plans are not drawn.'}
+                   'They include the massedeponi areas; the separate «Ny jord» farmland plans are not drawn.',
+         'VI_040': 'Ås plan 284 «Detaljregulering for utvidelse av Vinterbro næringspark» (adopted 25.05.2016, revised; '
+                   'in force 2018-04-26 in the register), the site of the Rema distribution warehouse at Myråsdalen 15. '
+                   'The older Rema warehouse at Kveldroveien 5 lies outside it, under plan 160 of 1998.'}
 NAP_SRC = 'Nasjonal arealplanbase (DiBK), NAP WMS reguleringsplaner, layer RpOmråde; read 2026-11-20'
 feats = []
-for k in ('VI_033', 'VI_035', 'VI_036', 'VI_037', 'VI_038'):
+for k in ('VI_033', 'VI_035', 'VI_036', 'VI_037', 'VI_038', 'VI_040'):
     mp, plans = [], []
     for x in SRC[k]:
         mp += polys(x['enc']); m = x['meta']
