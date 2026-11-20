@@ -46,6 +46,7 @@ img.pg{box-shadow:0 0 0 .5px var(--ink)}
 .open .pic .no{display:flex;align-items:center;justify-content:center;width:min(480px,80vw);height:min(360px,60vw);border:1px solid var(--frame)}
 .open .tt{max-width:560px}
 .open .by{max-width:560px;color:var(--sub);margin-top:-6px}
+.open .by a{color:inherit;text-decoration:none}
 .open .tm{max-width:560px;color:var(--sub)}
 .open .tm span{white-space:nowrap}
 .open .tm button{white-space:normal;color:var(--sub)}
@@ -135,6 +136,12 @@ const KIND = {
 const $ = id => document.getElementById(id);
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ESC[c]);
+// Licence of a document shown with its picture: the name, linked to the licence text (CC: credit, licence link).
+const LICENCES = [[/^CC BY-NC-ND/i, 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.no'], [/^CC BY-NC-SA/i, 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.no'],
+  [/^CC BY-NC/i, 'https://creativecommons.org/licenses/by-nc/4.0/deed.no'], [/^CC BY-SA/i, 'https://creativecommons.org/licenses/by-sa/4.0/deed.no'],
+  [/^CC BY-ND/i, 'https://creativecommons.org/licenses/by-nd/4.0/deed.no'], [/^CC BY/i, 'https://creativecommons.org/licenses/by/4.0/deed.no'],
+  [/^CC0/i, 'https://creativecommons.org/publicdomain/zero/1.0/deed.no'], [/^public domain/i, 'https://creativecommons.org/publicdomain/mark/1.0/deed.no']];
+const licUrl = v => { const m = LICENCES.find(([re]) => re.test(v)); return m ? m[1] : ''; };
 const safeUrl = v => { const u = String(v == null ? '' : v).trim(); return /^(https?:\/\/|\/|\.\/|data\/|assets\/|#)/i.test(u) ? u : ''; };
 const num = v => parseFloat(String(v == null ? '' : v).replace(',', '.'));
 const isTrue = v => /^(true|yes|1)$/i.test(String(v == null ? '' : v).trim());
@@ -193,6 +200,7 @@ function prepare(f, p, d, kom, th, au, ln) {
     r.__k = [...ks];
     r.__arch = String(r.Archive || '').trim();
     r.__by = String(r.Creator || '').trim() || String(au[r.DocID] || '').trim();
+    r.__lic = String(r.Licence || '').trim();
     r.__link = r.DocID in ln ? safeUrl(ln[r.DocID]) : safeUrl(r.Link);
     r.__lost = r.DocID in ln && !r.__link;                  // gone from the web, no archived copy
     r.__archived = /web\.archive\.org/.test(r.__link);   // opened from the Internet Archive
@@ -309,6 +317,8 @@ function opened(d) {
     `<div class="tt">${esc(d.Title)}</div>` +
     // who made it: the source is always named (åndsverkloven § 25)
     (d.__by ? `<div class="by">${esc(d.__by)}</div>` : '') +
+    // licence, when the picture is shown under one
+    (d.__img && licUrl(d.__lic) ? `<div class="by"><a href="${esc(licUrl(d.__lic))}" target="_blank" rel="noopener noreferrer">${esc(d.__lic)}</a></div>` : '') +
     (tm ? `<div class="tm">${tm}</div>` : '') +
     `<div class="ln">${note}${d.__lost ? '<span class="note">no longer available online</span>' : ''}` +
     `${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${d.__archived ? 'archived copy ↗' : 'document ↗'}</a>` : ''}` +
