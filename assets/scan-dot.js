@@ -4,9 +4,7 @@
   if (window.__scanDot || !matchMedia('(pointer: fine)').matches) return;
   window.__scanDot = true;
   function start() {
-    var css = document.createElement('style');
-    css.textContent = 'html.has-scan-dot, html.has-scan-dot * { cursor: none !important; }';
-    document.head.appendChild(css);
+    /* The normal pointer stays visible at the centre of the dot, so clicks stay precise */
     var d = document.createElement('div');
     d.id = 'scan-dot';
     d.style.cssText = 'position:fixed;top:0;left:0;width:48px;height:48px;margin:-24px 0 0 -24px;' +
