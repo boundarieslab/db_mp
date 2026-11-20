@@ -37,36 +37,44 @@
     #card h2 { font-size: 8px; font-weight: normal; letter-spacing: .5px; text-transform: uppercase; color: #777; margin: 10px 10px 4px; }
     #card ol, #card ul { margin: 0 10px 10px; padding: 0; list-style: none; }
     #card li { padding: 2px 0; line-height: 1.35; }
+    #card .tree li { padding: 2px 0; }
     #card li .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1px solid; box-sizing: border-box; }
     #card a { color: #00f; text-decoration: none; cursor: pointer; }
     #card .chain li { color: #444; }
     #card .chain li + li::before { content: "↑ "; color: #bbb; }
 
-    #legend-unused { display:none; position: absolute; left: 12px; bottom: 10px; display: flex; gap: 14px; align-items: center;
-              font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: .5px; z-index: 2; }
+    #card { width: 300px; }
+    #card .tree, #card .tree ul { list-style: none; margin: 0; padding: 0; }
+    #card .tree { margin: 4px 10px 10px; }
+    #card .tree ul { margin-left: 4px; padding-left: 12px; border-left: .5px solid #ccc; }
+    #card .tree li { position: relative; padding: 2px 0; }
+    #card .tree ul > li::before { content: ""; position: absolute; left: -12px; top: 9px; width: 9px; border-top: .5px solid #ccc; }
+    #card .tree ul > li:last-child { background: #fff; }
+    #card .tree ul > li:last-child::after { content: ""; position: absolute; left: -12.5px; top: 9.5px; bottom: 0; border-left: 1.5px solid #fff; }
+    .tn { display: inline-flex; align-items: center; gap: 6px; line-height: 1.35; }
+    .tn svg { width: 9px; height: 9px; flex: 0 0 9px; overflow: visible; }
+    .tn a { color: #333; }
+    .tn.st a { color: #00f; }
+    .tn.me b { font-weight: normal; color: #000; background: #f0f0f0; padding: 0 3px; }
+    .also { margin: 0 10px 10px; color: #777; font-size: 9px; }
+    #legend { position: absolute; left: 12px; bottom: 10px; display: flex; gap: 14px; align-items: center;
+              font-size: 7px; color: #777; text-transform: uppercase; letter-spacing: .5px; z-index: 2; }
     #legend span { display: flex; align-items: center; gap: 4px; }
     #legend svg { width: 9px; height: 9px; overflow: visible; }
-    #hint { position: absolute; left: 12px; top: 46px; width: 230px; font-size: 8px; line-height: 1.4; color: #999; z-index: 2; }
+    #hint { position: absolute; right: 12px; bottom: 10px; font-size: 8px; color: #aaa; z-index: 2; }
 
-    .lk { stroke: #9a9a9a; stroke-opacity: .55; stroke-width: .5; cursor: pointer; }
-    .lk.on { stroke: #000; stroke-opacity: 1; stroke-width: .8; }
+    .hull { fill: #000; fill-opacity: .028; stroke: #000; stroke-opacity: .10; stroke-width: .5; }
+    .hull-label { font-size: 9px; fill: #999; letter-spacing: .4px; text-transform: uppercase; pointer-events: none; }
+    .lk { stroke: #cfcfcf; stroke-width: .6; fill: none; }
+    .lk.same { stroke-dasharray: 2 2; }
+    .lk.hot { stroke: #000; stroke-width: 1; stroke-dasharray: 3 3; animation: flow 1s linear infinite; }
+    @keyframes flow { to { stroke-dashoffset: -6; } }
     .nd { cursor: pointer; }
-    .fade { opacity: .12; }
-    .nd, .lk { transition: opacity .2s; }
-    .nm { fill: #222; paint-order: stroke; stroke: #fff; stroke-linejoin: round; pointer-events: none; }
-    .nm.site { fill: #00f; }
-    .nm.main { fill: #000; letter-spacing: .3px; }
-    #keys { position: absolute; left: 50%; transform: translateX(-50%); bottom: 10px; display: flex; gap: 14px; align-items: center;
-            font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: .5px; z-index: 2; white-space: nowrap; }
-    #keys span { display: flex; align-items: center; gap: 4px; }
-    #keys svg { width: 9px; height: 9px; overflow: visible; }
-    #groups { position: absolute; left: 12px; bottom: 12px; margin: 0; padding: 8px 10px; list-style: none; background: rgba(255,255,255,.92);
-              font-size: 9px; max-height: 45%; overflow: auto; z-index: 2; }
-    #groups li { display: flex; align-items: center; gap: 7px; padding: 2px 0; cursor: pointer; color: #333; white-space: nowrap; }
-    #groups li:hover { color: #000; }
-    #groups li.lo { cursor: default; color: #888; }
-    #groups i { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 6px; }
-    #groups b { font-weight: normal; color: #999; margin-left: auto; padding-left: 14px; }
+    .nd text { font-size: 8px; fill: #555; paint-order: stroke; stroke: #fff; stroke-width: 2.8px; stroke-linejoin: round; pointer-events: none; }
+    .nd.site text { fill: #00f; }
+    .nd.big text { fill: #000; font-size: 9px; }
+    .fade { opacity: .1; transition: opacity .25s; }
+    .nd, .lk { transition: opacity .25s; }
 </style>
 </head>
 <body>
@@ -74,16 +82,15 @@
 <div id="status">Reading the published diagrams…</div>
 <div id="find"><input id="q" placeholder="Find a company or site" autocomplete="off"><ul id="res"></ul></div>
 <div id="card"></div>
-<ul id="groups"></ul>
-<div id="keys">
+<div id="legend">
     <span><svg viewBox="-5 -5 10 10"><rect x="-4" y="-4" width="8" height="8" fill="#000"/></svg>Owner</span>
     <span><svg viewBox="-5 -5 10 10"><polygon points="0,-4.5 4.5,4.5 -4.5,4.5" fill="none" stroke="#666"/></svg>Company</span>
     <span><svg viewBox="-5 -5 10 10"><polygon points="0,-4.5 4.5,4.5 -4.5,4.5" fill="#666"/></svg>Division</span>
-    <span><svg viewBox="-5 -5 10 10"><circle r="4" fill="none" stroke="#FF0000"/><path d="M-4,0 A4,4 0 0,0 4,0 Z" fill="#000"/></svg>Site, active</span>
+    <span><svg viewBox="-5 -5 10 10"><circle r="4" fill="none" stroke="#FF0000"/><path d="M-4,0 A4,4 0 0,0 4,0 Z" fill="#000"/></svg>Site active</span>
     <span><svg viewBox="-5 -5 10 10"><circle r="4" fill="none" stroke="#FFD400"/><path d="M-4,0 A4,4 0 0,0 4,0 Z" fill="#000"/></svg>Closed</span>
     <span>Size = sites held</span>
 </div>
-<div id="hint">hover a dot for its name · click a dot or a thread to light its chain · drag · scroll to zoom</div>
+<div id="hint">drag · scroll to zoom · click to follow a company</div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script>
@@ -205,8 +212,7 @@
         Object.keys(names).forEach(function (g) {
             var inner = nodes.filter(function (n) { return n.group === g && (up[n.id] || []).length >= 2; })
                              .sort(function (a, b) { return b.sites - a.sites; })[0];
-            // the shared company names the group only when it holds most of the group's sites (ROAF)
-            names[g] = inner && inner.sites >= 0.6 * N[g].sites ? inner.name : N[g].name;
+            names[g] = inner ? inner.name : N[g].name;
         });
         islandName = function (g) { return typeof names[g] === "string" ? names[g] : N[g].name; };
         $("status").textContent = "";
@@ -216,184 +222,210 @@
     function ancestors(id) { return reach(id, up).filter(function (x) { return x !== id; }); }
     function sitesUnder(id) { return reach(id, down).filter(function (x) { return N[x].uid; }); }
 
-    var svg, zoomer, gAll, nd, lk, labelG, sim, W, H, selected = null, groupColour = {}, hoverNode = null;
-    // one colour per group, pure and distinct; small owners in grey
-    var PALETTE = ["#ff3b30", "#0060ff", "#ff9500", "#00a86b", "#b300ff", "#e6007e", "#00b7c7", "#c8a400",
-                   "#5b3cc4", "#ff5e00", "#2e8b00", "#d4006a", "#0090e0", "#8a5a00", "#7a00e6", "#00a0a0"];
-    var LOOSE = "#a3a3a3";
-    function col(d) { return d.group ? groupColour[d.group] : LOOSE; }
-
+    var svg, zoomer, gAll, nd, lk, hullG, sim, W, H, selected = null;
     function draw() {
         var el = $("net"); W = el.clientWidth; H = el.clientHeight;
         svg = d3.select(el).append("svg");
         gAll = svg.append("g");
+        hullG = gAll.append("g");
+        var r = function (d) { return d.uid ? 4 : 3 + Math.sqrt(d.sites) * 2.2; };
+        nodes.forEach(function (d) { d.r = r(d); d.text = shortName(d.name); d.big = !d.uid && d.sites >= 3; d.tw = d.text.length * 5.6; });
 
-        // groups by size; the largest get colours and their owner's name on the drawing
-        var gsize = {}; nodes.forEach(function (d) { if (d.group) gsize[d.group] = (gsize[d.group] || 0) + 1; });
-        var order = Object.keys(gsize).sort(function (a, b) { return N[b].sites - N[a].sites || gsize[b] - gsize[a]; });
-        order.forEach(function (g, i) { groupColour[g] = PALETTE[i % PALETTE.length]; });
-        var MAIN = 10;
-        // the main name sits on the group's own company: its owner, or the company its co-owners share (ROAF)
-        var named = {};
-        order.forEach(function (g) {
-            var nm = islandName(g), n = nodes.find(function (x) { return x.name === nm && x.group === g; }) || N[g];
-            named[g] = n;
-        });
-        order.slice(0, MAIN).forEach(function (g) { named[g].main = true; });
-
-        // small dots: a site a little larger than a company; owners grow with the sites they hold
-        nodes.forEach(function (d) {
-            d.r = d.uid ? 4 : 3 + Math.sqrt(d.sites) * 2.2;
-            d.text = shortName(d.name);
-            d.home = d.group || ("~" + (ancestors(d.id).filter(function (a) { return !(up[a] || []).length; })[0] || d.id));
-        });
-        // each group starts in its own place, on a spiral by size; the loose chains round the outside
+        // Each owner that holds several sites gets its own place, laid out on a
+        // spiral by size so the groups do not overlap; owners of a single site
+        // (their small chains) go round the outside.
+        var groups = {}; nodes.forEach(function (d) { if (d.group) groups[d.group] = (groups[d.group] || 0) + 1; });
+        var order = Object.keys(groups).sort(function (a, b) { return groups[b] - groups[a]; });
         var centre = {}, acc = 0;
-        order.forEach(function (g, i) {
-            acc += gsize[g];
-            var a = i * 2.39996, rad = i ? 58 * Math.sqrt(acc) : 0;
-            centre[g] = { x: W / 2 + Math.cos(a) * rad * 1.2, y: H / 2 + Math.sin(a) * rad * 0.85 };
+        order.forEach(function (gk, i) {
+            acc += groups[gk];
+            var a = i * 2.39996, rad = i ? 62 * Math.sqrt(acc) : 0;
+            centre[gk] = { x: W / 2 + Math.cos(a) * rad * 1.25, y: H / 2 + Math.sin(a) * rad * 0.85 };
         });
-        var loose = Object.keys(nodes.reduce(function (o, d) { if (!d.group) o[d.home] = 1; return o; }, {}));
-        var outer = 58 * Math.sqrt(acc + 40);
-        loose.forEach(function (h, i) { var a = i / loose.length * Math.PI * 2; centre[h] = { x: W / 2 + Math.cos(a) * outer * 1.2, y: H / 2 + Math.sin(a) * outer * 0.85 }; });
+        var outer = 62 * Math.sqrt(acc + 40);
+        // the loose chains: one place per chain (its top owner), spread round the outside
+        var loose = {}; nodes.forEach(function (d) { if (!d.group) { var t = ancestors(d.id).filter(function (a) { return !(up[a] || []).length; })[0] || d.id; d.chain = t; loose[t] = 1; } });
+        Object.keys(loose).forEach(function (t, i, all) {
+            var a = (i / all.length) * Math.PI * 2;
+            centre["~" + t] = { x: W / 2 + Math.cos(a) * outer * 1.25, y: H / 2 + Math.sin(a) * outer * 0.85 };
+        });
+        nodes.forEach(function (d) { d.home = d.group || ("~" + d.chain); });
         nodes.forEach(function (d) { var c = centre[d.home]; d.x = c.x + (Math.random() - .5) * 30; d.y = c.y + (Math.random() - .5) * 30; });
 
-        lk = gAll.append("g").selectAll("line").data(links).join("line").attr("class", "lk");
-        // the symbols of the first trials: owner a black square, company an outlined
-        // triangle (a division filled), site the half-black disc in its status ring
-        nd = gAll.append("g").selectAll("g").data(nodes).join("g").attr("class", "nd");
+        lk = gAll.append("g").selectAll("line").data(links).join("line").attr("class", function (d) { return "lk" + (d.same ? " same" : ""); });
+        nd = gAll.append("g").selectAll("g").data(nodes).join("g")
+            .attr("class", function (d) { return "nd" + (d.uid ? " site" : "") + (d.big ? " big" : ""); });
         nd.each(function (d) {
             var s = d3.select(this), rr = d.r;
             if (d.uid) {
-                s.append("circle").attr("r", rr + 1.6).attr("fill", "#fff");
-                s.append("circle").attr("r", rr).attr("fill", "none").attr("stroke", colour(d.row && d.row.Status)).attr("stroke-width", 1);
+                s.append("circle").attr("r", rr + 1.8).attr("fill", "#fff");
+                s.append("circle").attr("r", rr).attr("fill", "none").attr("stroke", colour(d.row && d.row.Status)).attr("stroke-width", 1.1);
                 s.append("path").attr("d", "M" + -rr + ",0 A" + rr + "," + rr + " 0 0,0 " + rr + ",0 Z").attr("fill", "#000");
             } else if (d.type === "p" || !(up[d.id] || []).length) {
                 s.append("rect").attr("x", -rr).attr("y", -rr).attr("width", 2 * rr).attr("height", 2 * rr).attr("fill", "#000");
             } else {
                 var t = rr * 1.15;
                 s.append("polygon").attr("points", "0," + -t + " " + t + "," + t + " " + -t + "," + t)
-                    .attr("fill", d.type === "div_ind" ? "#666" : "#fff").attr("stroke", "#666").attr("stroke-width", .8);
+                    .attr("fill", d.type === "div_ind" ? "#666" : "#fff").attr("stroke", "#666").attr("stroke-width", .9);
             }
+            s.append("text").attr("x", rr + 4).attr("y", 3).text(d.text);
         });
-        labelG = gAll.append("g");
 
         sim = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(function (d) { return d.id; })
-                .distance(function (l) { return l.source.home !== l.target.home ? 200 : 22 + l.target.r * 2; })
-                .strength(function (l) { return l.source.home !== l.target.home ? 0.01 : 0.6; }))
-            .force("charge", d3.forceManyBody().strength(function (d) { return -30 - d.sites * 5; }).distanceMax(260))
-            // a lit chain opens out so that each of its names has room
-            .force("collide", d3.forceCollide().radius(function (d) { return lit && lit[d.id] ? Math.max(d.r + 3, d.text.length * 2.9 / zk) : d.r + 4; }).strength(0.9))
-            .force("gx", d3.forceX(function (d) { return centre[d.home].x; }).strength(0.05))
-            .force("gy", d3.forceY(function (d) { return centre[d.home].y; }).strength(0.05))
-            .alphaDecay(0.015).velocityDecay(0.4)
+            .force("link", d3.forceLink(links).id(function (d) { return d.id; }).distance(function (l) { return l.source.home !== l.target.home ? 220 : l.same ? 26 : 40 + l.target.r; })
+                .strength(function (l) { return l.source.home !== l.target.home ? 0.012 : 0.5; }))
+            .force("charge", d3.forceManyBody().strength(function (d) { return -70 - d.sites * 8; }).distanceMax(360))
+            // named nodes keep room for their name
+            .force("collide", d3.forceCollide().radius(function (d) { return Math.max(d.r + 9, (d.big || d.uid ? d.tw / 2 + 8 : d.r + 9)); }).strength(0.85))
+            .force("gx", d3.forceX(function (d) { return centre[d.home].x; }).strength(0.03))
+            .force("gy", d3.forceY(function (d) { return centre[d.home].y; }).strength(0.03))
+            .force("cx", d3.forceX(W / 2).strength(0.004))
+            .force("cy", d3.forceY(H / 2).strength(0.006))
+            .force("islands", islandForce())
+            .alphaDecay(0.012).velocityDecay(0.35)
             .on("tick", ticked)
             .on("end", function () { if (!selected) fit(); });
 
-        zoomer = d3.zoom().scaleExtent([0.3, 10]).on("zoom", function (e) { gAll.attr("transform", e.transform); zk = e.transform.k; names(); });
+        // Islands keep apart as wholes: each group is a disc round its nodes
+        // (names included), and where two discs overlap both groups are moved
+        // apart, so every island stays a separate white shape.
+        function islandForce() {
+            var homes;
+            function f(alpha) {
+                if (!homes) { homes = {}; nodes.forEach(function (d) { (homes[d.home] = homes[d.home] || []).push(d); }); }
+                var C = Object.keys(homes).map(function (k) {
+                    var m = homes[k], x = d3.mean(m, function (d) { return d.x; }), y = d3.mean(m, function (d) { return d.y; });
+                    var r = d3.max(m, function (d) { return Math.hypot(d.x - x, d.y - y) + d.r + ((d.big || d.uid) ? d.tw * 0.6 : 0); }) + 26;
+                    return { m: m, x: x, y: y, r: r };
+                });
+                for (var i = 0; i < C.length; i++) for (var j = i + 1; j < C.length; j++) {
+                    var a = C[i], b = C[j], dx = b.x - a.x, dy = b.y - a.y, dist = Math.hypot(dx, dy) || 1, over = a.r + b.r - dist;
+                    if (over <= 0) continue;
+                    var k = over * (0.04 + alpha * 0.5), ux = dx / dist, uy = dy / dist;
+                    var wa = b.m.length / (a.m.length + b.m.length), wb = 1 - wa;
+                    a.m.forEach(function (d) { d.vx -= ux * k * wa; d.vy -= uy * k * wa; });
+                    b.m.forEach(function (d) { d.vx += ux * k * wb; d.vy += uy * k * wb; });
+                }
+            }
+            return f;
+        }
+
+        // pan and zoom; names appear as you come closer
+        zoomer = d3.zoom().scaleExtent([0.25, 7]).on("zoom", function (e) { gAll.attr("transform", e.transform); labels(e.transform.k); });
         svg.call(zoomer).on("dblclick.zoom", null);
         svg.on("click", function (e) { if (e.target === svg.node()) select(null); });
+        setTimeout(fit, 2500);
 
+        // drag a node; the rest follows
         nd.call(d3.drag()
-            .on("start", function (e, d) { if (!e.active) sim.alphaTarget(0.12).restart(); d.fx = d.x; d.fy = d.y; })
+            .on("start", function (e, d) { if (!e.active) sim.alphaTarget(0.15).restart(); d.fx = d.x; d.fy = d.y; })
             .on("drag", function (e, d) { d.fx = e.x; d.fy = e.y; })
             .on("end", function (e, d) { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }));
-        nd.on("mouseenter", function (e, d) { hoverNode = d; if (!selected) thread(d); names(); })
-          .on("mouseleave", function () { hoverNode = null; if (!selected) thread(null); names(); })
+        nd.on("mouseenter", function (e, d) { if (!selected) hot(d); })
+          .on("mouseleave", function () { if (!selected) hot(null); })
           .on("click", function (e, d) { e.stopPropagation(); select(d); });
-        // a click on a thread lights the whole chain it belongs to
-        lk.on("click", function (e, l) { e.stopPropagation(); select(l.source.uid ? l.source : l.target); });
 
-        legend(order, gsize);
         search();
-        names();
-        setTimeout(function () { if (!selected) fit(); }, 4500);
+        labels(1);
     }
 
     function ticked() {
         lk.attr("x1", function (d) { return d.source.x; }).attr("y1", function (d) { return d.source.y; })
           .attr("x2", function (d) { return d.target.x; }).attr("y2", function (d) { return d.target.y; });
         nd.attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; });
-        labelG.selectAll("text").attr("x", function (d) { return d.x + d.r + 4 / zk; }).attr("y", function (d) { return d.y + 3 / zk; });
-        if (selected && sim.alpha() > 0.05 && Date.now() - (ticked._t || 0) > 120) { ticked._t = Date.now(); follow(); }
+        hulls();
     }
 
-    // Names: the main groups' owners always; the rest only under the cursor or along a lit thread.
-    var zk = 1, lit = null;
-    function names() {
-        var show = nodes.filter(function (d) {
-            if (lit) return lit[d.id];
-            return d.main || d === hoverNode;
+    // a faint shape round each group that holds several sites, named after its owner
+    function hulls() {
+        var by = {}; nodes.forEach(function (d) { if (d.group) (by[d.group] = by[d.group] || []).push(d); });
+        var data = Object.keys(by).filter(function (k) { return N[k].sites >= 2 && by[k].length >= 3; }).map(function (k) {
+            var pts = []; by[k].forEach(function (d) { var p = d.r + 10; var tw = 0; pts.push([d.x - p, d.y - p], [d.x + p + tw, d.y - p], [d.x - p, d.y + p], [d.x + p + tw, d.y + p]); });
+            return { k: k, hull: d3.polygonHull(pts) };
+        }).filter(function (d) { return d.hull; });
+        var line = d3.line().curve(d3.curveCatmullRomClosed.alpha(1));
+        hullG.selectAll("path").data(data, function (d) { return d.k; }).join("path").attr("class", "hull").attr("d", function (d) { return line(d.hull); });
+        hullG.selectAll("text").data(data, function (d) { return d.k; }).join("text").attr("class", "hull-label")
+            .attr("text-anchor", "middle")
+            .attr("x", function (d) { return d3.mean(d.hull, function (p) { return p[0]; }); })
+            .attr("y", function (d) { return d3.min(d.hull, function (p) { return p[1]; }) + 16; })
+            .text(function (d) { return shortName(islandName(d.k)); });
+    }
+
+    // names by zoom: owners of several sites always, sites from a little closer, everything close up
+    var zk = 1;
+    function labels(k) {
+        zk = k;
+        nd.select("text").style("display", function (d) {
+            if (selected || d._hot) return d._show ? null : "none";
+            if (d.big) return null;
+            if (d.uid) return k > 0.75 ? null : "none";
+            return k > 1.4 ? null : "none";
         });
-        var t = labelG.selectAll("text").data(show, function (d) { return d.id; });
-        t.exit().remove();
-        t.enter().append("text").merge(t)
-            .attr("class", function (d) { return "nm" + (d.uid ? " site" : "") + (d.main && !lit ? " main" : ""); })
-            .style("font-size", function (d) { return ((d.main && !lit) ? 11 : 9) / zk + "px"; })
-            .style("stroke-width", 3 / zk + "px")
-            .attr("x", function (d) { return d.x + d.r + 4 / zk; }).attr("y", function (d) { return d.y + 3 / zk; })
-            .text(function (d) { return d.text; });
     }
 
-    // the thread: everything above a node and everything it holds
-    function thread(d, open) {
+    // hover: what a company holds and who holds it, the chain running from owner to site
+    function hot(d) {
         if (!d) {
-            var was = !!lit; lit = null; nd.classed("fade", false); lk.classed("fade", false).classed("on", false);
-            if (was && sim) { sim.force("collide").initialize(nodes); sim.alpha(0.25).restart(); }
-            return;
+            nd.classed("fade", false).each(function (n) { n._hot = n._show = false; });
+            lk.classed("fade", false).classed("hot", false);
+            labels(zk); return;
         }
-        lit = {}; ancestors(d.id).concat(reach(d.id, down)).forEach(function (x) { lit[x] = 1; }); lit[d.id] = 1;
-        nd.classed("fade", function (n) { return !lit[n.id]; });
-        lk.classed("fade", function (l) { return !(lit[l.source.id] && lit[l.target.id]); })
-          .classed("on", function (l) { return lit[l.source.id] && lit[l.target.id]; });
-        if (open && sim) { sim.force("collide").initialize(nodes); sim.alpha(0.35).restart(); }
+        var a = {}, b = {};
+        ancestors(d.id).concat([d.id]).forEach(function (x) { a[x] = 1; });
+        reach(d.id, down).forEach(function (x) { b[x] = 1; });
+        nd.classed("fade", function (n) { return !a[n.id] && !b[n.id]; })
+          .each(function (n) { n._hot = true; n._show = !!(a[n.id] || b[n.id]); });
+        lk.classed("fade", function (l) { return !((a[l.source.id] && a[l.target.id]) || (b[l.source.id] && b[l.target.id])); })
+          .classed("hot", function (l) { return (a[l.source.id] && a[l.target.id]) || (b[l.source.id] && b[l.target.id]); });
+        labels(zk);
     }
 
-    // keep the clicked chain in view while it opens out
-    function follow() {
-        if (!selected) return;
-        var k = d3.zoomTransform(svg.node()).k;
-        svg.call(zoomer.transform, d3.zoomIdentity.translate(W / 2 - 140 - selected.x * k, H / 2 - selected.y * k).scale(k));
-    }
+    // click: centre it, keep its chain lit, and open its window
     function select(d) {
         selected = d;
-        if (!d) { thread(null); names(); $("card").className = ""; return; }
-        thread(d, true); names();
-        var t = d3.zoomTransform(svg.node()), k = Math.max(t.k, 2);
+        if (!d) { hot(null); $("card").className = ""; return; }
+        hot(d);
+        var t = d3.zoomTransform(svg.node()), k = Math.max(t.k, 1.6);
         svg.transition().duration(650).call(zoomer.transform, d3.zoomIdentity.translate(W / 2 - 140 - d.x * k, H / 2 - d.y * k).scale(k));
         card(d);
     }
 
-    // the groups, bottom left, with the sites each holds; a click brings the group forward
-    function legend(order, gsize) {
-        var box = $("groups"), rows = order.map(function (g) {
-            return "<li data-g='" + esc(g) + "'>" + esc(shortName(islandName(g))) + "<b>" + N[g].sites + "</b></li>";
-        });
-        var nLoose = nodes.filter(function (d) { return !d.group && d.uid; }).length;
-        if (nLoose) rows.push("<li class='lo'>Single-site owners<b>" + nLoose + "</b></li>");
-        box.innerHTML = rows.join("");
-        box.querySelectorAll("li[data-g]").forEach(function (li) { li.onclick = function () { select(N[li.getAttribute("data-g")]); }; });
+    // The window for what was clicked: its network drawn upright, as a tree —
+    // the owners above it, then it, then everything it holds — with the
+    // symbols of the key. A name moves the network to it; a site also opens on the map.
+    function sym(n) {
+        var c = n.uid ? colour(n.row && n.row.Status) : null;
+        if (n.uid) return "<svg viewBox='-5 -5 10 10'><circle r='4' fill='#fff' stroke='" + c + "'/><path d='M-4,0 A4,4 0 0,0 4,0 Z' fill='#000'/></svg>";
+        if (n.type === "p" || !(up[n.id] || []).length) return "<svg viewBox='-5 -5 10 10'><rect x='-4' y='-4' width='8' height='8' fill='#000'/></svg>";
+        return "<svg viewBox='-5 -5 10 10'><polygon points='0,-4.5 4.5,4.5 -4.5,4.5' fill='" + (n.type === "div_ind" ? "#666" : "#fff") + "' stroke='#666'/></svg>";
     }
-
+    function row(n, me) {
+        return "<span class='tn" + (me ? " me" : "") + (n.uid ? " st" : "") + "'>" + sym(n) +
+               (me ? "<b>" + esc(shortName(n.name)) + "</b>" : "<a data-node='" + esc(n.id) + "'>" + esc(shortName(n.name)) + "</a>") + "</span>";
+    }
+    function holdings(id, seen) {
+        var kids = (down[id] || []).filter(function (k) { return !seen[k]; });
+        if (!kids.length) return "";
+        kids.sort(function (a, b) { return (N[a].uid ? 1 : 0) - (N[b].uid ? 1 : 0) || N[b].sites - N[a].sites || N[a].name.localeCompare(N[b].name, "nb"); });
+        return "<ul>" + kids.map(function (k) { seen[k] = 1; return "<li>" + row(N[k]) + holdings(k, seen) + "</li>"; }).join("") + "</ul>";
+    }
     function card(d) {
-        var c = $("card"), html = "";
+        var c = $("card");
         var kind = d.uid ? "Site · " + ((d.row && d.row.Status) || "") + (d.row && d.row.Municipality ? " · " + d.row.Municipality : "")
                  : (!(up[d.id] || []).length ? "Owner" : d.type === "div_ind" ? "Division" : "Company") + (d.sites ? " · holds " + d.sites + " site" + (d.sites > 1 ? "s" : "") : "");
-        html += '<div class="hd"><span>' + (d.uid ? "Site" : "Ownership") + '</span><button type="button" aria-label="Close">×</button></div>';
-        html += "<h1>" + esc(shortName(d.name)) + "</h1><div class='kind'>" + esc(kind) + "</div>";
-        if (d.uid) html += "<ul><li><a data-uid='" + esc(d.uid) + "'>Open on the map ↗</a></li></ul>";
-        var chain = []; var cur = d.id, guard = 0;
-        while ((up[cur] || []).length && guard++ < 20) { cur = up[cur][up[cur].length - 1]; chain.push(cur); }
-        if (chain.length) html += "<h2>Owned through</h2><ol class='chain'>" + chain.map(function (x) { return "<li><a data-node='" + esc(x) + "'>" + esc(shortName(N[x].name)) + "</a></li>"; }).join("") + "</ol>";
+        // the chain of main owners above, top first
+        var chain = [], cur = d.id, guard = 0;
+        while ((up[cur] || []).length && guard++ < 20) { cur = up[cur][up[cur].length - 1]; chain.unshift(cur); }
+        var seen = {}; seen[d.id] = 1; chain.forEach(function (x) { seen[x] = 1; });
+        var inner = "<li>" + row(d, true) + holdings(d.id, seen) + "</li>";
+        for (var i = chain.length - 1; i >= 0; i--) inner = "<li>" + row(N[chain[i]]) + "<ul>" + inner + "</ul></li>";
         var co = (up[d.id] || []).slice(0, -1);
-        if (co.length) html += "<h2>Also owned by</h2><ul>" + co.map(function (x) { return "<li><a data-node='" + esc(x) + "'>" + esc(shortName(N[x].name)) + "</a></li>"; }).join("") + "</ul>";
-        if (d.held && d.held.length) {
-            html += "<h2>Sites held</h2><ul>" + d.held.map(function (x) {
-                var n = N[x]; return "<li><span class='dot' style='border-color:" + colour(n.row && n.row.Status) + "'></span><a data-node='" + esc(x) + "'>" + esc(shortName(n.name)) + "</a></li>";
-            }).join("") + "</ul>";
-        }
+        var html = '<div class="hd"><span>' + (d.uid ? "Site" : "Ownership") + '</span><button type="button" aria-label="Close">×</button></div>';
+        html += "<h1>" + esc(shortName(d.name)) + "</h1><div class='kind'>" + esc(kind) + "</div>";
+        html += "<ul class='tree'>" + inner + "</ul>";
+        if (co.length) html += "<div class='also'>Also owned by " + co.map(function (x) { return "<a data-node='" + esc(x) + "'>" + esc(shortName(N[x].name)) + "</a>"; }).join(", ") + "</div>";
+        if (d.uid) html += "<div class='also'><a data-uid='" + esc(d.uid) + "'>Open on the map ↗</a></div>";
         c.innerHTML = html; c.className = "on";
         c.querySelector("button").onclick = function () { select(null); };
         c.querySelectorAll("a[data-node]").forEach(function (a) { a.onclick = function () { select(N[a.getAttribute("data-node")]); }; });
