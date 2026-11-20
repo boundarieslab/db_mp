@@ -644,6 +644,8 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 #peek-card .cp .swatch,#peek-card .cp .ring{align-self:center;flex:0 0 auto}
 #hover-card .cp .ring{align-self:center;flex:0 0 auto}
 .kring{display:inline-flex;width:12px;justify-content:center}
+.key-list .kr.kw{gap:12px}
+.key-list .kp{display:inline-flex;align-items:center;gap:5px}
 .status-badge .ring{margin-right:6px;vertical-align:-1px}
 #peek-card .cp span{color:var(--sub);font-size:9px;font-family:PlexMono,monospace;margin-left:auto;white-space:nowrap}
 #peek-card .pk-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px;padding-top:5px;border-top:.5px solid var(--hair)}
@@ -1369,8 +1371,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // along hue and lightness, never by desaturating. Pure blue (#0000FF) is a
     // planned reception site; the lighter azure #007FFF belongs to terrain
     // change. Red and green are close together for a red-green colour-blind
-    // reader, so the two families are also told apart by their shape: round
-    // for reception, square for construction.
+    // reader, so the families are also told apart by their shape: round for
+    // reception, a triangle for extraction, square for construction.
     //
     // The sheet's Status column is free text ("closed (i etterdrift)",
     // "extraction ended 2022; still receives masses"), so it is classified
@@ -1378,17 +1380,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // ─────────────────────────────────────────────────────────────────────
     const CLASSES = {
         facility: [
-            { k: 'active',       col: '#FF0000', en: 'receiving now', no: 'mottar nå' },
+            { k: 'active',       col: '#FF0000', en: 'active',        no: 'aktiv' },
             { k: 'future',       col: '#0000FF', en: 'planned',       no: 'planlagt' },
             { k: 'old',          col: '#FFD400', en: 'closed',        no: 'nedlagt' },
-            { k: 'contaminated', col: '#B300FF', en: 'contaminated',  no: 'forurenset' },
-            { k: 'unknown',      col: '#FFFFFF', en: 'no status',     no: 'ukjent' }
+            { k: 'contaminated', col: '#B300FF', en: 'contaminated masses', no: 'forurensede masser' },
+            { k: 'unknown',      col: '#FFFFFF', en: 'status unknown', no: 'status ukjent' }
         ],
         project: [
             { k: 'active',       col: '#00FF00', en: 'under way',     no: 'pågår' },
             { k: 'future',       col: '#95FF00', en: 'planned',       no: 'planlagt' },
             { k: 'old',          col: '#00B218', en: 'finished',      no: 'ferdig' },
-            { k: 'unknown',      col: '#FFFFFF', en: 'no status',     no: 'ukjent' }
+            { k: 'unknown',      col: '#FFFFFF', en: 'status unknown', no: 'status ukjent' }
         ]
     };
     // Flows carry no colour. Evidence is a line treatment, so a modelled
@@ -1755,41 +1757,76 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // SYMBOLS. They live in the table now, not on the map. Shape says what a
-    // record is (circle: reception site, square: construction project), the
-    // black part says which way the masses go, the colour says its status.
+    // SYMBOLS. One grammar for the map, the table, the key and the record.
+    //   shape  what the site is   circle: reception · triangle: extraction ·
+    //                             square: construction project
+    //   black  what it does with masses   circle: lower half receives, side
+    //                             wedges both · triangle: the band along the
+    //                             base extracts, the left half also receives ·
+    //                             square: the diagonal halves, as before
+    //   ring   its status, in the pure colour
+    // The triangle is cut at the midpoints of its sides, so its parts are
+    // its own shape. Stroke, ink and face are in SYM_STYLE.
     // ─────────────────────────────────────────────────────────────────────
-    function projectSymbol(dir, col) {
-        const s = 13, c = col === '#FFFFFF' ? '#4A4A4A' : (col || '#00FF00');
-        const fill = dir === 'producing' ? '<polygon points="1,15 15,15 1,1" fill="#000"/>'
-                   : dir === 'receiving' ? '<polygon points="15,1 15,15 1,1" fill="#000"/>'
-                   : '<polygon points="1,1 8,8 1,15" fill="#000"/><polygon points="15,1 8,8 15,15" fill="#000"/>';
-        return `<svg width="${s}" height="${s}" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="14" height="14" fill="#fff" stroke="${c}" stroke-width="2"/>${fill}</svg>`;
+    const SYM_OUTLINE = {
+        c: '<circle cx="8" cy="8" r="7"/>',
+        t: '<polygon points="8,1.9 14.4,14.2 1.6,14.2"/>',
+        s: '<rect x="1" y="1" width="14" height="14"/>'
+    };
+    const SYM_BLACK = {
+        c: { receiving: '<path d="M1,8 A7,7 0 0,0 15,8 Z"/>',
+             producing: '<path d="M1,8 A7,7 0 0,1 15,8 Z"/>',
+             mixed:     '<path d="M8,8 L3.05,3.05 A7,7 0 0,0 3.05,12.95 Z"/><path d="M8,8 L12.95,3.05 A7,7 0 0,1 12.95,12.95 Z"/>' },
+        t: { receiving: '<polygon points="4.8,8.05 11.2,8.05 14.4,14.2 1.6,14.2"/>',
+             producing: '<polygon points="4.8,8.05 11.2,8.05 14.4,14.2 1.6,14.2"/>',
+             mixed:     '<polygon points="8,1.9 8,14.2 1.6,14.2"/>' },
+        s: { receiving: '<polygon points="15,1 15,15 1,1"/>',
+             producing: '<polygon points="1,15 15,15 1,1"/>',
+             mixed:     '<polygon points="1,1 8,8 1,15"/><polygon points="15,1 8,8 15,15"/>' }
+    };
+    const SYM_STYLE = { stroke: 2, ink: '#000000', face: '#FFFFFF', unknown: '#4A4A4A' };
+    const inkRing = col => col === '#FFFFFF' ? SYM_STYLE.unknown : col;
+    // dir '' draws the outline alone: a status mark in the family's shape.
+    function siteSymbol(shape, dir, col, size, cls) {
+        const sz = size || 13, o = SYM_OUTLINE[shape] || SYM_OUTLINE.c;
+        const k = (SYM_BLACK[shape] || SYM_BLACK.c)[dir] || '';
+        return `<svg${cls ? ` class="${cls}"` : ''} width="${sz}" height="${sz}" viewBox="0 0 16 16" aria-hidden="true">` +
+               `<g fill="${SYM_STYLE.face}">${o}</g><g fill="${SYM_STYLE.ink}">${k}</g>` +
+               `<g fill="none" stroke="${inkRing(col)}" stroke-width="${SYM_STYLE.stroke}" stroke-linejoin="miter">${o}</g></svg>`;
     }
-    function facilitySymbol(dir, col) {
-        const s = 13, c = col === '#FFFFFF' ? '#4A4A4A' : (col || '#FF0000');
-        const fill = dir === 'producing' ? '<path d="M1,8 A7,7 0 0,1 15,8 Z" fill="#000"/>'
-                   : dir === 'receiving' ? '<path d="M1,8 A7,7 0 0,0 15,8 Z" fill="#000"/>'
-                   : '<path d="M8,1 A7,7 0 0,1 15,8 L8,8 Z" fill="#000"/><path d="M8,15 A7,7 0 0,1 1,8 L8,8 Z" fill="#000"/>';
-        return `<svg width="${s}" height="${s}" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#fff" stroke="${c}" stroke-width="2"/>${fill}</svg>`;
+    const projectSymbol  = (dir, col) => siteSymbol('s', dir, col || '#00FF00');
+    const facilitySymbol = (dir, col, shape) => siteSymbol(shape || 'c', dir, col || '#FF0000');
+    // What a facility does, for its symbol. The sheet's Activities column
+    // decides when it is filled; otherwise the type: a quarry, gravel pit
+    // or rock cut extracts, and also receives only when its type says so.
+    function symActs(s) {
+        const a = String(s.Activities || '').toLowerCase();
+        if (a.trim()) return { rec: /recep|mottak/.test(a), ext: /extract|uttak/.test(a) };
+        const ty = (String(s.Type || '') + ' ' + String(s.Subtype || '')).toLowerCase();
+        const ext = /pukkverk|grustak|massetak|steinbrudd/.test(ty) || !!extOf(s);
+        return { rec: !ext || /mottak|deponi|fylling|gjenvinn/.test(ty), ext };
     }
     function getMarkerInfo(site) {
         const sr = (site["source /reception"] || site["source/reception"] || site.CargoType || "").toLowerCase().trim();
         const type = (site.Type || "").toLowerCase();
-        let category = site.__cat || 'facility', direction = 'receiving';
+        let category = site.__cat || 'facility', direction = 'receiving', shape = 'c';
         if (category === 'project') {
+            shape = 's';
             if (sr.includes('source') && sr.includes('reception')) direction = 'mixed';
             else if (sr.includes('source') || sr.includes('produc')) direction = 'producing';
             else if (sr.includes('reception') || sr.includes('receiv')) direction = 'receiving';
             else direction = 'mixed';
         } else {
-            if (type.includes('pukkverk')) direction = 'producing';
-            else if (type.includes('deponi') || type.includes('massemottak')) direction = 'receiving';
-            else if (type.includes('gjenvinning')) direction = 'mixed';
+            const ac = symActs(site);
+            if (ac.ext) { shape = 't'; direction = ac.rec ? 'mixed' : 'producing'; }
+            else direction = /gjenvinn/.test(type) ? 'mixed' : 'receiving';
         }
-        return { category, direction };
+        return { category, direction, shape };
     }
-    const symbolFor = site => (site.__cat === 'project' ? projectSymbol : facilitySymbol)(getMarkerInfo(site).direction, colourOf(site));
+    const shapeOf = site => getMarkerInfo(site).shape;
+    const symbolFor = site => { const m = getMarkerInfo(site); return siteSymbol(m.shape, m.direction, colourOf(site)); };
+    // The status alone: the outline of the site's own shape, in its colour.
+    const statusMark = (shape, col) => siteSymbol(shape, '', col, 11, 'ring');
 
 
     // ─────────────────────────────────────────────────────────────────────
@@ -1991,8 +2028,9 @@ document.addEventListener('DOMContentLoaded', function() {
             svg += `<path d="${d}" fill="none" stroke="${col}" stroke-width="1.5" fill-rule="evenodd"/>`;
         } else if (hasXY(site)) {
             const px = lonX(num(site.Longitude), z) - left, py = latY(num(site.Latitude), z) - top;
-            svg += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="9" fill="${col}" fill-opacity=".35"/>` +
-                   `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="4.5" fill="${col}" stroke="#fff" stroke-width="1"/>`;
+            const mk = getMarkerInfo(site), o = SYM_OUTLINE[mk.shape], kb = SYM_BLACK[mk.shape][mk.direction];
+            svg += `<g transform="translate(${(px - 8).toFixed(1)} ${(py - 8).toFixed(1)})"><g fill="${SYM_STYLE.face}">${o}</g><g fill="${SYM_STYLE.ink}">${kb}</g>` +
+                   `<g fill="none" stroke="${inkRing(col)}" stroke-width="${SYM_STYLE.stroke}">${o}</g></g>`;
         }
         svg += '</svg>';
         wrap.insertAdjacentHTML('beforeend', svg);
@@ -2111,15 +2149,19 @@ document.addEventListener('DOMContentLoaded', function() {
         nonesel: { en: "NOTHING IN THAT BOX", no: "INGENTING I DEN BOKSEN" },
         recep: { en: "RECEPTION SITES", no: "MOTTAKSANLEGG" },
         recep_key: { en: "RECEPTION AND EXTRACTION SITES", no: "MOTTAK OG UTTAK" },
+        k_shape: { en: "SHAPE", no: "FORM" }, k_black: { en: "BLACK", no: "SVART" }, k_colour: { en: "COLOUR", no: "FARGE" },
+        sh_c: { en: "reception", no: "mottak" }, sh_t: { en: "extraction", no: "uttak" }, sh_s: { en: "construction", no: "bygg" },
         projects: { en: "CONSTRUCTION PROJECTS", no: "BYGGEPROSJEKTER" },
         runs: { en: "TERRAIN CHANGE RUNS", no: "TERRENGENDRINGER" },
         selection: { en: "SELECTION", no: "UTVALG" },
         clearsel: { en: "clear selection", no: "fjern utvalg" },
         selected: { en: "SELECTED", no: "VALGT" },
         dir_all: { en: "all directions", no: "alle retninger" },
-        dir_producing: { en: "producing", no: "produserer" },
-        dir_receiving: { en: "receiving", no: "mottar" },
-        dir_mixed: { en: "mixed", no: "blandet" },
+        dir_producing: { en: "sends out", no: "sender ut" },
+        dir_receiving: { en: "receives", no: "tar imot" },
+        dir_mixed: { en: "both", no: "begge" },
+        dir_extracts: { en: "extracts", no: "tar ut" },
+        dir_extrec: { en: "extracts and receives", no: "tar ut og tar imot" },
         copied: { en: "LINK COPIED", no: "LENKE KOPIERT" },
         copyme: { en: "COPY THIS LINK: ", no: "KOPIER DENNE LENKEN: " },
         site: { en: "RECEPTION SITE", no: "MOTTAKSANLEGG" },
@@ -2237,7 +2279,7 @@ document.addEventListener('DOMContentLoaded', function() {
         nosum_mix: { en: "two kinds, not added", no: "to slag, ikke summert" },
         nosum_unit: { en: "mixed units, not added", no: "ulike enheter, ikke summert" },
         kdir_receiving: { en: "receives masses", no: "tar imot masser" },
-        kdir_producing: { en: "produces masses", no: "produserer masser" },
+        kdir_producing: { en: "sends masses out", no: "sender ut masser" },
         kdir_mixed: { en: "both", no: "begge" },
         key_cap: { en: "permit total; t/yr not drawn; blank = not yet verified, – = not applicable",
                    no: "totalt i tillatelsen; t/år tegnes ikke; tomt = ikke verifisert ennå, – = gjelder ikke" },
@@ -2589,7 +2631,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         container.innerHTML = `<div class="sb-media">${media}</div><div class="sb-credit" id="sb-credit">${mediaMode === 'photo' ? creditHtml(currentSlideIndex) : mediaMode === 'thennow' && tn ? tnCreditHtml(tn) : ''}</div>
             <div class="sb-head">
-                <span class="status-badge">${site.__cat === 'facility' ? ring(ci.col) : `<span class="swatch" style="background:${ci.col}"></span>`}${esc(ci[currentLang].toUpperCase())}${rawStatus(site, ci) ? ' · ' + esc(rawStatus(site, ci).slice(0, 60)) : ''}</span>
+                <span class="status-badge">${statusMark(shapeOf(site), ci.col)}${esc(ci[currentLang].toUpperCase())}${rawStatus(site, ci) ? ' · ' + esc(rawStatus(site, ci).slice(0, 60)) : ''}</span>
                 <h1 id="sb-title">${esc(site.Name || t('untitled'))}<span class="sb-uid">${esc(uidOf(site))}</span></h1>
                 <div class="sb-location">${esc(place)}${place && site.Type ? ' · ' : ''}${esc(site.Type || '')}${site.Subtype ? ', ' + esc(site.Subtype) : ''}</div>
             </div>
@@ -3252,7 +3294,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // A white mark needs a dark ring or it disappears on snow and concrete.
     // Size is a layout property and cannot read feature-state, so hover is
     // answered by the ring underneath instead.
-    const SYM_SIZE = ['interpolate', ['linear'], ['zoom'], 6, 0.40, 15, 0.66];
+    // Marker size at zoom 6 and 15 (set 20 Nov at 1.15× the earlier 0.40 / 0.66).
+    const SYM_SIZE_AT = [0.46, 0.76];
+    const SYM_SIZE = ['interpolate', ['linear'], ['zoom'], 6, SYM_SIZE_AT[0], 15, SYM_SIZE_AT[1]];
 
     let fpData = null, fpState = 0, sitesReady = false;
     let pgData = null;
@@ -3283,22 +3327,22 @@ document.addEventListener('DOMContentLoaded', function() {
             geometry: { type: 'Point', coordinates: [num(s.Longitude), num(s.Latitude)] },
             properties: { uid: uidOf(s), cat: s.__cat, cls: s.__cls, col: classInfo(s.__cat, s.__cls).col,
                           fp: fpBounds[uidOf(s)] ? 1 : 0, dir: getMarkerInfo(s).direction,
-                          sym: symId(s.__cat, s.__cls, getMarkerInfo(s).direction) }
+                          sym: symId(getMarkerInfo(s).shape, s.__cls, getMarkerInfo(s).direction) }
         })) };
     }
 
     // The marker is the table's own symbol, drawn large: a white face, a ring
     // in the pure status colour, and the black part that says which way the
-    // masses go. Circle for a reception site, square for a construction
-    // project. It is rendered from the same function the TYPE column uses, so
+    // masses go. Circle for reception, triangle for extraction, square for a
+    // construction project. It is rendered from the same function the TYPE column uses, so
     // the two can never drift apart, and rasterised once per combination.
     const SYM_DIRS = ['producing', 'receiving', 'mixed'];
-    const symId = (cat, cls, dir) => 'sym-' + cat + '-' + cls + '-' + dir;
+    const symId = (shape, cls, dir) => 'sym-' + shape + '-' + cls + '-' + dir;
     const SYM_PX = 56;                       // drawn at 2x, so 28 CSS px at size 1
 
-    function symbolSVG(cat, cls, dir) {
-        const col = classInfo(cat, cls).col;
-        const raw = (cat === 'project' ? projectSymbol : facilitySymbol)(dir, col);
+    function symbolSVG(shape, cls, dir) {
+        const col = classInfo(shape === 's' ? 'project' : 'facility', cls).col;
+        const raw = siteSymbol(shape, dir, col);
         // An <img> will not parse an SVG without the namespace, and the
         // symbol builders leave it out because inline SVG does not need it.
         return raw.replace(/width="\d+" height="\d+"/,
@@ -3718,7 +3762,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return `<svg class="strk" width="${(n * ADV).toFixed(1)}" height="${H}" fill="${col}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
     }
     const inkOf = s => { const c = colourOf(s); return c === '#FFFFFF' ? '#8a8a8a' : c; };
-    const ring = col => `<svg class="ring" width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="#fff" stroke="${col === '#FFFFFF' ? '#4A4A4A' : col}" stroke-width="2.2"/></svg>`;
+    const ring = col => statusMark('c', col);
 
     const SITE_COLS = [
         { key: 'Name', th: 'th_name', pth: 'th_pname', w: 230, pw: 0, keep: true,
@@ -3732,7 +3776,7 @@ document.addEventListener('DOMContentLoaded', function() {
           text: s => classInfo(s.__cat, s.__cls)[currentLang],
           // The colour is carried by the ring, at full strength; the word stays
           // black, so pure yellow never has to be read as text on white.
-          html: s => `${ring(classInfo(s.__cat, s.__cls).col)}<span class="stw">${esc(classInfo(s.__cat, s.__cls)[currentLang])}</span>`,
+          html: s => `${statusMark(shapeOf(s), classInfo(s.__cat, s.__cls).col)}<span class="stw">${esc(classInfo(s.__cat, s.__cls)[currentLang])}</span>`,
           sort: s => ['active', 'future', 'contaminated', 'old', 'unknown'].indexOf(s.__cls) },
         { key: '__type', nophone: true, th: 'th_type', w: 170, filter: true, keep: true,
           text: s => s.Type || '',
@@ -4424,7 +4468,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 b.setAttribute('aria-pressed', String(on));
                 b.title = ci[currentLang] + ' · ' + n;
                 b.setAttribute('aria-label', ci[currentLang] + ', ' + n);
-                b.innerHTML = `${ring(ci.col)}<span class="w">${esc(ci[currentLang])}</span> <span class="ct">${n}</span>`;
+                b.innerHTML = `${statusMark(cat === 'project' ? 's' : deckScope === 'extract' ? 't' : 'c', ci.col)}<span class="w">${esc(ci[currentLang])}</span> <span class="ct">${n}</span>`;
                 b.onclick = e => {
                     e.stopPropagation();
                     const set = show[cat].cls;
@@ -4921,7 +4965,7 @@ document.addEventListener('DOMContentLoaded', function() {
         else aerialShown = aerial(im, site, 240, 160);
         if (!imgs.length && !aerialShown) im.innerHTML = `<div class="no-images">${t('noimg')}</div>`;
         peekCard.querySelector('.cp').innerHTML =
-            (site.__cat === 'facility' ? ring(colourOf(site)) : `<span class="swatch" style="background:${colourOf(site)}"></span>`) + `${esc(site.Name || t('untitled'))}` +
+            statusMark(shapeOf(site), colourOf(site)) + `${esc(site.Name || t('untitled'))}` +
             `<span>${esc(uid)}${aerialShown ? ' · ' + t('aerialshort') : ''}</span>`;
         $('peek-open').textContent = t('peek_open');
         peekCard.setAttribute('aria-label', site.Name || uid);
@@ -5111,7 +5155,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else aerialShown = aerial(im, site, 240, 160);
             if (!imgs.length && !aerialShown) im.innerHTML = `<div class="no-images">${t('noimg')}</div>`;
             hoverCard.querySelector('.cp').innerHTML =
-                (site.__cat === 'facility' ? ring(colourOf(site)) : `<span class="swatch" style="background:${colourOf(site)}"></span>`) + `${esc(site.Name || t('untitled'))}` +
+                statusMark(shapeOf(site), colourOf(site)) + `${esc(site.Name || t('untitled'))}` +
                 `<span>${esc(uid)}${aerialShown ? ' · ' + t('aerialshort') : ''}</span>`;
             hoverCard.dataset.img = imgs.length || aerialShown ? '1' : '';
         }
@@ -5276,20 +5320,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function renderKey() {
         const box = $('key-list');
-        let h = '';
+        const G = '#555555', H = 'style="font-weight:500;letter-spacing:.06em;font-size:10px"';
+        const pair = (svg, w) => `<span class="kp">${svg}<span>${esc(w)}</span></span>`;
+        let h = `<div class="kr" ${H}>${t('k_shape')}</div>` +
+                `<div class="kr kw">${pair(siteSymbol('c', '', G), t('sh_c'))}${pair(siteSymbol('t', '', G), t('sh_t'))}${pair(siteSymbol('s', '', G), t('sh_s'))}</div>` +
+                `<div class="key-sep"></div><div class="kr" ${H}>${t('k_black')}</div>` +
+                `<div class="kr kw">${pair(siteSymbol('c', 'receiving', G), t('dir_receiving'))}${pair(siteSymbol('c', 'mixed', G), t('dir_mixed'))}</div>` +
+                `<div class="kr kw">${pair(siteSymbol('t', 'producing', G), t('dir_extracts'))}${pair(siteSymbol('t', 'mixed', G), t('dir_extrec'))}</div>` +
+                `<div class="kr kw">${pair(siteSymbol('s', 'producing', G), t('dir_producing'))}${pair(siteSymbol('s', 'receiving', G), t('dir_receiving'))}${pair(siteSymbol('s', 'mixed', G), t('dir_mixed'))}</div>` +
+                `<div class="key-sep"></div><div class="kr" ${H}>${t('k_colour')}</div>`;
         ['facility', 'project'].forEach((cat, i) => {
-            if (i) h += '<div class="key-sep"></div>';
-            h += `<div class="kr" style="font-weight:500;letter-spacing:.06em;font-size:10px">${t(cat === 'facility' ? 'recep_key' : 'projects')}</div>`;
+            h += `<div class="kr" style="color:var(--sub);font-size:10px">${t(cat === 'facility' ? 'recep_key' : 'projects').toLowerCase()}</div>`;
             CLASSES[cat].forEach(ci => {
                 const n = allSites.filter(s => s.__cat === cat && s.__cls === ci.k).length;
                 if (!n) return;   // an empty class has nothing to explain
-                h += `<div class="kr">${cat === 'facility' ? '<span class="kring">' + ring(ci.col) + '</span>' : `<span class="swatch" style="background:${ci.col}"></span>`}<span>${esc(ci[currentLang])}</span><span class="ct">${n}</span></div>`;
+                h += `<div class="kr"><span class="kring">${statusMark(cat === 'project' ? 's' : 'c', ci.col)}</span><span>${esc(ci[currentLang])}</span><span class="ct">${n}</span></div>`;
             });
         });
-        h += '<div class="key-sep"></div>' +
-             `<div class="kr"><span>${facilitySymbol('receiving', '#555')}</span><span>${t('dir_receiving')}</span>` +
-             `<span>${facilitySymbol('producing', '#555')}</span><span>${t('dir_producing')}</span>` +
-             `<span>${facilitySymbol('mixed', '#555')}</span><span>${t('dir_mixed')}</span></div>`;
         box.innerHTML = h;
         if (typeof updateFlowCounts === 'function') updateFlowCounts();
     }
@@ -6694,6 +6741,89 @@ document.addEventListener('DOMContentLoaded', function() {
         if (savedLang === 'no' || savedLang === 'en') setLanguage(savedLang);
     } catch (err) {}
     terrainNote();
+
+    // ── SYMBOL PANEL (index.html?sym): stroke, ink, face, size and the status
+    // colours, redrawn live on the map, the table and the key, and kept in
+    // this browser. A trial only: what is chosen here is written into the code
+    // above (SYM_STYLE, SYM_SIZE_AT, CLASSES) before it reaches visitors. ───
+    (function symbolPanel() {
+        const q = new URLSearchParams(location.search);
+        if (!q.has('sym')) return;
+        const box = document.createElement('div');
+        box.id = 'sym-panel';
+        box.style.cssText = 'position:absolute;right:12px;top:56px;z-index:9999;background:#fff;border:.5px solid #000;' +
+            'font:11px "Cutive Mono","Courier New",monospace;padding:8px 10px;width:230px;max-height:70vh;overflow:auto';
+        let size = 1;
+        // Every change is kept in this browser, so a reload does not lose it.
+        const KEY = 'db-sym-trial';
+        // Start from the colours as drawn: the saved site look may swap some
+        // (closed #FFD400 is shown as #FBFF00), and the panel shows what is seen.
+        const SC = (window.__DB_SITE_STYLE && window.__DB_SITE_STYLE.colors) || {};
+        const drawnCol = c => { const e = SC[String(c).toLowerCase()]; return e ? String(typeof e === 'string' ? e : e.to).toUpperCase() : c; };
+        CLASSES.facility.concat(CLASSES.project).forEach(ci => { ci.col = drawnCol(ci.col); });
+        const DEF = { style: Object.assign({}, SYM_STYLE),
+                      facility: CLASSES.facility.map(c => [c.k, c.col]), project: CLASSES.project.map(c => [c.k, c.col]) };
+        try {
+            const v = JSON.parse(localStorage.getItem(KEY) || 'null');
+            if (v) {
+                Object.assign(SYM_STYLE, v.style || {}); size = +v.size || 1;
+                (v.facility || []).forEach(([k, c]) => { const ci = CLASSES.facility.find(x => x.k === k); if (ci) ci.col = drawnCol(c); });
+                (v.project || []).forEach(([k, c]) => { const ci = CLASSES.project.find(x => x.k === k); if (ci) ci.col = drawnCol(c); });
+            }
+        } catch (e) {}
+        const values = () => JSON.stringify({ style: SYM_STYLE, size,
+            facility: CLASSES.facility.map(c => [c.k, c.col]), project: CLASSES.project.map(c => [c.k, c.col]) });
+        const save = () => { try { localStorage.setItem(KEY, values()); } catch (e) {} };
+        const redraw = () => {
+            save();
+            Object.keys(symAsked).forEach(k => { delete symAsked[k]; if (map.hasImage(k)) map.removeImage(k); });
+            if (map.getSource('sites')) map.getSource('sites').setData(siteFeatures());
+            if (map.getSource('fp')) map.getSource('fp').setData(fpFeatures());
+            if (map.getLayer('site-sym')) map.setLayoutProperty('site-sym', 'icon-size',
+                ['interpolate', ['linear'], ['zoom'], 6, SYM_SIZE_AT[0] * size, 15, SYM_SIZE_AT[1] * size]);
+            try { renderDeck(); } catch (e) {} try { renderKey(); } catch (e) {} try { renderChips(); } catch (e) {}
+        };
+        const row = (label, input) => { const r = document.createElement('label');
+            r.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;height:22px';
+            r.append(label, input); box.appendChild(r); return input; };
+        const num = (label, v, min, max, step, on) => { const i = document.createElement('input');
+            Object.assign(i, { type: 'range', min, max, step, value: v }); i.style.width = '110px';
+            const out = document.createElement('span'); out.textContent = v; out.style.width = '30px';
+            const w = document.createElement('span'); w.style.cssText = 'display:flex;gap:6px;align-items:center'; w.append(i, out);
+            i.oninput = () => { out.textContent = i.value; on(+i.value); redraw(); }; row(label, w); };
+        const col = (label, v, on) => { const i = document.createElement('input'); i.type = 'color'; i.value = v;
+            i.style.cssText = 'width:40px;height:16px;border:.5px solid #000;padding:0'; i.oninput = () => { on(i.value.toUpperCase()); redraw(); }; row(label, i); };
+        const head = t => { const d = document.createElement('div'); d.textContent = t; d.style.cssText = 'margin:8px 0 2px;letter-spacing:.06em'; box.appendChild(d); };
+        head('SYMBOLS');
+        num('stroke', SYM_STYLE.stroke, 0.5, 4, 0.25, v => SYM_STYLE.stroke = v);
+        num('size on map', size, 0.5, 2, 0.05, v => size = v);
+        col('black part', SYM_STYLE.ink, v => SYM_STYLE.ink = v);
+        col('face', SYM_STYLE.face, v => SYM_STYLE.face = v);
+        col('status unknown line', SYM_STYLE.unknown, v => SYM_STYLE.unknown = v);
+        [['facility', 'RECEPTION AND EXTRACTION'], ['project', 'CONSTRUCTION']].forEach(([cat, name]) => {
+            head(name);
+            CLASSES[cat].forEach(ci => col(ci.en, ci.col, v => ci.col = v));
+        });
+        const inputsDefault = [DEF.style.stroke, 1, DEF.style.ink, DEF.style.face, DEF.style.unknown]
+            .concat(DEF.facility.map(x => x[1]), DEF.project.map(x => x[1]));
+        const note = document.createElement('div');
+        note.textContent = 'Saved in this browser as you go.';
+        note.style.cssText = 'margin-top:8px;color:#777';
+        box.appendChild(note);
+        const b = document.createElement('button');
+        b.textContent = 'back to the default'; b.style.cssText = 'margin-top:6px;font:inherit;background:#fff;border:.5px solid #000;padding:2px 8px;cursor:pointer';
+        b.onclick = () => {
+            Object.assign(SYM_STYLE, DEF.style); size = 1;
+            DEF.facility.forEach(([k, c]) => CLASSES.facility.find(x => x.k === k).col = c);
+            DEF.project.forEach(([k, c]) => CLASSES.project.find(x => x.k === k).col = c);
+            box.querySelectorAll('input').forEach((i, n) => { const v = inputsDefault[n]; if (v != null) { i.value = v; if (i.nextSibling) i.nextSibling.textContent = v; } });
+            redraw();
+        };
+        box.appendChild(b);
+        document.body.appendChild(box);
+        if (localStorage.getItem(KEY)) redraw();
+        window.__symValues = values;
+    })();
 });
 </script>
 <script src="assets/scan-dot.js?v=3"></script>
