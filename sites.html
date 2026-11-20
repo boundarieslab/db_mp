@@ -158,7 +158,8 @@ const short = n => String(n || '').replace(/\s*\(.*?\)\s*/g, ' ').replace(/\b(ne
 let SITES = [], BYUID = {}, KOM = [], DOCS = [], BYID = {}, HAY = {};
 const parseCsv = url => new Promise((res, rej) => Papa.parse(url, {
   download: true, header: true, skipEmptyLines: true, transformHeader: h => h.trim(), complete: res, error: rej }));
-const getJson = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
+// 'no-cache': always ask GitHub whether the file changed (a framed page keeps its own cache for 10 min).
+const getJson = u => fetch(u, { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null);
 function inRing(x, y, ring) {
   let ins = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
