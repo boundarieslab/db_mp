@@ -413,7 +413,7 @@
     function card(d) {
         var c = $("card");
         var kind = d.uid ? "Site · " + ((d.row && d.row.Status) || "") + (d.row && d.row.Municipality ? " · " + d.row.Municipality : "")
-                 : (!(up[d.id] || []).length ? "Owner" : d.type === "div_ind" ? "Division" : "Company") + (d.sites ? " · holds " + d.sites + " site" + (d.sites > 1 ? "s" : "") : "");
+                 : (d.type === "p" || !(up[d.id] || []).length ? "Owner" : d.type === "div_ind" ? "Division" : "Company") + (d.sites ? " · holds " + d.sites + " site" + (d.sites > 1 ? "s" : "") : "");
         // the chain of main owners above, top first
         var chain = [], cur = d.id, guard = 0;
         while ((up[cur] || []).length && guard++ < 20) { cur = up[cur][up[cur].length - 1]; chain.unshift(cur); }
