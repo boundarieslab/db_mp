@@ -437,7 +437,12 @@ const CATS = [
   // an investigation (a case) is shown as a board; it is listed apart, under Investigations
   { id: 'inv', board: true, hidden: true }
 ];
-const catOf = id => CATS.find(c => c.id === id);
+// Parked on the live index (sites.html) until finished: the map, the themes (draft not yet checked)
+// and the investigations. sites-next.html shows everything.
+const FULL = /sites-next\.html$/.test(location.pathname);
+const PARKED = new Set(FULL ? [] : ['map', 'th', 'inv']);
+CATS.forEach(c => { if (PARKED.has(c.id)) c.hidden = true; });
+const catOf = id => CATS.find(c => c.id === id && !PARKED.has(c.id));
 const subKey = (a, b) => (nm(a) === a && nm(b) === b) ? coll.compare(a, b) : coll.compare(nm(a), nm(b));
 // [[top, [[sub, docs], …]], …], with the documents in the order shown.
 function treeOf(cat, docs) {
@@ -556,7 +561,7 @@ function renderNav(tree) {
     }).join('')}</div>`;
     return `<button class="cat${on ? ' on' : ''}${c.map ? ' gap' : ''}" data-by="${c.id}">${esc(w(c.id))}</button>${tops}`;
   }).join('');
-  const invs = Object.values(CASES).map(c => `<button class="inv${state.by === 'inv' && state.g === c.id ? ' on' : ''}" data-inv="${esc(c.id)}">${esc(nm('case:' + c.id))}</button>`).join('');
+  const invs = PARKED.has('inv') ? '' : Object.values(CASES).map(c => `<button class="inv${state.by === 'inv' && state.g === c.id ? ' on' : ''}" data-inv="${esc(c.id)}">${esc(nm('case:' + c.id))}</button>`).join('');
   $('a-cats').innerHTML = `<button class="head" data-home>${esc(w('archive'))}</button><div class="cats">${cats}</div>` +
     (invs ? `<button class="head gap" data-inv-head>${esc(w('inv'))}</button>${invs}` : '');
   $('a-mix').innerHTML = `<button data-mix>${esc(w('shuffle'))}</button>${state.mix ? `<button data-unmix>${esc(w('order'))}</button>` : ''}`;

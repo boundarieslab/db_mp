@@ -6,58 +6,143 @@
 <title>Index · Dirty Business</title>
 <meta name="description" content="The index of every document Dirty Business holds on the reception sites, quarries and construction projects of the Oslo region: photographs, aerials, newspaper articles, permits and reports, by class, site, kommune, period and archive.">
 <meta property="og:title" content="Dirty Business — index of documents">
-<meta property="og:description" content="Photographs, permits, plans, newspaper articles and registers on the Oslo region's excavated masses, arranged by site, class, decade, kommune, type of site, archive and corporate network.">
+<meta property="og:description" content="Photographs, permits, plans, newspaper articles and registers on the Oslo region's excavated masses, arranged by site, class, decade, kommune, type of site and archive, and placed on a map.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cutive+Mono&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#000;--sub:#808080;--red:#FF0000;--frame:#bdbdbd;--cell:180px;--obj:164px;--nav:170px}
+:root{--water:#00FFFF;--tie:#FF0000;--ink:#000;--sub:#808080;--red:#FF0000;--frame:#bdbdbd;--cell:180px;--obj:164px;--nav:170px;--pad:20px;--gap:24px}
 *{box-sizing:border-box}
-html,body{margin:0;background:#fff;color:var(--ink)}
-body{font:12px/17px 'Cutive Mono','Courier New',monospace;-webkit-font-smoothing:antialiased}
+html,body{margin:0;background:#fff;color:var(--ink);height:100%}
+body{font:12px/17px 'Cutive Mono','Courier New',monospace;-webkit-font-smoothing:antialiased;overflow:hidden}
 a{color:var(--ink)}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:left;border-radius:0}
-#atlas{min-height:100vh;padding:20px;display:flex;flex-wrap:wrap;align-items:flex-start;gap:24px}
-#a-nav{flex:0 0 var(--nav);min-width:0;display:flex;flex-direction:column;position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto;scrollbar-width:thin}
-#a-q{width:100%;height:22px;padding:0 6px;border:1px solid var(--ink);border-radius:0;outline:none;background:#fff;font:inherit;color:var(--ink);margin-bottom:16px;-webkit-appearance:none;appearance:none}
+/* Three panes side by side: the terms, the documents, and (when one is open) the reading table.
+   Each scrolls on its own, so choosing a document never moves the others. */
+#atlas{height:100vh;height:100svh;padding:var(--pad) var(--pad) 0;display:flex;align-items:stretch;gap:var(--gap)}
+#a-nav,#a-main,#a-read{overflow:auto;scrollbar-width:thin;scrollbar-color:var(--frame) transparent}
+#a-nav{flex:0 0 var(--nav);min-width:0;display:flex;flex-direction:column;padding-bottom:56px}
+#a-q{flex:0 0 auto;width:100%;height:22px;padding:0 6px;border:1px solid var(--ink);border-radius:0;outline:none;background:#fff;font:inherit;color:var(--ink);margin-bottom:16px;-webkit-appearance:none;appearance:none}
 #a-q::-webkit-search-cancel-button{display:none}
 .cat{display:block;line-height:19px;color:var(--sub)}
-.cat.on,.cat:hover,.sub:hover,.sub.on,.sec-t:hover,.tm button:hover{color:var(--ink)}
-.cat.gap{margin-top:14px}
-.subs{display:flex;flex-direction:column;padding:0 0 8px 12px}
-.sub{line-height:17px;color:var(--sub)}
-#a-main{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:28px}
-.sec{display:flex;flex-direction:column;gap:10px}
-.sec-t{align-self:flex-start;animation:fade .5s ease .25s both}
+.head{display:block;line-height:19px;color:var(--ink);margin:0 0 4px}
+.head.gap{margin-top:18px}
+.cats{display:flex;flex-direction:column;padding-left:12px}
+.inv{display:block;line-height:17px;color:var(--sub);padding-left:12px}
+.inv.on,.inv:hover,.head:hover{color:var(--ink)}
+.cat.on,.cat:hover,.top:hover,.top.on,.sub:hover,.sub.on,.sec-t:hover,.sub-t:hover,.tm button:hover,#a-mix button:hover,#a-lang button:hover,.rd-bar button:hover{color:var(--ink)}
+.cat.gap,#a-mix{margin-top:14px}
+.tops{display:flex;flex-direction:column;padding:0 0 8px 12px}
+.top{line-height:17px;color:var(--sub)}
+.subs{display:flex;flex-direction:column;padding:0 0 4px 12px}
+.sub{line-height:16px;font-size:11px;color:var(--sub)}
+#a-mix{display:flex;gap:10px;color:var(--sub)}
+#a-mix button{color:var(--sub)}
+#a-main{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:28px;padding-bottom:40px}
+#a-main.map{overflow:hidden;padding-bottom:var(--pad)}
+.sec{display:flex;flex-direction:column;gap:14px}
+.ssec{display:flex;flex-direction:column;gap:10px}
+.sec-t,.sub-t{align-self:flex-start;animation:fade .5s ease .25s both}
+.sub-t{color:var(--sub);font-size:11px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cell),1fr));gap:22px 14px}
 .obj{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--ink);min-width:0;transition:opacity .25s}
-.obj.dim{opacity:.1}
+.obj.dim,.pin.dim{opacity:.1}
 .obj .im{display:flex;align-items:center;justify-content:center;width:var(--obj);max-width:100%;height:calc(var(--obj) * .8)}
 .obj .im img{display:block;max-width:100%;max-height:100%}
 .obj .im.no{border:1px solid var(--frame)}
 /* first pages of permits and reports: a hairline round the sheet */
 img.pg{box-shadow:0 0 0 .5px var(--ink)}
 .obj .lb{max-width:100%;padding:0 3px;text-align:center;overflow-wrap:anywhere;font-size:10px;line-height:13px;color:var(--sub)}
-.obj:hover .lb{color:var(--ink)}
-.open{grid-column:1/-1;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:6px 0 18px}
-.open .pic{cursor:zoom-out;display:block;max-width:100%}
-.open .pic img{display:block;max-width:100%;max-height:62vh}
-.open .pic .no{display:flex;align-items:center;justify-content:center;width:min(480px,80vw);height:min(360px,60vw);border:1px solid var(--frame)}
-.open .tt{max-width:560px}
-.open .by{max-width:560px;color:var(--sub);margin-top:-6px}
-.open .by a{color:inherit;text-decoration:none}
-.open .tm{max-width:560px;color:var(--sub)}
-.open .tm span{white-space:nowrap}
-.open .tm button{white-space:normal;color:var(--sub)}
-.open .tm button.k{color:var(--red)}
-.open .tm button.on{color:var(--ink)}
-.open .ln{display:flex;flex-wrap:wrap;column-gap:16px}
-.open .ln .note{color:var(--sub)}
+.obj:hover .lb,.obj.cur .lb{color:var(--ink)}
+/* The reading table */
+#a-read{flex:0 0 0;width:0;display:none;padding-bottom:40px}
+body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var(--pad) - 2 * var(--gap)) * .5)}
+.rd{display:grid;grid-template-columns:minmax(150px,210px) 1fr;grid-template-rows:auto 1fr;column-gap:18px;align-items:start}
+.rd .meta{display:flex;flex-direction:column;align-items:flex-start;gap:8px;font-size:11px;line-height:15px;min-width:0}
+.rd .meta>*{max-width:100%;overflow-wrap:anywhere}
+.rd .meta .tm span{white-space:normal}
+.rd-bar{grid-column:1/-1}
+.rd-bar{align-self:stretch;display:flex;gap:16px;color:var(--sub);position:sticky;top:0;background:#fff;padding-bottom:6px;z-index:1}
+.rd-bar button{color:var(--sub)}
+.rd-bar .sp{flex:1}
+.rd .tt{max-width:620px}
+.rd .by{max-width:620px;color:var(--sub);margin-top:-6px}
+.rd .by a{color:inherit;text-decoration:none}
+.rd .tm{max-width:620px;color:var(--sub)}
+.rd .tm span{white-space:nowrap}
+.rd .tm button{white-space:normal;color:var(--sub)}
+.rd .tm button.k{color:var(--red)}
+.rd .tm button.on{color:var(--ink)}
+.rd .ln{display:flex;flex-wrap:wrap;column-gap:16px}
+.rd .ln .note{color:var(--sub)}
+/* the picture fits the height of the screen; a click shows it at full width */
+.rd .pic{display:block;max-width:100%;justify-self:start;cursor:zoom-in}
+.rd .pic img{display:block;max-width:100%;height:auto;max-height:calc(100vh - var(--pad) - 60px)}
+.rd.full .pic{cursor:zoom-out}
+.rd.full .pic img{max-height:none}
+.rd .pic .no{display:flex;align-items:center;justify-content:center;width:min(480px,100%);aspect-ratio:4/3;border:1px solid var(--frame)}
+/* The map: white ground, kommune boundaries as hairlines, every document at its place */
+#a-map{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;cursor:grab;touch-action:none}
+#a-map.drag{cursor:grabbing}
+#a-map svg{position:absolute;inset:0;width:100%;height:100%}
+#a-map .wl{position:absolute;left:0;top:0;max-width:none;pointer-events:none;user-select:none;transform-origin:0 0}
+#a-map .wl.ct{opacity:.35;filter:grayscale(1)}
+#a-map .wl.bd{opacity:.45;filter:grayscale(1)}
+#a-map .wl.wa,#a-map .wl.co{background:var(--water);-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+#a-map .wl.wa{opacity:.1}
+#a-map .wl.co{opacity:.45}
+#a-cred{position:absolute;left:0;bottom:0;background:#fff;padding:2px 6px 0 0;color:var(--sub);font-size:10px}
+/* on the map each document is a small black A4 sheet; pointing at it shows its picture */
+.pin{position:absolute;display:block;background:var(--ink);transition:opacity .25s}
+#a-peek{position:absolute;z-index:3;pointer-events:none;display:none;background:#fff}
+#a-peek img{display:block;max-width:150px;max-height:200px}
+#a-peek .no{display:flex;align-items:center;justify-content:center;width:106px;height:150px;border:1px solid var(--frame)}
+/* connections: hairlines from the opened document to the ones it is tied to; highlights as a yellow marker */
+#a-links{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:4}
+#a-links line,.board svg line{stroke:var(--tie);stroke-width:.35}
+#a-links circle,.board svg circle{fill:var(--tie)}
+.rd .pic{position:relative}
+.rd .hl{position:absolute;box-shadow:inset 0 0 0 1px var(--tie)}
+.rd .cx{display:flex;flex-direction:column;align-items:flex-start;color:var(--sub);max-width:620px}
+.rd .cx button{color:var(--ink);text-align:left}
+.obj.tie .lb{color:var(--ink)}
+/* an investigation: cut-out passages and documents by year, joined by straight lines in pure red,
+   each join carrying a flat yellow note */
+.board{position:relative;min-height:70vh;margin-top:8px}
+.board svg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:3}
+.board .col{position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-start;gap:30px;flex:0 0 auto}
+.board .yr{color:var(--sub);font-size:11px}
+.pc{position:absolute;z-index:1;display:flex;flex-direction:column;gap:4px;text-decoration:none;color:var(--ink);cursor:grab;touch-action:none;user-select:none}
+.pc.drag{cursor:grabbing;z-index:2}
+.pc img{-webkit-user-drag:none;user-select:none}
+.pc .wh{position:relative;display:block;width:150px;background:#fff;box-shadow:0 0 0 1px var(--ink)}
+.pc .wh img{display:block;width:100%;height:auto}
+.pc .wh.no{display:flex;align-items:center;justify-content:center;width:96px;height:120px}
+.pc .mk{position:absolute;box-shadow:inset 0 0 0 .75px var(--tie)}
+.pc .id{font-size:9px;line-height:11px;color:var(--sub)}
+.post{position:absolute;z-index:4;width:72px;height:72px;overflow:hidden;background:#FFFF00;color:#333;font-size:9px;line-height:11px;padding:6px;pointer-events:none;-webkit-font-smoothing:antialiased}
+.pin.cur{outline:1px solid var(--ink);outline-offset:2px;z-index:2}
+#a-zoom{position:absolute;right:0;bottom:0;display:flex;gap:10px;background:#fff;padding:2px 0 0 6px;color:var(--sub)}
+#a-zoom button:hover{color:var(--ink)}
+#a-lang{position:fixed;left:var(--pad);bottom:14px;background:#fff;color:var(--sub);padding-top:4px;z-index:5}
+#a-lang button{color:var(--sub)}
+#a-lang button.on{color:var(--ink)}
 .a-msg{color:var(--sub);margin:0}
 @keyframes fade{from{opacity:0}to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.sec-t{animation:none}.obj{transition:none}}
-@media (max-width:640px){#atlas{padding:12px;gap:16px}#a-nav{flex-basis:100%;position:static;max-height:none}:root{--cell:132px;--obj:120px}}
+@media (prefers-reduced-motion:reduce){.sec-t,.sub-t{animation:none}.obj{transition:none}}
+/* Phones: one column of panes; the reading table covers the page */
+@media (max-width:760px){
+  body{overflow:auto}
+  #atlas{display:block;height:auto;padding:12px}
+  #a-nav,#a-main{overflow:visible}
+  #a-nav{padding-bottom:16px}
+  :root{--cell:132px;--obj:120px}
+  #a-main.map{height:75svh}
+  body.reading{overflow:hidden}
+  body.reading #a-read{position:fixed;inset:0;z-index:6;background:#fff;padding:12px 12px 40px;width:auto}
+  .rd{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -65,9 +150,13 @@ img.pg{box-shadow:0 0 0 .5px var(--ink)}
   <nav id="a-nav" aria-label="Arrange the documents">
     <input id="a-q" type="search" placeholder="Search" aria-label="Search the documents" autocomplete="off">
     <div id="a-cats"></div>
+    <div id="a-mix"></div>
   </nav>
   <main id="a-main"><p class="a-msg">Loading the documents…</p></main>
+  <aside id="a-read" aria-live="polite"></aside>
 </div>
+<svg id="a-links" aria-hidden="true"></svg>
+<div id="a-lang"><button data-lang="en">EN</button> / <button data-lang="no">NO</button></div>
 
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <!-- The editor (sites.html?edit) saves this page's look into editor/sites-style.js, apart from the map's. -->
@@ -75,10 +164,11 @@ img.pg{box-shadow:0 0 0 .5px var(--ink)}
   name: 'sites', page: 'sites.html', key: 'db-style-draft-sites', global: '__DB_SITES_STYLE',
   path: 'editor/sites-style.js', nomap: true,
   parts: [
-    ['#a-nav', 'Left column'], ['#a-q', 'Search'], ['.cat', 'Category'], ['.subs', 'Groups list'], ['.sub', 'Group name'],
-    ['#a-main', 'Documents'], ['.sec-t', 'Group title'], ['.grid', 'Grid'], ['.obj', 'Document'], ['.obj .im', 'Document picture'],
-    ['.obj .lb', 'Document label'], ['.open', 'Opened document'], ['.open .tt', 'Opened title'], ['.open .by', 'Opened author'], ['.open .tm', 'Opened terms'],
-    ['.open .ln', 'Opened links'], ['body', 'Page']
+    ['#a-nav', 'Left column'], ['#a-q', 'Search'], ['.cat', 'Category'], ['.top', 'Group name'], ['.sub', 'Sub-group name'],
+    ['#a-main', 'Documents'], ['.sec-t', 'Group title'], ['.sub-t', 'Sub-group title'], ['.grid', 'Grid'], ['.obj', 'Document'],
+    ['.obj .im', 'Document picture'], ['.obj .lb', 'Document label'], ['#a-read', 'Reading table'], ['.rd .tt', 'Opened title'],
+    ['.rd .by', 'Opened author'], ['.rd .tm', 'Opened terms'], ['.rd .ln', 'Opened links'], ['#a-map path', 'Map lines'],
+    ['.pin', 'Map document'], ['#a-lang', 'Language'], ['body', 'Page']
   ]
 };</script>
 <script type="application/json" id="db-style">{}</script>
@@ -96,39 +186,97 @@ const FACILITIES_CSV = SHEET + '?output=csv';
 const PROJECTS_CSV = SHEET + '?gid=529338597&single=true&output=csv';
 const DOCUMENTS_CSV = SHEET + '?gid=187064250&single=true&output=csv';
 const KOMMUNER = 'data/kommuner.geojson';
-// Pictures made for documents that have none in the sheet: the first page of the PDFs
-// (tools/doc_thumbs.py).
+// Pictures made for documents that have none in the sheet: the first page of the PDFs (tools/doc_thumbs.py).
 const THUMBS = 'data/doc_thumbs.json';
 // Who issued each document, read from its letterhead (tools/doc_thumbs.py); the sheet's Creator wins.
 const AUTHORS = 'data/doc_authors.json';
 // Dead links: the Internet Archive copy to open instead, or '' for no link (tools/doc_thumbs.py).
 const LINKS = 'data/doc_links.json';
 const MAP_LINK = 'https://dirtybusiness.no/#site=';
+// The map's ground: Kartverket's own lines (grey-tone topographic map, WMS), each layer asked for
+// separately so it can be drawn in its own weight. The detail follows the zoom (N50 near, coarser far).
+const WMS = 'https://wms.geonorge.no/skwms1/wms.topograatone?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&SRS=EPSG:4326&FORMAT=image/png&TRANSPARENT=TRUE&STYLES=';
+// wa and co are drawn as a colour through the picture (water in light neon cyan); ct and bd as grey lines
+const WMS_LAYERS = [['wa', 'kd_vannflate'], ['ct', 'kd_hoydekurver'], ['bd', 'kd_administrative_grenser'], ['co', 'kd_vannkontur']];
+const WMS_TINT = { wa: 1, co: 1 };
+// Connections between documents, with highlights on their pictures (draft, data/doc_relations.json).
+const RELATIONS = 'data/doc_relations.json';
+// Themes: the sheet's Themes column when it exists; until then a first draft (data/doc_themes.json).
+const THEMES = 'data/doc_themes.json';
 
-// The classes of document, in the order they are listed.
-const CLASS_ORDER = ['Photograph', 'Aerial photograph', 'Newspaper article', 'Permit', 'Permit application', 'Mining licence', 'Inspection report',
-  'Zoning plan', 'Register entry', 'Company record', 'Public record', 'Ownership diagram', 'Terrain change', 'Report', 'Government document',
-  'Government page', 'Public notice', 'Municipal page', 'Company page'];
+// ─────────────────────────────────────────────────────────────────────────
+// Words of the page in English and Norwegian. Names from the sheet (titles,
+// sites, kommuner, archives) stay as written.
+// ─────────────────────────────────────────────────────────────────────────
+const WORDS = {
+  en: { search: 'Search', site: 'Site', th: 'Theme', linked: 'Tied to', archive: 'Archive of the Masses', inv: 'Investigations', cls: 'Class', dec: 'Decade', k: 'Kommune', ty: 'Type of site', arch: 'Archive', map: 'Map',
+        shuffle: 'Shuffle', order: 'in order', close: 'close ×', prev: '←', next: '→', doc: 'document ↗', archived: 'archived copy ↗',
+        lost: 'no longer available online', toMap: 'map →', loading: 'Loading the documents…', fail: 'The database could not be read. Try again in a minute.',
+        none: 'None', undated: 'Undated', other: 'Other', 'permission asked': 'permission asked', restricted: 'restricted', title: 'Index' },
+  no: { search: 'Søk', site: 'Sted', th: 'Tema', linked: 'Knyttet til', archive: 'Massenes arkiv', inv: 'Undersøkelser', cls: 'Klasse', dec: 'Tiår', k: 'Kommune', ty: 'Type sted', arch: 'Arkiv', map: 'Kart',
+        shuffle: 'Stokk', order: 'i rekkefølge', close: 'lukk ×', prev: '←', next: '→', doc: 'dokument ↗', archived: 'arkivert kopi ↗',
+        lost: 'ikke lenger tilgjengelig på nett', toMap: 'kart →', loading: 'Laster dokumentene…', fail: 'Databasen kunne ikke leses. Prøv igjen om et minutt.',
+        none: 'Ingen', undated: 'Udatert', other: 'Annet', 'permission asked': 'tillatelse etterspurt', restricted: 'begrenset', title: 'Indeks' }
+};
+// Group names: [English, Norwegian]. A value not listed is shown as written.
+const NAMES = {
+  // themes
+  pollution: ['Pollution', 'Forurensning'], 'pollution/leachate': ['Leachate and water', 'Sigevann og vann'], 'pollution/gas': ['Gas', 'Gass'],
+  'pollution/contaminated': ['Contaminated masses', 'Forurensede masser'], mobilisation: ['Citizen mobilisation', 'Innbyggere mobiliserer'],
+  'mobilisation/letters': ['Reader letters and debate', 'Leserbrev og debatt'], 'mobilisation/protest': ['Protests, complaints, appeals', 'Protester, klager, anker'],
+  afterlife: ['Afterlife of sites', 'Stedenes etterliv'], 'afterlife/closure': ['Closure', 'Avslutning'], 'afterlife/reuse': ['New use: parks, golf', 'Ny bruk: park, golf'],
+  oversight: ['Oversight', 'Tilsyn'], 'oversight/inspection': ['Inspections and orders', 'Tilsyn og pålegg'],
+  // the three families of site
+  rec: ['Reception', 'Mottak'], ext: ['Extraction', 'Uttak'], con: ['Construction', 'Bygg og anlegg'],
+  // classes and their bigger classes
+  pics: ['Pictures', 'Bilder'], press: ['Press', 'Presse'], perm: ['Permits and inspections', 'Tillatelser og tilsyn'], reps: ['Reports', 'Rapporter'],
+  'Photograph': ['Photograph', 'Fotografi'], 'Aerial photograph': ['Aerial photograph', 'Flyfoto'], 'Newspaper article': ['Newspaper article', 'Avisartikkel'],
+  'Permit': ['Permit', 'Tillatelse'], 'Permit application': ['Permit application', 'Søknad om tillatelse'], 'Mining licence': ['Mining licence', 'Driftskonsesjon'],
+  'Inspection report': ['Inspection report', 'Tilsynsrapport'], 'Report': ['Report', 'Rapport'], 'Government document': ['Government document', 'Offentlig dokument'],
+  // periods
+  p1800: ['Before 1900', 'Før 1900'], p1900: ['1900–1949', '1900–1949'], p1950: ['1950–1999', '1950–1999'], p2000: ['Since 2000', 'Etter 2000'],
+  // kinds of archive
+  a_news: ['Newspapers and media', 'Aviser og medier'], a_mus: ['Museums and archives', 'Museer og arkiv'], a_pub: ['Public bodies', 'Offentlige organer'],
+  a_reg: ['Registers', 'Registre'], a_co: ['Companies', 'Selskaper'], a_lub: ['LUB', 'LUB'],
+  // types of site, as the sheet writes them
+  'Pukkverk': ['Crushed-rock quarry', 'Pukkverk'], 'Deponi': ['Landfill', 'Deponi'], 'Massemottak': ['Mass reception site', 'Massemottak'],
+  'Gjenvinningsstasjon': ['Recycling station', 'Gjenvinningsstasjon'], 'Pukkverk + Massemottak': ['Quarry and mass reception', 'Pukkverk + massemottak'],
+  'Gjenvinning / Omlasting': ['Recycling and transfer', 'Gjenvinning / omlasting'], 'Massesenter': ['Mass centre', 'Massesenter'],
+  'Deponi + Gjenvinning': ['Landfill and recycling', 'Deponi + gjenvinning'], 'Behandlingsanlegg': ['Treatment plant', 'Behandlingsanlegg'],
+  'Spesialdeponi': ['Special landfill', 'Spesialdeponi'], 'Sjøutfylling': ['Sea fill', 'Sjøutfylling'], 'Miljøpark': ['Environmental park', 'Miljøpark'],
+  'Pukkverk + Gjenvinning': ['Quarry and recycling', 'Pukkverk + gjenvinning'], 'Deponi + Sortering': ['Landfill and sorting', 'Deponi + sortering'],
+  'Infrastruktur': ['Infrastructure', 'Infrastruktur'], 'Offentlig': ['Public building', 'Offentlig bygg'], 'Industri': ['Industry', 'Industri'],
+  'Næring': ['Commercial', 'Næring'], 'Byutvikling': ['Urban development', 'Byutvikling'], 'Næring/Bolig': ['Commercial and housing', 'Næring / bolig'],
+  'Bolig': ['Housing', 'Bolig'], t_none: ['Type not given', 'Type ikke oppgitt']
+};
+// Counties by the first two digits of the kommune number.
+const COUNTY = { '03': 'Oslo', '31': 'Østfold', '32': 'Akershus', '33': 'Buskerud', '34': 'Innlandet', '39': 'Vestfold', '40': 'Telemark', '42': 'Agder' };
+const COUNTY_ORDER = ['Oslo', 'Akershus', 'Østfold', 'Buskerud', 'Vestfold', 'Telemark', 'Innlandet', 'Agder'];
+
+// The classes of document and the bigger classes they belong to, in the order they are listed.
+const CLASS_TREE = [['pics', ['Photograph', 'Aerial photograph']], ['press', ['Newspaper article']],
+  ['perm', ['Permit', 'Permit application', 'Mining licence', 'Inspection report']], ['reps', ['Report', 'Government document']]];
+const CLASS_TOP = {}; CLASS_TREE.forEach(([t, cs]) => cs.forEach(c => { CLASS_TOP[c] = t; }));
 // Classes left out of the index: register and web entries with nothing to look at.
 const HIDDEN = new Set(['Terrain change', 'Ownership diagram', 'Zoning plan', 'Company page', 'Company record',
   'Register entry', 'Public record', 'Municipal page', 'Government page', 'Public notice']);
+// The kind of each archive, read from its name.
+const ARCHIVE_KIND = [
+  ['a_lub', /^LUB\b/],
+  ['a_reg', /Brønnøysund|Proff|arealplanbase|Norske utslipp|Grunnforurensning|Avfallsdeklarering|Public journal/i],
+  ['a_news', /Nasjonalbiblioteket|Teknisk Ukeblad|NTB|TV 2|Dagens Perspektiv|Estate Nyheter|Romerikes Blad|mynewsdesk|byggfakta|logistikkinside|geo365|bygg\.no|arkitektur\.no|karrierestart/i],
+  ['a_mus', /muse|Wikimedia|Lokalhistoriewiki|byarkiv|historielag|Arbeiderbevegelsens|fotosamling|Anno |Norge i bilder|leksikon|snl\.no/i],
+  ['a_pub', /direktorat|Statsforvalter|kommune|Statens vegvesen|Regjeringen|Stortinget|Statsbygg|Bane NOR|banenor|Folkehelse|politiet|nyeveier|uio\.no|universitets|osu\.no|roaf|movar|frevar|oeras|vesar|sirkula|iorenovasjon|drammenhavn/i]
+];
+const ARCHIVE_ORDER = ['a_news', 'a_mus', 'a_pub', 'a_reg', 'a_co', 'a_lub'];
+const FAMILY_ORDER = ['rec', 'ext', 'con'];
 // A document without a picture is drawn as one line icon of its kind.
 const ICON = {
   photo: 'M4 7h24v18H4z M4 21l7-7 6 6 4-4 7 7 M20 11h3v3h-3z',
   page: 'M8 3h11l5 5v21H8z M19 3v5h5 M11 13h10 M11 17h10 M11 21h7',
-  press: 'M4 6h24v20H4z M7 9h8v7H7z M18 9h7 M18 12h7 M18 15h7 M7 19h18 M7 22h18',
-  plan: 'M4 8l8-3 8 3 8-3v19l-8 3-8-3-8 3z M12 5v19 M20 8v19',
-  card: 'M3 8h26v16H3z M6 12h9 M6 16h12 M6 20h10 M21 11h5v7h-5z',
-  tree: 'M13 3h6v5h-6z M16 8v4 M7 12h18 M7 12v5 M25 12v5 M4 17h6v5H4z M22 17h6v5h-6z M16 12v5 M13 17h6v5h-6z',
-  terrain: 'M3 25h26 M3 21c5-5 9-5 12-2s7 2 14-3 M5 16c4-4 8-4 10-2s6 2 10-3 M9 11c3-3 6-3 8-1s4 1 6-2',
-  web: 'M3 6h26v20H3z M3 10h26 M6 14h10 M6 18h20 M6 22h14'
+  press: 'M4 6h24v20H4z M7 9h8v7H7z M18 9h7 M18 12h7 M18 15h7 M7 19h18 M7 22h18'
 };
-const KIND = {
-  'Photograph': 'photo', 'Aerial photograph': 'photo', 'Newspaper article': 'press', 'Permit': 'page', 'Permit application': 'page',
-  'Mining licence': 'page', 'Inspection report': 'page', 'Zoning plan': 'plan', 'Register entry': 'card', 'Company record': 'card',
-  'Public record': 'card', 'Ownership diagram': 'tree', 'Terrain change': 'terrain', 'Report': 'page', 'Government document': 'page',
-  'Government page': 'web', 'Public notice': 'web', 'Municipal page': 'web', 'Company page': 'web'
-};
+const KIND = { 'Photograph': 'photo', 'Aerial photograph': 'photo', 'Newspaper article': 'press' };
 
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -147,10 +295,15 @@ const num = v => parseFloat(String(v == null ? '' : v).replace(',', '.'));
 const isTrue = v => /^(true|yes|1)$/i.test(String(v == null ? '' : v).trim());
 const uidOf = s => (s && (s.UID || s.fid)) || '';
 const coll = new Intl.Collator('nb');
-
+const uniq = a => [...new Set(a)];
 const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ø/g, 'o').replace(/æ/g, 'ae');
 // A short name for the label under a document; groups and the opened document keep the full name.
 const short = n => String(n || '').replace(/\s*\(.*?\)\s*/g, ' ').replace(/\b(nedlagte deponi|avfallsdeponi|massemottak|deponi)\b/gi, '').replace(/\s+/g, ' ').trim() || n;
+
+let LANG = 'en';
+try { if (localStorage.getItem('db-index-lang') === 'no') LANG = 'no'; } catch (e) {}
+const w = k => WORDS[LANG][k] || WORDS.en[k] || k;
+const nm = v => NAMES[v] ? NAMES[v][LANG === 'no' ? 1 : 0] : (v === '__none' ? w('none') : v === '__undated' ? w('undated') : v);
 
 // ─────────────────────────────────────────────────────────────────────────
 // Data
@@ -168,26 +321,50 @@ function inRing(x, y, ring) {
   }
   return ins;
 }
-const inGeom = (x, y, g) => (g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [])
-  .some(p => inRing(x, y, p[0]) && !p.slice(1).some(h => inRing(x, y, h)));
+const polysOf = g => g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
+const inGeom = (x, y, g) => polysOf(g).some(p => inRing(x, y, p[0]) && !p.slice(1).some(h => inRing(x, y, h)));
 const kByName = n => KOM.find(k => coll.compare(k.n, String(n || '').trim()) === 0);
+// A kommune's place for documents tied to it alone: the middle of its largest ring.
+function middle(g) {
+  let best = null, bestN = 0;
+  polysOf(g).forEach(p => { if (p[0].length > bestN) { best = p[0]; bestN = p[0].length; } });
+  if (!best) return null;
+  let x = 0, y = 0; best.forEach(c => { x += c[0]; y += c[1]; });
+  const c = [x / best.length, y / best.length];
+  return inGeom(c[0], c[1], g) ? c : best[0];
+}
+const familiesOf = s => {
+  if (s.__cat === 'project') return ['con'];
+  const a = String(s.Activities || '').toLowerCase(), f = [];
+  if (/reception/.test(a)) f.push('rec');
+  if (/extraction/.test(a)) f.push('ext');
+  if (!f.length) f.push(/pukk|grus|uttak/i.test(s.Type || '') ? 'ext' : 'rec');
+  return f;
+};
+const archiveKind = a => { const m = ARCHIVE_KIND.find(([, re]) => re.test(a)); return m ? m[0] : 'a_co'; };
+const period = y => y < 1900 ? 'p1800' : y < 1950 ? 'p1900' : y < 2000 ? 'p1950' : 'p2000';
 
-function prepare(f, p, d, kom, th, au, ln) {
+let REL = {}, CASES = {}, CASES_OF = {};
+function prepare(f, p, d, kom, th, au, ln, rel, thm) {
   const tag = cat => r => { r.__cat = cat; return r; };
   SITES = [...f.filter(r => uidOf(r) && isTrue(r.Published)).map(tag('facility')), ...p.filter(r => uidOf(r) && isTrue(r.Published)).map(tag('project'))];
   BYUID = {}; SITES.forEach(s => { BYUID[uidOf(s)] = s; });
-  KOM = ((kom || {}).features || []).map(ft => ({ nr: ft.properties.nr, n: ft.properties.n, g: ft.geometry }));
+  KOM = ((kom || {}).features || []).map(ft => ({ nr: String(ft.properties.nr), n: ft.properties.n, g: ft.geometry }));
+  KOM.forEach(k => { k.c = middle(k.g); k.county = COUNTY[k.nr.slice(0, 2)] || ''; });
   SITES.forEach(s => {
     const x = num(s.Longitude), y = num(s.Latitude);
     let k = kByName(s.Municipality);
     if (!k && Number.isFinite(x) && Number.isFinite(y)) k = KOM.find(k => inGeom(x, y, k.g));
     s.__kn = k ? k.n : String(s.Municipality || '').trim();
-    s.__ty = String(s.Type || '').trim();
+    s.__ty = String(s.Type || '').trim() || 't_none';
+    s.__fam = familiesOf(s);
+    s.__xy = Number.isFinite(x) && Number.isFinite(y) ? [x, y] : null;
   });
-  // Documents: published, and tied to a published site or to none.
   th = th || {}; au = au || {}; ln = ln || {};
+  // Documents: published, and tied to a published site or to none.
   DOCS = d.filter(r => r.DocID && isTrue(r.Published) && !HIDDEN.has(String(r.Class || '').trim())).map(r => {
     const named = String(r.Sites || '').split(/[;,]/).map(x => x.trim()).filter(Boolean);
+    r.Class = String(r.Class || '').trim();
     r.__sites = named.filter(u => BYUID[u]).map(u => BYUID[u]);
     if (named.length && !r.__sites.length) return null;
     const m = /(?<!\d)(1[89]\d\d|20\d\d)(?!\d)/.exec(String(r.Date || ''));
@@ -206,63 +383,130 @@ function prepare(f, p, d, kom, th, au, ln) {
     r.__lost = r.DocID in ln && !r.__link;                  // gone from the web, no archived copy
     r.__archived = /web\.archive\.org/.test(r.__link);   // opened from the Internet Archive
     r.__siteNames = r.__sites.map(s => String(s.Name || '').trim()).filter(Boolean);
-    r.__ty = uniq(r.__sites.map(s => s.__ty).filter(Boolean));
     r.__icon = ICON[KIND[r.Class] || 'page'];
+    const own = String(r.Themes || '').split(/[;,]/).map(x => x.trim()).filter(Boolean);
+    r.__th = own.length ? own : (((thm || {}).themes || {})[r.DocID] || []);
     const where = r.__siteNames[0] ? short(r.__siteNames[0]) : (r.__k[0] || '');
     r.__label = [where, r.__year].filter(Boolean).join(' ');
+    // its place on the map: its first site, or else the middle of its kommune
+    const s0 = r.__sites.find(s => s.__xy), k0 = !s0 && r.__k.map(kByName).find(k => k && k.c);
+    r.__xy = s0 ? s0.__xy : k0 ? k0.c : null;
+    r.__at = s0 ? uidOf(s0) : k0 ? 'k:' + k0.nr : '';
     return r;
   }).filter(Boolean);
   DOCS.sort((a, b) => (a.__year || 9999) - (b.__year || 9999) || coll.compare(a.Class, b.Class) || coll.compare(a.Title, b.Title));
+  DOCS.forEach((r, i) => { r.__i = i; });
+  // connections, both ways; a highlight belongs to the document it is drawn on
+  CASES = {}; CASES_OF = {};
+  ((rel || {}).cases || []).forEach(c => {
+    c.docs = (c.docs || []).filter(id => DOCS.some(r => r.DocID === id)); if (!c.docs.length) return;
+    c.tops = c.tops || ['other']; CASES[c.id] = c; NAMES['case:' + c.id] = [c.en, c.no || c.en];
+    c.docs.forEach(id => (CASES_OF[id] = CASES_OF[id] || []).push(c));
+  });
+  REL = {};
+  const byId = {}; DOCS.forEach(r => { byId[r.DocID] = r; });
+  ((rel || {}).links || []).forEach(l => {
+    if (!byId[l.a] || !byId[l.b]) return;
+    (REL[l.a] = REL[l.a] || []).push({ id: l.b, box: l.box || null, en: l.en || '', no: l.no || '' });
+    if (!(REL[l.b] || []).some(x => x.id === l.a)) (REL[l.b] = REL[l.b] || []).push({ id: l.a, box: null, en: l.en || '', no: l.no || '', back: true });
+  });
+  Object.keys(REL).forEach(k => { const seen = {}; REL[k] = REL[k].filter(x => { if (seen[x.id] && !x.box) return false; seen[x.id] = 1; return true; }); });
   BYID = {}; HAY = {};
   DOCS.forEach(r => {
     BYID[r.DocID] = r;
-    HAY[r.DocID] = fold([r.Class, r.Title, r.__year, r.__siteNames.join(' '), r.__k.join(' '), r.__ty.join(' '), r.__arch, r.Creator].join(' '));
+    HAY[r.DocID] = fold([r.Class, nm(r.Class), r.Title, r.__year, r.__siteNames.join(' '), r.__k.join(' '), r.__arch, r.Creator].join(' '));
   });
 }
-const uniq = a => [...new Set(a)];
 
 // ─────────────────────────────────────────────────────────────────────────
-// The ways to arrange the documents.
+// The ways to arrange the documents. Each gives, for a document, its places
+// as [bigger group, group] pairs; the page lists the bigger groups, and the
+// groups inside them.
 // ─────────────────────────────────────────────────────────────────────────
+const kCounty = n => { const k = kByName(n); return (k && k.county) || 'other'; };
 const CATS = [
-  { id: 'site', label: 'Site', of: d => d.__siteNames },
-  { id: 'cls', label: 'Class', of: d => d.Class ? [d.Class] : [], order: CLASS_ORDER },
-  { id: 'dec', label: 'Decade', of: d => d.__dec ? [d.__dec] : [], dec: true },
-  { id: 'k', label: 'Kommune', of: d => d.__k },
-  { id: 'ty', label: 'Type of site', of: d => d.__ty },
-  { id: 'arch', label: 'Archive', of: d => d.__arch ? [d.__arch] : [] }
+  { id: 'site', of: d => d.__sites.flatMap(s => s.__fam.map(f => [f, String(s.Name || '').trim()])).filter(p => p[1]), tops: FAMILY_ORDER },
+  { id: 'k', of: d => d.__k.map(n => [kCounty(n), n]), tops: COUNTY_ORDER },
+  { id: 'th', of: d => d.__th.map(t => [t.split('/')[0], t]), tops: ['pollution', 'mobilisation', 'afterlife', 'oversight'] },
+  { id: 'ty', of: d => d.__sites.flatMap(s => s.__fam.map(f => [f, s.__ty])), tops: FAMILY_ORDER },
+  { id: 'cls', of: d => d.Class ? [[CLASS_TOP[d.Class] || 'other', d.Class]] : [], tops: CLASS_TREE.map(t => t[0]),
+    subs: CLASS_TREE.flatMap(t => t[1]) },
+  { id: 'dec', of: d => d.__year ? [[period(d.__year), d.__dec]] : [], tops: ['p1800', 'p1900', 'p1950', 'p2000'], dec: true },
+  { id: 'arch', of: d => d.__arch ? [[archiveKind(d.__arch), d.__arch]] : [], tops: ARCHIVE_ORDER },
+  { id: 'map', map: true },
+  // an investigation (a case) is shown as a board; it is listed apart, under Investigations
+  { id: 'inv', board: true, hidden: true }
 ];
-const catOf = id => CATS.find(c => c.id === id);
-function groupsOf(cat) {
-  const groups = {}, none = [];
-  DOCS.forEach(d => { const vs = cat.of(d); if (!vs.length) none.push(d); vs.forEach(v => (groups[v] = groups[v] || []).push(d)); });
-  let keys = Object.keys(groups);
-  if (cat.order) keys = cat.order.filter(k => groups[k]).concat(keys.filter(k => !cat.order.includes(k)).sort((a, b) => coll.compare(a, b)));
-  else if (cat.dec) keys.sort(); else keys.sort((a, b) => coll.compare(a, b));
-  const list = keys.map(k => [k, groups[k]]);
-  if (none.length) list.push([cat.dec ? 'Undated' : 'None', none]);
-  return list;
+// Parked on the live index (sites.html) until finished: the map, the themes (draft not yet checked)
+// and the investigations. sites-next.html shows everything.
+const FULL = /sites-next\.html$/.test(location.pathname);
+const PARKED = new Set(FULL ? [] : ['map', 'th', 'inv']);
+CATS.forEach(c => { if (PARKED.has(c.id)) c.hidden = true; });
+const catOf = id => CATS.find(c => c.id === id && !PARKED.has(c.id));
+const subKey = (a, b) => (nm(a) === a && nm(b) === b) ? coll.compare(a, b) : coll.compare(nm(a), nm(b));
+// [[top, [[sub, docs], …]], …], with the documents in the order shown.
+function treeOf(cat, docs) {
+  const t = {}, none = [];
+  docs.forEach(d => {
+    const ps = cat.of(d); if (!ps.length) { none.push(d); return; }
+    const seen = {};
+    ps.forEach(([a, b]) => { const key = a + '\u0001' + b; if (seen[key]) return; seen[key] = 1; ((t[a] = t[a] || {})[b] = t[a][b] || []).push(d); });
+  });
+  let tops = Object.keys(t);
+  tops = cat.tops.filter(k => t[k]).concat(tops.filter(k => !cat.tops.includes(k)).sort(subKey));
+  const out = tops.map(a => {
+    let subs = Object.keys(t[a]);
+    if (cat.subs) subs = cat.subs.filter(s => t[a][s]).concat(subs.filter(s => !cat.subs.includes(s)).sort(subKey));
+    else if (cat.dec) subs.sort(); else subs.sort(subKey);
+    return [a, subs.map(s => [s, t[a][s]])];
+  });
+  if (none.length) { const k = cat.dec ? '__undated' : '__none'; out.push([k, [[k, none]]]); }
+  return out;
+}
+// the bigger group a value sits in, for links from the reading table
+function topOf(catId, v) {
+  const cat = catOf(catId); if (!cat || cat.map || cat.board) return '';
+  for (const d of DOCS) { const p = cat.of(d).find(p => p[1] === v); if (p) return p[0]; }
+  return '';
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Address: #by=cls&g=Photograph, #doc=ID, #q=word — so a view can be shared.
+// Address: #by=cls&g=pics&s=Photograph, #doc=ID, #q=word, #mix=7, #lang=no
 // ─────────────────────────────────────────────────────────────────────────
-let state = { by: '', g: '', doc: '', q: '' };
+const KEYS = ['by', 'g', 's', 'doc', 'q', 'mix'];
+let state = { by: '', g: '', s: '', doc: '', q: '', mix: '' };
 function readHash() {
-  const o = { by: '', g: '', doc: '', q: '' };
+  const o = { by: '', g: '', s: '', doc: '', q: '', mix: '' };
   location.hash.replace(/^#/, '').split('&').forEach(kv => {
     const i = kv.indexOf('='); if (i < 1) return;
     const k = kv.slice(0, i); let v = kv.slice(i + 1); try { v = decodeURIComponent(v); } catch (e) {}
     if (k in o) o[k] = v;
+    if (k === 'lang' && (v === 'no' || v === 'en')) LANG = v;
   });
-  if (!catOf(o.by)) { o.by = ''; o.g = ''; }
+  if (!catOf(o.by)) { o.by = ''; o.g = ''; o.s = ''; }
+  else if (o.g && o.by === 'inv') { if (!CASES[o.g]) { o.by = ''; o.g = ''; } o.s = ''; }
+  else if (o.g) {
+    // links of the old flat index (#by=cls&g=Photograph) name the group, not the bigger group
+    const tree = treeOf(catOf(o.by), DOCS);
+    if (!tree.some(([a]) => a === o.g)) { const top = topOf(o.by, o.g); if (top) { o.s = o.g; o.g = top; } else { o.g = ''; o.s = ''; } }
+  }
   if (o.doc && !BYID[o.doc]) o.doc = '';
   return o;
 }
 function writeHash() {
-  const parts = ['by', 'g', 'doc', 'q'].filter(k => state[k]).map(k => k + '=' + encodeURIComponent(state[k]));
+  const parts = KEYS.filter(k => state[k]).map(k => k + '=' + encodeURIComponent(state[k]));
+  if (LANG === 'no') parts.push('lang=no');
   history.replaceState(null, '', parts.length ? '#' + parts.join('&') : location.pathname + location.search);
 }
+
+// Shuffle: a fixed random order for a given number, so a shuffled view can be shared.
+function mixKey(id, seed) {
+  let h = 2166136261 ^ (+seed || 0);
+  for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 16777619); }
+  h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15;
+  return h >>> 0;
+}
+const ordered = ds => state.mix ? ds.slice().sort((a, b) => mixKey(a.DocID, state.mix) - mixKey(b.DocID, state.mix)) : ds;
 
 // ─────────────────────────────────────────────────────────────────────────
 // The documents move themselves: where each stands is noted before the
@@ -273,7 +517,7 @@ function capture() {
   const m = {};
   document.querySelectorAll('#a-main [data-id]').forEach(el => {
     if (m[el.dataset.id]) return;
-    const b = el.getBoundingClientRect(); m[el.dataset.id] = { x: b.left, y: b.top };
+    const b = el.getBoundingClientRect(); m[el.dataset.id] = { x: b.left, y: b.top, w: b.width };
   });
   return m;
 }
@@ -282,126 +526,476 @@ function glide(prev) {
   const seen = {}, vh = window.innerHeight || 900;
   document.querySelectorAll('#a-main [data-id]').forEach((el, i) => {
     const id = el.dataset.id, b = el.getBoundingClientRect(), p = prev[id];
-    if (el.classList.contains('open')) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 200, fill: 'backwards' });
-    else if (p && !seen[id]) {
-      const dx = p.x - b.left, dy = p.y - b.top;
-      if ((dx || dy) && (b.top < vh * 1.5 || p.y < vh * 1.5))
-        el.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'translate(0,0)' }],
+    const near = b.top < vh * 1.5 && b.bottom > -vh * .5;
+    if (p && !seen[id] && !el.classList.contains('pin')) {
+      const dx = p.x - b.left, dy = p.y - b.top, sc = b.width && p.w ? p.w / b.width : 1;
+      const wasNear = p.y < vh * 1.5 && p.y > -vh * .5;
+      if ((dx || dy || Math.abs(sc - 1) > .01) && (near || wasNear))
+        el.animate([{ transform: `translate(${dx}px,${dy}px) scale(${sc})`, transformOrigin: '0 0' }, { transform: 'none', transformOrigin: '0 0' }],
                    { duration: 750, easing: 'cubic-bezier(.2,.7,.2,1)', delay: Math.min(i * 0.8, 220), fill: 'backwards' });
-    } else if (b.top < vh * 1.5) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, delay: 350, fill: 'backwards' });
+    } else if (near) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, delay: 350, fill: 'backwards' });
     seen[id] = 1;
   });
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Drawing
+// Drawing: the terms, the documents (grid or map), the reading table
 // ─────────────────────────────────────────────────────────────────────────
-const svgIcon = (d, z, w) => `<svg width="${z}" height="${z}" viewBox="0 0 32 32" aria-hidden="true"><path d="${d}" fill="#fff" stroke="#000" stroke-width="${w}"/></svg>`;
+const svgIcon = (d, z, sw) => `<svg width="${z}" height="${z}" viewBox="0 0 32 32" aria-hidden="true"><path d="${d}" fill="#fff" stroke="#000" stroke-width="${sw}"/></svg>`;
+const pgCls = d => /^assets\/docs\//.test(d.__img) ? ' class="pg"' : '';
 function obj(d) {
-  const pg = /^assets\/docs\//.test(d.__img) ? ' class="pg"' : '';
-  const pic = d.__img ? `<img${pg} src="${esc(d.__img)}" alt="" loading="lazy" decoding="async">` : svgIcon(d.__icon, 22, 1);
-  return `<a class="obj" href="#doc=${encodeURIComponent(d.DocID)}" data-id="${esc(d.DocID)}" data-doc="${esc(d.DocID)}" title="${esc(d.Title)}"><span class="im${d.__img ? '' : ' no'}">${pic}</span><span class="lb">${esc(d.__label)}</span></a>`;
+  const pic = d.__img ? `<img${pgCls(d)} src="${esc(d.__img)}" alt="" loading="lazy" decoding="async">` : svgIcon(d.__icon, 22, 1);
+  return `<a class="obj${d.DocID === state.doc ? ' cur' : ''}" href="#doc=${encodeURIComponent(d.DocID)}" data-id="${esc(d.DocID)}" data-doc="${esc(d.DocID)}" title="${esc(d.Title)}"><span class="im${d.__img ? '' : ' no'}">${pic}</span><span class="lb">${esc(d.__label)}</span></a>`;
 }
-function opened(d) {
-  const pg = /^assets\/docs\//.test(d.__img) ? ' class="pg"' : '';
-  const pic = d.__img ? `<img${pg} src="${esc(d.__img)}" alt="${esc(d.Title)}">` : `<span class="no">${svgIcon(d.__icon, 32, .8)}</span>`;
+const grid = ds => '<div class="grid">' + ordered(ds).map(obj).join('') + '</div>';
+let ORDER = [];   // the documents in the order shown, for ← →
+function renderNav(tree) {
+  $('a-q').placeholder = w('search');
+  const cats = CATS.filter(c => !c.hidden).map(c => {
+    const on = c.id === state.by;
+    let tops = '';
+    if (on && tree) tops = `<div class="tops">${tree.map(([a, subs]) => {
+      const open = state.g === a && !(subs.length === 1 && subs[0][0] === a);
+      const ss = open ? `<div class="subs">${subs.map(([s]) => `<button class="sub${state.s === s ? ' on' : ''}" data-g="${esc(a)}" data-s="${esc(s)}">${esc(nm(s))}</button>`).join('')}</div>` : '';
+      return `<button class="top${state.g === a ? ' on' : ''}" data-g="${esc(a)}">${esc(nm(a))}</button>${ss}`;
+    }).join('')}</div>`;
+    return `<button class="cat${on ? ' on' : ''}${c.map ? ' gap' : ''}" data-by="${c.id}">${esc(w(c.id))}</button>${tops}`;
+  }).join('');
+  const invs = PARKED.has('inv') ? '' : Object.values(CASES).map(c => `<button class="inv${state.by === 'inv' && state.g === c.id ? ' on' : ''}" data-inv="${esc(c.id)}">${esc(nm('case:' + c.id))}</button>`).join('');
+  $('a-cats').innerHTML = `<button class="head" data-home>${esc(w('archive'))}</button><div class="cats">${cats}</div>` +
+    (invs ? `<button class="head gap" data-inv-head>${esc(w('inv'))}</button>${invs}` : '');
+  $('a-mix').innerHTML = `<button data-mix>${esc(w('shuffle'))}</button>${state.mix ? `<button data-unmix>${esc(w('order'))}</button>` : ''}`;
+  document.querySelectorAll('#a-lang button').forEach(b => b.classList.toggle('on', b.dataset.lang === LANG));
+  document.documentElement.lang = LANG === 'no' ? 'nb' : 'en';
+}
+function renderMain() {
+  const cat = catOf(state.by), main = $('a-main');
+  main.classList.toggle('map', !!(cat && cat.map));
+  let tree = null, html;
+  if (cat && cat.map) { html = mapHtml(); ORDER = DOCS.filter(d => d.__xy); }
+  else if (cat && cat.board) { const c = CASES[state.g]; const bd = c ? boardHtml(c) : { html: '', docs: [] }; html = `<section class="sec"><span class="sec-t">${esc(c ? nm('case:' + c.id) : '')}</span>${bd.html}</section>`; ORDER = bd.docs; }
+  else if (!cat) { html = `<section class="sec">${grid(DOCS)}</section>`; ORDER = ordered(DOCS); }
+  else {
+    tree = treeOf(cat, DOCS);
+    ORDER = [];
+    html = tree.filter(([a]) => !state.g || state.g === a).map(([a, subs]) => {
+      const one = subs.length === 1 && subs[0][0] === a;
+      const inner = subs.filter(([s]) => !state.s || state.s === s).map(([s, ds]) => {
+        ordered(ds).forEach(d => ORDER.push(d));
+        return `<div class="ssec">${one ? '' : `<button class="sub-t" data-g="${esc(a)}" data-s="${esc(s)}">${esc(nm(s))}</button>`}${grid(ds)}</div>`;
+      }).join('');
+      return `<section class="sec"><button class="sec-t" data-g="${esc(a)}">${esc(nm(a))}</button>${inner}</section>`;
+    }).join('');
+    ORDER = uniq(ORDER);
+  }
+  main.innerHTML = html;
+  renderNav(tree);
+  if (cat && cat.map) drawMap(true);
+  search();
+}
+function renderRead() {
+  const d = BYID[state.doc], box = $('a-read');
+  document.body.classList.toggle('reading', !!d);
+  document.querySelectorAll('#a-main .cur').forEach(el => el.classList.remove('cur'));
+  document.title = (d ? d.Title + ' · ' : '') + w('title') + ' · Dirty Business';
+  if (!d) { box.innerHTML = ''; drawLinks(); return; }
+  document.querySelectorAll(`#a-main [data-id="${CSS.escape(d.DocID)}"]`).forEach(el => el.classList.add('cur'));
+  const pic = d.__img ? `<img${pgCls(d)} src="${esc(d.__img)}" alt="${esc(d.Title)}">` : `<span class="no">${svgIcon(d.__icon, 32, .8)}</span>`;
   const terms = [].concat(d.__siteNames.map(v => ['site', v]), d.__dec ? [['dec', d.__dec]] : [], d.__k.map(v => ['k', v]),
                           d.Class ? [['cls', d.Class]] : [], d.__arch ? [['arch', d.__arch]] : []);
   const tm = terms.map(([c, v], i) => {
-    const on = state.by === c && state.g === v;
-    return `<span><button class="${c === 'k' ? 'k' : ''}${on ? ' on' : ''}" data-term="${c}" data-val="${esc(v)}">${esc(v)}</button>${i < terms.length - 1 ? ', ' : ''}</span>`;
+    const on = state.by === c && state.s === v;
+    return `<span><button class="${c === 'k' ? 'k' : ''}${on ? ' on' : ''}" data-term="${c}" data-val="${esc(v)}">${esc(nm(v))}</button>${i < terms.length - 1 ? ', ' : ''}</span>`;
   }).join('');
   const link = d.__link, site = d.__sites[0];
-  const note = d.__acc !== 'open' ? `<span class="note">${esc(d.__acc)}</span>` : '';
-  return `<div class="open" data-id="${esc(d.DocID)}">` +
-    `<button class="pic" data-close aria-label="Close">${pic}</button>` +
-    `<div class="tt">${esc(d.Title)}</div>` +
+  const note = d.__acc !== 'open' ? `<span class="note">${esc(w(d.__acc))}</span>` : '';
+  box.innerHTML = `<div class="rd" data-rd="${esc(d.DocID)}">` +
+    `<div class="rd-bar"><button data-step="-1" aria-label="previous">${w('prev')}</button><button data-step="1" aria-label="next">${w('next')}</button><span class="sp"></span><button data-close>${esc(w('close'))}</button></div>` +
+    `<div class="meta"><div class="tt">${esc(d.Title)}</div>` +
     // who made it: the source is always named (åndsverkloven § 25)
     (d.__by ? `<div class="by">${esc(d.__by)}</div>` : '') +
     // licence, when the picture is shown under one
     (d.__img && licUrl(d.__lic) ? `<div class="by"><a href="${esc(licUrl(d.__lic))}" target="_blank" rel="noopener noreferrer">${esc(d.__lic)}</a></div>` : '') +
     (tm ? `<div class="tm">${tm}</div>` : '') +
-    `<div class="ln">${note}${d.__lost ? '<span class="note">no longer available online</span>' : ''}` +
-    `${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${d.__archived ? 'archived copy ↗' : 'document ↗'}</a>` : ''}` +
-    `${site ? `<a href="${esc(MAP_LINK + encodeURIComponent(uidOf(site)))}" target="_top">map →</a>` : ''}<button data-close>close ×</button></div></div>`;
+    `<div class="ln">${note}${d.__lost ? `<span class="note">${esc(w('lost'))}</span>` : ''}` +
+    `${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${esc(w(d.__archived ? 'archived' : 'doc'))}</a>` : ''}` +
+    `${site ? `<a href="${esc(MAP_LINK + encodeURIComponent(uidOf(site)))}" target="_top">${esc(w('toMap'))}</a>` : ''}</div>` +
+    cxHtml(d) + `</div><div class="pic" data-zoom-pic>${pic}${(REL[d.DocID] || []).filter(x => x.box).map((x, i) => `<button class="hl" data-doc="${esc(x.id)}" data-hl="${esc(x.id)}" title="${esc(x[LANG] || x.en)}" style="left:${x.box[0] * 100}%;top:${x.box[1] * 100}%;width:${x.box[2] * 100}%;height:${x.box[3] * 100}%"></button>`).join('')}</div></div>`;
+  box.scrollTop = 0;
+  if (!still() && box.firstChild.animate) box.firstChild.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 350 });
+  box.querySelectorAll('img').forEach(im => im.addEventListener('load', () => linksFor(50)));
+  linksFor(1300);
 }
-function grid(ds, shown) {
-  return '<div class="grid">' + ds.map(d => {
-    if (d.DocID === state.doc && !shown.done) { shown.done = 1; return opened(d); }
-    return obj(d);
-  }).join('') + '</div>';
+// A case as a board: each document whole, by its year, with the parts selected on it outlined;
+// straight red lines run from a selected part to the document (or part) it is tied to.
+function boardHtml(c) {
+  // no timeline: the documents stand in the order the case lists them
+  const docs = c.docs.map(id => BYID[id]).filter(Boolean);
+  const pc = d => {
+    const marks = (REL[d.DocID] || []).filter(x => x.box && c.docs.includes(x.id));
+    return `<a class="pc" href="#doc=${encodeURIComponent(d.DocID)}" data-doc="${esc(d.DocID)}" data-id="${esc(d.DocID)}" data-pc="${esc(d.DocID)}" title="${esc(d.Title)}">` +
+      (d.__img ? `<span class="wh"><img${pgCls(d)} src="${esc(d.__img)}" alt="" loading="lazy">` +
+        marks.map(x => `<span class="mk" data-to="${esc(x.id)}" style="left:${x.box[0] * 100}%;top:${x.box[1] * 100}%;width:${x.box[2] * 100}%;height:${x.box[3] * 100}%"></span>`).join('') + '</span>'
+        : `<span class="wh no">${svgIcon(d.__icon, 22, 1)}</span>`) +
+      `<span class="id">${esc(d.__label)}</span></a>`;
+  };
+  const html = `<div class="board" data-case="${esc(c.id)}"><svg aria-hidden="true"></svg>` +
+    docs.map(pc).join('') + '</div>';
+  setTimeout(() => layBoard(c), 0);
+  return { html, docs };
 }
-function render() {
-  const cat = catOf(state.by), shown = {};
-  let html, list = [];
-  if (!cat) html = `<section class="sec">${grid(DOCS, shown)}</section>`;
-  else {
-    list = groupsOf(cat);
-    html = list.filter(([k]) => !state.g || state.g === k)
-      .map(([k, ds]) => `<section class="sec"><button class="sec-t" data-g="${esc(k)}">${esc(k)}</button>${grid(ds, shown)}</section>`).join('');
-  }
-  $('a-main').innerHTML = html;
-  $('a-cats').innerHTML = CATS.map(c => {
-    const on = c.id === state.by;
-    const subs = on ? `<div class="subs">${list.map(([k]) => `<button class="sub${state.g === k ? ' on' : ''}" data-g="${esc(k)}">${esc(k)}</button>`).join('')}</div>` : '';
-    return `<button class="cat${on ? ' on' : ''}${c.gap ? ' gap' : ''}" data-by="${c.id}">${esc(c.label)}</button>${subs}`;
-  }).join('');
-  search();
-  const d = BYID[state.doc];
-  document.title = (d ? d.Title + ' · ' : '') + 'Index · Dirty Business';
-  writeHash();
+// Each document is scaled to fit 170 x 220 px, so all can be seen at once.
+function fitPc(img) {
+  const wh = img.parentNode, k = Math.min(170 / img.naturalWidth, 220 / img.naturalHeight);
+  wh.style.width = Math.round(img.naturalWidth * k) + 'px';
 }
+// Free placement: rows with a small offset each, not aligned; a document moved by hand keeps
+// its place (in this browser only).
+const boardKey = id => 'db-board-' + id;
+function loadPos(id) { try { return JSON.parse(localStorage.getItem(boardKey(id)) || '{}'); } catch (e) { return {}; } }
+function savePos(id, pos) { try { localStorage.setItem(boardKey(id), JSON.stringify(pos)); } catch (e) {} }
+function layBoard(c) {
+  const b = document.querySelector(`#a-main .board[data-case="${CSS.escape(c.id)}"]`); if (!b) return;
+  const W = b.clientWidth || 900, saved = loadPos(c.id), jit = id => (mixKey(id, 7) % 1000) / 1000;
+  let x = 0, y = 10, rowH = 0, maxY = 0;
+  b.querySelectorAll('.pc').forEach(el => {
+    const id = el.dataset.pc, w = el.offsetWidth || 150, h = el.offsetHeight || 200;
+    if (x > 0 && x + w > W) { x = 0; y += rowH + 70; rowH = 0; }
+    let px = x + Math.round(jit(id) * 40), py = y + Math.round(jit(id + 'y') * 50);
+    if (saved[id]) [px, py] = saved[id];
+    el.style.left = px + 'px'; el.style.top = py + 'px';
+    x += w + 60 + Math.round(jit(id + 'x') * 40); rowH = Math.max(rowH, h + 50);
+    maxY = Math.max(maxY, py + h);
+  });
+  b.style.height = (maxY + 120) + 'px';
+  drawBoards();
+}
+document.addEventListener('load', e => {
+  const img = e.target; if (!img || !img.closest || !img.closest('.board .wh')) return;
+  fitPc(img);
+  const b = img.closest('.board'); clearTimeout(b.__lay); b.__lay = setTimeout(() => layBoard(CASES[b.dataset.case]), 60);
+}, true);
+// dragging a document on the board
+let pcDrag = null;
+document.addEventListener('pointerdown', e => {
+  const el = e.target.closest && e.target.closest('.board .pc'); if (!el || e.button) return;
+  e.preventDefault();
+  pcDrag = { el, x: e.clientX, y: e.clientY, l: parseFloat(el.style.left) || 0, t: parseFloat(el.style.top) || 0, moved: false };
+});
+document.addEventListener('pointermove', e => {
+  if (!pcDrag) return;
+  const dx = e.clientX - pcDrag.x, dy = e.clientY - pcDrag.y;
+  if (!pcDrag.moved && Math.hypot(dx, dy) < 4) return;
+  pcDrag.moved = true; pcDrag.el.classList.add('drag');
+  pcDrag.el.style.left = Math.max(0, pcDrag.l + dx) + 'px'; pcDrag.el.style.top = Math.max(0, pcDrag.t + dy) + 'px';
+  later(drawBoards);
+});
+document.addEventListener('pointerup', () => {
+  if (!pcDrag) return;
+  const { el, moved } = pcDrag; pcDrag = null; el.classList.remove('drag');
+  if (!moved) return;
+  const b = el.closest('.board'), pos = loadPos(b.dataset.case);
+  pos[el.dataset.pc] = [parseFloat(el.style.left), parseFloat(el.style.top)]; savePos(b.dataset.case, pos);
+  const bottom = el.offsetTop + el.offsetHeight + 120; if (bottom > b.offsetHeight) b.style.height = bottom + 'px';
+  const stop = ev => { ev.stopPropagation(); ev.preventDefault(); };
+  document.addEventListener('click', stop, { capture: true, once: true }); setTimeout(() => document.removeEventListener('click', stop, true), 0);
+});
+function drawBoards() {
+  document.querySelectorAll('#a-main .board').forEach(b => {
+    const c = CASES[b.dataset.case]; if (!c) return;
+    const r0 = b.getBoundingClientRect();
+    const box = el => { const r = (el.classList.contains('mk') ? el : (el.querySelector('.wh') || el)).getBoundingClientRect(); return { x: r.left - r0.left, y: r.top - r0.top, w: r.width, h: r.height }; };
+    const first = id => b.querySelector(`[data-pc="${CSS.escape(id)}"]`);
+    let svg = '', notes = '';
+    const seen = {};
+    c.docs.forEach(id => (REL[id] || []).forEach(x => {
+      if (x.back || !c.docs.includes(x.id)) return;
+      const k = id + '>' + x.id; if (seen[k]) return; seen[k] = 1;
+      const node = first(id), tnode = first(x.id);
+      if (!node || !tnode) return;
+      const from = node.querySelector(`.mk[data-to="${CSS.escape(x.id)}"]`) || node, to = tnode.querySelector(`.mk[data-to="${CSS.escape(id)}"]`) || tnode.querySelector('.mk') || tnode;
+      const A = box(from), B = box(to);
+      // from the side of each piece that faces the other: straight, one pure colour
+      const ax = A.x + A.w / 2, ay = A.y + A.h / 2, bx = B.x + B.w / 2, by = B.y + B.h / 2;
+      // each end sits inside its document: at the centre of a marked part, or 12 px in from the edge
+      const end = (P, isMark, tx, ty) => {
+        const cx = P.x + P.w / 2, cy = P.y + P.h / 2; if (isMark) return [cx, cy];
+        const dx = tx - cx, dy = ty - cy, s = Math.min(Math.abs((P.w / 2 - 12) / (dx || 1e-6)), Math.abs((P.h / 2 - 12) / (dy || 1e-6)));
+        return [cx + dx * s, cy + dy * s];
+      };
+      const [x1, y1] = end(A, from.classList.contains('mk'), bx, by), [x2, y2] = end(B, to.classList.contains('mk'), ax, ay);
+      svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><circle cx="${x1}" cy="${y1}" r="1.6"/><circle cx="${x2}" cy="${y2}" r="1.6"/>`;
+      const t = x[LANG] || x.en;
+      if (t) notes += `<span class="post" style="left:${(x1 + x2) / 2 - 39}px;top:${(y1 + y2) / 2 - 39}px">${esc(t)}</span>`;
+    }));
+    b.querySelector('svg').innerHTML = svg;
+    b.querySelectorAll('.post').forEach(n => n.remove());
+    b.insertAdjacentHTML('beforeend', notes);
+  });
+}
+function cxHtml(d) {
+  const rs = REL[d.DocID] || []; if (!rs.length) return '';
+  return `<div class="cx"><span>${esc(w('linked'))}</span>${rs.map(x => { const o = BYID[x.id]; return `<button data-doc="${esc(x.id)}" data-cx="${esc(x.id)}">${esc((x[LANG] || x.en) ? (x[LANG] || x.en) + ' — ' : '')}${esc(o.Title)}${o.__year ? ', ' + o.__year : ''}</button>`; }).join('')}</div>`;
+}
+// The hairlines: from the highlight (or the entry in the list) on the reading table to each tied document
+// where it stands in the strip or on the map. Redrawn as things scroll, glide and zoom.
+function drawLinks() {
+  drawBoards();
+  const svg = $('a-links'), d = BYID[state.doc];
+  document.querySelectorAll('#a-main .tie').forEach(el => el.classList.remove('tie'));
+  if (!d || !REL[d.DocID]) { svg.innerHTML = ''; return; }
+  const main = $('a-main').getBoundingClientRect(), read = $('a-read').getBoundingClientRect();
+  let out = '';
+  REL[d.DocID].forEach(x => {
+    const t = document.querySelector(`#a-main [data-id="${CSS.escape(x.id)}"], #a-main [data-pc="${CSS.escape(x.id)}"]`);
+    const src = document.querySelector(`#a-read [data-hl="${CSS.escape(x.id)}"]`) || document.querySelector(`#a-read [data-cx="${CSS.escape(x.id)}"]`);
+    if (!t || !src) return;
+    t.classList.add('tie');
+    const a = src.getBoundingClientRect(), b = (t.querySelector('.im') || t).getBoundingClientRect();
+    if (a.bottom < read.top || a.top > read.bottom) return;
+    // a tied document scrolled out of the strip: the line runs to the strip's edge, towards it
+    const off = b.bottom < main.top || b.top > main.bottom;
+    const x1 = a.left, y1 = a.top + a.height / 2;
+    const x2 = off ? main.right - 6 : Math.min(b.right, main.right), y2 = off ? (b.top > main.bottom ? main.bottom - 2 : main.top + 2) : b.top + b.height / 2;
+    out += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"${off ? ' stroke-dasharray="2 3"' : ''}/>` + (off ? '' : `<circle cx="${x2}" cy="${y2}" r="1.5"/>`);
+  });
+  svg.innerHTML = out;
+}
+let linkUntil = 0;
+function linksFor(ms) { linkUntil = Math.max(linkUntil, performance.now() + ms); const tick = () => { drawLinks(); if (performance.now() < linkUntil) requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
+document.addEventListener('scroll', () => drawLinks(), true);
 function search() {
   const terms = fold(state.q).split(/\s+/).filter(Boolean);
-  document.querySelectorAll('#a-main .obj').forEach(el => {
-    const h = HAY[el.dataset.id] || '';
+  document.querySelectorAll('#a-main .obj, #a-main .pin, #a-main .pc').forEach(el => {
+    const h = HAY[el.dataset.doc || el.dataset.id] || '';
     el.classList.toggle('dim', !!terms.length && !terms.every(t => h.includes(t)));
   });
 }
-function change(next, toTop) {
+
+// ─────────────────────────────────────────────────────────────────────────
+// The map: kommune boundaries as hairlines on white; the documents of each
+// place laid out as a small block of pictures at its point. Drag to move,
+// wheel or + − to zoom; pictures grow as one zooms in.
+// ─────────────────────────────────────────────────────────────────────────
+const COS = Math.cos(60 * Math.PI / 180);
+const proj = c => [c[0] * COS, -c[1]];
+let VIEW = { k: 1, cx: null, cy: null }, BASE = null, WMS_AT = {}, wmsTimer = 0;
+function mapHtml() {
+  WMS_AT = {};
+  const pins = DOCS.filter(d => d.__xy).map(d => `<a class="pin${d.DocID === state.doc ? ' cur' : ''}" href="#doc=${encodeURIComponent(d.DocID)}" data-id="${esc(d.DocID)}" data-doc="${esc(d.DocID)}" title="${esc(d.__label + ' · ' + d.Title)}"></a>`).join('');
+  return `<div id="a-map">${WMS_LAYERS.map(([c]) => WMS_TINT[c] ? `<div class="wl ${c}" data-wl="${c}"></div>` : `<img class="wl ${c}" alt="" data-wl="${c}">`).join('')}${pins}<div id="a-peek"></div><div id="a-cred">Kartverket</div><div id="a-zoom"><button data-zoom="1.6" aria-label="zoom in">+</button><button data-zoom="0.625" aria-label="zoom out">−</button></div></div>`;
+}
+function fitBase(box) {
+  const pts = DOCS.filter(d => d.__xy).map(d => proj(d.__xy));
+  if (!pts.length) return null;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  pts.forEach(([x, y]) => { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); });
+  const pad = 40, s = Math.min((box.width - 2 * pad) / (x1 - x0 || 1), (box.height - 2 * pad) / (y1 - y0 || 1));
+  return { s, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
+}
+function drawMap(refit) {
+  const map = $('a-map'); if (!map) return;
+  const box = map.getBoundingClientRect(); if (!box.width) return;
+  if (refit || !BASE) { BASE = fitBase(box); if (!BASE) return; if (VIEW.cx == null) { VIEW.cx = BASE.cx; VIEW.cy = BASE.cy; } }
+  const s = BASE.s * VIEW.k, ox = box.width / 2 - VIEW.cx * s, oy = box.height / 2 - VIEW.cy * s;
+  // Kartverket's lines: each layer picture is placed by the area it shows, so it follows the view
+  // at once; a new picture of the area on screen is asked for once the view rests.
+  map.querySelectorAll('.wl').forEach(img => {
+    const b = WMS_AT[img.dataset.wl]; if (!b) { img.style.display = 'none'; return; }
+    const x0 = ox + b[0] * COS * s, y0 = oy - b[3] * s, w = (b[2] - b[0]) * COS * s, h = (b[3] - b[1]) * s;
+    img.style.display = ''; img.style.width = w + 'px'; img.style.height = h + 'px'; img.style.transform = `translate(${x0}px,${y0}px)`;
+  });
+  clearTimeout(wmsTimer);
+  wmsTimer = setTimeout(() => askWms(box, ox, oy, s), 250);
+  // the documents of each place, as a small block of squares centred on it
+  const cell = Math.max(4, Math.min(9, 4 * Math.pow(VIEW.k, .35))), tall = cell * 1.414, gap = 2;
+  const at = {};
+  DOCS.filter(d => d.__xy).forEach(d => (at[d.__at] = at[d.__at] || []).push(d));
+  Object.values(at).forEach(ds => {
+    const n = ds.length, cols = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n / cols);
+    const [px, py] = proj(ds[0].__xy), cx = ox + px * s, cy = oy + py * s;
+    const wd = cols * cell + (cols - 1) * gap, ht = rows * tall + (rows - 1) * gap;
+    ordered(ds).forEach((d, i) => {
+      const el = map.querySelector(`.pin[data-id="${CSS.escape(d.DocID)}"]`); if (!el) return;
+      const x = cx - wd / 2 + (i % cols) * (cell + gap), y = cy - ht / 2 + Math.floor(i / cols) * (tall + gap);
+      el.style.cssText = `left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;width:${cell.toFixed(1)}px;height:${tall.toFixed(1)}px`;
+    });
+  });
+  drawLinks();
+}
+function askWms(box, ox, oy, s) {
+  const map = $('a-map'); if (!map) return;
+  const bb = [(0 - ox) / s / COS, -(box.height - oy) / s, (box.width - ox) / s / COS, -(0 - oy) / s];
+  // twice the pixels of the pane: the next finer level of Kartverket's lines, drawn half as thick
+  const dpr = 2, w = Math.min(4096, Math.round(box.width * dpr)), h = Math.min(4096, Math.round(box.height * dpr));
+  const key = bb.map(v => v.toFixed(5)).join(',');
+  WMS_LAYERS.forEach(([c, layer]) => {
+    const img = map.querySelector(`.wl.${c}`); if (!img || img.dataset.key === key) return;
+    const next = new Image();
+    if (WMS_TINT[c]) next.crossOrigin = 'anonymous';
+    next.onload = () => {
+      if (!img.isConnected) return;
+      if (WMS_TINT[c]) { img.style.webkitMaskImage = img.style.maskImage = `url("${next.src}")`; } else img.src = next.src;
+      img.dataset.key = key; WMS_AT[c] = bb; drawMap();
+    };
+    next.src = WMS + '&LAYERS=' + layer + '&BBOX=' + key + '&WIDTH=' + w + '&HEIGHT=' + h;
+  });
+}
+function zoomAt(f, px, py) {
+  const map = $('a-map'); if (!map || !BASE) return;
+  const box = map.getBoundingClientRect(), k = Math.max(1, Math.min(60, VIEW.k * f)), s0 = BASE.s * VIEW.k, s1 = BASE.s * k;
+  const mx = px == null ? box.width / 2 : px - box.left, my = py == null ? box.height / 2 : py - box.top;
+  const wx = VIEW.cx + (mx - box.width / 2) / s0, wy = VIEW.cy + (my - box.height / 2) / s0;
+  VIEW.k = k; VIEW.cx = wx - (mx - box.width / 2) / s1; VIEW.cy = wy - (my - box.height / 2) / s1;
+  drawMap();
+}
+let raf = 0;
+const later = fn => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fn); };
+document.addEventListener('wheel', e => {
+  if (!e.target.closest('#a-map')) return;
+  e.preventDefault();
+  const f = Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0018));
+  later(() => zoomAt(f, e.clientX, e.clientY));
+}, { passive: false });
+// pointing at a document on the map shows its picture beside it
+document.addEventListener('pointerover', e => {
+  const pin = e.target.closest && e.target.closest('#a-map .pin'), peek = $('a-peek');
+  if (!peek) return;
+  if (!pin || drag) { peek.style.display = 'none'; return; }
+  const d = BYID[pin.dataset.id]; if (!d) return;
+  peek.innerHTML = d.__img ? `<img${pgCls(d)} src="${esc(d.__img)}" alt="">` : `<span class="no">${svgIcon(d.__icon, 24, 1)}</span>`;
+  const m = $('a-map').getBoundingClientRect(), r = pin.getBoundingClientRect();
+  const left = r.right - m.left + 8, right = m.right - r.left + 8;
+  peek.style.display = 'block'; peek.style.top = Math.max(0, Math.min(r.top - m.top, m.height - 210)) + 'px';
+  if (left + 160 < m.width) { peek.style.left = left + 'px'; peek.style.right = 'auto'; } else { peek.style.right = right + 'px'; peek.style.left = 'auto'; }
+});
+let drag = null;
+document.addEventListener('pointerdown', e => {
+  const map = e.target.closest('#a-map'); if (!map || e.target.closest('#a-zoom') || e.button) return;
+  drag = { x: e.clientX, y: e.clientY, cx: VIEW.cx, cy: VIEW.cy, moved: false };
+});
+document.addEventListener('pointermove', e => {
+  if (!drag || !BASE) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+  drag.moved = true; $('a-map').classList.add('drag');
+  const s = BASE.s * VIEW.k; VIEW.cx = drag.cx - dx / s; VIEW.cy = drag.cy - dy / s;
+  later(() => drawMap());
+});
+document.addEventListener('pointerup', () => {
+  if (!drag) return;
+  const m = $('a-map'); if (m) m.classList.remove('drag');
+  if (drag.moved) { const stop = e => { e.stopPropagation(); e.preventDefault(); }; document.addEventListener('click', stop, { capture: true, once: true }); setTimeout(() => document.removeEventListener('click', stop, true), 0); }
+  drag = null;
+});
+window.addEventListener('resize', () => later(() => { drawMap(true); Object.values(CASES).forEach(layBoard); drawLinks(); }));
+
+// ─────────────────────────────────────────────────────────────────────────
+// Changes of view
+// ─────────────────────────────────────────────────────────────────────────
+// Rearranging the documents: they glide from where they stood to their new places.
+function arrange(next, toTop) {
   const prev = capture();
   Object.assign(state, next);
-  render();
-  if (toTop) window.scrollTo(0, 0);
+  renderMain();
+  renderRead();
+  if (toTop) $('a-main').scrollTop = 0;
   glide(prev);
-  const o = document.querySelector('#a-main .open');
-  if (o && next.doc) setTimeout(() => o.scrollIntoView({ block: 'nearest', behavior: still() ? 'auto' : 'smooth' }), 60);
+  linksFor(1300);
+  writeHash();
+}
+// Opening, changing or closing the document on the reading table. When the table opens or
+// closes the documents strip changes width: the chosen one keeps its height on the screen
+// and the others glide into the new columns. Choosing another while it is open moves nothing.
+function read(id) {
+  const was = !!state.doc, will = !!id, main = $('a-main');
+  const anchorId = id || state.doc;
+  const anchor = () => main.querySelector(`[data-id="${CSS.escape(anchorId)}"]`);
+  const before = anchor() ? anchor().getBoundingClientRect().top : null;
+  const prev = was !== will ? capture() : null;
+  state.doc = id || '';
+  renderRead();
+  if (was !== will) {
+    if (main.classList.contains('map')) drawMap(true);
+    main.querySelectorAll('.board').forEach(bd => layBoard(CASES[bd.dataset.case]));
+    const a = anchor();
+    if (a && before != null && !main.classList.contains('map')) main.scrollTop += a.getBoundingClientRect().top - before;
+    glide(prev);
+  }
+  const a = anchor();
+  if (a && will && !main.classList.contains('map')) {
+    const r = a.getBoundingClientRect(), m = main.getBoundingClientRect();
+    if (r.top < m.top || r.bottom > m.bottom) a.scrollIntoView({ block: 'nearest', behavior: still() ? 'auto' : 'smooth' });
+  }
+  writeHash();
+}
+function step(n) {
+  const i = ORDER.findIndex(d => d.DocID === state.doc);
+  if (i < 0 || !ORDER.length) return;
+  read(ORDER[(i + n + ORDER.length) % ORDER.length].DocID);
 }
 
 document.addEventListener('click', e => {
+  const zp = e.target.closest && e.target.closest('[data-zoom-pic]');
+  if (zp && !e.target.closest('.hl')) { zp.closest('.rd').classList.toggle('full'); linksFor(400); return; }
   const el = e.target.closest('button,a');
   if (!el || document.documentElement.classList.contains('dbx-sel') || document.documentElement.classList.contains('dbx-txt')) return;
-  if (el.dataset.by) { change({ by: state.by === el.dataset.by ? '' : el.dataset.by, g: '' }); return; }
-  if (el.dataset.g != null) { change({ g: state.g === el.dataset.g ? '' : el.dataset.g }, true); return; }
-  if (el.dataset.term) {
-    const on = state.by === el.dataset.term && state.g === el.dataset.val;
-    change({ by: el.dataset.term, g: on ? '' : el.dataset.val, doc: '' }, true); return;
+  if (el.dataset.lang) { LANG = el.dataset.lang; try { localStorage.setItem('db-index-lang', LANG); } catch (er) {} renderMain(); renderRead(); writeHash(); return; }
+  if (el.dataset.zoom) { zoomAt(+el.dataset.zoom); return; }
+  if (el.hasAttribute('data-home')) { arrange({ by: '', g: '', s: '' }, true); return; }
+  if (el.hasAttribute('data-inv-head')) { const first = Object.keys(CASES)[0]; if (first) arrange({ by: 'inv', g: first, s: '' }, true); return; }
+  if (el.dataset.inv) { arrange({ by: 'inv', g: el.dataset.inv, s: '' }, true); return; }
+  if (el.hasAttribute('data-mix')) { arrange({ mix: String(1 + Math.floor(Math.random() * 9999)) }); return; }
+  if (el.hasAttribute('data-unmix')) { arrange({ mix: '' }); return; }
+  if (el.dataset.by) {
+    const off = state.by === el.dataset.by;
+    if (el.dataset.by === 'map' || state.by === 'map') { VIEW = { k: 1, cx: null, cy: null }; BASE = null; }
+    arrange({ by: off ? '' : el.dataset.by, g: '', s: '' }, true); return;
   }
-  if (el.hasAttribute('data-close')) { change({ doc: '' }); return; }
-  if (el.dataset.doc) { e.preventDefault(); change({ doc: state.doc === el.dataset.doc ? '' : el.dataset.doc }); }
+  if (el.dataset.s != null) { arrange({ g: el.dataset.g, s: state.s === el.dataset.s ? '' : el.dataset.s }, true); return; }
+  if (el.dataset.g != null) { arrange({ g: state.g === el.dataset.g && !state.s ? '' : el.dataset.g, s: '' }, true); return; }
+  if (el.dataset.term) {
+    const c = el.dataset.term, v = el.dataset.val, on = state.by === c && state.s === v;
+    arrange(on ? { by: c, g: '', s: '' } : { by: c, g: topOf(c, v), s: v }, true); return;
+  }
+  if (el.dataset.step) { step(+el.dataset.step); return; }
+  if (el.hasAttribute('data-close')) { read(''); return; }
+  if (el.dataset.doc) { e.preventDefault(); read(state.doc === el.dataset.doc ? '' : el.dataset.doc); }
+});
+document.addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input,textarea')) return;
+  if (!state.doc) return;
+  if (e.key === 'Escape') read('');
+  else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
 });
 // A picture that cannot be fetched gives way to the line icon of its kind.
 document.addEventListener('error', e => {
   const img = e.target;
   if (!img || img.tagName !== 'IMG') return;
-  const box = img.closest('[data-id]'), d = box && BYID[box.dataset.id];
+  const box = img.closest('[data-id],[data-rd]'), d = box && BYID[box.dataset.id || box.dataset.rd];
   if (!d) return;
-  if (box.classList.contains('open')) img.outerHTML = `<span class="no">${svgIcon(d.__icon, 32, .8)}</span>`;
+  if (box.dataset.rd) img.outerHTML = `<span class="no">${svgIcon(d.__icon, 32, .8)}</span>`;
   else { img.parentNode.classList.add('no'); img.outerHTML = svgIcon(d.__icon, 22, 1); }
 }, true);
 $('a-q').addEventListener('input', e => { state.q = e.target.value; search(); writeHash(); });
-window.addEventListener('hashchange', () => { const o = readHash(); if (['by', 'g', 'doc', 'q'].some(k => o[k] !== state[k])) { state = o; $('a-q').value = state.q; render(); } });
+window.addEventListener('hashchange', () => {
+  const o = readHash();
+  if (KEYS.some(k => o[k] !== state[k])) { const docOnly = KEYS.every(k => k === 'doc' || o[k] === state[k]); if (docOnly) read(o.doc); else { state = o; $('a-q').value = state.q; renderMain(); renderRead(); } }
+});
 
-Promise.all([parseCsv(FACILITIES_CSV), parseCsv(PROJECTS_CSV), parseCsv(DOCUMENTS_CSV), getJson(KOMMUNER), getJson(THUMBS), getJson(AUTHORS), getJson(LINKS)])
-  .then(([f, p, d, kom, th, au, ln]) => {
-    prepare(f.data || [], p.data || [], d.data || [], kom, th, au, ln);
+$('a-main').innerHTML = `<p class="a-msg">${esc(w('loading'))}</p>`;
+Promise.all([parseCsv(FACILITIES_CSV), parseCsv(PROJECTS_CSV), parseCsv(DOCUMENTS_CSV), getJson(KOMMUNER), getJson(THUMBS), getJson(AUTHORS), getJson(LINKS), getJson(RELATIONS), getJson(THEMES)])
+  .then(([f, p, d, kom, th, au, ln, rel, thm]) => {
+    prepare(f.data || [], p.data || [], d.data || [], kom, th, au, ln, rel, thm);
     if (!DOCS.length) throw new Error('empty');
     state = readHash();
     $('a-q').value = state.q;
-    render();
-    if (state.doc) { const o = document.querySelector('#a-main .open'); if (o) o.scrollIntoView({ block: 'center' }); }
+    renderMain();
+    renderRead();
+    if (state.doc) { const o = document.querySelector('#a-main .cur'); if (o && !$('a-main').classList.contains('map')) o.scrollIntoView({ block: 'center' }); }
   })
-  .catch(err => { console.error(err); $('a-main').innerHTML = '<p class="a-msg">The database could not be read. Try again in a minute.</p>'; });
+  .catch(err => { console.error(err); $('a-main').innerHTML = `<p class="a-msg">${esc(w('fail'))}</p>`; });
 })();
 </script>
 <script src="assets/scan-dot.js?v=3"></script>
