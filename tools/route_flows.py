@@ -82,15 +82,17 @@ for fl in FLOWS:
         km = sum(hav(a, b) for a, b in zip(coords, coords[1:]))/1000; sa = sb = 0; path = []
     else:
         na, sa = snap(A); nb, sb = snap(B)
-        path = nx.shortest_path(G, na, nb, weight='t')
-        coords = [A, pos[na]]
+        # both ends join the same node (a move to the site next door): one straight join, no road
+        path = nx.shortest_path(G, na, nb, weight='t') if na != nb or seaB else []
+        coords = [A, pos[na]] if path else [A]
         for u, v in zip(path, path[1:]):
             g = G[u][v]['g']
             if hav(g[0], coords[-1]) > hav(g[-1], coords[-1]): g = g[::-1]
             coords += g[1:]
             use.setdefault(frozenset((u, v)), set()).add(fid)
         coords.append(B)
-        km = (sa + sb + nx.path_weight(G, path, weight='L'))/1000
+        km = ((sa + sb + nx.path_weight(G, path, weight='L')) if path else hav(A, B))/1000
+        if not path: sa = sb = 0
     sea_from = 0
     if seaB:
         sea_from = len(coords) - 1
@@ -147,6 +149,8 @@ for u, v in H.edges:
 for fid, L in legs.items():
     if L['mode'] == 'sea':
         net.append((L['sea'], frozenset([fid]), 'sea'))
+    elif not L['path']:
+        net.append(([L['A'], L['B']], frozenset([fid])))
     else:
         net.append(([L['A'], pos[L['na']]], frozenset([fid])))
         net.append(([pos[L['nb']], L['B']], frozenset([fid])))
