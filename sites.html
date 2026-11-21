@@ -21,7 +21,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cu
 /* Three panes side by side: the terms, the documents, and (when one is open) the reading table.
    Each scrolls on its own, so choosing a document never moves the others. */
 /* the whole index sits inside the window with a white border of about one picture on every side */
-#atlas{height:100vh;height:100svh;padding:var(--ey) var(--ex);display:flex;align-items:stretch;gap:var(--gap)}
+#atlas{height:100vh;height:100svh;padding:0 var(--ex);display:flex;align-items:stretch;gap:var(--gap)}
+/* the columns run the full height: what scrolls passes through the white border at top and bottom */
+#a-nav,#a-main,#a-read{padding-top:var(--ey)!important;padding-bottom:var(--ey)!important}
 /* no scroll bars: the panes scroll with the wheel, the trackpad or the keys */
 #a-nav,#a-main,#a-read{overflow:auto;scrollbar-width:none}
 #a-nav::-webkit-scrollbar,#a-main::-webkit-scrollbar,#a-read::-webkit-scrollbar{display:none}
@@ -66,7 +68,7 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 .rd .meta>*{max-width:100%;overflow-wrap:anywhere}
 .rd .meta .tm span{white-space:normal}
 .rd-bar{grid-column:1/-1}
-.rd-bar{align-self:stretch;display:flex;gap:16px;color:var(--sub);position:sticky;top:0;background:#fff;padding-bottom:6px;z-index:1}
+.rd-bar{align-self:stretch;display:flex;gap:16px;color:var(--sub);padding-bottom:6px}
 .rd-bar button{color:var(--sub)}
 .rd-bar .sp{flex:1}
 .rd .tt{max-width:620px}
@@ -141,6 +143,7 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 @media (max-width:760px){
   body{overflow:auto}
   #atlas{display:block;height:auto;padding:12px}
+  #a-nav,#a-main,#a-read{padding-top:0!important;padding-bottom:16px!important}
   #a-nav,#a-main{overflow:visible}
   #a-nav{padding-bottom:16px}
   :root{--cell:132px;--obj:120px}
@@ -175,8 +178,12 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
     ['#a-main', 'Documents'], ['.sec-t', 'Group title'], ['.sub-t', 'Sub-group title'], ['.grid', 'Grid'], ['.obj', 'Document'],
     ['.obj .im', 'Document picture'], ['.obj .lb', 'Document label'], ['#a-read', 'Reading table'], ['.rd .tt', 'Opened title'],
     ['.rd .by', 'Opened author'], ['.rd .tm', 'Opened terms'], ['.rd .ln', 'Opened links'], ['#a-map path', 'Map lines'],
-    ['.pin', 'Map document'], ['#a-lang', 'Language'], ['body', 'Page']
-  ]
+    ['.pin', 'Map document'], ['#a-lang', 'Language'], ['.head', 'Archive / Investigations title'], ['.inv', 'Investigation name'],
+    ['#a-mix', 'Shuffle'], ['.rd .meta', 'Opened text column'], ['.rd .pic', 'Opened picture'], ['.rd-bar', 'Opened arrows and close'], ['body', 'Page']
+  ],
+  // measures the editor shows under PAGE MEASURES (any CSS length: 120px, 8vw, …)
+  vars: [['--ex', 'White border, left and right'], ['--ey', 'White border, top and bottom'], ['--nav', 'Terms column width'],
+    ['--gap', 'Space between the columns'], ['--cell', 'Document cell width'], ['--obj', 'Picture size']]
 };</script>
 <script type="application/json" id="db-style">{}</script>
 <script src="editor/sites-style.js"></script>

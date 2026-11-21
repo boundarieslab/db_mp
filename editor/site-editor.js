@@ -1491,6 +1491,15 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
         const hli = numIn(hl || '', r1(num(getComputedStyle(document.documentElement).getPropertyValue('--hl'))), (v, l) => { if (v) s.vars['--hl'] = px(v); else delete s.vars['--hl']; commit(l); if (!l) renderDock(); }, { step: 0.25, unit: 'px', k: 'hl' });
         const r0 = h('div', { class: 'dbx-li' + (hl ? ' set' : '') }, h('span', { class: 'nm' }, 'hairline', h('small', null, 'one screen pixel, set by the page')), hli, x(hl, () => { delete s.vars['--hl']; commit(); renderDock(); }));
         scrub(r0.firstChild, hli); out.push(r0);
+        // Measures the page names itself (window.__DB_STYLE_CFG.vars): borders, widths, sizes.
+        if ((CFG.vars || []).length) out.push(h('div', { class: 'dbx-h', style: 'margin-top:12px' }, 'PAGE MEASURES'));
+        (CFG.vars || []).forEach(([name, label]) => {
+            const cur = s.vars[name];
+            const now = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+            const inp = numIn(cur || '', now, (v, l) => { if (v) s.vars[name] = /^[\d.]+$/.test(v) ? v + 'px' : v; else delete s.vars[name]; commit(l); if (!l) renderDock(); }, { step: 1, unit: 'px', k: 'v:' + name });
+            const r = h('div', { class: 'dbx-li' + (cur ? ' set' : '') }, h('span', { class: 'nm' }, label, h('small', null, name)), inp, x(cur, () => { delete s.vars[name]; commit(); renderDock(); }));
+            scrub(r.firstChild, inp); out.push(r);
+        });
         [...inv.widths.entries()].sort((a, b) => num(a[0]) - num(b[0])).forEach(([k, n]) => {
             const to = s.widths[k];
             const i = numIn(to || '', k, (v, l) => { if (v) s.widths[k] = /^[\d.]+$/.test(v) && /px$/.test(k) ? v + 'px' : v; else delete s.widths[k]; commit(l); if (!l) renderDock(); }, { step: 0.25, unit: /px$/.test(k) ? 'px' : '', k: 'w:' + k });
