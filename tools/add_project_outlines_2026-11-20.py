@@ -1,4 +1,4 @@
-"""Add plan-area outlines for the construction-project rows of 20 Nov 2026 (VI_033, VI_035, VI_036, VI_037, VI_038, VI_040) to data/project_geometries.geojson.
+"""Add plan-area outlines for the construction-project rows of 20 Nov 2026 (VI_033, VI_035, VI_036, VI_037, VI_038, VI_039, VI_040) to data/project_geometries.geojson.
 
 Input, saved on the day in tools/project_outlines_2026-11-20.json: the plan area (RpOmråde) of each
 project's regulation plan, read from the national plan register (Nasjonal arealplanbase, DiBK,
@@ -15,7 +15,7 @@ exec(_src[_src.index('def dec('):_src.index('NAMES =')])   # the same decoding, 
 
 NAMES = {'VI_033': 'Holmenga Nord: uttak av fjell for næringsareal', 'VI_035': 'Holmestrand næringspark (Bentsrud)',
          'VI_036': 'E134 Saggrenda–Elgsjø', 'VI_037': 'Vestfoldbanen: Nykirke–Barkåker (dobbeltspor)',
-         'VI_038': 'E18 Retvet–Vinterbro', 'VI_040': 'Rema Distribunal Østlandet'}
+         'VI_038': 'E18 Retvet–Vinterbro', 'VI_039': 'Innseiling Borg havn', 'VI_040': 'Rema Distribunal Østlandet'}
 NOTES = {'VI_033': 'The plan Holmenga nord, del av gbnr. 97/1; the same ground as facility AK_EI_007.',
          'VI_035': 'The plan crosses the kommune border: the Holmestrand part and the Tønsberg part are drawn together.',
          'VI_036': 'Two plans for one road: Kongsberg 522R and Notodden 201904, drawn together.',
@@ -24,12 +24,18 @@ NOTES = {'VI_033': 'The plan Holmenga nord, del av gbnr. 97/1; the same ground a
                    'They include the permanent deposit areas D1, D7, D13 and D18.',
          'VI_038': 'Two plans for one road, drawn together: Ås 286 (two parts) and Nordre Follo 201402 (former Ski). '
                    'They include the massedeponi areas; the separate «Ny jord» farmland plans are not drawn.',
+         'VI_039': 'Two Fredrikstad plans of 2014 for the inner lane, drawn together: 1017 «Farled Borg Havn, Røsvikrenna, '
+                   '150 m bredde» and 1063 «Snuplass og farled i Fuglevikbukta», the deepening of Røsvikrenna and the new turning '
+                   'basin. The two plans for the outer part of the lane (Fredrikstad 1065 and Hvaler 129, «Innseiling til Borg, '
+                   'ytre del») are not drawn: the 2019 permit also covered blasting shoals further out, which Kystverket no longer '
+                   'plans (Miljødirektoratet, 08.05.2024). The sea deposit areas are not drawn.',
          'VI_040': 'Ås plan 284 «Detaljregulering for utvidelse av Vinterbro næringspark» (adopted 25.05.2016, revised; '
                    'in force 2018-04-26 in the register), the site of the Rema distribution warehouse at Myråsdalen 15. '
                    'The older Rema warehouse at Kveldroveien 5 lies outside it, under plan 160 of 1998.'}
 NAP_SRC = 'Nasjonal arealplanbase (DiBK), NAP WMS reguleringsplaner, layer RpOmråde; read 2026-11-20'
+READ = {'VI_039': '2026-11-21'}   # rows outlined on a later day
 feats = []
-for k in ('VI_033', 'VI_035', 'VI_036', 'VI_037', 'VI_038', 'VI_040'):
+for k in ('VI_033', 'VI_035', 'VI_036', 'VI_037', 'VI_038', 'VI_039', 'VI_040'):
     mp, plans = [], []
     for x in SRC[k]:
         mp += polys(x['enc']); m = x['meta']
@@ -38,7 +44,7 @@ for k in ('VI_033', 'VI_035', 'VI_036', 'VI_037', 'VI_038', 'VI_040'):
     note = ('The plan area (RpOmråde) of the project\'s regulation plan in the national plan register, simplified to 1 m: '
             'what the plan regulates, not a worked footprint. ' + NOTES[k])
     feats.append({'type': 'Feature', 'properties': {'uid': 'SRC_' + k, 'n': NAMES[k], 'kind': 'perimeter', 'firm': 1, 'basis': 'plan area',
-                  'src': NAP_SRC, 'srcname': 'Nasjonal arealplanbase', 'plan': '; '.join(plans), 'note': note,
+                  'src': NAP_SRC.replace('2026-11-20', READ.get(k, '2026-11-20')), 'srcname': 'Nasjonal arealplanbase', 'plan': '; '.join(plans), 'note': note,
                   'pt': point_in(mp), 'a': area(mp)}, 'geometry': {'type': 'MultiPolygon', 'coordinates': mp}})
 gj = json.load(open(OUT, encoding='utf-8'))
 new = {f['properties']['uid'] for f in feats}
