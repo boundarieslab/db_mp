@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cutive+Mono&display=swap" rel="stylesheet">
 <style>
-:root{--water:#00FFFF;--tie:#FF0000;--ink:#000;--sub:#808080;--red:#FF0000;--frame:#bdbdbd;--cell:180px;--obj:164px;--nav:170px;--pad:20px;--gap:24px}
+:root{--ex:clamp(24px,11vw,164px);--ey:clamp(16px,11vh,164px);--water:#00FFFF;--tie:#FF0000;--ink:#000;--sub:#808080;--red:#FF0000;--frame:#bdbdbd;--cell:180px;--obj:164px;--nav:170px;--pad:20px;--gap:24px}
 *{box-sizing:border-box}
 html,body{margin:0;background:#fff;color:var(--ink);height:100%}
 body{font:12px/17px 'Cutive Mono','Courier New',monospace;-webkit-font-smoothing:antialiased;overflow:hidden}
@@ -20,9 +20,12 @@ a{color:var(--ink)}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:left;border-radius:0}
 /* Three panes side by side: the terms, the documents, and (when one is open) the reading table.
    Each scrolls on its own, so choosing a document never moves the others. */
-#atlas{height:100vh;height:100svh;padding:var(--pad) var(--pad) 0;display:flex;align-items:stretch;gap:var(--gap)}
-#a-nav,#a-main,#a-read{overflow:auto;scrollbar-width:thin;scrollbar-color:var(--frame) transparent}
-#a-nav{flex:0 0 var(--nav);min-width:0;display:flex;flex-direction:column;padding-bottom:56px}
+/* the whole index sits inside the window with a white border of about one picture on every side */
+#atlas{height:100vh;height:100svh;padding:var(--ey) var(--ex);display:flex;align-items:stretch;gap:var(--gap)}
+/* no scroll bars: the panes scroll with the wheel, the trackpad or the keys */
+#a-nav,#a-main,#a-read{overflow:auto;scrollbar-width:none}
+#a-nav::-webkit-scrollbar,#a-main::-webkit-scrollbar,#a-read::-webkit-scrollbar{display:none}
+#a-nav{flex:0 0 var(--nav);min-width:0;display:flex;flex-direction:column;padding-bottom:20px}
 #a-q{flex:0 0 auto;width:100%;height:22px;padding:0 6px;border:1px solid var(--ink);border-radius:0;outline:none;background:#fff;font:inherit;color:var(--ink);margin-bottom:16px;-webkit-appearance:none;appearance:none}
 #a-q::-webkit-search-cancel-button{display:none}
 .cat{display:block;line-height:19px;color:var(--sub)}
@@ -57,7 +60,7 @@ img.pg{box-shadow:0 0 0 .5px var(--ink)}
 .obj:hover .lb,.obj.cur .lb{color:var(--ink)}
 /* The reading table */
 #a-read{flex:0 0 0;width:0;display:none;padding-bottom:40px}
-body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var(--pad) - 2 * var(--gap)) * .5)}
+body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var(--ex) - 2 * var(--gap)) * .5)}
 .rd{display:grid;grid-template-columns:minmax(150px,210px) 1fr;grid-template-rows:auto 1fr;column-gap:18px;align-items:start}
 .rd .meta{display:flex;flex-direction:column;align-items:flex-start;gap:8px;font-size:11px;line-height:15px;min-width:0}
 .rd .meta>*{max-width:100%;overflow-wrap:anywhere}
@@ -78,7 +81,7 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 .rd .ln .note{color:var(--sub)}
 /* the picture fits the height of the screen; a click shows it at full width */
 .rd .pic{display:block;max-width:100%;justify-self:start;cursor:zoom-in}
-.rd .pic img{display:block;max-width:100%;height:auto;max-height:calc(100vh - var(--pad) - 60px)}
+.rd .pic img{display:block;max-width:100%;height:auto;max-height:calc(100vh - 2 * var(--ey) - 40px)}
 .rd.full .pic{cursor:zoom-out}
 .rd.full .pic img{max-height:none}
 .rd .pic .no{display:flex;align-items:center;justify-content:center;width:min(480px,100%);aspect-ratio:4/3;border:1px solid var(--frame)}
@@ -125,12 +128,13 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 .pin.cur{outline:1px solid var(--ink);outline-offset:2px;z-index:2}
 #a-zoom{position:absolute;right:0;bottom:0;display:flex;gap:10px;background:#fff;padding:2px 0 0 6px;color:var(--sub)}
 #a-zoom button:hover{color:var(--ink)}
-#a-lang{position:fixed;left:var(--pad);bottom:14px;background:#fff;color:var(--sub);padding-top:4px;z-index:5}
+#a-lang{position:fixed;left:var(--ex);bottom:max(10px,calc(var(--ey) / 2 - 8px));background:#fff;color:var(--sub);padding-top:4px;z-index:5}
 #a-lang button{color:var(--sub)}
 #a-lang button.on{color:var(--ink)}
 .a-msg{color:var(--sub);margin:0}
-.framed #atlas{padding-top:6px;height:calc(100vh - 34px)}
-.framed #a-lang{bottom:40px}
+.framed #atlas{height:calc(100vh - 34px)}
+.framed .rd .pic img{max-height:calc(100vh - 34px - 2 * var(--ey) - 40px)}
+.framed #a-lang{bottom:calc(34px + max(10px,calc(var(--ey) / 2 - 8px)))}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.sec-t,.sub-t{animation:none}.obj{transition:none}}
 /* Phones: one column of panes; the reading table covers the page */
