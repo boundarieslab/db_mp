@@ -15,6 +15,10 @@ The map draws two outlines per site, made here and carrying no area:
             both, so that part of the edge is where the plan's raw-material
             fields and the DMF licence overlap (rule agreed 2026-11-19); where a
             site has only one of the two, that one is used
+            Fields given an "edge" name (plans that followed one another, e.g.
+            Huken's quarry plans of 1962 and 1973) get one edge each, so the
+            line between them stays; a "lab" / "lab_no" on them (how the legal
+            area is labelled) is carried to the allowed outline
   planned   the outer edge of the planned expansion
 "Worked outside permitted" is never published. Needs shapely and pyproj.
 """
@@ -66,6 +70,8 @@ def allowed(uid, d):
 def main():
     fs = json.load(open(SRC, encoding="utf-8"))["features"]
     out = []; by = collections.defaultdict(lambda: collections.defaultdict(list)); names = {}
+    edges = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(list)))
+    labs = collections.defaultdict(dict)
     for f in fs:
         p = f["properties"]
         if p.get("publish") != 1 or p["pcls"] not in KEEP:
@@ -73,14 +79,27 @@ def main():
         q = {"uid": p["uid"], "pid": p["pid"], "n": p["n"], "src": p["src"], "a": p["a"],
              "firm": 1 if p["pcls"] == "worked" else 0, "pcls": KEEP[p["pcls"]], "note": p.get("note", "")}
         if p.get("shared"): q["shared"] = p["shared"]
+        for k in ("lab", "lab_no"):
+            if p.get(k): q[k] = p[k]; labs[p["uid"]][k] = p[k]
         out.append({"type": "Feature", "properties": q, "geometry": {"type": f["geometry"]["type"], "coordinates": rnd(f["geometry"]["coordinates"])}})
         key = p["pcls"] + ("_x" if p.get("use") == "extraction" and p["pcls"] in ("permitted", "licence") else "")
         by[p["uid"]][key].append(shape(f["geometry"])); names[p["uid"]] = p["n"]
+        if p.get("edge") and p["pcls"] in ("permitted", "licence"):
+            edges[p["uid"]][p["edge"]][key].append(shape(f["geometry"]))
     for uid, d in by.items():
         for cls, src in (("allowed", allowed(uid, d)), ("planned", d.get("expansion", []))):
-            g = outer(src) if src else None
+            if cls == "allowed" and uid in edges:
+                # plans that followed one another keep the line between them:
+                # one outer edge per plan ("edge"), drawn side by side
+                parts = [outer(allowed(uid, e)) for e in edges[uid].values()]
+                parts = [q for g in parts if g is not None for q in polys(g)]
+                g = MultiPolygon(parts) if parts else None
+            else:
+                g = outer(src) if src else None
             if g is None: continue
-            out.append({"type": "Feature", "properties": {"uid": uid, "pid": uid + "_" + cls, "n": names[uid], "firm": 0, "pcls": cls},
+            pr = {"uid": uid, "pid": uid + "_" + cls, "n": names[uid], "firm": 0, "pcls": cls}
+            if cls == "allowed": pr.update(labs.get(uid, {}))
+            out.append({"type": "Feature", "properties": pr,
                         "geometry": {"type": "MultiPolygon", "coordinates": rnd(mapping(g)["coordinates"])}})
     out.sort(key=lambda f: (f["properties"]["uid"], f["properties"]["pid"]))
     json.dump({"type": "FeatureCollection", "features": out}, open(DST, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))

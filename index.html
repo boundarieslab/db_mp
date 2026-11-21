@@ -3739,6 +3739,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const fs = fpData.features.filter(f => f.properties.uid === uid);
         return fs.some(f => f.properties.firm === 1) && !fs.some(f => f.properties.pcls === 'allowed');
     }
+    // The grey line under a site's name: worked ground with no legal area, or
+    // how a legal area is labelled when the data gives it (e.g. a replaced plan).
+    function legalLine(uid) {
+        if (noLegal(uid)) return t('nolegal');
+        const a = fpData && fpData.features.find(f => f.properties.uid === uid && f.properties.pcls === 'allowed');
+        const p = a ? a.properties : {};
+        return (currentLang === 'no' && p.lab_no) || p.lab || '';
+    }
     function outlinesOf(s) {
         if (!fpData) return '';
         const uid = uidOf(s), by = {};
@@ -3747,7 +3755,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (p.uid !== uid || !Number.isFinite(+p.a)) return;
             by[p.pcls || ''] = (by[p.pcls || ''] || 0) + (+p.a);
         });
-        return PCLS.filter(c => c in by).map(c => pclsWord(c) + ' ' + fmt(by[c]) + ' m²').join(' · ') + (noLegal(uid) ? ' · ' + t('nolegal') : '');
+        return PCLS.filter(c => c in by).map(c => pclsWord(c) + ' ' + fmt(by[c]) + ' m²').join(' · ') + (legalLine(uid) ? ' · ' + legalLine(uid) : '');
     }
     function areaOf(s) {
         if (!fpData) return null;
@@ -4995,7 +5003,7 @@ document.addEventListener('DOMContentLoaded', function() {
             statusMark(shapeOf(site), colourOf(site)) + `${esc(site.Name || t('untitled'))}` +
             `<span>${esc(uid)}${aerialShown ? ' · ' + t('aerialshort') : ''}</span>`;
         peekCard.querySelectorAll('.nolegal').forEach(e => e.remove());
-        if (noLegal(uid)) peekCard.querySelector('.cp').insertAdjacentHTML('afterend', `<div class="nolegal">${t('nolegal')}</div>`);
+        if (legalLine(uid)) peekCard.querySelector('.cp').insertAdjacentHTML('afterend', `<div class="nolegal">${esc(legalLine(uid))}</div>`);
         $('peek-open').textContent = t('peek_open');
         peekCard.setAttribute('aria-label', site.Name || uid);
     }
@@ -5188,7 +5196,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusMark(shapeOf(site), colourOf(site)) + `${esc(site.Name || t('untitled'))}` +
                 `<span>${esc(uid)}${aerialShown ? ' · ' + t('aerialshort') : ''}</span>`;
             hoverCard.querySelectorAll('.nolegal').forEach(e => e.remove());
-            if (noLegal(uid)) hoverCard.querySelector('.cp').insertAdjacentHTML('afterend', `<div class="nolegal">${t('nolegal')}</div>`);
+            if (legalLine(uid)) hoverCard.querySelector('.cp').insertAdjacentHTML('afterend', `<div class="nolegal">${esc(legalLine(uid))}</div>`);
             hoverCard.dataset.img = imgs.length || aerialShown ? '1' : '';
         }
         hoverCard.classList.add('on');
