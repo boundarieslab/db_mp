@@ -27,11 +27,11 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cu
 /* no scroll bars: the panes scroll with the wheel, the trackpad or the keys */
 #a-nav,#a-main,#a-read{overflow:auto;scrollbar-width:none}
 #a-nav::-webkit-scrollbar,#a-main::-webkit-scrollbar,#a-read::-webkit-scrollbar{display:none}
-#a-nav{flex:0 0 var(--nav);min-width:0;display:flex;flex-direction:column;padding-bottom:20px}
+#a-nav{flex:0 0 var(--nav);min-width:0;overflow-x:hidden;display:flex;flex-direction:column;padding-bottom:20px}
 #a-q{flex:0 0 auto;width:100%;height:22px;padding:0 6px;border:1px solid var(--ink);border-radius:0;outline:none;background:#fff;font:inherit;color:var(--ink);margin-bottom:16px;-webkit-appearance:none;appearance:none}
 #a-q::-webkit-search-cancel-button{display:none}
 .cat{display:block;line-height:19px;color:var(--sub)}
-.head{display:block;line-height:19px;color:var(--ink);margin:0 0 4px}
+.head{display:block;text-align:left;overflow-wrap:break-word;hyphens:manual;line-height:19px;color:var(--ink);margin:0 0 4px}
 .head.gap{margin-top:18px}
 .cats{display:flex;flex-direction:column;padding-left:12px}
 .inv{display:block;line-height:17px;color:var(--sub);padding-left:12px}
@@ -227,7 +227,7 @@ const WORDS = {
         shuffle: 'Shuffle', order: 'in order', close: 'close ×', prev: '←', next: '→', doc: 'document ↗', archived: 'archived copy ↗',
         lost: 'no longer available online', toMap: 'map →', loading: 'Loading the documents…', fail: 'The database could not be read. Try again in a minute.',
         none: 'None', undated: 'Undated', other: 'Other', 'permission asked': 'permission asked', restricted: 'restricted', title: 'Index' },
-  no: { search: 'Søk', site: 'Sted', th: 'Tema', linked: 'Knyttet til', archive: 'Massebevegelsesarkivet', inv: 'Undersøkelser', cls: 'Klasse', dec: 'Tiår', k: 'Kommune', ty: 'Type sted', arch: 'Arkiv', map: 'Kart',
+  no: { search: 'Søk', site: 'Sted', th: 'Tema', linked: 'Knyttet til', archive: 'Massebevegelses\u00ADarkivet', inv: 'Undersøkelser', cls: 'Klasse', dec: 'Tiår', k: 'Kommune', ty: 'Type sted', arch: 'Arkiv', map: 'Kart',
         shuffle: 'Stokk', order: 'i rekkefølge', close: 'lukk ×', prev: '←', next: '→', doc: 'dokument ↗', archived: 'arkivert kopi ↗',
         lost: 'ikke lenger tilgjengelig på nett', toMap: 'kart →', loading: 'Laster dokumentene…', fail: 'Databasen kunne ikke leses. Prøv igjen om et minutt.',
         none: 'Ingen', undated: 'Udatert', other: 'Annet', 'permission asked': 'tillatelse etterspurt', restricted: 'begrenset', title: 'Indeks' }
