@@ -59,7 +59,13 @@
     }
     const BAKED = readBaked();
     let S = BAKED;
-    if (EDIT) { try { const d = localStorage.getItem(KEY); if (d) S = norm(JSON.parse(d)); } catch (e) {} }
+    // A draft remembers the published look it started from. When the site's look has changed since
+    // (saved from another browser, or fixed in the repository), the editor starts from the site instead.
+    let BASE = JSON.stringify(BAKED);
+    if (EDIT) { try {
+        const d = localStorage.getItem(KEY), b = localStorage.getItem(KEY + ':base');
+        if (d && (b === BASE || (b === null && !(CFG && CFG.nomap)))) S = norm(JSON.parse(d));
+    } catch (e) {} }
     let OFF = false;                      // the editor's before/after: the page as written
 
     // ── colours ──────────────────────────────────────────────────────────
@@ -726,7 +732,8 @@
         get mapFile() { return FILE; },
         apply, applyNow, applyCss, applyDom, buildCss, remapValue, colorKey, remapColorText, collectRules, rules: RULES, norm, blank, ownText, origText: el => { const o = T_ORIG.get(el); const c = ownText(el); return o && c === o.to ? o.from : c; }, layerIds: () => MAP ? layerIds() : [], get origBefore() { return ORIG_BEFORE; },
         get published() { return !!(window[GLOBAL] && Object.keys(window[GLOBAL]).length); },
-        saveDraft() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} },
+        saveDraft() { try { localStorage.setItem(KEY, JSON.stringify(S)); localStorage.setItem(KEY + ':base', BASE); } catch (e) {} },
+        setBase(o) { BASE = JSON.stringify(norm(JSON.parse(JSON.stringify(o)))); },
         clearDraft() { try { localStorage.removeItem(KEY); } catch (e) {} }
     };
     window.__dbStyle = api;

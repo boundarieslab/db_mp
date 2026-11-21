@@ -1926,6 +1926,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
             const iso = new Date().toISOString();
             const body = '/* The look of ' + PAGE_FILE + ', saved by the site editor (' + PAGE_FILE + '?edit) on ' + iso + '.\n   Applied by editor/style-runtime.js. {} means the page as written. */\nwindow.' + STYLE_GLOBAL + ' = ' + JSON.stringify(st) + ';\n';
             await putFile(STYLE_PATH, b64text(body), 'Site style: ' + summary(st));
+            R.setBase(st);
             if (!empty) { R.state = st; R.saveDraft(); }
             pubSnap = stable(R.norm(clone(st)));
             LS.set(PUB_AT, iso);
