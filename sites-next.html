@@ -93,10 +93,10 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 #a-peek .no{display:flex;align-items:center;justify-content:center;width:106px;height:150px;border:1px solid var(--frame)}
 /* connections: hairlines from the opened document to the ones it is tied to; highlights as a yellow marker */
 #a-links{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:4}
-#a-links line,.board svg line{stroke:var(--tie);stroke-width:.6}
+#a-links line,.board svg line{stroke:var(--tie);stroke-width:.35}
 #a-links circle,.board svg circle{fill:var(--tie)}
 .rd .pic{position:relative}
-.rd .hl{position:absolute;box-shadow:0 0 0 1.5px var(--tie)}
+.rd .hl{position:absolute;box-shadow:inset 0 0 0 1px var(--tie)}
 .rd .cx{display:flex;flex-direction:column;align-items:flex-start;color:var(--sub);max-width:620px}
 .rd .cx button{color:var(--ink);text-align:left}
 .obj.tie .lb{color:var(--ink)}
@@ -110,9 +110,9 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 .pc .wh{position:relative;display:block;width:150px;background:#fff;box-shadow:0 0 0 1px var(--ink)}
 .pc .wh img{display:block;width:100%;height:auto}
 .pc .wh.no{display:flex;align-items:center;justify-content:center;width:96px;height:120px}
-.pc .mk{position:absolute;box-shadow:0 0 0 1.5px var(--tie)}
-.pc .id{font-size:10px;line-height:12px;color:var(--sub)}
-.post{position:absolute;z-index:4;width:78px;height:78px;overflow:hidden;background:#FFFF00;color:var(--ink);font-size:10px;line-height:12px;padding:6px;pointer-events:none}
+.pc .mk{position:absolute;box-shadow:inset 0 0 0 .75px var(--tie)}
+.pc .id{font-size:9px;line-height:11px;color:var(--sub)}
+.post{position:absolute;z-index:4;width:72px;height:72px;overflow:hidden;background:#FFFF00;color:#333;font-size:9px;line-height:11px;padding:6px;pointer-events:none;-webkit-font-smoothing:antialiased}
 .pin.cur{outline:1px solid var(--ink);outline-offset:2px;z-index:2}
 #a-zoom{position:absolute;right:0;bottom:0;display:flex;gap:10px;background:#fff;padding:2px 0 0 6px;color:var(--sub)}
 #a-zoom button:hover{color:var(--ink)}
@@ -647,9 +647,14 @@ function drawBoards() {
       const A = box(from), B = box(to);
       // from the side of each piece that faces the other: straight, one pure colour
       const ax = A.x + A.w / 2, ay = A.y + A.h / 2, bx = B.x + B.w / 2, by = B.y + B.h / 2;
-      const edge = (P, tx, ty) => { const dx = tx - (P.x + P.w / 2), dy = ty - (P.y + P.h / 2); const s = Math.min(Math.abs((P.w / 2) / (dx || 1e-6)), Math.abs((P.h / 2) / (dy || 1e-6))); return [P.x + P.w / 2 + dx * s, P.y + P.h / 2 + dy * s]; };
-      const [x1, y1] = edge(A, bx, by), [x2, y2] = edge(B, ax, ay);
-      svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><circle cx="${x2}" cy="${y2}" r="2"/>`;
+      // each end sits inside its document: at the centre of a marked part, or 12 px in from the edge
+      const end = (P, isMark, tx, ty) => {
+        const cx = P.x + P.w / 2, cy = P.y + P.h / 2; if (isMark) return [cx, cy];
+        const dx = tx - cx, dy = ty - cy, s = Math.min(Math.abs((P.w / 2 - 12) / (dx || 1e-6)), Math.abs((P.h / 2 - 12) / (dy || 1e-6)));
+        return [cx + dx * s, cy + dy * s];
+      };
+      const [x1, y1] = end(A, from.classList.contains('mk'), bx, by), [x2, y2] = end(B, to.classList.contains('mk'), ax, ay);
+      svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><circle cx="${x1}" cy="${y1}" r="1.6"/><circle cx="${x2}" cy="${y2}" r="1.6"/>`;
       const t = x[LANG] || x.en;
       if (t) notes += `<span class="post" style="left:${(x1 + x2) / 2 - 39}px;top:${(y1 + y2) / 2 - 39}px">${esc(t)}</span>`;
     }));
