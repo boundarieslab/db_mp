@@ -1,0 +1,132 @@
+{
+ "note": "Investigations and the ties between their documents (draft for review). links: a = document, b = the one it points to; box = the passage signalled on a's picture, as fractions [x, y, w, h]. cases: an investigation laid out as a board; tops = the lines of inquiry it belongs to.",
+ "links": [
+  {
+   "a": "NW_0028",
+   "b": "AE_0008",
+   "box": [
+    0.25,
+    0.445,
+    0.23,
+    0.115
+   ],
+   "en": "30 metres of waste under the course",
+   "no": "30 meter søppel under banen"
+  },
+  {
+   "a": "AE_0008",
+   "b": "NW_0028",
+   "box": [
+    0.17,
+    0.24,
+    0.35,
+    0.31
+   ],
+   "en": "the golf course on the closed fill",
+   "no": "golfbanen på den avsluttede fyllingen"
+  },
+  {
+   "a": "AE_0008",
+   "b": "AE_0007",
+   "en": "the same ground in 1937",
+   "no": "samme terreng i 1937"
+  },
+  {
+   "a": "NW_0028",
+   "b": "PH_0017",
+   "en": "the course on the fill, 2014",
+   "no": "banen på fyllingen, 2014"
+  },
+  {
+   "a": "PH_0044",
+   "b": "PH_0046",
+   "en": "the same fill, 1971",
+   "no": "samme fylling, 1971"
+  },
+  {
+   "a": "AE_0007",
+   "b": "PH_0044",
+   "en": "the forest before the fill",
+   "no": "skogen før fyllingen"
+  },
+  {
+   "a": "NW_0043",
+   "b": "PH_0044",
+   "box": [
+    0.0,
+    0.615,
+    1.0,
+    0.125
+   ],
+   "en": "what they fought: the fill",
+   "no": "det de kjempet mot: fyllingen"
+  },
+  {
+   "a": "NW_0044",
+   "b": "PE_0019",
+   "box": [
+    0.03,
+    0.546,
+    0.94,
+    0.036
+   ],
+   "en": "gas from the fill, 1996",
+   "no": "gass fra fyllingen, 1996"
+  },
+  {
+   "a": "NW_0138",
+   "b": "NW_0151",
+   "box": [
+    0.03,
+    0.198,
+    0.94,
+    0.088
+   ],
+   "en": "not closed in 1987, nor 1997 — 2007?",
+   "no": "ikke nedlagt i 1987 eller 1997 — 2007?"
+  },
+  {
+   "a": "NW_0138",
+   "b": "NW_0150",
+   "en": "the debate that followed",
+   "no": "debatten som fulgte"
+  },
+  {
+   "a": "NW_0151",
+   "b": "PE_0019",
+   "box": [
+    0.0,
+    0.285,
+    0.48,
+    0.065
+   ],
+   "en": "to close in 2007; approved 2019",
+   "no": "skulle nedlegges 2007; godkjent 2019"
+  }
+ ],
+ "cases": [
+  {
+   "id": "gronmo-golf",
+   "tops": [
+    "afterlife",
+    "pollution"
+   ],
+   "en": "Grønmo: a golf course on 30 m of waste",
+   "no": "Grønmo: golfbane på 30 meter søppel",
+   "docs": [
+    "AE_0007",
+    "PH_0044",
+    "PH_0046",
+    "NW_0043",
+    "NW_0044",
+    "NW_0028",
+    "NW_0138",
+    "NW_0151",
+    "NW_0150",
+    "PH_0017",
+    "PE_0019",
+    "AE_0008"
+   ]
+  }
+ ]
+}

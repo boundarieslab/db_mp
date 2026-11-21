@@ -1,0 +1,475 @@
+{
+"note": "Themes, first draft from words in titles and notes; to be checked and moved to a Themes column in the Documents tab.",
+"themes": {
+"PH_0016": [
+"afterlife/reuse"
+],
+"PH_0017": [
+"afterlife/reuse"
+],
+"PH_0018": [
+"afterlife/reuse"
+],
+"PH_0019": [
+"afterlife/reuse"
+],
+"PH_0035": [
+"mobilisation/protest"
+],
+"AE_0007": [
+"afterlife/closure"
+],
+"AE_0008": [
+"afterlife/closure"
+],
+"AE_0009": [
+"afterlife/reuse"
+],
+"NW_0003": [
+"afterlife/reuse"
+],
+"PE_0002": [
+"afterlife/reuse"
+],
+"PE_0005": [
+"pollution/leachate",
+"afterlife/closure"
+],
+"PE_0012": [
+"pollution/contaminated"
+],
+"PE_0019": [
+"afterlife/closure"
+],
+"PE_0022": [
+"pollution/contaminated"
+],
+"PE_0025": [
+"afterlife/closure"
+],
+"PE_0028": [
+"afterlife/closure"
+],
+"PE_0032": [
+"oversight/inspection"
+],
+"PE_0034": [
+"afterlife/closure"
+],
+"PE_0048": [
+"afterlife/closure"
+],
+"PE_0057": [
+"pollution/contaminated",
+"afterlife/reuse"
+],
+"PE_0058": [
+"pollution/contaminated"
+],
+"PE_0059": [
+"pollution/contaminated"
+],
+"PE_0064": [
+"pollution/contaminated"
+],
+"PE_0065": [
+"pollution/contaminated"
+],
+"PE_0066": [
+"pollution/contaminated"
+],
+"PA_0012": [
+"afterlife/reuse"
+],
+"PA_0024": [
+"pollution/contaminated"
+],
+"IR_0001": [
+"oversight/inspection"
+],
+"IR_0002": [
+"oversight/inspection"
+],
+"IR_0003": [
+"oversight/inspection"
+],
+"IR_0004": [
+"oversight/inspection"
+],
+"IR_0005": [
+"oversight/inspection"
+],
+"IR_0006": [
+"oversight/inspection"
+],
+"IR_0007": [
+"oversight/inspection"
+],
+"IR_0008": [
+"pollution/contaminated",
+"oversight/inspection"
+],
+"IR_0009": [
+"pollution/contaminated",
+"oversight/inspection"
+],
+"IR_0010": [
+"oversight/inspection"
+],
+"IR_0011": [
+"oversight/inspection"
+],
+"IR_0012": [
+"oversight/inspection"
+],
+"IR_0013": [
+"oversight/inspection"
+],
+"IR_0014": [
+"oversight/inspection"
+],
+"IR_0015": [
+"oversight/inspection"
+],
+"IR_0016": [
+"oversight/inspection"
+],
+"IR_0017": [
+"oversight/inspection"
+],
+"IR_0018": [
+"oversight/inspection"
+],
+"IR_0019": [
+"oversight/inspection"
+],
+"IR_0020": [
+"oversight/inspection"
+],
+"IR_0021": [
+"oversight/inspection"
+],
+"IR_0022": [
+"oversight/inspection"
+],
+"IR_0023": [
+"oversight/inspection"
+],
+"IR_0024": [
+"oversight/inspection"
+],
+"ZP_0012": [
+"pollution/contaminated"
+],
+"CR_0009": [
+"pollution/contaminated"
+],
+"CR_0010": [
+"pollution/contaminated"
+],
+"CR_0014": [
+"afterlife/closure"
+],
+"OD_0005": [
+"afterlife/closure"
+],
+"OD_0013": [
+"pollution/contaminated"
+],
+"OD_0023": [
+"afterlife/closure"
+],
+"OD_0027": [
+"pollution/contaminated"
+],
+"OD_0039": [
+"afterlife/closure"
+],
+"OD_0067": [
+"afterlife/closure"
+],
+"RP_0033": [
+"afterlife/reuse"
+],
+"RP_0035": [
+"pollution/contaminated"
+],
+"MP_0005": [
+"afterlife/closure"
+],
+"MP_0008": [
+"afterlife/closure"
+],
+"MP_0011": [
+"afterlife/closure"
+],
+"MP_0016": [
+"afterlife/closure"
+],
+"CP_0010": [
+"afterlife/reuse"
+],
+"CP_0014": [
+"afterlife/reuse"
+],
+"CP_0033": [
+"afterlife/reuse"
+],
+"CP_0069": [
+"afterlife/reuse"
+],
+"CP_0075": [
+"afterlife/reuse"
+],
+"CP_0080": [
+"afterlife/reuse"
+],
+"CP_0086": [
+"afterlife/reuse"
+],
+"NW_0015": [
+"pollution/leachate"
+],
+"NW_0018": [
+"pollution/gas",
+"mobilisation/protest"
+],
+"NW_0021": [
+"mobilisation/protest"
+],
+"NW_0028": [
+"afterlife/reuse"
+],
+"NW_0030": [
+"pollution/contaminated"
+],
+"NW_0042": [
+"pollution/leachate"
+],
+"NW_0043": [
+"mobilisation/protest"
+],
+"NW_0044": [
+"pollution/gas",
+"mobilisation/letters"
+],
+"NW_0046": [
+"pollution/contaminated"
+],
+"NW_0052": [
+"mobilisation/protest"
+],
+"NW_0056": [
+"pollution/gas"
+],
+"NW_0057": [
+"mobilisation/protest"
+],
+"NW_0059": [
+"pollution/contaminated",
+"mobilisation/protest"
+],
+"NW_0060": [
+"pollution/leachate",
+"pollution/contaminated"
+],
+"NW_0064": [
+"mobilisation/protest"
+],
+"NW_0069": [
+"mobilisation/protest"
+],
+"NW_0071": [
+"mobilisation/protest"
+],
+"NW_0074": [
+"mobilisation/letters",
+"mobilisation/protest"
+],
+"NW_0075": [
+"pollution/leachate"
+],
+"NW_0077": [
+"pollution/leachate"
+],
+"NW_0078": [
+"pollution/contaminated"
+],
+"NW_0079": [
+"pollution/contaminated",
+"mobilisation/protest"
+],
+"NW_0080": [
+"mobilisation/letters",
+"mobilisation/protest"
+],
+"NW_0082": [
+"mobilisation/protest"
+],
+"NW_0083": [
+"pollution/contaminated"
+],
+"NW_0084": [
+"pollution/gas",
+"mobilisation/protest"
+],
+"NW_0085": [
+"pollution/contaminated"
+],
+"NW_0086": [
+"pollution/contaminated"
+],
+"NW_0088": [
+"mobilisation/protest"
+],
+"NW_0090": [
+"pollution/contaminated",
+"mobilisation/protest"
+],
+"NW_0092": [
+"pollution/leachate"
+],
+"NW_0094": [
+"pollution/contaminated"
+],
+"NW_0095": [
+"oversight/inspection"
+],
+"NW_0100": [
+"mobilisation/protest"
+],
+"NW_0101": [
+"mobilisation/protest"
+],
+"NW_0105": [
+"mobilisation/protest"
+],
+"NW_0107": [
+"mobilisation/protest"
+],
+"NW_0108": [
+"pollution/contaminated"
+],
+"NW_0111": [
+"pollution/contaminated"
+],
+"NW_0114": [
+"mobilisation/protest"
+],
+"NW_0116": [
+"pollution/contaminated"
+],
+"NW_0118": [
+"pollution/contaminated"
+],
+"NW_0120": [
+"mobilisation/protest"
+],
+"NW_0121": [
+"mobilisation/protest"
+],
+"NW_0124": [
+"pollution/leachate",
+"pollution/gas",
+"mobilisation/protest"
+],
+"NW_0126": [
+"pollution/contaminated",
+"mobilisation/protest"
+],
+"NW_0127": [
+"mobilisation/protest"
+],
+"NW_0128": [
+"mobilisation/letters"
+],
+"NW_0129": [
+"mobilisation/letters",
+"mobilisation/protest"
+],
+"NW_0131": [
+"pollution/gas",
+"mobilisation/letters"
+],
+"NW_0132": [
+"mobilisation/letters"
+],
+"NW_0133": [
+"mobilisation/letters"
+],
+"NW_0134": [
+"pollution/gas",
+"mobilisation/letters"
+],
+"NW_0135": [
+"mobilisation/letters"
+],
+"NW_0136": [
+"mobilisation/letters"
+],
+"NW_0137": [
+"mobilisation/letters"
+],
+"NW_0138": [
+"mobilisation/letters"
+],
+"NW_0139": [
+"mobilisation/letters",
+"mobilisation/protest"
+],
+"NW_0140": [
+"mobilisation/letters",
+"mobilisation/protest"
+],
+"NW_0141": [
+"mobilisation/letters"
+],
+"NW_0142": [
+"pollution/contaminated",
+"mobilisation/letters"
+],
+"NW_0143": [
+"mobilisation/protest"
+],
+"NW_0144": [
+"mobilisation/letters",
+"mobilisation/protest"
+],
+"NW_0145": [
+"mobilisation/letters"
+],
+"NW_0146": [
+"mobilisation/letters"
+],
+"NW_0147": [
+"pollution/contaminated",
+"mobilisation/letters",
+"mobilisation/protest"
+],
+"NW_0148": [
+"mobilisation/letters",
+"mobilisation/protest"
+],
+"NW_0149": [
+"mobilisation/letters",
+"mobilisation/protest"
+],
+"NW_0150": [
+"mobilisation/letters"
+],
+"NW_0151": [
+"mobilisation/letters",
+"afterlife/closure"
+],
+"NW_0152": [
+"pollution/contaminated",
+"mobilisation/letters"
+],
+"NW_0153": [
+"mobilisation/protest"
+],
+"NW_0154": [
+"mobilisation/protest"
+]
+}
+}
