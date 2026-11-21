@@ -36,7 +36,7 @@
 
     // ── state ────────────────────────────────────────────────────────────
     const blank = () => ({ version: 2, vars: {}, colors: {}, fonts: {}, fontFiles: [], googleFonts: [],
-                           sizes: {}, weights: {}, widths: {}, rules: [],
+                           sizes: {}, weights: {}, widths: {}, spaces: {}, steps: {}, rules: [],
                            texts: [], added: [], dups: [], css: '',
                            map: { lineWidth: 1, layers: {}, order: [] } });
     function norm(s) {
@@ -109,6 +109,7 @@
     }
 
     // ── values in stylesheets and style attributes ───────────────────────
+    const SPACE_PROPS = /^(padding|margin)(-(top|right|bottom|left))?$|^(gap|row-gap|column-gap)$/;
     const WIDTH_PROPS = /^(border-(top|right|bottom|left)-width|outline-width|stroke-width|column-rule-width|text-decoration-thickness)$/;
     const lenKey = v => { const m = /^\s*(-?[\d.]+)(px|em|rem|%)?\s*$/.exec(String(v)); return m ? (+m[1]) + (m[2] || '') : null; };
     const unq = f => f.trim().replace(/^["']|["']$/g, '');
@@ -130,6 +131,7 @@
         if (prop === 'font-family') out = remapFamilies(out);
         else if (prop === 'font-size') { const k = lenKey(out); if (k !== null && S.sizes[k] !== undefined) out = S.sizes[k]; }
         else if (prop === 'font-weight') { if (S.weights[out.trim()] !== undefined) out = String(S.weights[out.trim()]); }
+        else if (SPACE_PROPS.test(prop)) { if (S.spaces && Object.keys(S.spaces).length) out = remapWord(out, S.spaces); }
         else if (WIDTH_PROPS.test(prop)) { const k = lenKey(out); if (k !== null && S.widths[k] !== undefined) out = S.widths[k]; }
         else if (/^(font|border(-top|-right|-bottom|-left)?|outline)$/.test(prop) && out.indexOf('var(') >= 0) {
             // A shorthand with a variable keeps its longhands unresolved: work on the text.
@@ -170,7 +172,24 @@
             for (let i = 0; i < st.length; i++) props.push(st[i]);
             SHORTHANDS.forEach(p => { const v = st.getPropertyValue(p); if (v && v.indexOf('var(') >= 0) props.push(p); });
             Object.keys(e.orig).forEach(p => { if (props.indexOf(p) < 0) props.push(p); });
+            // Type steps: every rule that sets a given type size gets that step's
+            // line height and letter spacing (kept apart, so they can be undone).
+            if (!('font-size' in e.orig)) { const fv = st.getPropertyValue('font-size'); if (fv) e.orig['font-size'] = [fv, st.getPropertyPriority('font-size')]; }
+            const fk = e.orig['font-size'] ? lenKey(e.orig['font-size'][0]) : null;
+            const step = (!OFF && fk && S.steps) ? S.steps[fk] : null;
+            [['line-height', 'lh'], ['letter-spacing', 'ls']].forEach(([p, k]) => {
+                const want = step && step[k] ? String(step[k]) : '';
+                if (want) {
+                    e.stepped = e.stepped || {};
+                    if (!(p in e.stepped)) e.stepped[p] = p in e.orig ? e.orig[p] : [st.getPropertyValue(p), st.getPropertyPriority(p)];
+                    if (st.getPropertyValue(p) !== want) st.setProperty(p, want, e.stepped[p][1]);
+                } else if (e.stepped && p in e.stepped) {
+                    const [ov, pr] = e.stepped[p]; delete e.stepped[p];
+                    if (ov) st.setProperty(p, remapValue(p, ov), pr); else st.removeProperty(p);
+                }
+            });
             for (const p of props) {
+                if (e.stepped && p in e.stepped) continue;
                 if (!(p in e.orig)) {
                     const v = st.getPropertyValue(p);
                     if (v === '' && SHORTHANDS.indexOf(p) < 0) continue;
@@ -200,7 +219,7 @@
             return nv === core ? d : d.slice(0, i + 1) + nv + (imp ? ' !important' : '');
         }).join(';');
     }
-    const needDom = () => hasColors() || Object.keys(S.fonts).length || Object.keys(S.sizes).length || Object.keys(S.widths).length || Object.keys(S.weights).length;
+    const needDom = () => hasColors() || Object.keys(S.fonts).length || Object.keys(S.sizes).length || Object.keys(S.widths).length || Object.keys(S.weights).length || Object.keys(S.spaces || {}).length;
     let domTouched = false;
     function remapEl(el) {
         if (isOurs(el)) return;

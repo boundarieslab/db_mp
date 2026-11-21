@@ -1165,8 +1165,9 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
     const bar = ui('div', { id: 'dbx-bar' });
     document.body.appendChild(bar);
     keepKeys(bar);
-    const DOCK_TABS = NOMAP ? ['OUTLINE', 'TYPE', 'COLOUR', 'LINES', 'CSS', 'SAVE'] : ['OUTLINE', 'MAP', 'TYPE', 'COLOUR', 'LINES', 'CSS', 'SAVE'];
+    const DOCK_TABS = NOMAP ? ['OUTLINE', 'PAGE', 'COLOUR', 'CSS', 'SAVE'] : ['OUTLINE', 'MAP', 'TABLE', 'PAGE', 'COLOUR', 'CSS', 'SAVE'];
     let dockTab = LS.get('dbx-dock', '');
+    if (dockTab === 'TYPE' || dockTab === 'LINES') dockTab = 'PAGE';
     if (dockTab && DOCK_TABS.indexOf(dockTab) < 0) dockTab = '';
     const stable = o => JSON.stringify(o, (k, v) => v && typeof v === 'object' && !Array.isArray(v) ? Object.keys(v).sort().reduce((a, kk) => { a[kk] = v[kk]; return a; }, {}) : v);
     let pubSnap = stable(R.norm(clone(R.BAKED)));
@@ -1241,6 +1242,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
     keepKeys(dock);
     if (LS.get('dbx-dock-left', false)) dock.classList.add('left');
     function openDock(t) {
+        if (t === 'TYPE' || t === 'LINES') t = 'PAGE';
         dockTab = t; LS.set('dbx-dock', t);
         renderDock(); renderBar(); placeInsp();
     }
@@ -1257,7 +1259,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
         const foc = document.activeElement && dock.contains(document.activeElement) ? document.activeElement.dataset.k : null;
         const y = dockBody.scrollTop;
         dockBody.textContent = '';
-        const f = { OUTLINE: renderOutline, MAP: renderMap, TYPE: renderType, COLOUR: renderColour, LINES: renderLines, CSS: renderCss, SAVE: renderSave }[dockTab];
+        const f = { OUTLINE: renderOutline, MAP: renderMapPlus, TABLE: renderTable, PAGE: renderPage, TYPE: renderType, COLOUR: renderColour, LINES: renderLines, CSS: renderCss, SAVE: renderSave }[dockTab];
         try { [].concat(f()).forEach(n => n && dockBody.appendChild(n)); }
         catch (e) { console.error(e); dockBody.appendChild(h('div', { class: 'dbx-note dbx-err' }, 'Something went wrong drawing this: ' + e.message)); }
         dockBody.scrollTop = y;
@@ -1344,7 +1346,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
     function inventory() {
         if (invCache && Date.now() - invAt < 1500) return invCache;
         R.collectRules();
-        const fams = new Map(), sizes = new Map(), weights = new Map(), widths = new Map(), colors = new Map(), where = new Map();
+        const fams = new Map(), sizes = new Map(), weights = new Map(), widths = new Map(), colors = new Map(), where = new Map(), spaces = new Map();
         const bump = (m, k, by) => { if (k === null || k === undefined || k === '') return; m.set(k, (m.get(k) || 0) + (by || 1)); };
         const lk = v => { const m = /^\s*(-?[\d.]+)(px|em|rem|%)?\s*$/.exec(String(v)); return m ? (+m[1]) + (m[2] || '') : null; };
         const col = (text, sel, kind) => {
@@ -1365,6 +1367,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
                 else if (p === 'font' && v.indexOf('var(') >= 0) { const m = /(?:"([^"]+)"|([A-Za-z][\w-]*))\s*(?:,|$)/.exec(v.replace(/^.*?\d[\w.%]*(?:\/[\d.]+\w*)?\s+/, '')); if (m) bump(fams, m[1] || m[2]); }
                 if (p === 'font-size') bump(sizes, lk(v));
                 if (p === 'font-weight') bump(weights, v.trim());
+                if (/^(padding|margin)(-(top|right|bottom|left))?$|^(gap|row-gap|column-gap)$/.test(p)) String(v).split(/\s+/).forEach(t => { const k = lk(t); if (k && /px$/.test(k) && num(k) > 0) bump(spaces, k); });
                 if (/^(border-(top|right|bottom|left)-width|outline-width|stroke-width|text-decoration-thickness)$/.test(p)) bump(widths, lk(v));
                 if (/^(border(-top|-right|-bottom|-left)?|outline)$/.test(p)) { const m = /(-?\.?\d[\d.]*px)/.exec(v); if (m) bump(widths, lk(m[1])); }
                 col(v, sel, 'ui');
@@ -1378,7 +1381,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
         const L = R.layers;
         const walk = (e, f) => { if (typeof e === 'string') f(e); else if (Array.isArray(e)) e.forEach(x => walk(x, f)); };
         Object.keys(L).forEach(id => Object.keys(L[id].paint || {}).forEach(p => { if (/-color$/.test(p)) walk(L[id].paint[p], s => col(s, 'map: ' + id, 'map')); }));
-        invCache = { fams, sizes, weights, widths, colors, where }; invAt = Date.now();
+        invCache = { fams, sizes, weights, widths, colors, where, spaces }; invAt = Date.now();
         return invCache;
     }
 
@@ -1426,12 +1429,16 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
             out.push(h('div', { class: 'dbx-li' }, h('span', { class: 'nm', style: 'font-family:"' + f.family + '"' }, f.family, h('small', null, f.file || 'file')), w,
                 x(true, () => { s.fontFiles.splice(i, 1); commit(); renderDock(); }, 'Remove')));
         });
-        out.push(h('div', { class: 'dbx-h' }, 'TYPE SIZES'));
+        out.push(h('div', { class: 'dbx-h' }, 'TYPE STEPS', h('span', { style: 'margin-left:auto;font-weight:400;letter-spacing:0;color:#999' }, 'size · line height · letter spacing')));
+        s.steps = s.steps || {};
+        const stepSet = (k, key, v, live) => { const o = Object.assign({}, s.steps[k]); if (v === '' || v === null) delete o[key]; else o[key] = v; if (Object.keys(o).length) s.steps[k] = o; else delete s.steps[k]; commit(live); if (!live) renderDock(); };
         [...inv.sizes.entries()].filter(([k]) => /px$/.test(k) && num(k) > 0).sort((a, b) => num(a[0]) - num(b[0])).forEach(([k, n]) => {
-            const to = s.sizes[k];
-            const i = numIn(to || '', k, (v, live) => { if (v) s.sizes[k] = px(v); else delete s.sizes[k]; commit(live); if (!live) renderDock(); }, { step: 0.5, unit: 'px', k: 'size:' + k });
-            const r = h('div', { class: 'dbx-li' + (to ? ' set' : '') }, h('span', { class: 'nm', style: 'font-size:' + Math.min(18, num(to || k)) + 'px' }, k, h('small', null, n + '×')),
-                h('span', { class: 'ct' }, '→'), i, x(to, () => { delete s.sizes[k]; commit(); renderDock(); }));
+            const to = s.sizes[k], st = s.steps[k] || {};
+            const i = numIn(to || '', k, (v, live) => { if (v) s.sizes[k] = px(v); else delete s.sizes[k]; commit(live); if (!live) renderDock(); }, { step: 0.5, unit: 'px', k: 'size:' + k, w4: true });
+            const lh = numIn(st.lh || '', 'as is', (v, live) => stepSet(k, 'lh', v === '' ? '' : (/^[\d.]+$/.test(v) && num(v) > 4 ? v + 'px' : v), live), { step: 1, k: 'lh:' + k, w4: true, title: 'line height for every text of this size: px, or a number like 1.3' });
+            const ls = numIn(st.ls || '', 'as is', (v, live) => stepSet(k, 'ls', v === '' ? '' : (/^-?[\d.]+$/.test(v) ? v + 'em' : v), live), { step: 0.01, unit: 'em', k: 'ls:' + k, w4: true, title: 'letter spacing for every text of this size' });
+            const r = h('div', { class: 'dbx-li' + (to || s.steps[k] ? ' set' : '') }, h('span', { class: 'nm', style: 'font-size:' + Math.min(18, num(to || k)) + 'px' }, k, h('small', null, n + '×')),
+                i, lh, ls, x(to || s.steps[k], () => { delete s.sizes[k]; delete s.steps[k]; commit(); renderDock(); }));
             scrub(r.firstChild, i);
             out.push(r);
         });
@@ -1483,7 +1490,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
     }
 
     // ── LINES ───────────────────────────────────────────────────────────
-    function renderLines() {
+    function renderLines(noMap) {
         const inv = inventory();
         const s = S();
         const out = [h('div', { class: 'dbx-h' }, 'PAGE LINES')];
@@ -1509,7 +1516,7 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
             scrub(r.firstChild, i); out.push(r);
         });
         out.push(h('div', { class: 'dbx-note' }, 'Every border, rule and outline on the page that has this weight. 0.5 px is the half-pixel the page uses on most frames. Drag a name sideways to change it.'));
-        if (!NOMAP) {
+        if (!NOMAP && !noMap) {
             out.push(h('div', { class: 'dbx-h' }, 'MAP LINES'));
             out.push(mapLineAll());
             out.push(h('div', { class: 'dbx-note' }, 'Each map line on its own, and every other property of the map: ', h('button', { class: 'dbx-btn', onclick: () => openDock('MAP') }, 'MAP')));
@@ -2042,6 +2049,475 @@ html [data-dbx-ui] button, html [data-dbx-ui] summary, html [data-dbx-ui] .nd{cu
     }
 
     // ── render ──────────────────────────────────────────────────────────
+
+    // ═════════════════════════════════════════════════════════════════════
+    // MAP, BY WHAT IT SHOWS: every line, mark and fill under a plain name,
+    // with plain controls. Values that change with hover, sites/projects or
+    // zoom are split into their parts, each one set on its own.
+    // ═════════════════════════════════════════════════════════════════════
+    const CAT = [
+        ['BASE MAP', [['Aerial photo', ['satellite'], 'its strength in the default view is the terrain panel’s photo slider'],
+            ['Terrain shading', ['base-shade', 'relief-shade', 'hillshade']], ['Relief, grey ground', ['relief-ground', 'relief']],
+            ['Grey map (Kartverket)', ['graytone']], ['Oslo aerial survey', ['bym']], ['Older aerials', ['historical']], ['Elevation, far', ['dem-far']]]],
+        ['SITE SYMBOLS', 'sym'],
+        ['STATUS COLOURS', 'status'],
+        ['SITE OUTLINES', [['Legal area edge', ['fp-paper']], ['Worked ground and project outlines', ['fp-line']],
+            ['Planned / to come, dashed', ['fp-soft']], ['Planned expansion', ['fp-exp']], ['Site fill', ['fp-fill']], ['Hover area under the symbols', ['site-hot']]]],
+        ['FLOWS', [['Received (solid)', ['flow-net-solid']], ['Designated (dashed)', ['flow-net-dash']], ['By sea', ['flow-net-sea']],
+            ['Line under the flows', ['flow-net-cas']], ['Hovered or chosen flow', ['flow-pick-solid', 'flow-pick-dash', 'flow-pick-sea', 'flow-pick-cas']],
+            ['Ends of a hovered flow', ['flow-end-sym']]]],
+        ['TERRAIN CHANGE', [['Change colour', ['dod']], ['Far view', ['dodfar']], ['Studied areas, fill', ['dodfp-fill']], ['Studied areas, line', ['dodfp-line']],
+            ['Chosen cluster', ['dodsel-line', 'dodsel-edge']], ['Change contours, 1 m', ['dod-iso']], ['Edge of each change', ['dod-edge']],
+            ['Terrain contours', [/^dod-contours/, /^dod-in-/]], ['Older survey', [/^dodold-/]]]],
+        ['CROSS SECTION TOOL', [['Line', ['prof-line']], ['Points', ['prof-pt']], ['Cursor', ['prof-cur']]]],
+        ['LABELS, CARDS AND KEY', 'parts'],
+        ['EVERYTHING ELSE ON THE MAP', 'rest']
+    ];
+    const MAP_PARTS = [['Hover card', '#hover-card', 'it shows while the pointer is on a site'], ['Site label, after a click', '#peek-card', 'click a site first'],
+        ['Record window', '#sidebar', 'open a record first'], ['Key', '#key-list', 'open the key first'], ['Tool bar', '#bar'], ['North arrow', '#compass'],
+        ['Scale bar', '.maplibregl-ctrl-scale'], ['Zoom buttons', '.maplibregl-ctrl-group'], ['Status line', '#status-strip'], ['Search', '#search-panel', 'open the search first'],
+        ['Terrain change panel', '#dod-panel', 'open terrain change first'], ['Layers panel', '#filter-panel', 'open the layers first']];
+    const P_LABEL = { 'line-color': 'colour', 'line-opacity': 'opacity', 'line-width': 'width', 'line-dasharray': 'dash', 'line-blur': 'blur', 'line-offset': 'offset',
+        'line-gap-width': 'double line, gap', 'line-cap': 'line ends', 'line-join': 'corners', 'fill-color': 'fill', 'fill-opacity': 'opacity', 'fill-outline-color': 'edge',
+        'circle-color': 'fill', 'circle-opacity': 'opacity', 'circle-radius': 'radius', 'circle-stroke-color': 'ring colour', 'circle-stroke-width': 'ring width',
+        'circle-stroke-opacity': 'ring opacity', 'raster-opacity': 'opacity', 'raster-saturation': 'colour strength', 'raster-contrast': 'contrast',
+        'raster-brightness-min': 'darkest', 'raster-brightness-max': 'lightest', 'raster-hue-rotate': 'hue turn', 'hillshade-exaggeration': 'strength',
+        'hillshade-illumination-direction': 'light from', 'hillshade-shadow-color': 'shadow', 'hillshade-highlight-color': 'light', 'hillshade-accent-color': 'accent',
+        'icon-size': 'size', 'icon-opacity': 'opacity' };
+    const P_OF = { line: [['paint', 'line-color'], ['paint', 'line-opacity'], ['paint', 'line-width'], ['paint', 'line-dasharray'], ['layout', 'line-cap'], ['layout', 'line-join'], ['paint', 'line-blur'], ['paint', 'line-offset'], ['paint', 'line-gap-width']],
+        fill: [['paint', 'fill-color'], ['paint', 'fill-opacity'], ['paint', 'fill-outline-color']],
+        circle: [['paint', 'circle-color'], ['paint', 'circle-opacity'], ['paint', 'circle-radius'], ['paint', 'circle-stroke-color'], ['paint', 'circle-stroke-width'], ['paint', 'circle-stroke-opacity']],
+        raster: [['paint', 'raster-opacity'], ['paint', 'raster-saturation'], ['paint', 'raster-contrast'], ['paint', 'raster-brightness-min'], ['paint', 'raster-brightness-max'], ['paint', 'raster-hue-rotate']],
+        hillshade: [['paint', 'hillshade-exaggeration'], ['paint', 'hillshade-illumination-direction'], ['paint', 'hillshade-shadow-color'], ['paint', 'hillshade-highlight-color'], ['paint', 'hillshade-accent-color']],
+        symbol: [['layout', 'icon-size'], ['paint', 'icon-opacity']] };
+    const DASHES = [[null, 'solid'], [[3, 3], ''], [[6, 3], ''], [[1, 2], ''], [[3, 2], ''], [[8, 2, 1, 2], '']];
+    const stepOf = p => /opacity|saturation|contrast|brightness|size|exaggeration/.test(p) ? 0.05 : /direction|hue/.test(p) ? 5 : /radius/.test(p) ? 0.5 : 0.1;
+    let mapView = LS.get('dbx-mapview', 'what');
+    const openItems = new Set(LS.get('dbx-open-items', []));
+    const saveItems = () => LS.set('dbx-open-items', [...openItems]);
+    const matchId = (pat, id) => typeof pat === 'string' ? pat === id : pat.test(id);
+    const catIds = pats => R.layerIds().filter(id => pats.some(p => matchId(p, id)));
+    const getAt = (e, path) => path.reduce((a, k) => (a === undefined || a === null) ? undefined : a[k], e);
+    function setAt(e, path, v) {
+        if (!path.length) return v;
+        const c = clone(e); let a = c;
+        for (let i = 0; i < path.length - 1; i++) a = a[path[i]];
+        a[path[path.length - 1]] = v;
+        return c;
+    }
+    function condLabel(c) {
+        const s = JSON.stringify(c);
+        if (/feature-state/.test(s)) { const m = /"feature-state","([^"]+)"/.exec(s); const k = m ? m[1] : ''; return /hot|hover/.test(k) ? 'on hover' : /sel|pick/.test(k) ? 'chosen' : k; }
+        if (/"cat"/.test(s) && /facility/.test(s)) return /"!="|^\["!"/.test(s) ? 'projects' : 'sites';
+        if (/"kind"/.test(s) && /"line"/.test(s)) return /"!="/.test(s) ? 'area projects' : 'road and rail projects';
+        if (Array.isArray(c) && (c[0] === '==' || c[0] === '!=') && Array.isArray(c[1]) && c[1][0] === 'get') return c[1][1] + (c[0] === '==' ? ' = ' : ' ≠ ') + JSON.stringify(c[2]).replace(/"/g, '');
+        return 'when ' + s.replace(/"/g, '').slice(0, 36);
+    }
+    function elseLabel(labs) {
+        const opp = { 'on hover': 'normal', sites: 'projects', projects: 'sites', chosen: 'not chosen', 'road and rail projects': 'area projects', 'area projects': 'road and rail projects' };
+        return labs.length === 1 ? (opp[labs[0]] || 'not ' + labs[0]) : 'otherwise';
+    }
+    const isZoom = e => Array.isArray(e) && e[0] === 'zoom';
+    // Every value inside a map value: { path, label, v, kind }.
+    function leavesOf(e, path, ctx, out) {
+        out = out || []; path = path || []; ctx = ctx || [];
+        const label = ctx.join(' · ');
+        if (e === undefined || e === null) { out.push({ path, label, v: e, kind: 'none' }); return out; }
+        if (typeof e === 'number') { out.push({ path, label, v: e, kind: 'num' }); return out; }
+        if (typeof e === 'boolean') { out.push({ path, label, v: e, kind: 'expr' }); return out; }
+        if (typeof e === 'string') { out.push({ path, label, v: e, kind: R.colorKey(e) ? 'col' : 'str' }); return out; }
+        if (!Array.isArray(e)) { out.push({ path, label, v: e, kind: 'expr' }); return out; }
+        if (e.length && e.every(x => typeof x === 'number')) { out.push({ path, label, v: e, kind: 'arr' }); return out; }
+        const op = e[0];
+        if (op === 'literal' && Array.isArray(e[1]) && e[1].every(x => typeof x === 'number')) { out.push({ path, label, v: e[1], kind: 'arr', lit: true }); return out; }
+        if (op === 'case') {
+            const labs = [];
+            for (let i = 1; i < e.length - 1; i += 2) { const l = condLabel(e[i]); labs.push(l); leavesOf(e[i + 1], path.concat(i + 1), ctx.concat(l), out); }
+            leavesOf(e[e.length - 1], path.concat(e.length - 1), ctx.concat(elseLabel(labs)), out);
+            return out;
+        }
+        if (op === 'match') {
+            const inp = Array.isArray(e[1]) && e[1][0] === 'get' ? e[1][1] : 'value';
+            const ST = { active: 'active', future: 'planned', old: 'closed / finished', contaminated: 'contaminated', unknown: 'no status' };
+            const ml = v => inp === 'cls' ? [].concat(v).map(z => ST[z] || z).join('/') : inp + ' ' + [].concat(v).join('/');
+            for (let i = 2; i < e.length - 1; i += 2) leavesOf(e[i + 1], path.concat(i + 1), ctx.concat(ml(e[i])), out);
+            leavesOf(e[e.length - 1], path.concat(e.length - 1), ctx.concat(inp === 'cls' ? 'other status' : inp + ' other'), out);
+            return out;
+        }
+        if (/^interpolate/.test(op) || op === 'step') {
+            const z = isZoom(e[2 - (op === 'step' ? 1 : 0)]);
+            out.push({ path, label, v: e, kind: 'curve', zoom: z, step: op === 'step' });
+            const first = op === 'step' ? 3 : 3;
+            if (op === 'step') { const n0 = out.length; leavesOf(e[2], path.concat(2), ctx.concat(z ? 'below zoom ' + e[3] : 'first'), out); if (out.length === n0 + 1) out[n0].stopOf = path; }
+            for (let i = first; i < e.length; i += 2) {
+                const n0 = out.length;
+                leavesOf(e[i + 1], path.concat(i + 1), ctx.concat((z ? 'zoom ' : 'at ') + e[i]), out);
+                if (out.length === n0 + 1) { out[n0].stopOf = path; out[n0].zi = i; }
+            }
+            return out;
+        }
+        if (op === 'get') { out.push({ path, label, v: e, kind: 'data' }); return out; }
+        out.push({ path, label, v: e, kind: 'expr' });
+        return out;
+    }
+    function firstNum(e) { const l = leavesOf(e).reverse().find(x => x.kind === 'num'); return l ? l.v : null; }
+    function firstCol(e) { const l = leavesOf(e).reverse().find(x => x.kind === 'col'); return l ? l.v : null; }
+    function linePreview(id) {
+        const m = R.map; let col = '#000', w = 1, dash = null;
+        try { col = firstCol(m.getPaintProperty(id, 'line-color')) || '#888'; w = firstNum(m.getPaintProperty(id, 'line-width')) || 1; const d = m.getPaintProperty(id, 'line-dasharray'); const dl = d && leavesOf(d).find(x => x.kind === 'arr'); dash = dl ? dl.v : null; } catch (e) {}
+        const ww = Math.max(0.5, Math.min(6, w));
+        return h('span', { style: 'flex:0 0 34px;display:inline-flex;align-items:center;height:12px;background:#9a9a9a;padding:0 3px', html:
+            '<svg width="28" height="8"><line x1="0" y1="4" x2="28" y2="4" stroke="' + col + '" stroke-width="' + ww + '"' + (dash ? ' stroke-dasharray="' + dash.map(n => n * ww).join(' ') + '"' : '') + '/></svg>' });
+    }
+    function swatchFor(id, type) {
+        const m = R.map;
+        try {
+            if (type === 'line') return linePreview(id);
+            const p = type === 'fill' ? 'fill-color' : type === 'circle' ? 'circle-color' : null;
+            if (p) return h('span', { style: 'flex:0 0 34px;height:10px;border:.5px solid #000;background:' + (firstCol(m.getPaintProperty(id, p)) || '#ccc') });
+        } catch (e) {}
+        return h('span', { style: 'flex:0 0 34px;color:#aaa;font-size:9px' }, type);
+    }
+    // One property of one or several layers, split into its values.
+    function propBlock(ids, type, kind, prop) {
+        const s = S();
+        const spec = (SPEC[type] || {})[kind === 'paint' ? 'p' : 'l'] || {};
+        const sp = spec[prop];
+        const ownOf = id => { const L = s.map.layers[id] || {}; return L[kind] && Object.prototype.hasOwnProperty.call(L[kind], prop) ? L[kind][prop] : undefined; };
+        // What the map draws now (with older multipliers, dashes and the Maputnik file in it);
+        // colours as the page wrote them, since the colour table is applied on top anyway.
+        const origOf = id => {
+            let v;
+            if (!/color/.test(prop)) { try { v = kind === 'paint' ? R.map.getPaintProperty(id, prop) : R.map.getLayoutProperty(id, prop); } catch (e) {} }
+            if (v === undefined) { const r = R.layers[id]; v = r && r[kind] ? r[kind][prop] : undefined; }
+            return v !== undefined ? clone(v) : (sp ? sp[1] : undefined);
+        };
+        const curOf = id => { const o = ownOf(id); return o !== undefined ? o : origOf(id); };
+        const isSet = ids.some(id => ownOf(id) !== undefined);
+        const write = (id, val, live) => { const L = s.map.layers[id] || {}; const bag = Object.assign({}, L[kind]); if (val === undefined) delete bag[prop]; else bag[prop] = val; updLayer(id, { [kind]: bag }, live); };
+        const edit = (path, v, live) => {
+            ids.forEach(id => {
+                const c = curOf(id);
+                if (!path.length) { write(id, v, live); return; }
+                if (getAt(c, path) === undefined) return;
+                write(id, setAt(c, path, v), live);
+            });
+            if (!live) renderDock();
+        };
+        const reset = () => { ids.forEach(id => write(id, undefined)); renderDock(); };
+        const name = P_LABEL[prop] || prop;
+        const out = [];
+        if (sp && sp[0] === 'e') {
+            out.push(row(name, seg(sp[2].map(o => [o, ({ butt: 'flat', round: 'round', square: 'square', miter: 'sharp', bevel: 'cut' })[o] || o]), String(curOf(ids[0]) || sp[1]), v => { ids.forEach(id => write(id, v || undefined)); renderDock(); }), x(isSet, reset)));
+            return out;
+        }
+        const cur = curOf(ids[0]);
+        const lv = leavesOf(cur);
+        const single = lv.length === 1 && !lv[0].path.length;
+        if (!single) out.push(h('div', { class: 'dbx-row' }, h('span', { class: 'lb', style: isSet ? 'color:#00f' : '' }, name), h('span', { class: 'dbx-note', style: 'margin:0;flex:1' }, 'changes with what is shown'), x(isSet, reset)));
+        lv.forEach(lf => {
+            const lab = single ? name : h('span', { style: 'padding-left:10px;color:#777' }, lf.label || 'value');
+            const ctl = leafControl(lf, prop, (v, live) => edit(lf.path, v, live));
+            const extra = [];
+            if (lf.kind === 'curve') {
+                const node = lf.v;
+                extra.push(h('button', { class: 'dbx-btn', title: 'Add a stop', onclick: () => { const n = clone(node); const lz = n[n.length - 2], lval = n[n.length - 1]; n.push(+lz + 2, clone(lval)); edit(lf.path, n); } }, '+ stop'),
+                    h('button', { class: 'dbx-btn', title: 'One value at every zoom', onclick: () => edit(lf.path, clone(node[node[0] === 'step' ? 2 : 4])) }, 'flat'));
+                out.push(h('div', { class: 'dbx-row' }, h('span', { class: 'lb' }, single ? name : lab), h('span', { class: 'dbx-note', style: 'margin:0;flex:1' }, lf.zoom ? 'by zoom' : 'by a value'), ...extra, single ? x(isSet, reset) : null));
+                return;
+            }
+            if (lf.stopOf && lf.zi && lf.kind !== 'curve') {
+                const node = getAt(cur, lf.stopOf);
+                const zIn = numIn(node[lf.zi], '', (v, live) => { if (v === '') return; edit(lf.stopOf.concat(lf.zi), num(v), live); }, { w3: true, step: 0.5, title: 'zoom' });
+                const del = (node.length > (node[0] === 'step' ? 5 : 7)) ? h('button', { class: 'dbx-x', title: 'Remove this stop', onclick: () => { const n = clone(node); n.splice(lf.zi, 2); edit(lf.stopOf, n); } }, '−') : null;
+                out.push(h('div', { class: 'dbx-row' }, h('span', { class: 'lb', style: 'padding-left:10px;color:#777' }, (lf.label.split(' · ').slice(0, -1).join(' · ') + ' zoom').trim()), zIn, ...[].concat(ctl), del));
+                return;
+            }
+            const zoomBtn = lf.kind === 'num' ? h('button', { class: 'dbx-x', title: 'Make it change with the zoom', onclick: () => edit(lf.path, ['interpolate', ['linear'], ['zoom'], 6, lf.v, 16, lf.v]) }, '⤢') : null;
+            out.push(h('div', { class: 'dbx-row' }, h('span', { class: 'lb', style: (single && isSet ? 'color:#00f;' : '') + (single ? '' : 'flex:0 0 132px;white-space:normal;overflow:visible;line-height:12px') }, lab), ...[].concat(ctl), zoomBtn, single ? x(isSet, reset) : null));
+        });
+        return out;
+    }
+    function leafControl(lf, prop, set) {
+        if (lf.kind === 'num') {
+            const step = stepOf(prop);
+            const n = numIn(lf.v, '', (v, live) => { if (v === '' || isNaN(parseFloat(v))) return; set(parseFloat(v), live); }, { w4: true, step });
+            const max = /opacity|saturation|contrast|brightness/.test(prop) ? 1 : /direction|hue/.test(prop) ? 359 : /radius/.test(prop) ? 30 : /size/.test(prop) ? 3 : 8;
+            const min = /saturation|contrast/.test(prop) ? -1 : 0;
+            const rng = h('input', { type: 'range', class: 'dbx-r', min, max, step, value: lf.v });
+            rng.addEventListener('input', () => { n.value = rng.value; set(+rng.value, true); });
+            rng.addEventListener('change', () => set(+rng.value));
+            return [rng, n];
+        }
+        if (lf.kind === 'col') return colorIn(lf.v, '', (v, live) => { if (R.colorKey(v)) set(v, live); });
+        if (lf.kind === 'arr') {
+            const wrap = v => lf.lit ? ['literal', v] : v;
+            const cur = JSON.stringify(lf.v);
+            const t = h('input', { class: 'dbx-t dbx-mono', value: lf.v.join(' '), style: 'flex:0 0 58px', spellcheck: false, title: 'dash, gap, dash, gap… in line widths' });
+            t.addEventListener('change', () => { const a = t.value.trim().split(/[\s,]+/).map(Number).filter(n => !isNaN(n)); if (a.length) set(wrap(a)); });
+            return [h('span', { class: 'dbx-seg' }, DASHES.filter(d => d[0]).map(([d]) => h('button', { class: JSON.stringify(d) === cur ? 'on' : '', title: d.join(' '), onclick: () => set(wrap(d)),
+                html: '<svg width="22" height="4"><line x1="0" y1="2" x2="22" y2="2" stroke="currentColor" stroke-dasharray="' + d.map(n => n * 1.5).join(' ') + '"/></svg>' }))), t];
+        }
+        if (lf.kind === 'data') return [h('span', { class: 'dbx-note', style: 'margin:0;flex:1' }, lf.v[1] === 'col' ? 'status colour (STATUS COLOURS)' : 'from the data: ' + lf.v[1]),
+            h('button', { class: 'dbx-btn', title: 'Draw it in one colour instead', onclick: () => set('#000000') }, 'one colour')];
+        if (lf.kind === 'none') return [h('button', { class: 'dbx-btn', onclick: () => set(/color/.test(prop) ? '#000000' : /dash/.test(prop) ? [3, 3] : 1) }, /dash/.test(prop) ? 'add a dash' : 'set')];
+        const t = h('input', { class: 'dbx-t dbx-mono', value: typeof lf.v === 'string' ? lf.v : JSON.stringify(lf.v), spellcheck: false, style: 'flex:1' });
+        t.addEventListener('change', () => { let v = t.value.trim(); try { v = JSON.parse(v); } catch (e) {} set(v); });
+        return [t];
+    }
+    function itemEditor(inner, ids, note) {
+        const m = R.map;
+        const live = ids.filter(id => m.getLayer(id));
+        if (!live.length) { inner.appendChild(h('div', { class: 'dbx-note' }, 'Not on the map right now: it appears when the site switches it on.')); return; }
+        const type = m.getLayer(live[0]).type;
+        const same = live.filter(id => m.getLayer(id).type === type);
+        if (note) inner.appendChild(h('div', { class: 'dbx-note' }, note));
+        (P_OF[type] || []).forEach(([kind, p]) => propBlock(same, type, kind, p).forEach(n => inner.appendChild(n)));
+        const L0 = S().map.layers[same[0]] || {};
+        const reg = R.layers[same[0]] || {};
+        const zr = (k, ph) => numIn(L0[k] === undefined ? '' : L0[k], ph, (v, l) => { same.forEach(id => updLayer(id, { [k]: v === '' ? undefined : num(v) }, l)); }, { w3: true, step: 0.5 });
+        inner.appendChild(row('shown from zoom', zr('minzoom', reg.minzoom === undefined ? 0 : reg.minzoom), h('span', { class: 'ct' }, 'to'), zr('maxzoom', reg.maxzoom === undefined ? 24 : reg.maxzoom)));
+        const all = h('details', { class: 'dbx-det' }, h('summary', null, h('i', { class: 'tri' }), h('span', { class: 'nm', style: 'color:#777' }, 'every property · ' + same.join(', '))));
+        const ai = h('div', { class: 'in' }); all.appendChild(ai);
+        all.addEventListener('toggle', () => { if (all.open && !ai.childElementCount) same.forEach(id => { ai.appendChild(h('div', { class: 'dbx-h' }, id)); buildLayer(ai, id, m.getLayer(id).type); }); });
+        inner.appendChild(all);
+    }
+    let symT = 0;
+    const symRedraw = () => { clearTimeout(symT); symT = setTimeout(() => { try { if (window.__dbSymApply) window.__dbSymApply(); } catch (e) {} }, 90); };
+    function symControls() {
+        const s = S(); const o = s.sym || {};
+        const D = window.__dbSymDefaults || { stroke: 2, ink: '#000000', face: '#FFFFFF', unknown: '#4A4A4A', hot: 1.35 };
+        const set = (k, v, live) => { s.sym = Object.assign({}, s.sym); if (v === '' || v === null || v === undefined) delete s.sym[k]; else s.sym[k] = v; if (!Object.keys(s.sym).length) delete s.sym; commit(live); symRedraw(); if (!live) renderDock(); };
+        const n = (k, ph, step) => numIn(o[k] === undefined ? '' : o[k], ph, (v, l) => set(k, v === '' ? '' : num(v), l), { w4: true, step });
+        const c = (k) => colorIn(o[k] || '', D[k], (v, l) => set(k, v, l));
+        const r = (lab, k, ...ctl) => row(lab, ...ctl, x(o[k] !== undefined, () => set(k, '')));
+        return [h('div', { class: 'dbx-note' }, 'The same symbols in the map, the table, the key and the record window.'),
+            r('ring width', 'stroke', n('stroke', D.stroke, 0.25)), r('black part', 'ink', ...c('ink')), r('white face', 'face', ...c('face')),
+            r('ring, no status', 'unknown', ...c('unknown')), r('size ×', 'size', n('size', 1, 0.05)), r('on hover ×', 'hot', n('hot', D.hot, 0.05)),
+            h('div', { class: 'dbx-note' }, 'Ring colours are the status colours, below.')];
+    }
+    function statusControls() {
+        const s = S(); const C = window.__dbClasses;
+        if (!C) return [h('div', { class: 'dbx-note' }, 'The map has not started yet.')];
+        const out = [h('div', { class: 'dbx-note' }, 'One colour changes the symbol ring, the outline, the chip and the key — and that colour everywhere else on the page.')];
+        [['RECEPTION AND EXTRACTION', C.facility], ['CONSTRUCTION', C.project]].forEach(([g, list]) => {
+            out.push(h('div', { class: 'dbx-h' }, g));
+            list.forEach(ci => {
+                if (/^#fff(fff)?$/i.test(ci.col)) return;
+                const k = R.colorKey(ci.col); const e = s.colors[k]; const to = e ? (typeof e === 'string' ? e : e.to) : '';
+                const [cc, t] = colorIn(to, ci.col, (v, l) => { if (!R.colorKey(v)) return; if (R.colorKey(v) === k) delete s.colors[k]; else s.colors[k] = { to: v, ui: true, map: true }; commit(l); symRedraw(); if (!l) renderDock(); });
+                out.push(row(ci.en, cc, t, x(!!e, () => { delete s.colors[k]; commit(); symRedraw(); renderDock(); })));
+            });
+        });
+        return out;
+    }
+    function partsControls() {
+        return [h('div', { class: 'dbx-note' }, 'These are page parts: they open in the part window, with place, size, type, fill and border.')]
+            .concat(MAP_PARTS.map(([name, q, when]) => h('div', { class: 'dbx-row' }, h('span', { class: 'nm', style: 'flex:1' }, name),
+                h('button', { class: 'dbx-btn', onclick: () => { const el = document.querySelector(q); if (!el || !el.getClientRects().length) { toast('Not on the page right now' + (when ? ': ' + when : '') + '.', 3000); if (!el) return; } select(el, q); } }, 'edit'))));
+    }
+    function renderMapPlus() {
+        const m = R.map;
+        const head = h('div', { class: 'dbx-row' }, seg([['what', 'BY WHAT IT SHOWS'], ['layers', 'EVERY LAYER']], mapView, v => { mapView = v || mapView; LS.set('dbx-mapview', mapView); renderDock(); }));
+        if (mapView === 'layers') return [head].concat(renderMap());
+        if (!m) return [head, h('div', { class: 'dbx-note' }, 'The map has not started yet.')];
+        const s = S();
+        const out = [head, h('div', { class: 'dbx-row' }, h('button', { class: 'dbx-btn' + (pickMap ? ' on' : ''), title: 'Then click a line on the map: what is drawn there opens here', onclick: () => setPickMap(!pickMap) }, pickMap ? 'click the map…' : '⌖ pick on the map')), mapLineAll()];
+        const used = new Set();
+        CAT.forEach(([g, items]) => { if (Array.isArray(items)) items.forEach(it => catIds(it[1]).forEach(id => used.add(id))); });
+        const hidden = new Set(['flow-hit', 'site-sym', 'site-sym-hot']);
+        CAT.forEach(([g, items]) => {
+            let rows = [];
+            if (items === 'sym') rows = symControls();
+            else if (items === 'status') rows = statusControls();
+            else if (items === 'parts') rows = partsControls();
+            else {
+                const list = items === 'rest' ? R.layerIds().filter(id => !used.has(id) && !hidden.has(id)).map(id => [layerName(id), [id]]) : items;
+                list.forEach(([name, pats, note]) => {
+                    const ids = catIds(pats);
+                    const key = g + '|' + name;
+                    if (!ids.length && items === 'rest') return;
+                    const l0 = ids.length ? m.getLayer(ids[0]) : null;
+                    const set = ids.some(id => Object.keys(s.map.layers[id] || {}).length);
+                    const hit = ids.some(id => found.indexOf(id) >= 0);
+                    if (hit) openItems.add(key);
+                    const det = h('details', { class: 'dbx-det' + (hit ? ' found' : ''), open: openItems.has(key) });
+                    const allHid = ids.length && ids.every(id => (s.map.layers[id] || {}).hide);
+                    const eye = ids.length ? h('input', { type: 'checkbox', checked: !allHid, title: allHid ? 'Hidden always (tick to give it back)' : 'Untick to hide it always', style: 'margin:0;accent-color:#00f',
+                        onclick: e => e.stopPropagation(), onchange: e => { ids.forEach(id => updLayer(id, { hide: e.target.checked ? undefined : true })); renderDock(); } }) : null;
+                    det.appendChild(h('summary', null, h('i', { class: 'tri' }), eye, l0 ? swatchFor(ids[0], l0.type) : h('span', { style: 'flex:0 0 34px' }),
+                        h('span', { class: 'nm', style: 'flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' + (set ? ';color:#00f' : '') + (ids.length ? '' : ';opacity:.45'), title: ids.join(', ') || 'not on the map now' }, name)));
+                    const inner = h('div', { class: 'in' }); det.appendChild(inner);
+                    if (det.open) itemEditor(inner, ids, note);
+                    det.addEventListener('toggle', () => { if (det.open) { openItems.add(key); if (!inner.childElementCount) itemEditor(inner, ids, note); } else openItems.delete(key); saveItems(); });
+                    rows.push(det);
+                });
+            }
+            const sec = section(g, false, ...rows);
+            sec.dataset.g = g;
+            if (Array.isArray(items) && items.some(it => catIds(it[1]).some(id => found.indexOf(id) >= 0))) sec.open = true;
+            out.push(sec);
+        });
+        out.push(h('div', { class: 'dbx-note' }, 'Grey names are not on the map right now (a run, a tool, a background not chosen); they can be set as soon as they show. ⤢ makes a value change with the zoom.'));
+        return out;
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // TABLE: the sheet under the map, part by part
+    // ═════════════════════════════════════════════════════════════════════
+    let tMedia = LS.get('dbx-tmedia', 'all');
+    let tPick = false;
+    const TPARTS = [
+        ['SHEET TABS', [['type size', 'num', '#tabstrip .tab', 'font-size'], ['open tab, text', 'col', '#tabstrip .tab[aria-selected="true"]', 'color'],
+            ['other tabs, text', 'col', '#tabstrip .tab', 'color'], ['open tab, fill', 'var', '#tabstrip', '--tab-on', 'col'], ['other tabs, fill', 'var', '#deck', '--stack-tab', 'col'],
+            ['ground behind', 'var', '#deck', '--stack', 'col'], ['space across', 'pair', '#tabstrip .tab', ['padding-left', 'padding-right']],
+            ['space above', 'num', '#tabstrip .tab', 'padding-top'], ['overlap', 'num', '#tabstrip .tab', 'margin-right'],
+            ['slant', 'var', '#tabstrip', '--tab-slant', 'num', 0.1, ''], ['outline width', 'var', '#tabstrip', '--tab-line-w', 'num', 0.25, 'px'],
+            ['outline colour', 'var', '#tabstrip', '--tab-line', 'col']]],
+        ['HEAD BAR', [['height', 'pair', '#deck .deck-head', ['height', 'flex-basis']], ['type size', 'num', '#deck .deck-head', 'font-size'],
+            ['line under the tabs', 'line', '#deck .deck-head::after', ['bottom']], ['legend chip height', 'num', '#deck .chip', 'height'],
+            ['legend chip frame', 'line', '#deck .chip', ['top', 'right', 'bottom', 'left']], ['space between chips', 'num', '#deck .chips', 'gap'],
+            ['search box width', 'num', '#deck .deck-head .find', 'width'], ['search box frame', 'line', '#deck .deck-head .find', ['top', 'right', 'bottom', 'left']]]],
+        ['COLUMN HEADS', [['height', 'num', '#site-table th', 'height'], ['type size', 'num', '#site-table th', 'font-size'], ['text', 'col', '#site-table th', 'color'],
+            ['units', 'col', '#site-table th .unit', 'color'], ['fill', 'col', '#site-table th', 'background-color'],
+            ['space across', 'pair', '#site-table th', ['padding-left', 'padding-right']], ['align', 'seg', '#site-table th', 'text-align', ['left', 'center', 'right']]]],
+        ['CELLS', [['typeface', 'font', '#site-table', 'font-family'], ['type size', 'num', '#site-table', 'font-size'], ['letter spacing', 'num', '#site-table', 'letter-spacing', 0.01, 'em'],
+            ['text', 'col', '#site-table td', 'color'], ['row height', 'num', '#site-table td', 'height'], ['space across', 'pair', '#site-table td', ['padding-left', 'padding-right']],
+            ['space down', 'pair', '#site-table td', ['padding-top', 'padding-bottom']], ['long text', 'seg', '#site-table td', 'white-space', [['normal', 'wraps'], ['nowrap', 'one line']]],
+            ['text that does not fit', 'seg', '#site-table td', 'text-overflow', [['clip', 'cut'], ['ellipsis', '…']]], ['numbers', 'seg', '#site-table td.num', 'text-align', ['left', 'right']]]],
+        ['GRID LINES', [['between rows', 'line', '#site-table td', ['bottom']], ['between columns', 'line', '#site-table td, #site-table th', ['right']],
+            ['under the heads', 'line', '#site-table th', ['bottom']], ['sheet frame', 'line', '#deck .deck-scroll', ['right', 'bottom', 'left']]]],
+        ['PICKED ROW AND HOVER', [['picked row, fill', 'col', '#site-table tbody tr.sel td', 'background-color'], ['picked row, text', 'col', '#site-table tbody tr.sel td', 'color'],
+            ['row under the pointer', 'col', '#site-table tbody tr:hover td', 'background-color'], ['rows picked with shift', 'col', '#site-table tbody tr.pick td', 'background-color'],
+            ['chosen flow', 'col', '#site-table tbody tr.flow-sel td', 'background-color']]],
+        ['SIZES', [['closed', 'num', '#deck:not(.half):not(.full)', 'flex-basis'], ['half open', 'num', '#deck.half', 'flex-basis'],
+            ['opening time', 'num', '#deck', 'transition-duration', 0.02, 's']]],
+        ['COLUMNS', 'cols']
+    ];
+    const tabsRepaint = () => { try { if (window.__dbPaintTabs) requestAnimationFrame(window.__dbPaintTabs); } catch (e) {} };
+    function liveOf(sel, prop) {
+        let q = sel.split(',')[0].trim(), pseudo = null;
+        const m = /::?(after|before)$/.exec(q); if (m) { pseudo = '::' + m[1]; q = q.slice(0, m.index); }
+        const el = document.querySelector(q.replace(/:hover/g, ''));
+        if (!el) return '';
+        try { return getComputedStyle(el, pseudo).getPropertyValue(prop).trim(); } catch (e) { return ''; }
+    }
+    const hexOf = v => { const k = v ? R.colorKey(v) : null; return k ? (k.length === 9 && /ff$/i.test(k) ? k.slice(0, 7) : k).toUpperCase() : (v || ''); };
+    const VAR_DEF = { '--tab-on': () => '#FFFFFF', '--tab-line': () => hexOf(getComputedStyle(document.documentElement).getPropertyValue('--frame').trim()),
+        '--tab-line-w': () => (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hl')) || 0.5) + 'px', '--tab-slant': () => '1' };
+    function tGet(sel, prop) { const r = ruleFor(sel, tMedia, false); return r && r.props[prop] !== undefined ? r.props[prop] : ''; }
+    function tSet(sel, obj, live) {
+        const r = ruleFor(sel, tMedia, true);
+        Object.keys(obj).forEach(k => { const v = obj[k]; if (v === null || v === undefined || v === '') delete r.props[k]; else r.props[k] = String(v); });
+        prune(); commit(live); tabsRepaint(); if (!live) renderDock();
+    }
+    const short = v => { const n = parseFloat(v); return isNaN(n) ? v : String(Math.round(n * 100) / 100) + (String(v).replace(/^-?[\d.]+/, '') || ''); };
+    function tControl([label, kind, q, prop, a, b, c]) {
+        const s = S();
+        if (kind === 'var') {
+            const key = q + '|' + prop, cur = s.vars[key] || '';
+            const setV = (v, l) => { if (v === '' || v === null) delete s.vars[key]; else s.vars[key] = v; commit(l); tabsRepaint(); if (!l) renderDock(); };
+            const ph = liveOf(q, prop) || (VAR_DEF[prop] ? VAR_DEF[prop]() : '');
+            if (a === 'col') return row(label, ...colorIn(cur, hexOf(ph) || '#000000', (v, l) => { if (R.colorKey(v)) setV(v, l); }), x(!!cur, () => setV('')));
+            const unit = c || '';
+            return row(label, numIn(cur, ph, (v, l) => setV(v === '' ? '' : (unit && /^[\d.]+$/.test(v) ? v + unit : v), l), { w4: true, step: b || 0.25, unit }), x(!!cur, () => setV('')));
+        }
+        if (kind === 'num') {
+            const unit = b || 'px', cur = tGet(q, prop);
+            const i = numIn(cur, short(liveOf(q, prop)), (v, l) => tSet(q, { [prop]: v === '' ? '' : (/^-?[\d.]+$/.test(v) ? v + unit : v) }, l), { w4: true, step: a || (unit === 'px' ? 1 : 0.1), unit });
+            return row(label, i, x(!!cur, () => tSet(q, { [prop]: '' })));
+        }
+        if (kind === 'pair') {
+            const cur = tGet(q, prop[0]);
+            const i = numIn(cur, short(liveOf(q, prop[0])), (v, l) => { const val = v === '' ? '' : (/^-?[\d.]+$/.test(v) ? v + 'px' : v); const o = {}; prop.forEach(p => { o[p] = val; }); tSet(q, o, l); }, { w4: true, step: 1, unit: 'px' });
+            return row(label, i, x(!!cur, () => { const o = {}; prop.forEach(p => { o[p] = ''; }); tSet(q, o); }));
+        }
+        if (kind === 'col') {
+            const cur = tGet(q, prop);
+            return row(label, ...colorIn(cur, hexOf(liveOf(q, prop)) || '#000000', (v, l) => { if (R.colorKey(v)) tSet(q, { [prop]: v }, l); }), x(!!cur, () => tSet(q, { [prop]: '' })));
+        }
+        if (kind === 'seg') {
+            const cur = tGet(q, prop);
+            return row(label, seg(a.map(o => Array.isArray(o) ? o : [o, o]), cur || liveOf(q, prop), v => tSet(q, { [prop]: v === (liveOf(q, prop)) && !cur ? '' : v })), x(!!cur, () => tSet(q, { [prop]: '' })));
+        }
+        if (kind === 'font') {
+            const cur = tGet(q, prop), now = liveOf(q, prop);
+            return row(label, sel(familyOptions(), cur ? firstFamily(cur) : '', 'as now: ' + firstFamily(now), v => tSet(q, { [prop]: v ? famValue(v, now) : '' }), 'flex:1'), x(!!cur, () => tSet(q, { [prop]: '' })));
+        }
+        if (kind === 'line') {
+            const sides = prop;
+            const P = k => sides.map(sd => 'border-' + sd + '-' + k);
+            const curW = tGet(q, P('width')[0]), curC = tGet(q, P('color')[0]), curS = tGet(q, P('style')[0]);
+            const setAll = (k, v, l) => { const o = {}; P(k).forEach(p => { o[p] = v; }); tSet(q, o, l); };
+            const w = numIn(curW, short(liveOf(q, P('width')[0])), (v, l) => setAll('width', v === '' ? '' : (/^[\d.]+$/.test(v) ? v + 'px' : v), l), { w3: true, step: 0.25, unit: 'px' });
+            const [cc, ct] = colorIn(curC, hexOf(liveOf(q, P('color')[0])) || '#000000', (v, l) => { if (R.colorKey(v)) setAll('color', v, l); });
+            ct.style.flex = '0 0 66px';
+            const st = h('select', { class: 'dbx-s' + (curS ? ' set' : ''), style: 'flex:0 0 58px' }, ['solid', 'dashed', 'dotted', 'none'].map(o => h('option', { value: o, selected: (curS || liveOf(q, P('style')[0])) === o }, o === 'none' ? 'no line' : o)));
+            st.addEventListener('change', () => setAll('style', st.value));
+            return row(label, w, cc, ct, st, x(!!(curW || curC || curS), () => { const o = {}; ['width', 'color', 'style'].forEach(k => P(k).forEach(p => { o[p] = ''; })); tSet(q, o); }));
+        }
+        return null;
+    }
+    function colsControls() {
+        const s = S(); const t = s.table || {};
+        const n = Object.keys(t.colW || {}).length, k = Object.keys(t.colOn || {}).length;
+        return [h('div', { class: 'dbx-note' }, 'Make the columns as you want them in the table itself: drag a column’s edge to widen it, and switch columns on and off with the table’s own COLUMNS list. Then keep them for every visitor:'),
+            h('div', { class: 'dbx-row' }, h('button', { class: 'dbx-btn', onclick: () => {
+                s.table = Object.assign({}, s.table, { colW: LS.get('db_colw', {}), colOn: LS.get('db_cols', {}) });
+                commit(); renderDock(); toast('The columns as they are now will be the site’s, once you save to the site.', 3500); } }, 'keep these columns for the site'),
+                (n || k) ? x(true, () => { delete s.table; commit(); renderDock(); }, 'Forget them') : null),
+            (n || k) ? h('div', { class: 'dbx-note' }, 'Kept: widths for ' + n + ' sheet' + (n === 1 ? '' : 's') + ', columns on/off for ' + k + '. A visitor who changes them in their browser keeps their own.') : null];
+    }
+    function renderTable() {
+        const out = [h('div', { class: 'dbx-row' }, seg([['all', 'BOTH'], ['desktop', 'DESKTOP'], ['phone', 'PHONE']], tMedia, v => { tMedia = v || 'all'; LS.set('dbx-tmedia', tMedia); renderDock(); }),
+            h('button', { class: 'dbx-btn' + (tPick ? ' on' : ''), title: 'Then click any part of the table', onclick: () => { tPick = !tPick; renderDock(); toast(tPick ? 'Click a part of the table.' : 'Picking stopped.'); } }, tPick ? 'click the table…' : '⌖ pick in the table'))];
+        if (tMedia !== 'all') out.push(h('div', { class: 'dbx-note' }, 'Changes now apply to the ' + tMedia + ' layout only.'));
+        TPARTS.forEach(([g, list]) => {
+            const rows = list === 'cols' ? colsControls() : list.map(tControl).filter(Boolean);
+            const set = list !== 'cols' && list.some(([, kind, sel, prop]) => kind === 'var' ? !!S().vars[sel + '|' + prop] : !!ruleFor(sel, tMedia, false));
+            const sec = section(g, set, ...rows);
+            sec.dataset.g = g;
+            out.push(sec);
+        });
+        out.push(h('div', { class: 'dbx-note' }, 'The table’s typefaces, type sizes and line weights also follow PAGE, unless they are set here.'));
+        return out;
+    }
+    // Clicking the table while picking opens the part clicked.
+    document.addEventListener('click', e => {
+        if (!tPick || ours(e.target)) return;
+        const t = e.target.closest && e.target.closest('#deck');
+        if (!t) return;
+        e.preventDefault(); e.stopPropagation();
+        const el = e.target;
+        const g = el.closest('#tabstrip') ? 'SHEET TABS' : el.closest('th') ? 'COLUMN HEADS' : el.closest('td') ? (el.closest('tr.sel,tr.pick') ? 'PICKED ROW AND HOVER' : 'CELLS')
+            : el.closest('.deck-head') ? 'HEAD BAR' : el.closest('.deck-scroll') ? 'GRID LINES' : 'SIZES';
+        tPick = false;
+        OPEN.add(g); LS.set('dbx-open', [...OPEN]);
+        openDock('TABLE');
+        setTimeout(() => { const d = dockBody.querySelector('[data-g="' + g + '"]'); if (d) { d.open = true; d.scrollIntoView({ block: 'start' }); } }, 30);
+    }, true);
+
+    // ═════════════════════════════════════════════════════════════════════
+    // PAGE: the site's type, spacing and lines, once for every part
+    // ═════════════════════════════════════════════════════════════════════
+    function spacingSteps() {
+        const inv = inventory(); const s = S();
+        s.spaces = s.spaces || {};
+        const out = [h('div', { class: 'dbx-h' }, 'SPACING STEPS'), h('div', { class: 'dbx-note' }, 'Every padding, margin and gap the site uses, by size. Change one and every space of that size follows.')];
+        [...inv.spaces.entries()].sort((a, b) => num(a[0]) - num(b[0])).forEach(([k, n]) => {
+            const to = s.spaces[k];
+            const i = numIn(to || '', k, (v, l) => { if (v) s.spaces[k] = /^-?[\d.]+$/.test(v) ? v + 'px' : v; else delete s.spaces[k]; commit(l); if (!l) renderDock(); }, { step: 1, unit: 'px', k: 'sp:' + k });
+            const r = h('div', { class: 'dbx-li' + (to ? ' set' : '') },
+                h('span', { class: 'nm' }, h('span', { style: 'display:inline-block;vertical-align:middle;height:7px;margin-right:6px;background:#000;width:' + Math.min(60, num(to || k)) + 'px' }), k, h('small', null, n + '×')),
+                h('span', { class: 'ct' }, '→'), i, x(to, () => { delete s.spaces[k]; commit(); renderDock(); }));
+            scrub(r.firstChild, i); out.push(r);
+        });
+        return out;
+    }
+    function renderPage() {
+        return [].concat(renderType(), spacingSteps(), renderLines(true));
+    }
+
     function render() { renderBar(); renderInsp(); renderDock(); placeInsp(); }
     let lastPhone = isPhone();
     window.addEventListener('resize', () => { if (isPhone() !== lastPhone) { lastPhone = isPhone(); render(); } else placeInsp(); });

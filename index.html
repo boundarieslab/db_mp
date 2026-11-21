@@ -1790,6 +1790,14 @@ document.addEventListener('DOMContentLoaded', function() {
              mixed:     '<polygon points="1,1 8,8 1,15"/><polygon points="15,1 8,8 15,15"/>' }
     };
     const SYM_STYLE = { stroke: 2, ink: '#000000', face: '#FFFFFF', unknown: '#4A4A4A' };
+    // The saved look (editor → MAP → SITE SYMBOLS) may change stroke, ink, face and sizes.
+    const SYM_DEF = Object.assign({}, SYM_STYLE);
+    const symSaved = () => { try { const R = window.__dbStyle; return (R && !R.off && R.state && R.state.sym) || {}; } catch (e) { return {}; } };
+    function symFromStyle() {
+        const v = symSaved();
+        ['stroke', 'ink', 'face', 'unknown'].forEach(k => { SYM_STYLE[k] = (v[k] !== undefined && v[k] !== '') ? (k === 'stroke' ? +v[k] : v[k]) : SYM_DEF[k]; });
+    }
+    symFromStyle();
     const inkRing = col => col === '#FFFFFF' ? SYM_STYLE.unknown : col;
     // dir '' draws the outline alone: a status mark in the family's shape.
     function siteSymbol(shape, dir, col, size, cls) {
@@ -3306,8 +3314,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // answered by the ring underneath instead.
     // Marker size at zoom 6 and 15 (set 20 Nov at 1.15× the earlier 0.40 / 0.66).
     const SYM_SIZE_AT = [0.46, 0.76];
+    const SYM_SIZE_DEF = SYM_SIZE_AT.slice();
+    let SYM_HOT = 1.35;                     // the hovered marker, against the others
+    function symSizeFromStyle() {
+        const v = symSaved(), k = +v.size || 1;
+        SYM_SIZE_AT[0] = SYM_SIZE_DEF[0] * k; SYM_SIZE_AT[1] = SYM_SIZE_DEF[1] * k;
+        SYM_HOT = +v.hot || 1.35;
+    }
+    symSizeFromStyle();
     const SYM_SIZE = ['interpolate', ['linear'], ['zoom'], 6, SYM_SIZE_AT[0], 15, SYM_SIZE_AT[1]];
-    const SYM_HOT = 1.35;                   // the hovered marker, against the others
 
     let fpData = null, fpState = 0, sitesReady = false;
     let pgData = null;
@@ -4174,8 +4189,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const sheetSort = JSON.parse(JSON.stringify(SORT0));
     const colFilter = { facility: {}, extract: {}, project: {}, all: {}, sel: {}, flow: {}, dod: {} };   // key -> Set of values left out
     const findQ = { facility: '', extract: '', project: '', all: '', sel: '', flow: '', dod: '' };
+    // The saved look (editor → TABLE → COLUMNS) gives the starting widths and columns;
+    // what a visitor changes in their own browser wins.
+    const savedTable = (() => { try { const R = window.__dbStyle; return (R && R.state && R.state.table) || {}; } catch (e) { return {}; } })();
+    const mergeSheets = (a, b) => { const o = JSON.parse(JSON.stringify(a || {})); Object.keys(b || {}).forEach(k => { o[k] = Object.assign({}, o[k], b[k]); }); return o; };
     let colW = {};
     try { colW = JSON.parse(localStorage.getItem('db_colw') || '{}') || {}; } catch (err) { colW = {}; }
+    colW = mergeSheets(savedTable.colW, colW);
     let deckSort = sheetSort.facility;          // kept for anything that still reads it
     let flowSortKey = null;
     const picked = new Set();                   // rows picked with shift / ctrl
@@ -4197,6 +4217,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Which columns a viewer has switched on or off, per sheet (COLUMNS list).
     let colOn = {};
     try { colOn = JSON.parse(localStorage.getItem('db_cols') || '{}') || {}; } catch (err) { colOn = {}; }
+    colOn = mergeSheets(savedTable.colOn, colOn);
     const isOn = c => { const m = colOn[colsKey()]; return m && c.key in m ? m[c.key] : !c.opt; };
     function visibleCols(rows) {
         const all = colsOfSheet();
@@ -4556,17 +4577,21 @@ document.addEventListener('DOMContentLoaded', function() {
             // and the same line: one pixel, full black of the frame.
             // The label sits in the middle of the trapezoid: the tab's top padding
             // equals its top edge, so the letters never touch the line above them.
-            const hh = hl / 2, top = (phone() ? h - 17 : 9) + hh, bot = h - hh;
-            const s = bot - top;                        // 45°: the slant runs as far as it rises
+            const tcs = getComputedStyle(strip);
+            const padTop = parseFloat(getComputedStyle(tb).paddingTop);
+            const hh = hl / 2, top = (phone() ? h - 17 : (isNaN(padTop) ? 9 : padTop)) + hh, bot = h - hh;
+            const slant = parseFloat(tcs.getPropertyValue('--tab-slant'));
+            const s = Math.max(0, Math.min((w - 2 * hh) / 2 - 1, (bot - top) * (isNaN(slant) ? 1 : slant)));   // 45°: the slant runs as far as it rises
             const pts = `${hh},${bot} ${hh + s},${top} ${w - hh - s},${top} ${w - hh},${bot}`;
             svg.setAttribute('width', w); svg.setAttribute('height', h + 1);
             svg.setAttribute('viewBox', `0 0 ${w} ${h + 1}`);
-            svg.innerHTML = `<polygon points="${pts} ${w - hh},${h} ${hh},${h}" style="fill:${on ? '#fff' : 'var(--stack-tab)'}"/>` +
-                `<polyline points="${pts}" shape-rendering="crispEdges" style="fill:none;stroke:var(--frame);stroke-width:${hl}px"/>` +
-                (on ? `<rect x="${hl}" y="${h - hl}" width="${Math.max(0, w - 2 * hl)}" height="${1 + hl}" fill="#fff"/>` : '');
+            svg.innerHTML = `<polygon points="${pts} ${w - hh},${h} ${hh},${h}" style="fill:${on ? 'var(--tab-on,#fff)' : 'var(--stack-tab)'}"/>` +
+                `<polyline points="${pts}" shape-rendering="crispEdges" style="fill:none;stroke:var(--tab-line,var(--frame));stroke-width:var(--tab-line-w,${hl}px)"/>` +
+                (on ? `<rect x="${hl}" y="${h - hl}" width="${Math.max(0, w - 2 * hl)}" height="${1 + hl}" style="fill:var(--tab-on,#fff)"/>` : '');
         });
         mirrorChips();
     }
+    window.__dbPaintTabs = () => { try { paintTabs(); } catch (e) {} };
     // When the legend does not fit beside the tabs, it closes up before it scrolls.
     function fitHead() {
         const head = document.querySelector('.deck-head'), chips = $('deck-chips');
@@ -6786,6 +6811,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // colours, redrawn live on the map, the table and the key, and kept in
     // this browser. A trial only: what is chosen here is written into the code
     // above (SYM_STYLE, SYM_SIZE_AT, CLASSES) before it reaches visitors. ───
+    // For the editor: the classes, the symbol defaults, and a redraw after a change.
+    window.__dbClasses = CLASSES;
+    window.__dbSymDefaults = Object.assign({ hot: 1.35 }, SYM_DEF);
+    window.__dbSymApply = () => {
+        symFromStyle(); symSizeFromStyle();
+        Object.keys(symAsked).forEach(k => { delete symAsked[k]; if (map.hasImage(k)) map.removeImage(k); });
+        if (map.getSource('sites')) map.getSource('sites').setData(siteFeatures());
+        if (map.getSource('fp')) map.getSource('fp').setData(fpFeatures());
+        if (map.getLayer('site-sym')) map.setLayoutProperty('site-sym', 'icon-size', ['interpolate', ['linear'], ['zoom'], 6, SYM_SIZE_AT[0], 15, SYM_SIZE_AT[1]]);
+        if (map.getLayer('site-sym-hot')) map.setLayoutProperty('site-sym-hot', 'icon-size', ['interpolate', ['linear'], ['zoom'], 6, SYM_SIZE_AT[0] * SYM_HOT, 15, SYM_SIZE_AT[1] * SYM_HOT]);
+        try { renderDeck(); } catch (e) {} try { renderKey(); } catch (e) {} try { renderChips(); } catch (e) {}
+    };
     (function symbolPanel() {
         const q = new URLSearchParams(location.search);
         if (!q.has('sym')) return;
