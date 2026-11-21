@@ -648,6 +648,7 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
 .key-list .kp{display:inline-flex;align-items:center;gap:5px}
 .status-badge .ring{margin-right:6px;vertical-align:-1px}
 #peek-card .cp span{color:var(--sub);font-size:9px;font-family:PlexMono,monospace;margin-left:auto;white-space:nowrap}
+#peek-card .nolegal,#hover-card .nolegal{color:var(--sub);font-size:9px;font-family:PlexMono,monospace;padding:1px 1px 2px 20px}
 #peek-card .pk-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px;padding-top:5px;border-top:.5px solid var(--hair)}
 #peek-open{background:none;border:0;padding:0;cursor:pointer;color:#00f;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase}
 #peek-open:hover{text-decoration:underline}
@@ -954,8 +955,8 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
                     <div class="key-list" id="key-list"></div>
                     <div class="key-sep"></div>
                     <div class="key-list">
-                        <div class="kr"><span class="swatch" style="background:#fff;border:1.5px solid #FFD400"></span><span data-en="Closed site: its ground, or its registered outline" data-no="Nedlagt anlegg: området, eller registrert omriss">Closed site: its ground, or its registered outline</span></div>
-                        <div class="kr"><span class="swatch" style="background:#5a5a5a;border:1.5px solid #fff;box-shadow:0 0 0 .5px #999"></span><span data-en="Permitted or licensed (reguleringsplan, mining licence)" data-no="Tillatt eller konsesjon (reguleringsplan, driftskonsesjon)">Permitted or licensed (reguleringsplan, mining licence)</span></div>
+                        <div class="kr"><span class="swatch" style="background:#5a5a5a;border:1.5px solid #fff;box-shadow:0 0 0 .5px #999"></span><span data-en="Legal area: where the site may work" data-no="Lovlig område: der anlegget kan drive">Legal area: where the site may work</span></div>
+                        <div class="kr"><span class="swatch" style="background:#fff;border:1px solid rgba(255,212,0,.55)"></span><span data-en="Worked ground, where no legal area was found" data-no="Driftsområde, der lovlig område ikke er funnet">Worked ground, where no legal area was found</span></div>
                         <div class="kr"><span class="swatch" style="background:#5a5a5a;border:1.5px dashed #00FFFF;box-shadow:0 0 0 .5px #999"></span><span data-en="Planned expansion" data-no="Planlagt utvidelse">Planned expansion</span></div>
                         <div class="kr"><span class="swatch ring" style="background:#fff;border:2.5px solid #FF0000;box-shadow:0 0 0 .5px #999"></span><span data-en="Site with no outline yet" data-no="Sted uten omriss ennå">Site with no outline yet</span></div>
                         <div class="key-sep"></div>
@@ -2029,7 +2030,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (rings && rings.length) {
             const open = !!fpOpen[uidOf(site)];
             const d = rings.map(r => 'M' + r.map(c => (lonX(c[0], z) - left).toFixed(1) + ' ' + (latY(c[1], z) - top).toFixed(1)).join('L') + (open ? '' : 'Z')).join('');
-            svg += `<path d="${d}" fill="none" stroke="${col}" stroke-width="1.5" fill-rule="evenodd"/>`;
+            const legalD = (fpData ? fpData.features : []).filter(f => f.properties.uid === uidOf(site) && f.properties.pcls === 'allowed')
+                .map(f => (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates).flat()
+                .map(r => 'M' + r.map(c => (lonX(c[0], z) - left).toFixed(1) + ' ' + (latY(c[1], z) - top).toFixed(1)).join('L') + 'Z').join('')).join('');
+            const faint = site.__cat === 'facility' && !fpOpen[uidOf(site)] && (fpData ? fpData.features : []).some(f => f.properties.uid === uidOf(site) && f.properties.firm === 1);
+            if (!legalD) svg += `<path d="${d}" fill="none" stroke="${col}" stroke-width="${faint ? 1 : 1.5}" stroke-opacity="${faint ? 0.6 : 1}" fill-rule="evenodd"/>`;
+            if (legalD) svg += `<path d="${legalD}" fill="none" stroke="#fff" stroke-width="1.5" fill-rule="evenodd"/>`;
         } else if (hasXY(site)) {
             const px = lonX(num(site.Longitude), z) - left, py = latY(num(site.Latitude), z) - top;
             const mk = getMarkerInfo(site), o = SYM_OUTLINE[mk.shape], kb = SYM_BLACK[mk.shape][mk.direction];
@@ -2069,7 +2075,7 @@ document.addEventListener('DOMContentLoaded', function() {
         key_ext: { en: "planned extraction, total; yearly figures not drawn; blank = not yet verified, – = not applicable",
                    no: "planlagt uttak, totalt; årlige tall tegnes ikke; tomt = ikke verifisert ennå, – = gjelder ikke" },
         n_extract: { en: "extraction sites", no: "uttak" },
-        pc_observed: { en: "worked", no: "drift" }, pc_permitted: { en: "permitted", no: "tillatt" },
+        pc_observed: { en: "worked", no: "drift" }, nolegal: { en: "worked ground, legal area not found", no: "driftsområde, lovlig område ikke funnet" }, pc_permitted: { en: "permitted", no: "tillatt" },
         pc_plan: { en: "plan", no: "plan" }, pc_register: { en: "register", no: "register" },
         pc_licence: { en: "mining licence", no: "driftskonsesjon" }, pc_expansion: { en: "planned expansion", no: "planlagt utvidelse" },
         outl: { en: "Outlines", no: "Omriss" },
@@ -3267,7 +3273,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const IS_PLANNED = ['==', ['get', 'pcls'], 'planned'];
     const IS_KEPT    = ['in', ['get', 'pcls'], ['literal', ['permitted', 'licence', 'plan', 'expansion', 'property']]];
     // The site's own line: a closed site, or a site with nothing allowed to show.
-    const SITE_LINE  = ['any', ['!', ['==', ['get', 'cat'], 'facility']], ['==', ['get', 'cls'], 'old'], ['==', ['get', 'solo'], 1]];
+    const SITE_LINE  = ['any', ['!', ['==', ['get', 'cat'], 'facility']], ['==', ['get', 'solo'], 1]];
     // Dashed in the status colour: a site still to come, and an outline that
     // stands in for the site (a register outline where nothing was traced).
     const F_SOFT  = ['any', ['all', NOT_FIRM, ['!', IS_ALLOWED], ['!', IS_PLANNED], ['!', IS_KEPT], ['!=', ['get', 'hid'], 1]],
@@ -3394,7 +3400,8 @@ document.addEventListener('DOMContentLoaded', function() {
             filter: ['all', ['==', ['get', 'firm'], 1], ['!=', ['get', 'cls'], 'future'], SITE_LINE],
             layout: { 'line-join': 'round' },
             paint: { 'line-color': ['get', 'col'],
-                     'line-width': ['case', IS_FAC, ['case', HOVER, 2.4, 1.5], ['case', HOVER, LINE_W_H_ALL, LINE_W_ALL]] } }, before);
+                     'line-opacity': ['case', IS_FAC, ['case', HOVER, 0.9, 0.6], 1],
+                     'line-width': ['case', IS_FAC, ['case', HOVER, 1.8, 1.2], ['case', HOVER, LINE_W_H_ALL, LINE_W_ALL]] } }, before);
         // Dashed: still to come, and the NGU resource areas that are not a
         // measured operating extent.
         map.addLayer({ id: 'fp-soft', type: 'line', source: 'fp',
@@ -3406,10 +3413,10 @@ document.addEventListener('DOMContentLoaded', function() {
             layout: { 'line-join': 'round' },
             filter: F_EXP,
             paint: { 'line-color': EXP_COL, 'line-width': ['case', HOVER, 1.5, 1], 'line-dasharray': [3, 2.6] } }, before);
-        map.addLayer({ id: 'fp-paper', type: 'line', source: 'fp', minzoom: 10,
+        map.addLayer({ id: 'fp-paper', type: 'line', source: 'fp',
             layout: { 'line-join': 'round' },
             filter: F_PAPER,
-            paint: { 'line-color': PAPER_COL, 'line-width': ['case', HOVER, 1.5, 1] } }, before);
+            paint: { 'line-color': PAPER_COL, 'line-opacity': 0.85, 'line-width': ['case', HOVER, 1.8, 1.2] } }, before);
 
         // Hover makes the marker itself larger (site-sym-hot, below); this
         // layer stays as the invisible hit area it always was, with no ring.
@@ -3473,9 +3480,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const hasWorked = new Set(gj.features.filter(f => f.properties.firm === 1).map(f => f.properties.uid));
             gj.features.forEach(f => {
                 const uid = f.properties.uid;
-                if (hasWorked.has(uid) && f.properties.firm !== 1) return;
+                const legal = f.properties.pcls === 'allowed';
+                if (hasWorked.has(uid) && f.properties.firm !== 1 && !legal) return;
                 let w = 180, so = 90, e = -180, n = -90;
-                const rings = fpRings[uid] || (fpRings[uid] = []);
+                const rings = hasWorked.has(uid) && legal ? [] : (fpRings[uid] || (fpRings[uid] = []));
                 const walk = (c, depth) => {
                     if (typeof c[0][0] === 'number') { rings.push(c); c.forEach(p => {
                         if (p[0] < w) w = p[0]; if (p[0] > e) e = p[0];
@@ -3724,8 +3732,13 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     // The area of a site is the area of its outline, and an outline is one of
     // six kinds. The table names the kind beside the number.
-    const PCLS = ['observed', 'permitted', 'licence', 'plan', 'register', 'property', 'resource', 'expansion'];
+    const PCLS = ['permitted', 'licence', 'plan', 'observed', 'register', 'property', 'resource', 'expansion'];
     // Every kind of outline a site has, with its area, for the record window.
+    function noLegal(uid) {
+        if (!fpData) return false;
+        const fs = fpData.features.filter(f => f.properties.uid === uid);
+        return fs.some(f => f.properties.firm === 1) && !fs.some(f => f.properties.pcls === 'allowed');
+    }
     function outlinesOf(s) {
         if (!fpData) return '';
         const uid = uidOf(s), by = {};
@@ -3734,7 +3747,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (p.uid !== uid || !Number.isFinite(+p.a)) return;
             by[p.pcls || ''] = (by[p.pcls || ''] || 0) + (+p.a);
         });
-        return PCLS.filter(c => c in by).map(c => pclsWord(c) + ' ' + fmt(by[c]) + ' m²').join(' · ');
+        return PCLS.filter(c => c in by).map(c => pclsWord(c) + ' ' + fmt(by[c]) + ' m²').join(' · ') + (noLegal(uid) ? ' · ' + t('nolegal') : '');
     }
     function areaOf(s) {
         if (!fpData) return null;
@@ -4981,6 +4994,8 @@ document.addEventListener('DOMContentLoaded', function() {
         peekCard.querySelector('.cp').innerHTML =
             statusMark(shapeOf(site), colourOf(site)) + `${esc(site.Name || t('untitled'))}` +
             `<span>${esc(uid)}${aerialShown ? ' · ' + t('aerialshort') : ''}</span>`;
+        peekCard.querySelectorAll('.nolegal').forEach(e => e.remove());
+        if (noLegal(uid)) peekCard.querySelector('.cp').insertAdjacentHTML('afterend', `<div class="nolegal">${t('nolegal')}</div>`);
         $('peek-open').textContent = t('peek_open');
         peekCard.setAttribute('aria-label', site.Name || uid);
     }
@@ -5172,6 +5187,8 @@ document.addEventListener('DOMContentLoaded', function() {
             hoverCard.querySelector('.cp').innerHTML =
                 statusMark(shapeOf(site), colourOf(site)) + `${esc(site.Name || t('untitled'))}` +
                 `<span>${esc(uid)}${aerialShown ? ' · ' + t('aerialshort') : ''}</span>`;
+            hoverCard.querySelectorAll('.nolegal').forEach(e => e.remove());
+            if (noLegal(uid)) hoverCard.querySelector('.cp').insertAdjacentHTML('afterend', `<div class="nolegal">${t('nolegal')}</div>`);
             hoverCard.dataset.img = imgs.length || aerialShown ? '1' : '';
         }
         hoverCard.classList.add('on');
