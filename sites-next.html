@@ -188,8 +188,8 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
     ['--gap', 'Space between the columns'], ['--cell', 'Document cell width'], ['--obj', 'Picture size']]
 };</script>
 <script type="application/json" id="db-style">{}</script>
-<script src="editor/sites-style.js"></script>
-<script src="editor/style-runtime.js"></script>
+<!-- Loaded fresh each time: GitHub Pages keeps files 10 minutes, and a save in the editor must show at the next reload. -->
+<script>document.write('<script src="editor/sites-style.js?t=' + Date.now() + '"><\/script><script src="editor/style-runtime.js?t=' + Date.now() + '"><\/script>');</script>
 <script>
 (function () {
 'use strict';
