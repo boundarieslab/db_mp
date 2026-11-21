@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cutive+Mono&display=swap" rel="stylesheet">
 <style>
-:root{--ex:clamp(24px,11vw,164px);--ey:clamp(16px,11vh,164px);--water:#00FFFF;--tie:#FF0000;--ink:#000;--sub:#808080;--red:#FF0000;--frame:#bdbdbd;--cell:180px;--obj:164px;--nav:170px;--pad:20px;--gap:24px}
+:root{--ex:clamp(24px,11vw,164px);--ey:clamp(16px,11vh,164px);--water:#00FFFF;--tie:#FF0000;--ink:#000;--sub:#808080;--red:#FF0000;--frame:#bdbdbd;--cell:180px;--obj:164px;--nav:170px;--pad:20px;--gap:24px;--navtop:47vh}
 *{box-sizing:border-box}
 html,body{margin:0;background:#fff;color:var(--ink);height:100%}
 body{font:12px/17px 'Cutive Mono','Courier New',monospace;-webkit-font-smoothing:antialiased;overflow:hidden}
@@ -24,6 +24,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cu
 #atlas{height:100vh;height:100svh;padding:0 var(--ex);display:flex;align-items:stretch;gap:var(--gap)}
 /* the columns run the full height: what scrolls passes through the white border at top and bottom */
 #a-nav,#a-main,#a-read{padding-top:var(--ey)!important;padding-bottom:var(--ey)!important}
+/* The search and the terms sit lower down the left column (--navtop), never so low that the list leaves the window. */
+#atlas>#a-nav{padding-top:max(var(--ey),min(var(--navtop),calc(100vh - 380px)))!important}
 /* no scroll bars: the panes scroll with the wheel, the trackpad or the keys */
 #a-nav,#a-main,#a-read{overflow:auto;scrollbar-width:none}
 #a-nav::-webkit-scrollbar,#a-main::-webkit-scrollbar,#a-read::-webkit-scrollbar{display:none}
@@ -144,7 +146,7 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 @media (max-width:760px){
   body{overflow:auto}
   #atlas{display:block;height:auto;padding:12px}
-  #a-nav,#a-main,#a-read{padding-top:0!important;padding-bottom:16px!important}
+  #a-nav,#a-main,#a-read,#atlas>#a-nav{padding-top:0!important;padding-bottom:16px!important}
   #a-nav,#a-main{overflow:visible}
   #a-nav{padding-bottom:16px}
   :root{--cell:132px;--obj:120px}
@@ -182,7 +184,7 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
     ['#a-mix', 'Shuffle'], ['.rd .meta', 'Opened text column'], ['.rd .pic', 'Opened picture'], ['.rd-bar', 'Opened arrows and close'], ['body', 'Page']
   ],
   // measures the editor shows under PAGE MEASURES (any CSS length: 120px, 8vw, …)
-  vars: [['--ex', 'White border, left and right'], ['--ey', 'White border, top and bottom'], ['--nav', 'Terms column width'],
+  vars: [['--ex', 'White border, left and right'], ['--ey', 'White border, top and bottom'], ['--nav', 'Terms column width'], ['--navtop', 'Search and terms, distance from the top'],
     ['--gap', 'Space between the columns'], ['--cell', 'Document cell width'], ['--obj', 'Picture size']]
 };</script>
 <script type="application/json" id="db-style">{}</script>
