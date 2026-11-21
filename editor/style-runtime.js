@@ -280,6 +280,11 @@
         const keep = KEEP.filter(k => k[0].test(String(rule.sel || '').trim())).reduce((a, k) => a.concat(k[1]), []);
         const props = Object.assign({}, rule.props || {});
         keep.forEach(k => { delete props[k]; });
+        // a border width set in the editor shows as a solid line unless a line style was chosen
+        ['top', 'right', 'bottom', 'left'].forEach(side => {
+            const w = props['border-' + side + '-width'];
+            if (w && parseFloat(w) > 0 && !props['border-' + side + '-style'] && !props['border-style'] && !props['border']) props['border-' + side + '-style'] = 'solid';
+        });
         const ks = Object.keys(props);
         if (!ks.length) return '';
         const sel = rule.sel;
