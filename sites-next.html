@@ -93,7 +93,7 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 #a-peek .no{display:flex;align-items:center;justify-content:center;width:106px;height:150px;border:1px solid var(--frame)}
 /* connections: hairlines from the opened document to the ones it is tied to; highlights as a yellow marker */
 #a-links{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:4}
-#a-links line,.board svg line{stroke:var(--tie);stroke-width:1}
+#a-links line,.board svg line{stroke:var(--tie);stroke-width:.6}
 #a-links circle,.board svg circle{fill:var(--tie)}
 .rd .pic{position:relative}
 .rd .hl{position:absolute;box-shadow:0 0 0 1.5px var(--tie)}
@@ -102,17 +102,17 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 .obj.tie .lb{color:var(--ink)}
 /* an investigation: cut-out passages and documents by year, joined by straight lines in pure red,
    each join carrying a flat yellow note */
-.board{position:relative;display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px 40px;padding:18px 0 40px}
-.board svg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:0}
+.board{position:relative;display:flex;flex-wrap:wrap;align-items:flex-start;gap:56px 48px;padding:18px 0 40px}
+.board svg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:3}
 .board .col{position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-start;gap:30px;flex:0 0 auto}
 .board .yr{color:var(--sub);font-size:11px}
-.pc{display:flex;flex-direction:column;gap:4px;text-decoration:none;color:var(--ink)}
+.pc{position:relative;z-index:1;display:flex;flex-direction:column;gap:4px;text-decoration:none;color:var(--ink)}
 .pc .wh{position:relative;display:block;width:150px;background:#fff;box-shadow:0 0 0 1px var(--ink)}
 .pc .wh img{display:block;width:100%;height:auto}
 .pc .wh.no{display:flex;align-items:center;justify-content:center;width:96px;height:120px}
 .pc .mk{position:absolute;box-shadow:0 0 0 1.5px var(--tie)}
 .pc .id{font-size:10px;line-height:12px;color:var(--sub)}
-.post{position:absolute;z-index:2;background:#FFFF00;color:var(--ink);font-size:10px;line-height:12px;padding:3px 5px;max-width:170px;pointer-events:none}
+.post{position:absolute;z-index:4;width:78px;height:78px;overflow:hidden;background:#FFFF00;color:var(--ink);font-size:10px;line-height:12px;padding:6px;pointer-events:none}
 .pin.cur{outline:1px solid var(--ink);outline-offset:2px;z-index:2}
 #a-zoom{position:absolute;right:0;bottom:0;display:flex;gap:10px;background:#fff;padding:2px 0 0 6px;color:var(--sub)}
 #a-zoom button:hover{color:var(--ink)}
@@ -614,8 +614,8 @@ function renderRead() {
 // A case as a board: each document whole, by its year, with the parts selected on it outlined;
 // straight red lines run from a selected part to the document (or part) it is tied to.
 function boardHtml(c) {
-  const docs = c.docs.map(id => BYID[id]).filter(Boolean).sort((x, y) => (x.__year || 9999) - (y.__year || 9999)), cols = {};
-  docs.forEach(d => (cols[d.__year || '–'] = cols[d.__year || '–'] || []).push(d));
+  // no timeline: the documents stand in the order the case lists them
+  const docs = c.docs.map(id => BYID[id]).filter(Boolean);
   const pc = d => {
     const marks = (REL[d.DocID] || []).filter(x => x.box && c.docs.includes(x.id));
     return `<a class="pc" href="#doc=${encodeURIComponent(d.DocID)}" data-doc="${esc(d.DocID)}" data-id="${esc(d.DocID)}" data-pc="${esc(d.DocID)}" title="${esc(d.Title)}">` +
@@ -625,7 +625,7 @@ function boardHtml(c) {
       `<span class="id">${esc(d.__label)}</span></a>`;
   };
   const html = `<div class="board" data-case="${esc(c.id)}"><svg aria-hidden="true"></svg>` +
-    Object.keys(cols).map(y => `<div class="col"><span class="yr">${esc(y)}</span>${cols[y].map(pc).join('')}</div>`).join('') + '</div>';
+    docs.map(pc).join('') + '</div>';
   return { html, docs };
 }
 // a picture on the board that finishes loading moves the lines
@@ -651,7 +651,7 @@ function drawBoards() {
       const [x1, y1] = edge(A, bx, by), [x2, y2] = edge(B, ax, ay);
       svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><circle cx="${x2}" cy="${y2}" r="2"/>`;
       const t = x[LANG] || x.en;
-      if (t) notes += `<span class="post" style="left:${(x1 + x2) / 2 - 40}px;top:${(y1 + y2) / 2 - 8}px">${esc(t)}</span>`;
+      if (t) notes += `<span class="post" style="left:${(x1 + x2) / 2 - 39}px;top:${(y1 + y2) / 2 - 39}px">${esc(t)}</span>`;
     }));
     b.querySelector('svg').innerHTML = svg;
     b.querySelectorAll('.post').forEach(n => n.remove());
