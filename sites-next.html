@@ -50,7 +50,11 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cu
 .ssec{display:flex;flex-direction:column;gap:10px}
 .sec-t,.sub-t{align-self:flex-start;animation:fade .5s ease .25s both}
 .sub-t{color:var(--sub);font-size:11px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cell),1fr));gap:22px 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cell),1fr));grid-auto-flow:row dense;gap:22px 14px}
+/* the opened document, in the grid: the right part of three rows, the others flow round it */
+.open{grid-row:span 3;align-self:start;min-width:0}
+.open .rd .pic img{max-height:calc(3 * (var(--obj) * .8 + 41px) + 10px)}
+.open .rd.full .pic img{max-height:none}
 .obj{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--ink);min-width:0;transition:opacity .25s}
 .obj.dim,.pin.dim{opacity:.1}
 .obj .im{display:flex;align-items:center;justify-content:center;width:var(--obj);max-width:100%;height:calc(var(--obj) * .8)}
@@ -561,7 +565,19 @@ function obj(d) {
   const pic = d.__img ? `<img${pgCls(d)} src="${esc(d.__img)}" alt="" loading="lazy" decoding="async">` : svgIcon(d.__icon, 22, 1);
   return `<a class="obj${d.DocID === state.doc ? ' cur' : ''}" href="#doc=${encodeURIComponent(d.DocID)}" data-id="${esc(d.DocID)}" data-doc="${esc(d.DocID)}" title="${esc(d.Title)}"><span class="im${d.__img ? '' : ' no'}">${pic}</span><span class="lb">${esc(d.__label)}</span></a>`;
 }
-const grid = ds => '<div class="grid">' + ordered(ds).map(obj).join('') + '</div>';
+let OPENED = false;
+const grid = ds => '<div class="grid">' + ordered(ds).map(d => {
+  if (d.DocID === state.doc && inline() && !OPENED) { OPENED = true; return `<div class="open" data-id="${esc(d.DocID)}">${rdHtml(d)}</div>`; }
+  return obj(d);
+}).join('') + '</div>';
+// the opened document takes the right part of its rows: 3 of 4 columns, 2 of 3, all of 2 or 1
+function spanOpen() {
+  document.querySelectorAll('#a-main .open').forEach(o => {
+    const cols = getComputedStyle(o.parentNode).gridTemplateColumns.split(' ').filter(Boolean).length;
+    const n = cols <= 2 ? cols : Math.max(2, Math.round(cols * .66));
+    o.style.gridColumn = o.querySelector('.rd.full') || n >= cols ? '1 / -1' : 'span ' + n + ' / -1';
+  });
+}
 let ORDER = [];   // the documents in the order shown, for ← →
 function renderNav(tree) {
   $('a-q').placeholder = w('search');
@@ -584,6 +600,7 @@ function renderNav(tree) {
 }
 function renderMain() {
   const cat = catOf(state.by), main = $('a-main');
+  OPENED = false;
   main.classList.toggle('map', !!(cat && cat.map));
   let tree = null, html;
   if (cat && cat.map) { html = mapHtml(); ORDER = DOCS.filter(d => d.__xy); }
@@ -603,17 +620,28 @@ function renderMain() {
     ORDER = uniq(ORDER);
   }
   main.innerHTML = html;
+  spanOpen();
   renderNav(tree);
   if (cat && cat.map) drawMap(true);
   search();
 }
 function renderRead() {
   const d = BYID[state.doc], box = $('a-read');
-  document.body.classList.toggle('reading', !!d);
+  document.body.classList.toggle('reading', !!d && !inline());
   document.querySelectorAll('#a-main .cur').forEach(el => el.classList.remove('cur'));
   document.title = (d ? d.Title + ' · ' : '') + w('title') + ' · Dirty Business';
-  if (!d) { box.innerHTML = ''; drawLinks(); return; }
+  if (!d || inline()) { box.innerHTML = ''; drawLinks(); return; }
   document.querySelectorAll(`#a-main [data-id="${CSS.escape(d.DocID)}"]`).forEach(el => el.classList.add('cur'));
+  box.innerHTML = rdHtml(d);
+  box.scrollTop = 0;
+  if (!still() && box.firstChild.animate) box.firstChild.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 350 });
+  box.querySelectorAll('img').forEach(im => im.addEventListener('load', () => linksFor(50)));
+  linksFor(1300);
+}
+// In the grid the opened document stays in the scroll, enlarged on the right side of its rows; the reading
+// pane on the right is used only by the map and the investigation boards.
+const inline = () => { const c = catOf(state.by); return !(c && (c.map || c.board)); };
+function rdHtml(d) {
   const pic = d.__img ? `<img${pgCls(d)} src="${esc(d.__img)}" alt="${esc(d.Title)}">` : `<span class="no">${svgIcon(d.__icon, 32, .8)}</span>`;
   const terms = [].concat(d.__siteNames.map(v => ['site', v]), d.__dec ? [['dec', d.__dec]] : [], d.__k.map(v => ['k', v]),
                           d.Class ? [['cls', d.Class]] : [], d.__arch ? [['arch', d.__arch]] : []);
@@ -623,7 +651,7 @@ function renderRead() {
   }).join('');
   const link = d.__link, site = d.__sites[0];
   const note = d.__acc !== 'open' ? `<span class="note">${esc(w(d.__acc))}</span>` : '';
-  box.innerHTML = `<div class="rd" data-rd="${esc(d.DocID)}">` +
+  return `<div class="rd" data-rd="${esc(d.DocID)}">` +
     `<div class="rd-bar"><button data-step="-1" aria-label="previous">${w('prev')}</button><button data-step="1" aria-label="next">${w('next')}</button><span class="sp"></span><button data-close>${esc(w('close'))}</button></div>` +
     `<div class="meta"><div class="tt">${esc(d.Title)}</div>` +
     // who made it: the source is always named (åndsverkloven § 25)
@@ -635,10 +663,6 @@ function renderRead() {
     `${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${esc(w(d.__archived ? 'archived' : 'doc'))}</a>` : ''}` +
     `${site ? `<a href="${esc(MAP_LINK + encodeURIComponent(uidOf(site)))}" target="_top">${esc(w('toMap'))}</a>` : ''}</div>` +
     cxHtml(d) + `</div><div class="pic" data-zoom-pic>${pic}${(REL[d.DocID] || []).filter(x => x.box).map((x, i) => `<button class="hl" data-doc="${esc(x.id)}" data-hl="${esc(x.id)}" title="${esc(x[LANG] || x.en)}" style="left:${x.box[0] * 100}%;top:${x.box[1] * 100}%;width:${x.box[2] * 100}%;height:${x.box[3] * 100}%"></button>`).join('')}</div></div>`;
-  box.scrollTop = 0;
-  if (!still() && box.firstChild.animate) box.firstChild.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 350 });
-  box.querySelectorAll('img').forEach(im => im.addEventListener('load', () => linksFor(50)));
-  linksFor(1300);
 }
 // A case as a board: each document whole, by its year, with the parts selected on it outlined;
 // straight red lines run from a selected part to the document (or part) it is tied to.
@@ -902,7 +926,7 @@ document.addEventListener('pointerup', () => {
   if (drag.moved) { const stop = e => { e.stopPropagation(); e.preventDefault(); }; document.addEventListener('click', stop, { capture: true, once: true }); setTimeout(() => document.removeEventListener('click', stop, true), 0); }
   drag = null;
 });
-window.addEventListener('resize', () => later(() => { drawMap(true); Object.values(CASES).forEach(layBoard); drawLinks(); }));
+window.addEventListener('resize', () => later(() => { spanOpen(); drawMap(true); Object.values(CASES).forEach(layBoard); drawLinks(); }));
 
 // ─────────────────────────────────────────────────────────────────────────
 // Changes of view
@@ -922,6 +946,18 @@ function arrange(next, toTop) {
 // closes the documents strip changes width: the chosen one keeps its height on the screen
 // and the others glide into the new columns. Choosing another while it is open moves nothing.
 function read(id) {
+  if (inline()) {
+    // the opened document takes the place of the one clicked, which keeps its height on the screen
+    const main = $('a-main'), key = id || state.doc, src = main.querySelector(`[data-id="${CSS.escape(key)}"]`);
+    const before = src ? src.getBoundingClientRect().top : null, prev = capture();
+    state.doc = id || '';
+    renderMain(); renderRead();
+    const now = main.querySelector(`[data-id="${CSS.escape(key)}"]`);
+    if (now && before != null) main.scrollTop += now.getBoundingClientRect().top - before;
+    glide(prev);
+    writeHash();
+    return;
+  }
   const was = !!state.doc, will = !!id, main = $('a-main');
   const anchorId = id || state.doc;
   const anchor = () => main.querySelector(`[data-id="${CSS.escape(anchorId)}"]`);
@@ -951,7 +987,7 @@ function step(n) {
 
 document.addEventListener('click', e => {
   const zp = e.target.closest && e.target.closest('[data-zoom-pic]');
-  if (zp && !e.target.closest('.hl')) { zp.closest('.rd').classList.toggle('full'); linksFor(400); return; }
+  if (zp && !e.target.closest('.hl')) { zp.closest('.rd').classList.toggle('full'); spanOpen(); linksFor(400); return; }
   const el = e.target.closest('button,a');
   if (!el || document.documentElement.classList.contains('dbx-sel') || document.documentElement.classList.contains('dbx-txt')) return;
   if (el.dataset.lang) { LANG = el.dataset.lang; try { localStorage.setItem('db-index-lang', LANG); } catch (er) {} renderMain(); renderRead(); writeHash(); return; }
