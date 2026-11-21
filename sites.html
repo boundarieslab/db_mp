@@ -129,6 +129,8 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 #a-lang button{color:var(--sub)}
 #a-lang button.on{color:var(--ink)}
 .a-msg{color:var(--sub);margin:0}
+.framed #atlas{padding-top:6px;height:calc(100vh - 34px)}
+.framed #a-lang{bottom:40px}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.sec-t,.sub-t{animation:none}.obj{transition:none}}
 /* Phones: one column of panes; the reading table covers the page */
@@ -158,6 +160,7 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 <svg id="a-links" aria-hidden="true"></svg>
 <div id="a-lang"><button data-lang="en">EN</button> / <button data-lang="no">NO</button></div>
 
+<script>try { if (window.top !== window) document.documentElement.classList.add('framed'); } catch (e) { document.documentElement.classList.add('framed'); }</script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <!-- The editor (sites.html?edit) saves this page's look into editor/sites-style.js, apart from the map's. -->
 <script>window.__DB_STYLE_CFG = {
