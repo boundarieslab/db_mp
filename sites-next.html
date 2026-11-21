@@ -57,8 +57,12 @@ img.pg{box-shadow:0 0 0 .5px var(--ink)}
 .obj:hover .lb,.obj.cur .lb{color:var(--ink)}
 /* The reading table */
 #a-read{flex:0 0 0;width:0;display:none;padding-bottom:40px}
-body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var(--pad) - 2 * var(--gap)) * .62)}
-.rd{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var(--pad) - 2 * var(--gap)) * .5)}
+.rd{display:grid;grid-template-columns:minmax(150px,210px) 1fr;grid-template-rows:auto 1fr;column-gap:18px;align-items:start}
+.rd .meta{display:flex;flex-direction:column;align-items:flex-start;gap:8px;font-size:11px;line-height:15px;min-width:0}
+.rd .meta>*{max-width:100%;overflow-wrap:anywhere}
+.rd .meta .tm span{white-space:normal}
+.rd-bar{grid-column:1/-1}
 .rd-bar{align-self:stretch;display:flex;gap:16px;color:var(--sub);position:sticky;top:0;background:#fff;padding-bottom:6px;z-index:1}
 .rd-bar button{color:var(--sub)}
 .rd-bar .sp{flex:1}
@@ -72,8 +76,11 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 .rd .tm button.on{color:var(--ink)}
 .rd .ln{display:flex;flex-wrap:wrap;column-gap:16px}
 .rd .ln .note{color:var(--sub)}
-.rd .pic{margin-top:10px;display:block;max-width:100%}
-.rd .pic img{display:block;max-width:100%;height:auto}
+/* the picture fits the height of the screen; a click shows it at full width */
+.rd .pic{display:block;max-width:100%;justify-self:start;cursor:zoom-in}
+.rd .pic img{display:block;max-width:100%;height:auto;max-height:calc(100vh - var(--pad) - 60px)}
+.rd.full .pic{cursor:zoom-out}
+.rd.full .pic img{max-height:none}
 .rd .pic .no{display:flex;align-items:center;justify-content:center;width:min(480px,100%);aspect-ratio:4/3;border:1px solid var(--frame)}
 /* The map: white ground, kommune boundaries as hairlines, every document at its place */
 #a-map{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;cursor:grab;touch-action:none}
@@ -102,11 +109,13 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
 .obj.tie .lb{color:var(--ink)}
 /* an investigation: cut-out passages and documents by year, joined by straight lines in pure red,
    each join carrying a flat yellow note */
-.board{position:relative;display:flex;flex-wrap:wrap;align-items:flex-start;gap:56px 48px;padding:18px 0 40px}
+.board{position:relative;min-height:70vh;margin-top:8px}
 .board svg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:3}
 .board .col{position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-start;gap:30px;flex:0 0 auto}
 .board .yr{color:var(--sub);font-size:11px}
-.pc{position:relative;z-index:1;display:flex;flex-direction:column;gap:4px;text-decoration:none;color:var(--ink)}
+.pc{position:absolute;z-index:1;display:flex;flex-direction:column;gap:4px;text-decoration:none;color:var(--ink);cursor:grab;touch-action:none;user-select:none}
+.pc.drag{cursor:grabbing;z-index:2}
+.pc img{-webkit-user-drag:none;user-select:none}
 .pc .wh{position:relative;display:block;width:150px;background:#fff;box-shadow:0 0 0 1px var(--ink)}
 .pc .wh img{display:block;width:100%;height:auto}
 .pc .wh.no{display:flex;align-items:center;justify-content:center;width:96px;height:120px}
@@ -132,6 +141,7 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
   #a-main.map{height:75svh}
   body.reading{overflow:hidden}
   body.reading #a-read{position:fixed;inset:0;z-index:6;background:#fff;padding:12px 12px 40px;width:auto}
+  .rd{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -596,7 +606,7 @@ function renderRead() {
   const note = d.__acc !== 'open' ? `<span class="note">${esc(w(d.__acc))}</span>` : '';
   box.innerHTML = `<div class="rd" data-rd="${esc(d.DocID)}">` +
     `<div class="rd-bar"><button data-step="-1" aria-label="previous">${w('prev')}</button><button data-step="1" aria-label="next">${w('next')}</button><span class="sp"></span><button data-close>${esc(w('close'))}</button></div>` +
-    `<div class="tt">${esc(d.Title)}</div>` +
+    `<div class="meta"><div class="tt">${esc(d.Title)}</div>` +
     // who made it: the source is always named (åndsverkloven § 25)
     (d.__by ? `<div class="by">${esc(d.__by)}</div>` : '') +
     // licence, when the picture is shown under one
@@ -605,7 +615,7 @@ function renderRead() {
     `<div class="ln">${note}${d.__lost ? `<span class="note">${esc(w('lost'))}</span>` : ''}` +
     `${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${esc(w(d.__archived ? 'archived' : 'doc'))}</a>` : ''}` +
     `${site ? `<a href="${esc(MAP_LINK + encodeURIComponent(uidOf(site)))}" target="_top">${esc(w('toMap'))}</a>` : ''}</div>` +
-    cxHtml(d) + `<div class="pic">${pic}${(REL[d.DocID] || []).filter(x => x.box).map((x, i) => `<button class="hl" data-doc="${esc(x.id)}" data-hl="${esc(x.id)}" title="${esc(x[LANG] || x.en)}" style="left:${x.box[0] * 100}%;top:${x.box[1] * 100}%;width:${x.box[2] * 100}%;height:${x.box[3] * 100}%"></button>`).join('')}</div></div>`;
+    cxHtml(d) + `</div><div class="pic" data-zoom-pic>${pic}${(REL[d.DocID] || []).filter(x => x.box).map((x, i) => `<button class="hl" data-doc="${esc(x.id)}" data-hl="${esc(x.id)}" title="${esc(x[LANG] || x.en)}" style="left:${x.box[0] * 100}%;top:${x.box[1] * 100}%;width:${x.box[2] * 100}%;height:${x.box[3] * 100}%"></button>`).join('')}</div></div>`;
   box.scrollTop = 0;
   if (!still() && box.firstChild.animate) box.firstChild.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 350 });
   box.querySelectorAll('img').forEach(im => im.addEventListener('load', () => linksFor(50)));
@@ -626,10 +636,65 @@ function boardHtml(c) {
   };
   const html = `<div class="board" data-case="${esc(c.id)}"><svg aria-hidden="true"></svg>` +
     docs.map(pc).join('') + '</div>';
+  setTimeout(() => layBoard(c), 0);
   return { html, docs };
 }
-// a picture on the board that finishes loading moves the lines
-document.addEventListener('load', e => { if (e.target && e.target.closest && e.target.closest('.board')) drawBoards(); }, true);
+// Each document is scaled to fit 170 x 220 px, so all can be seen at once.
+function fitPc(img) {
+  const wh = img.parentNode, k = Math.min(170 / img.naturalWidth, 220 / img.naturalHeight);
+  wh.style.width = Math.round(img.naturalWidth * k) + 'px';
+}
+// Free placement: rows with a small offset each, not aligned; a document moved by hand keeps
+// its place (in this browser only).
+const boardKey = id => 'db-board-' + id;
+function loadPos(id) { try { return JSON.parse(localStorage.getItem(boardKey(id)) || '{}'); } catch (e) { return {}; } }
+function savePos(id, pos) { try { localStorage.setItem(boardKey(id), JSON.stringify(pos)); } catch (e) {} }
+function layBoard(c) {
+  const b = document.querySelector(`#a-main .board[data-case="${CSS.escape(c.id)}"]`); if (!b) return;
+  const W = b.clientWidth || 900, saved = loadPos(c.id), jit = id => (mixKey(id, 7) % 1000) / 1000;
+  let x = 0, y = 10, rowH = 0, maxY = 0;
+  b.querySelectorAll('.pc').forEach(el => {
+    const id = el.dataset.pc, w = el.offsetWidth || 150, h = el.offsetHeight || 200;
+    if (x > 0 && x + w > W) { x = 0; y += rowH + 70; rowH = 0; }
+    let px = x + Math.round(jit(id) * 40), py = y + Math.round(jit(id + 'y') * 50);
+    if (saved[id]) [px, py] = saved[id];
+    el.style.left = px + 'px'; el.style.top = py + 'px';
+    x += w + 60 + Math.round(jit(id + 'x') * 40); rowH = Math.max(rowH, h + 50);
+    maxY = Math.max(maxY, py + h);
+  });
+  b.style.height = (maxY + 120) + 'px';
+  drawBoards();
+}
+document.addEventListener('load', e => {
+  const img = e.target; if (!img || !img.closest || !img.closest('.board .wh')) return;
+  fitPc(img);
+  const b = img.closest('.board'); clearTimeout(b.__lay); b.__lay = setTimeout(() => layBoard(CASES[b.dataset.case]), 60);
+}, true);
+// dragging a document on the board
+let pcDrag = null;
+document.addEventListener('pointerdown', e => {
+  const el = e.target.closest && e.target.closest('.board .pc'); if (!el || e.button) return;
+  e.preventDefault();
+  pcDrag = { el, x: e.clientX, y: e.clientY, l: parseFloat(el.style.left) || 0, t: parseFloat(el.style.top) || 0, moved: false };
+});
+document.addEventListener('pointermove', e => {
+  if (!pcDrag) return;
+  const dx = e.clientX - pcDrag.x, dy = e.clientY - pcDrag.y;
+  if (!pcDrag.moved && Math.hypot(dx, dy) < 4) return;
+  pcDrag.moved = true; pcDrag.el.classList.add('drag');
+  pcDrag.el.style.left = Math.max(0, pcDrag.l + dx) + 'px'; pcDrag.el.style.top = Math.max(0, pcDrag.t + dy) + 'px';
+  later(drawBoards);
+});
+document.addEventListener('pointerup', () => {
+  if (!pcDrag) return;
+  const { el, moved } = pcDrag; pcDrag = null; el.classList.remove('drag');
+  if (!moved) return;
+  const b = el.closest('.board'), pos = loadPos(b.dataset.case);
+  pos[el.dataset.pc] = [parseFloat(el.style.left), parseFloat(el.style.top)]; savePos(b.dataset.case, pos);
+  const bottom = el.offsetTop + el.offsetHeight + 120; if (bottom > b.offsetHeight) b.style.height = bottom + 'px';
+  const stop = ev => { ev.stopPropagation(); ev.preventDefault(); };
+  document.addEventListener('click', stop, { capture: true, once: true }); setTimeout(() => document.removeEventListener('click', stop, true), 0);
+});
 function drawBoards() {
   document.querySelectorAll('#a-main .board').forEach(b => {
     const c = CASES[b.dataset.case]; if (!c) return;
@@ -818,7 +883,7 @@ document.addEventListener('pointerup', () => {
   if (drag.moved) { const stop = e => { e.stopPropagation(); e.preventDefault(); }; document.addEventListener('click', stop, { capture: true, once: true }); setTimeout(() => document.removeEventListener('click', stop, true), 0); }
   drag = null;
 });
-window.addEventListener('resize', () => later(() => { drawMap(true); drawLinks(); }));
+window.addEventListener('resize', () => later(() => { drawMap(true); Object.values(CASES).forEach(layBoard); drawLinks(); }));
 
 // ─────────────────────────────────────────────────────────────────────────
 // Changes of view
@@ -847,6 +912,7 @@ function read(id) {
   renderRead();
   if (was !== will) {
     if (main.classList.contains('map')) drawMap(true);
+    main.querySelectorAll('.board').forEach(bd => layBoard(CASES[bd.dataset.case]));
     const a = anchor();
     if (a && before != null && !main.classList.contains('map')) main.scrollTop += a.getBoundingClientRect().top - before;
     glide(prev);
@@ -865,6 +931,8 @@ function step(n) {
 }
 
 document.addEventListener('click', e => {
+  const zp = e.target.closest && e.target.closest('[data-zoom-pic]');
+  if (zp && !e.target.closest('.hl')) { zp.closest('.rd').classList.toggle('full'); linksFor(400); return; }
   const el = e.target.closest('button,a');
   if (!el || document.documentElement.classList.contains('dbx-sel') || document.documentElement.classList.contains('dbx-txt')) return;
   if (el.dataset.lang) { LANG = el.dataset.lang; try { localStorage.setItem('db-index-lang', LANG); } catch (er) {} renderMain(); renderRead(); writeHash(); return; }
