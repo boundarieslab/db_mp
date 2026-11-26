@@ -759,8 +759,8 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
     max-height:calc(100% - var(--frame-top) - 20px)!important}
   html body #bar .toolbar{flex-direction:column!important;width:auto!important;padding:2px!important;gap:2px!important;overflow:visible!important}
   html body #bar .toolbar .sp{display:none!important}
-  html body #bar .toolbar .lang{flex-direction:column!important;position:static!important;margin:0!important;gap:2px!important;background:none!important}
-  html body .btn, html body .toolbar .btn.txt{width:34px!important;height:34px!important;flex:0 0 34px!important;font-size:12px!important}
+  html body #bar .toolbar .lang{flex-direction:column!important;position:static!important;margin:0!important;gap:2px!important;background:none!important;border:0!important;padding:0!important}
+  html body .btn, html body .toolbar .btn.txt{width:30px!important;height:30px!important;flex:0 0 30px!important;font-size:11px!important}
   html body #btn-terrain, html body #btn-3d, html body #btn-light, html body #btn-flat, html body #btn-help,
   html body #btn-profile, html body #btn-select{display:none!important}
   html body #bar .drawer{flex:1 1 auto!important;width:auto!important;min-width:0!important}
@@ -784,10 +784,10 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
     flex:0 0 var(--ps-h)!important;height:var(--ps-h)!important;padding-bottom:0!important;display:flex!important;flex-direction:column!important;transition:flex-basis .2s ease-out,height .2s ease-out!important}
   body.ps-drag #deck{transition:none!important}
   #shell:has(#sidebar.active) #deck{display:none!important}
-  html body #deck .deck-head{height:32px!important;flex:0 0 32px!important;padding:0 6px!important;align-items:flex-end!important;touch-action:pan-x!important}
+  html body #deck .deck-head{height:28px!important;flex:0 0 28px!important;padding:0 6px!important;align-items:flex-end!important;touch-action:pan-x!important}
   html body #deck-size{display:none!important}
-  html body #tabstrip .tab{height:30px!important;padding:8px 16px 0!important;margin-right:-8px!important;gap:5px!important;align-items:center!important}
-  html body #tabstrip .tab .tl, html body #tabstrip .tab .tc{font-family:Plex,Helvetica,Arial,sans-serif!important;font-size:12.5px!important;font-weight:700!important;letter-spacing:.02em!important}
+  html body #tabstrip .tab{height:26px!important;padding:5px 13px 0!important;margin-right:-6px!important;gap:4px!important;align-items:center!important}
+  html body #tabstrip .tab .tl, html body #tabstrip .tab .tc{font-family:Plex,Helvetica,Arial,sans-serif!important;font-size:12px!important;font-weight:700!important;letter-spacing:.02em!important}
   html body #tabstrip .tab .tc{font-weight:400!important;color:#8a8a8a!important}
   html body .deck-scroll{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important}
   html body #site-table{font-size:12px!important}
@@ -795,7 +795,9 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
   html body #site-table .c-uid, html body #site-table .c-kom, html body #site-table .c-area{display:table-cell!important}
   html body #site-table tbody td{height:44px!important;white-space:nowrap!important}
   html body #site-table tbody td:first-child{white-space:normal!important}
-  html body #site-table tr > :first-child{position:sticky!important;left:0!important;background:#fff!important;z-index:2!important}
+  html body #site-table tr > :first-child{position:sticky!important;left:0!important;background:#fff!important;z-index:1!important}
+  html body #site-table thead th{z-index:3!important}
+  html body #site-table thead th:first-child{z-index:4!important;top:0!important}
   html body #site-table tr.hot > :first-child, html body #site-table tr.sel > :first-child{background:inherit!important}
   html body .sheet-bar .chip{height:30px!important;min-width:30px!important}
   html body .sheet-bar .find{height:30px!important;font-size:13px!important}
@@ -810,13 +812,16 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
   html body #sb-dynamic-content > .sb-head{grid-column:1!important;grid-row:1!important}
   html body #sb-dynamic-content > div.sb-media{grid-column:2!important;grid-row:1!important;width:76px!important;height:76px!important;margin-top:10px!important;overflow:hidden!important;position:relative!important;left:0!important;top:0!important}
   html body #sb-dynamic-content > div.sb-media:has(.no-images){display:none!important}
-  html body #sb-dynamic-content > .sb-head:only-of-type{grid-column:1 / -1!important}
+  html body #sb-dynamic-content > div.sb-media:has(.no-images) ~ .sb-head{grid-column:1 / -1!important}
+  html body #sb-dynamic-content > .sb-head{border-bottom:0!important;padding-left:0!important;padding-right:0!important}
   html body #sb-dynamic-content .sb-media .media-toggle, html body #sb-dynamic-content .sb-media .modes,
   html body #sb-dynamic-content .sb-media .slideshow-counter, html body #sb-dynamic-content .sb-media .slide-nav,
   html body #sb-dynamic-content .sb-media button{display:none!important}
   html body #sb-dynamic-content .sb-media img{width:100%!important;height:100%!important;object-fit:cover!important}
   html body #sb-dynamic-content > .sb-credit{display:none!important}
-  html body #sb-dynamic-content span.status-badge{width:auto!important;height:auto!important;max-width:100%!important;border:0!important;flex-wrap:wrap!important;font-size:12px!important;line-height:1.4!important;padding:10px 0 2px!important}
+  html body #sb-dynamic-content span.status-badge{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;width:auto!important;height:auto!important;min-height:20px!important;max-width:100%!important;border:0!important;font-size:12px!important;line-height:1.35!important;padding:12px 0 4px!important;margin:0!important;position:static!important}
+  html body #sb-dynamic-content .sb-head > *{position:static!important;top:auto!important;left:auto!important}
+  html body #sb-dynamic-content #sb-title{margin:2px 0 0!important}
   html body #sb-dynamic-content #sb-title{height:auto!important;font-size:17px!important}
   html body #sb-dynamic-content div.sb-location{height:auto!important;top:0!important}
   html body #sb-dynamic-content div.sb-desc{height:auto!important;left:0!important}
@@ -824,6 +829,14 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
   html body #sb-dynamic-content .sb-content *{border-top-width:0!important;border-bottom-width:0!important}
   html body #sb-dynamic-content div.sb-content > b{height:auto!important;padding-top:16px!important}
   html body #graph-container{max-width:100%!important}
+  html body #viewer .v-out, html body #viewer .v-in{display:none!important}
+  html body #viewer .v-prev, html body #viewer .v-next{position:fixed!important;top:60px!important;bottom:70px!important;height:auto!important;width:28%!important;
+    opacity:0!important;border:0!important;background:transparent!important;z-index:3!important}
+  html body #viewer .v-prev{left:0!important}
+  html body #viewer .v-next{right:0!important}
+  html body #viewer .v-x{position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 10px)!important;right:10px!important;width:36px!important;height:36px!important;
+    font-size:22px!important;line-height:1!important;z-index:4!important;background:#fff!important}
+  html body #viewer .v-bar{font-size:11px!important}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:0s!important;animation-duration:0s!important;animation-delay:0s!important}
@@ -4691,7 +4704,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // equals its top edge, so the letters never touch the line above them.
             const tcs = getComputedStyle(strip);
             const padTop = parseFloat(getComputedStyle(tb).paddingTop);
-            const hh = hl / 2, top = (phone() ? 2 : (isNaN(padTop) ? 9 : padTop)) + hh, bot = h - hh;
+            const hh = hl / 2, top = (phone() ? 4 : (isNaN(padTop) ? 9 : padTop)) + hh, bot = h - hh;
             const slant = parseFloat(tcs.getPropertyValue('--tab-slant'));
             const s = Math.max(0, Math.min((w - 2 * hh) / 2 - 1, (bot - top) * (isNaN(slant) ? 1 : slant)));   // 45°: the slant runs as far as it rises
             const pts = `${hh},${bot} ${hh + s},${top} ${w - hh - s},${top} ${w - hh},${bot}`;
