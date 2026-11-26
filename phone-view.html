@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Phone view</title>
+<style>
+  html,body{margin:0;background:#f1f1f1;font:400 12px/1.4 "IBM Plex Sans",Helvetica,Arial,sans-serif;color:#000}
+  header{display:flex;gap:18px;align-items:baseline;padding:14px 24px}
+  header b{font-weight:500}
+  header button{font:inherit;background:none;border:0;padding:0;color:#8a8a8a;cursor:pointer}
+  header button:hover,header button.on{color:#000}
+  main{display:flex;gap:40px;padding:6px 24px 40px;align-items:flex-start;overflow-x:auto}
+  .ph{flex:0 0 auto;display:flex;flex-direction:column;gap:6px}
+  .ph .bar{display:flex;gap:12px;align-items:baseline}
+  .ph .bar span{flex:1;color:#8a8a8a}
+  .ph .bar a,.ph .bar button{font:inherit;color:#000;background:none;border:0;padding:0;cursor:pointer;text-decoration:none}
+  iframe{display:block;border:.5px solid #000;background:#fff}
+</style>
+</head>
+<body>
+<header>
+  <b>Phone view</b>
+  <button data-size="390x844" class="on">iPhone 390 × 844</button>
+  <button data-size="375x667">small 375 × 667</button>
+  <button data-size="430x932">large 430 × 932</button>
+</header>
+<main>
+  <div class="ph"><div class="bar"><span>Map (test)</span><button data-reload>reload</button><a href="phone-test.html" target="_blank">open ↗</a></div>
+    <iframe src="phone-test.html" title="Map, phone test"></iframe></div>
+  <div class="ph"><div class="bar"><span>Archive (test)</span><button data-reload>reload</button><a href="sites-phone-test.html" target="_blank">open ↗</a></div>
+    <iframe src="sites-phone-test.html" title="Archive, phone test"></iframe></div>
+</main>
+<script>
+  const frames = [...document.querySelectorAll('iframe')];
+  const v = '?v=' + Date.now();
+  frames.forEach(f => f.src = f.getAttribute('src') + v);
+  function size(s) {
+    const [w, h] = s.split('x').map(Number);
+    frames.forEach(f => { f.style.width = w + 'px'; f.style.height = h + 'px'; });
+    document.querySelectorAll('[data-size]').forEach(b => b.classList.toggle('on', b.dataset.size === s));
+  }
+  document.querySelectorAll('[data-size]').forEach(b => b.onclick = () => size(b.dataset.size));
+  document.querySelectorAll('[data-reload]').forEach(b => b.onclick = () => {
+    const f = b.closest('.ph').querySelector('iframe'); f.src = f.src.split('?')[0] + '?v=' + Date.now();
+  });
+  size('390x844');
+</script>
+</body>
+</html>
