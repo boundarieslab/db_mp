@@ -181,6 +181,10 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
   html:root:root body #ps-row #ps-arr{flex:1 1 auto;width:auto;margin:0}
   html:root:root body #ps-row #a-lang{position:static!important;flex:0 0 auto;margin:0!important;padding:0!important;font-size:13px!important;background:none!important}
   html:root:root body #ps-row #a-lang button{font-size:13px!important;min-height:36px}
+  /* the opened document: air between it and its neighbours, and between its words and its picture */
+  html:root:root body #a-main .open{padding:4px 0 12px 12px!important}
+  html:root:root body #a-main .open .rd{row-gap:22px!important}
+  html:root:root body #a-main .open .rd .meta{gap:10px!important}
   /* the reading bar as saved for the desktop (sites editor): Helvetica, black, line-height 1, no frame; sized down for the phone */
   html:root:root body .rd-bar{gap:22px!important;align-items:baseline!important;padding-bottom:12px!important}
   html:root:root body .rd-bar button{font-family:"Helvetica",monospace!important;font-size:30px!important;line-height:1!important;color:#000!important;opacity:1!important;background:none!important;border:0!important;padding:0!important}
@@ -569,17 +573,20 @@ function capture() {
 }
 function glide(prev) {
   if (!prev || !Element.prototype.animate || still()) return;
-  const seen = {}, vh = window.innerHeight || 900;
+  const seen = {}, vh = window.innerHeight || 900, ph = window.matchMedia('(max-width:760px)').matches;
   document.querySelectorAll('#a-main [data-id]').forEach((el, i) => {
     const id = el.dataset.id, b = el.getBoundingClientRect(), p = prev[id];
     const near = b.top < vh * 1.5 && b.bottom > -vh * .5;
     if (p && !seen[id] && !el.classList.contains('pin')) {
       const dx = p.x - b.left, dy = p.y - b.top, sc = b.width && p.w ? p.w / b.width : 1;
       const wasNear = p.y < vh * 1.5 && p.y > -vh * .5;
-      if ((dx || dy || Math.abs(sc - 1) > .01) && (near || wasNear))
+      if (ph && Math.abs(sc - 1) > .2) { if (near) el.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 320, delay: 140, easing: 'ease-out', fill: 'backwards' }); }
+      else if (ph && (dx || dy) && (near || wasNear))
+        el.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.25,.8,.25,1)', fill: 'backwards' });
+      else if ((dx || dy || Math.abs(sc - 1) > .01) && (near || wasNear))
         el.animate([{ transform: `translate(${dx}px,${dy}px) scale(${sc})`, transformOrigin: '0 0' }, { transform: 'none', transformOrigin: '0 0' }],
                    { duration: 750, easing: 'cubic-bezier(.2,.7,.2,1)', delay: Math.min(i * 0.8, 220), fill: 'backwards' });
-    } else if (near) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 450, delay: 350, fill: 'backwards' });
+    } else if (near) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: ph ? 300 : 450, delay: ph ? 140 : 350, fill: 'backwards' });
     seen[id] = 1;
   });
 }
@@ -981,8 +988,18 @@ function read(id) {
     state.doc = id || '';
     renderMain(); renderRead();
     const now = main.querySelector(`[data-id="${CSS.escape(key)}"]`);
-    if (now && before != null) main.scrollTop += now.getBoundingClientRect().top - before;
+    if (now && before != null) {
+      const dy = now.getBoundingClientRect().top - before;
+      if (getComputedStyle(main).overflowY === 'visible') window.scrollBy(0, dy); else main.scrollTop += dy;
+    }
     glide(prev);
+    if (id && window.matchMedia('(max-width:760px)').matches) {
+      const o = main.querySelector('.open'), nav = $('a-nav');
+      if (o) {
+        const band = nav ? nav.getBoundingClientRect().bottom : 0, t = o.getBoundingClientRect().top;
+        if (t < band + 8 || t > window.innerHeight * .4) window.scrollBy({ top: t - band - 14, behavior: still() ? 'auto' : 'smooth' });
+      }
+    }
     writeHash();
     return;
   }
@@ -1015,7 +1032,7 @@ function step(n) {
 
 document.addEventListener('click', e => {
   const zp = e.target.closest && e.target.closest('[data-zoom-pic]');
-  if (zp && !e.target.closest('.hl')) { zp.closest('.rd').classList.toggle('full'); spanOpen(); linksFor(400); return; }
+  if (zp && !e.target.closest('.hl')) { const pv = window.matchMedia('(max-width:760px)').matches ? capture() : null; zp.closest('.rd').classList.toggle('full'); spanOpen(); if (pv) glide(pv); linksFor(400); return; }
   const el = e.target.closest('button,a');
   if (!el || document.documentElement.classList.contains('dbx-sel') || document.documentElement.classList.contains('dbx-txt')) return;
   if (el.dataset.lang) { LANG = el.dataset.lang; try { localStorage.setItem('db-index-lang', LANG); } catch (er) {} renderMain(); renderRead(); writeHash(); return; }
