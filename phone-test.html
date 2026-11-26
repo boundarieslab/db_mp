@@ -844,8 +844,18 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
   html:root:root body #key-list .ps-hd{cursor:pointer}
   html:root:root body #key-list .ps-hd::after{content:"  +";font-weight:400}
   html:root:root body #key-list .ps-hd.open::after{content:"  \2013"}
-  html:root:root body #key-list .ps-x:not(.show){display:none!important}
+  html:root:root body #filter-panel .key-list .kr.ps-x:not(.show){display:none!important}
   html:root:root body #filter-panel .kr{font-size:13px!important}
+  /* the key: one item per line, every mark in the same 16 px slot, the words on one edge; no counts */
+  html:root:root body #filter-panel .key-list .kr{display:flex!important;align-items:center!important;gap:10px!important;height:auto!important;min-height:26px!important;flex-wrap:nowrap!important}
+  html:root:root body #filter-panel .key-list .kr.kw{flex-direction:column!important;align-items:stretch!important;gap:0!important}
+  html:root:root body #filter-panel .key-list .kp{display:flex!important;align-items:center!important;gap:10px!important;min-height:26px!important}
+  html:root:root body #filter-panel .key-list .kr > svg, html:root:root body #filter-panel .key-list .kp > svg, html:root:root body #filter-panel .key-list .kring,
+  html:root:root body #filter-panel .key-list .swatch, html:root:root body #filter-panel .key-list .ev{flex:0 0 16px!important;width:16px!important;margin:0!important;box-sizing:border-box!important}
+  html:root:root body #filter-panel .key-list .kr > svg, html:root:root body #filter-panel .key-list .kp > svg, html:root:root body #filter-panel .key-list .kring, html:root:root body #filter-panel .key-list .swatch{height:16px!important}
+  html:root:root body #filter-panel .key-list .kring svg{width:16px!important;height:16px!important}
+  html:root:root body #filter-panel .key-list .ct, html:root:root body #data-panel .ct{display:none!important}
+  html:root:root body #btn-expand, html:root:root body #btn-collapse{display:none!important}
   html:root:root body #data-panel .src, html:root:root body #data-panel .note{display:none!important}
   html:root:root body.ps-more #data-panel .src, html:root:root body.ps-more #data-panel .note{display:block!important}
   html:root:root body #data-panel .pane-title{cursor:pointer}
@@ -7076,7 +7086,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!phone()) return;
         const root = document.documentElement, body = document.body;
         let stop = 'mid';
-        const H = () => ({ low: 72, mid: Math.round(window.innerHeight * 0.36), full: window.innerHeight - 96 });
+        const H = () => ({ low: 56, mid: Math.round(window.innerHeight * 0.36), full: window.innerHeight - 96 });
         const record = () => $('sidebar').classList.contains('active');
         function setH(h, live) {
             root.style.setProperty('--ps-h', Math.round(h) + 'px');
