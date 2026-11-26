@@ -181,12 +181,9 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
   html:root:root body #ps-row #ps-arr{flex:1 1 auto;width:auto;margin:0}
   html:root:root body #ps-row #a-lang{position:static!important;flex:0 0 auto;margin:0!important;padding:0!important;font-size:13px!important;background:none!important}
   html:root:root body #ps-row #a-lang button{font-size:13px!important;min-height:36px}
-  /* the reading bar as the map's photo viewer: square boxes, a hairline frame, the cross alone */
-  html:root:root body .rd-bar{gap:4px!important;align-items:center!important}
-  html:root:root body .rd-bar button{width:36px!important;height:36px!important;display:flex!important;align-items:center!important;justify-content:center!important;
-    background:#fff!important;border:.5px solid #2b2b2b!important;font:400 16px/1 Plex,Helvetica,Arial,sans-serif!important;color:#000!important;padding:0!important}
-  html:root:root body .rd-bar button[data-close]{font-size:0!important}
-  html:root:root body .rd-bar button[data-close]::after{content:"\00d7";font-size:20px}
+  /* the reading bar as saved for the desktop (sites editor): Helvetica, black, line-height 1, no frame; sized down for the phone */
+  html:root:root body .rd-bar{gap:22px!important;align-items:baseline!important;padding-bottom:12px!important}
+  html:root:root body .rd-bar button{font-family:"Helvetica",monospace!important;font-size:30px!important;line-height:1!important;color:#000!important;opacity:1!important;background:none!important;border:0!important;padding:0!important}
 }
 </style>
 </head>
