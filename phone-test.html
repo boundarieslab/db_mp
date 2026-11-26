@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Dirty Business Map, phone test</title>
+<!--
+  Phone layout test page (26 Nov 2026). It loads the live map (index.html) and
+  lays the phone sheet over it, below 760 px only. Nothing here changes the
+  live map; open this page on a phone to try the sheet.
+-->
+<script>
+(function () {
+    // Everything the phone sheet needs, written into the map page before it runs.
+    var PHONE_CSS = `
+@media (max-width:760px){
+  :root{--ps-h:290px}
+  /* the sheet: one surface along the bottom, moved only by swiping */
+  body.ps #deck.ps-sheet, body.ps #sidebar.ps-sheet{
+    position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;
+    width:100%!important;max-width:none!important;height:var(--ps-h)!important;max-height:none!important;
+    transform:none!important;opacity:1!important;border:0!important;border-top:.5px solid #2b2b2b!important;
+    background:#fff!important;display:flex!important;flex-direction:column!important;flex-basis:auto!important;
+    z-index:80!important;margin:0!important;transition:height .2s ease-out}
+  body.ps.ps-drag #deck.ps-sheet, body.ps.ps-drag #sidebar.ps-sheet{transition:none!important}
+  body.ps-record #deck{display:none!important}
+  body.ps-table #sidebar{display:none!important}
+  .ps-grab{height:22px;flex:0 0 22px;display:flex;align-items:center;justify-content:center;background:#fff;touch-action:none}
+  .ps-grab i{display:block;width:40px;height:0;border-top:1px solid #2b2b2b}
+  #status-strip,.status-strip,#scan-dot,#hover-card,#peek-card{display:none!important}
+
+  /* toolbar: layers, search, key, share, EN, NO; finger-sized */
+  .toolbar .btn{width:44px!important;height:44px!important;flex:0 0 44px!important}
+  .toolbar .btn.txt{width:44px!important}
+  #btn-terrain,#btn-3d,#btn-light,#btn-flat,#btn-help,#btn-profile,#btn-select{display:none!important}
+  .toolbar .btn.txt, .toolbar .lang .btn{font-size:13px!important}
+
+  /* north arrow and zoom as on the desktop (the desktop rules of the saved look), above the sheet */
+  #map .maplibregl-ctrl-bottom-left, #map .maplibregl-ctrl-bottom-right{bottom:calc(var(--ps-h) + 8px)!important;transition:bottom .2s ease-out}
+  body.ps-drag #map .maplibregl-ctrl-bottom-left, body.ps-drag #map .maplibregl-ctrl-bottom-right{transition:none!important}
+  #compass{position:relative!important;left:0!important;top:-10px!important;right:auto!important;bottom:auto!important;width:35px!important;max-width:none!important;height:63px!important;max-height:none!important;font-family:"PlexMono",sans-serif!important}
+  #map span.maplibregl-ctrl-icon{height:10px!important;max-height:none!important;position:relative!important;left:0!important;top:0!important;font-weight:100!important;font-family:"Verdana",sans-serif!important;background-color:#ff000000!important}
+  #map .maplibregl-ctrl-bottom-left .maplibregl-ctrl-group{font-size:1px!important}
+
+  /* the table */
+  #deck .deck-head{flex:0 0 auto!important;height:auto!important;max-height:none!important;overflow:visible!important;
+    position:relative!important;z-index:3!important;padding:0 8px!important}
+  #tabstrip{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;scrollbar-width:none!important;
+    width:100%!important;height:41px!important;min-height:41px!important;align-items:flex-end!important;margin:0!important}
+  #tabstrip .tab{position:relative!important;flex:0 0 auto!important;max-width:none!important;width:auto!important;min-width:0!important;
+    overflow:visible!important;white-space:nowrap!important;padding:14px 26px 0 24px!important;height:40px!important;
+    display:flex!important;align-items:center!important;gap:6px!important;line-height:1!important;box-sizing:border-box!important}
+  #tabstrip .tab span{position:relative!important;z-index:1!important;font-family:Plex,Helvetica,Arial,sans-serif!important;
+    font-weight:700!important;font-size:14px!important;letter-spacing:.02em!important}
+  #tabstrip .tab > svg{position:absolute!important;left:0!important;top:0!important;width:100%!important;height:100%!important;z-index:0!important}
+  #deck .deck-scroll{flex:1 1 auto!important;overflow:auto!important;height:auto!important;max-height:none!important;display:block!important}
+  #deck-size{display:none!important}
+  #deck table{width:100%!important;table-layout:fixed!important}
+  #deck tbody td{height:44px!important;white-space:normal!important}
+  #deck td.num,#deck th.num{white-space:nowrap!important}
+
+  /* the record: no header row, a small photo beside the name, no lines between parts */
+  #sidebar .sb-header{display:none!important}
+  #sidebar .sb-scroll-area{flex:1 1 auto!important;overflow:auto!important;height:auto!important;max-height:none!important;width:auto!important;
+    position:relative!important;left:0!important;top:0!important}
+  #sidebar .sb-media,#sidebar .sb-credit{display:none!important}
+  #ps-top{display:flex;gap:12px;align-items:flex-start;padding:0 12px 0 0}
+  #ps-top .sb-head{flex:1 1 auto;min-width:0}
+  #ps-top, #deck .deck-head{touch-action:pan-x}
+  #ps-thumb{flex:0 0 76px;width:76px;height:76px;object-fit:cover;border:.5px solid #2b2b2b;margin-top:10px;display:block}
+  #sidebar .sb-scroll-area *{border-top-width:0!important;border-bottom-width:0!important}
+  #sidebar hr{display:none!important}
+  #sb-dynamic-content span.status-badge{width:auto!important;max-width:none!important;border-style:none!important}
+  #sb-dynamic-content div.sb-desc, #sb-dynamic-content div.sb-location{height:auto!important}
+}
+@media (max-width:760px) and (prefers-reduced-motion:reduce){
+  body.ps #deck.ps-sheet, body.ps #sidebar.ps-sheet, #map .maplibregl-ctrl-bottom-left, #map .maplibregl-ctrl-bottom-right{transition:none!important}
+}`;
+
+    function PHONE_JS() {
+        var MQ = window.matchMedia('(max-width:760px)');
+        var $ = function (id) { return document.getElementById(id); };
+        var body = document.body;
+        var mode = 'table', stop = 'mid';
+
+        function heights() {
+            var H = window.innerHeight;
+            return { low: 64, mid: Math.round(H * 0.34), full: H - 100 };
+        }
+        function apply() {
+            var h = heights()[stop];
+            document.documentElement.style.setProperty('--ps-h', h + 'px');
+            body.classList.toggle('ps-record', mode === 'record');
+            body.classList.toggle('ps-table', mode === 'table');
+            setTimeout(recentre, 230);
+        }
+        function recentre() {
+            var M = window.__M; if (!M || mode !== 'record') return;
+            var h = heights()[stop];
+            M.easeTo({ padding: { top: 100, bottom: h + 16, left: 20, right: 20 }, duration: 200 });
+        }
+
+        // a grab line on top of both sheets
+        function addGrab(el) {
+            if (!el || el.querySelector(':scope > .ps-grab')) return;
+            var g = document.createElement('div'); g.className = 'ps-grab'; g.innerHTML = '<i></i>';
+            el.insertBefore(g, el.firstChild);
+            dragOn(g, true);
+        }
+
+        // swipe: up = next height, down = previous; down from a record = back to the table
+        function dragOn(el, always) {
+            var y0 = null, h0 = 0, moved = false;
+            el.addEventListener('pointerdown', function (e) {
+                y0 = e.clientY; h0 = heights()[stop]; moved = false;
+            });
+            window.addEventListener('pointermove', function (e) {
+                if (y0 === null) return;
+                var dy = e.clientY - y0;
+                if (!moved && Math.abs(dy) < 8) return;
+                if (!moved && !always && Math.abs(dy) < 14) return;
+                moved = true; body.classList.add('ps-drag');
+                var h = Math.max(48, Math.min(window.innerHeight - 80, h0 - dy));
+                document.documentElement.style.setProperty('--ps-h', h + 'px');
+                e.preventDefault();
+            }, { passive: false });
+            var end = function (e) {
+                if (y0 === null) return;
+                var dy = (e.clientY || y0) - y0; y0 = null;
+                body.classList.remove('ps-drag');
+                if (!moved) return;
+                if (dy < -40) up(); else if (dy > 40) down(); else apply();
+                // a drag that started on a tab is not a tap on it
+                var stopClick = function (ev) { ev.stopPropagation(); ev.preventDefault(); window.removeEventListener('click', stopClick, true); };
+                window.addEventListener('click', stopClick, true);
+                setTimeout(function () { window.removeEventListener('click', stopClick, true); }, 300);
+            };
+            window.addEventListener('pointerup', end);
+            window.addEventListener('pointercancel', end);
+        }
+        function up() { stop = stop === 'low' ? 'mid' : 'full'; apply(); }
+        function down() {
+            if (stop === 'full') stop = 'mid';
+            else if (mode === 'record') { closeRecord(); return; }
+            else stop = 'low';
+            apply();
+        }
+        function closeRecord() {
+            var c = $('sb-close'); if (c) c.click();
+            mode = 'table'; stop = 'mid'; apply();
+        }
+
+        // the table: one column for the name, one for the figure (the capacity bars go)
+        function fixTable() {
+            var deck = $('deck'); if (!deck) return;
+            deck.querySelectorAll('table').forEach(function (tb) {
+                var head = tb.querySelector('thead tr'); if (!head) return;
+                var i = Array.prototype.findIndex.call(head.children, function (c) { return c.classList.contains('bar'); });
+                if (i < 0) return;
+                var cols = tb.querySelectorAll('colgroup col'); if (cols[i]) cols[i].remove();
+                tb.querySelectorAll('tr').forEach(function (tr) {
+                    var c = tr.children[i];
+                    if (!c) return;
+                    if (c.classList.contains('bar') || tr.parentElement.tagName === 'TFOOT') {
+                        // the footer's total sits one cell further on: keep it
+                        if (tr.parentElement.tagName === 'TFOOT' && !c.textContent.trim() && tr.children[i + 1]) c.remove();
+                        else if (c.classList.contains('bar')) c.remove();
+                    }
+                });
+            });
+            raise(deck);
+        }
+        // the folder tabs stretched round the bigger names
+        function fixTabs() {
+            document.querySelectorAll('#tabstrip .tab > svg').forEach(function (v) {
+                v.setAttribute('preserveAspectRatio', 'none'); v.removeAttribute('height'); v.setAttribute('width', '100%');
+                var vb = (v.getAttribute('viewBox') || '0 0 175 45').split(' ').map(Number);
+                v.querySelectorAll('polygon,polyline').forEach(function (p) {
+                    var pts = p.getAttribute('points').trim().split(/\s+/).map(function (q) { return q.split(',').map(Number); });
+                    var ys = pts.map(function (q) { return q[1]; });
+                    var a = Math.min.apply(null, ys), b = Math.max.apply(null, ys);
+                    if (a <= 1.05 && b >= vb[3] - 1.5) return;
+                    var k = (vb[3] - 1) / ((b - a) || 1);
+                    p.setAttribute('points', pts.map(function (q) { return q[0] + ',' + (1 + (q[1] - a) * k).toFixed(1); }).join(' '));
+                });
+            });
+        }
+        // nothing under 13 px (12 px for the monospace)
+        function raise(root) {
+            var mono = /mono|cutive|courier/i;
+            root.querySelectorAll('*').forEach(function (e) {
+                if (e.closest('#tabstrip')) return;
+                var txt = false;
+                for (var n = e.firstChild; n; n = n.nextSibling) if (n.nodeType === 3 && n.textContent.trim()) { txt = true; break; }
+                if (!txt) return;
+                var cs = getComputedStyle(e), fs = parseFloat(cs.fontSize), min = mono.test(cs.fontFamily) ? 12 : 13;
+                if (fs < min) e.style.setProperty('font-size', min + 'px', 'important');
+            });
+        }
+        // the record: the photo as a small square beside the name
+        function fixRecord() {
+            var sb = $('sidebar'); if (!sb) return;
+            var head = sb.querySelector('.sb-head'), media = sb.querySelector('.sb-media');
+            if (head && media && !head.closest('#ps-top')) {
+                var top = document.createElement('div'); top.id = 'ps-top';
+                head.parentElement.insertBefore(top, head); top.appendChild(head);
+                var u = null;
+                media.querySelectorAll('*').forEach(function (e) {
+                    if (u) return;
+                    var s = e.currentSrc || e.src; if (s) { u = s; return; }
+                    var m = /url\("?(.*?)"?\)/.exec(getComputedStyle(e).backgroundImage); if (m) u = m[1];
+                });
+                if (u) { var t = document.createElement('img'); t.id = 'ps-thumb'; t.src = u; t.alt = ''; top.appendChild(t); }
+                dragOn(top, false);
+            }
+            raise(sb);
+        }
+        function fixToolbar() {
+            document.querySelectorAll('.toolbar > *').forEach(function (e) {
+                if (e.tagName !== 'BUTTON' && !e.querySelector('button') && e.getBoundingClientRect().width < 12) e.style.setProperty('display', 'none', 'important');
+            });
+        }
+
+        function start() {
+            if (!MQ.matches || !$('deck') || !$('sidebar')) return false;
+            body.classList.add('ps');
+            $('deck').classList.add('ps-sheet'); $('sidebar').classList.add('ps-sheet');
+            addGrab($('deck')); addGrab($('sidebar'));
+            var dh = document.querySelector('#deck .deck-head'); if (dh) dragOn(dh, false);
+            fixToolbar();
+            // the table shows from the start
+            var on = document.querySelector('#tabstrip .tab[aria-selected="true"]') || $('tab-facility');
+            if ($('deck').className.indexOf('closed') >= 0 || !$('deck').querySelector('tbody tr')) { if (on) on.click(); }
+            // a picked site opens its record in the sheet at once (no label in between)
+            var peek = $('peek-card');
+            if (peek) new MutationObserver(function () {
+                if (!peek.hidden && $('peek-open')) $('peek-open').click();
+            }).observe(peek, { attributes: true, attributeFilter: ['hidden'] });
+            new MutationObserver(function () {
+                var open = $('sidebar').classList.contains('active');
+                if (open && mode !== 'record') { mode = 'record'; stop = 'mid'; apply(); }
+                if (!open && mode === 'record') { mode = 'table'; stop = 'mid'; apply(); }
+                if (open) fixRecord();
+            }).observe($('sidebar'), { attributes: true, attributeFilter: ['class'], childList: true, subtree: true });
+            var busy = false;
+            new MutationObserver(function () {
+                if (busy) return; busy = true;
+                requestAnimationFrame(function () { fixTabs(); fixTable(); busy = false; });
+            }).observe($('deck'), { childList: true, subtree: true });
+            fixTabs(); fixTable(); apply();
+            window.addEventListener('resize', function () { apply(); });
+            return true;
+        }
+        var tries = 0;
+        (function wait() { if (!start() && tries++ < 60) setTimeout(wait, 250); })();
+    }
+
+    fetch('index.html?x=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) {
+        t = t.replace("if (new URLSearchParams(window.location.search).has('debug')) window.__M = map;", 'window.__M = map;');
+        t = t.replace('</head>', '<style id="phone-sheet">' + PHONE_CSS + '</style>\n</head>');
+        t = t.replace(/<\/body>(?![\s\S]*<\/body>)/, '<script>(' + PHONE_JS.toString() + ')();<\/script>\n</body>');
+        document.open(); document.write(t); document.close();
+    });
+})();
+</script>
+</head>
+<body></body>
+</html>
