@@ -51,6 +51,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cu
 .sec{display:flex;flex-direction:column;gap:14px}
 .ssec{display:flex;flex-direction:column;gap:10px}
 .sec-t,.sub-t{align-self:flex-start;animation:fade .5s ease .25s both}
+#a-main.calm .sec-t,#a-main.calm .sub-t{animation:none}
 .sub-t{color:var(--sub);font-size:11px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cell),1fr));grid-auto-flow:row dense;gap:22px 14px}
 /* the opened document, in the grid: the right part of three rows, the others flow round it */
@@ -161,9 +162,11 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
   html:root:root body .grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:18px 10px!important}
   html:root:root body .obj .im{width:100%!important;height:110px!important}
   html:root:root body .obj .lb{font-size:11px!important;line-height:14px!important}
-  html:root:root body #a-q{font-size:13px!important;height:34px!important}
+  html:root:root body #a-q{font-size:13px!important;height:34px!important;border-width:3px!important;margin:0!important}
+  html:root:root body #atlas{padding-bottom:130px!important}
   html:root:root body .cat, html:root:root body .top, html:root:root body .sub, html:root:root body #a-mix button, html:root:root body .sec-t, html:root:root body .sub-t{font-size:13px!important;line-height:30px!important}
-  html:root:root body #a-nav{position:sticky!important;top:0!important;z-index:7!important;background:none!important;padding:12px 0 8px!important;margin:-12px 0 0!important;
+  html:root:root body #a-nav{position:fixed!important;top:auto!important;left:12px!important;right:12px!important;bottom:0!important;z-index:7!important;background:none!important;
+    padding:8px 0 calc(12px + env(safe-area-inset-bottom))!important;margin:0!important;flex-direction:column-reverse!important;
     max-height:100svh!important;overflow-y:auto!important;overscroll-behavior:contain}
   html:root:root body #a-nav > :not(#a-q):not(#ps-row){display:none!important}
   html:root:root body.nav-open #a-nav > :not(#a-q):not(#ps-row){display:block!important}
@@ -174,12 +177,12 @@ body.reading #a-read{display:block;flex-basis:calc((100vw - var(--nav) - 2 * var
   html:root:root body #ps-arr{justify-content:flex-start!important;gap:12px}
   html:root:root body #ps-arr span, html:root:root body #ps-arr i{background:#fff;padding:2px 4px;margin-left:-4px}
   html:root:root body #ps-arr i{margin-left:auto}
-  html:root:root body #ps-row #a-lang{background:#fff!important;padding:2px 4px!important}
+  html:root:root body #ps-row #a-lang{background:#fff!important;padding:2px 6px!important}
   html:root:root body #a-nav .cat, html:root:root body #a-nav .top, html:root:root body #a-nav .sub, html:root:root body #a-nav .sec-t, html:root:root body #a-nav .sub-t, html:root:root body #a-mix button{width:fit-content!important;background:#fff!important;padding:0 4px!important;margin-left:-4px}
   html:root:root body #a-mix{background:none!important}
-  html:root:root body #ps-row{display:flex;align-items:center;gap:16px;margin-top:6px}
+  html:root:root body #ps-row{display:flex;align-items:center;gap:16px;margin:0 0 6px}
   html:root:root body #ps-row #ps-arr{flex:1 1 auto;width:auto;margin:0}
-  html:root:root body #ps-row #a-lang{position:static!important;flex:0 0 auto;margin:0!important;padding:0!important;font-size:13px!important;background:none!important}
+  html:root:root body #ps-row #a-lang{position:static!important;flex:0 0 auto;margin:0!important;font-size:13px!important}
   html:root:root body #ps-row #a-lang button{font-size:13px!important;min-height:36px}
   /* the opened document: air between it and its neighbours, and between its words and its picture */
   html:root:root body #a-main .open{padding:4px 0 12px 12px!important}
@@ -654,7 +657,13 @@ function renderMain() {
     }).join('');
     ORDER = uniq(ORDER);
   }
+  const kept = {};
+  main.querySelectorAll('img').forEach(i => (kept[i.getAttribute('src')] = kept[i.getAttribute('src')] || []).push(i));
   main.innerHTML = html;
+  main.querySelectorAll('img').forEach(n => {
+    const l = kept[n.getAttribute('src')], o = l && l.shift();
+    if (o && o.complete) { o.className = n.className; o.alt = n.alt; n.replaceWith(o); }
+  });
   spanOpen();
   renderNav(tree);
   if (cat && cat.map) drawMap(true);
@@ -986,7 +995,7 @@ function read(id) {
     const main = $('a-main'), key = id || state.doc, src = main.querySelector(`[data-id="${CSS.escape(key)}"]`);
     const before = src ? src.getBoundingClientRect().top : null, prev = capture();
     state.doc = id || '';
-    renderMain(); renderRead();
+    main.classList.add('calm'); renderMain(); renderRead(); main.classList.remove('calm');
     const now = main.querySelector(`[data-id="${CSS.escape(key)}"]`);
     if (now && before != null) {
       const dy = now.getBoundingClientRect().top - before;
@@ -996,8 +1005,8 @@ function read(id) {
     if (id && window.matchMedia('(max-width:760px)').matches) {
       const o = main.querySelector('.open'), nav = $('a-nav');
       if (o) {
-        const band = nav ? nav.getBoundingClientRect().bottom : 0, t = o.getBoundingClientRect().top;
-        if (t < band + 8 || t > window.innerHeight * .4) window.scrollBy({ top: t - band - 14, behavior: still() ? 'auto' : 'smooth' });
+        const t = o.getBoundingClientRect().top;
+        if (t < 8 || t > window.innerHeight * .35) window.scrollBy({ top: t - 14, behavior: still() ? 'auto' : 'smooth' });
       }
     }
     writeHash();
