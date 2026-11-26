@@ -29,7 +29,19 @@
   .ps-grab i{display:block;width:40px;height:0;border-top:1px solid #2b2b2b}
   #status-strip,.status-strip,#scan-dot,#hover-card,#peek-card{display:none!important}
 
-  /* toolbar: layers, search, key, share, EN, NO; finger-sized */
+  /* toolbar: one column on the right; menu, search and key open as a window to its left */
+  body.ps #bar{position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 10px)!important;left:10px!important;right:10px!important;
+    width:auto!important;max-height:none!important;display:flex!important;flex-direction:row-reverse!important;align-items:flex-start!important;
+    gap:6px!important;overflow:visible!important;pointer-events:none!important}
+  body.ps #bar .toolbar{flex-direction:column!important;width:auto!important;height:auto!important;padding:3px!important;gap:3px!important;
+    overflow:visible!important;left:0!important;top:0!important}
+  body.ps #bar .toolbar .lang{flex-direction:column!important;margin:0!important;position:static!important;gap:3px!important}
+  body.ps #bar .drawer{flex:1 1 auto!important;width:auto!important;min-width:0!important;
+    max-height:calc(100dvh - var(--ps-h) - 40px)!important}
+  body.ps #bar:not(.open) .drawer{max-height:0!important}
+  body.ps #bar .bar-scroll, body.ps #bar .pane, body.ps #bar .pad, body.ps #bar .in{width:auto!important;max-width:none!important}
+  body.ps #bar .bar-scroll{max-height:calc(100dvh - var(--ps-h) - 40px)!important}
+  /* finger-sized buttons */
   .toolbar .btn{width:44px!important;height:44px!important;flex:0 0 44px!important}
   .toolbar .btn.txt{width:44px!important}
   #btn-terrain,#btn-3d,#btn-light,#btn-flat,#btn-help,#btn-profile,#btn-select{display:none!important}
@@ -38,20 +50,25 @@
   /* north arrow and zoom as on the desktop (the desktop rules of the saved look), above the sheet */
   #map .maplibregl-ctrl-bottom-left, #map .maplibregl-ctrl-bottom-right{bottom:calc(var(--ps-h) + 8px)!important;transition:bottom .2s ease-out}
   body.ps-drag #map .maplibregl-ctrl-bottom-left, body.ps-drag #map .maplibregl-ctrl-bottom-right{transition:none!important}
-  #compass{position:relative!important;left:0!important;top:-10px!important;right:auto!important;bottom:auto!important;width:35px!important;max-width:none!important;height:63px!important;max-height:none!important;font-family:"PlexMono",sans-serif!important}
+  #map .maplibregl-ctrl-bottom-left{left:auto!important;right:0!important;margin:0 10px 0 0!important;display:flex!important;flex-direction:column!important;align-items:flex-end!important}
+  #map .maplibregl-ctrl-bottom-left .maplibregl-ctrl-scale{display:none!important}
+  #map .maplibregl-ctrl-bottom-right{right:auto!important;left:0!important;margin:0 0 0 10px!important}
+  #compass{background:transparent!important;border:0!important;box-shadow:none!important;
+  position:relative!important;left:0!important;top:0!important;right:auto!important;bottom:auto!important;width:35px!important;max-width:none!important;height:63px!important;max-height:none!important;font-family:"PlexMono",sans-serif!important}
   #map span.maplibregl-ctrl-icon{height:10px!important;max-height:none!important;position:relative!important;left:0!important;top:0!important;font-weight:100!important;font-family:"Verdana",sans-serif!important;background-color:#ff000000!important}
-  #map .maplibregl-ctrl-bottom-left .maplibregl-ctrl-group{font-size:1px!important}
+  #map .maplibregl-ctrl-bottom-left .maplibregl-ctrl-group{display:none!important}
+  body.ps-noctl #map .maplibregl-ctrl-bottom-left, body.ps-noctl #map .maplibregl-ctrl-bottom-right{display:none!important}
 
   /* the table */
   #deck .deck-head{flex:0 0 auto!important;height:auto!important;max-height:none!important;overflow:visible!important;
     position:relative!important;z-index:3!important;padding:0 8px!important}
   #tabstrip{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;scrollbar-width:none!important;
-    width:100%!important;height:41px!important;min-height:41px!important;align-items:flex-end!important;margin:0!important}
+    width:100%!important;height:33px!important;min-height:33px!important;align-items:flex-end!important;margin:0!important}
   #tabstrip .tab{position:relative!important;flex:0 0 auto!important;max-width:none!important;width:auto!important;min-width:0!important;
-    overflow:visible!important;white-space:nowrap!important;padding:14px 26px 0 24px!important;height:40px!important;
+    overflow:visible!important;white-space:nowrap!important;padding:5px 20px 0 18px!important;height:32px!important;
     display:flex!important;align-items:center!important;gap:6px!important;line-height:1!important;box-sizing:border-box!important}
   #tabstrip .tab span{position:relative!important;z-index:1!important;font-family:Plex,Helvetica,Arial,sans-serif!important;
-    font-weight:700!important;font-size:14px!important;letter-spacing:.02em!important}
+    font-weight:700!important;font-size:12.5px!important;letter-spacing:.02em!important}
   #tabstrip .tab > svg{position:absolute!important;left:0!important;top:0!important;width:100%!important;height:100%!important;z-index:0!important}
   #deck .deck-scroll{flex:1 1 auto!important;overflow:auto!important;height:auto!important;max-height:none!important;display:block!important}
   #deck-size{display:none!important}
@@ -64,6 +81,10 @@
   #sidebar .sb-scroll-area{flex:1 1 auto!important;overflow:auto!important;height:auto!important;max-height:none!important;width:auto!important;
     position:relative!important;left:0!important;top:0!important}
   #sidebar .sb-media,#sidebar .sb-credit{display:none!important}
+  #sidebar .sb-scroll-area{overflow-x:hidden!important}
+  #sidebar #sb-dynamic-content, #sidebar #sb-dynamic-content *{max-width:100%!important;box-sizing:border-box}
+  #sb-dynamic-content div.graph-head{width:auto!important;left:0!important}
+  #sb-dynamic-content{padding-left:14px!important;padding-right:14px!important;width:auto!important}
   #ps-top{display:flex;gap:12px;align-items:flex-start;padding:0 12px 0 0}
   #ps-top .sb-head{flex:1 1 auto;min-width:0}
   #ps-top, #deck .deck-head{touch-action:pan-x}
@@ -92,12 +113,36 @@
             document.documentElement.style.setProperty('--ps-h', h + 'px');
             body.classList.toggle('ps-record', mode === 'record');
             body.classList.toggle('ps-table', mode === 'table');
+            room(h);
             setTimeout(recentre, 230);
         }
+        function room(h) {
+            var bar = document.querySelector('#bar .toolbar') || $('bar');
+            var tb = bar ? bar.getBoundingClientRect().bottom : 100;
+            body.classList.toggle('ps-noctl', window.innerHeight - h - 8 - 80 < tb + 8);
+        }
+        var target = null, framed = '';
         function recentre() {
             var M = window.__M; if (!M || mode !== 'record') return;
             var h = heights()[stop];
-            M.easeTo({ padding: { top: 100, bottom: h + 16, left: 20, right: 20 }, duration: 200 });
+            var pad = { top: 110, bottom: h + 24, left: 30, right: 30 };
+            var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var b = window.__pad && window.__pad().box;
+            if (b && framed !== b.join()) {
+                framed = b.join(); target = null;
+                M.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: pad, maxZoom: 16, duration: still ? 0 : 900 });
+            } else if (target) {
+                var t = target; target = null;
+                M.flyTo({ center: t, zoom: Math.max(M.getZoom(), 14), padding: pad, duration: still ? 0 : 900 });
+            } else M.easeTo({ padding: pad, duration: 200 });
+        }
+        function watchTaps() {
+            var M = window.__M; if (!M) { setTimeout(watchTaps, 300); return; }
+            M.on('click', function (e) {
+                var f = M.queryRenderedFeatures(e.point).filter(function (x) { return x.geometry && x.geometry.type === 'Point'; })[0];
+                target = f ? f.geometry.coordinates : [e.lngLat.lng, e.lngLat.lat];
+                setTimeout(function () { if (mode !== 'record') target = null; }, 1500);
+            });
         }
 
         // a grab line on top of both sheets
@@ -122,6 +167,7 @@
                 moved = true; body.classList.add('ps-drag');
                 var h = Math.max(48, Math.min(window.innerHeight - 80, h0 - dy));
                 document.documentElement.style.setProperty('--ps-h', h + 'px');
+                room(h);
                 e.preventDefault();
             }, { passive: false });
             var end = function (e) {
@@ -228,6 +274,7 @@
             addGrab($('deck')); addGrab($('sidebar'));
             var dh = document.querySelector('#deck .deck-head'); if (dh) dragOn(dh, false);
             fixToolbar();
+            document.querySelectorAll('#bar .toolbar .btn').forEach(function (b) { b.addEventListener('click', function () { setTimeout(function () { raise($('bar')); room(heights()[stop]); }, 120); }); });
             // the table shows from the start
             var on = document.querySelector('#tabstrip .tab[aria-selected="true"]') || $('tab-facility');
             if ($('deck').className.indexOf('closed') >= 0 || !$('deck').querySelector('tbody tr')) { if (on) on.click(); }
@@ -239,7 +286,8 @@
             new MutationObserver(function () {
                 var open = $('sidebar').classList.contains('active');
                 if (open && mode !== 'record') { mode = 'record'; stop = 'mid'; apply(); }
-                if (!open && mode === 'record') { mode = 'table'; stop = 'mid'; apply(); }
+                if (!open && mode === 'record') { mode = 'table'; stop = 'mid'; framed = ''; apply(); }
+                if (open && mode === 'record' && window.__pad && window.__pad().box && framed !== window.__pad().box.join()) setTimeout(recentre, 260);
                 if (open) fixRecord();
             }).observe($('sidebar'), { attributes: true, attributeFilter: ['class'], childList: true, subtree: true });
             var busy = false;
@@ -247,7 +295,7 @@
                 if (busy) return; busy = true;
                 requestAnimationFrame(function () { fixTabs(); fixTable(); busy = false; });
             }).observe($('deck'), { childList: true, subtree: true });
-            fixTabs(); fixTable(); apply();
+            fixTabs(); fixTable(); apply(); watchTaps();
             window.addEventListener('resize', function () { apply(); });
             return true;
         }
