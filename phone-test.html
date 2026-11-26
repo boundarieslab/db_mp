@@ -33,7 +33,7 @@
   body.ps #bar{position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 10px)!important;left:10px!important;right:10px!important;
     width:auto!important;max-height:none!important;display:flex!important;flex-direction:row-reverse!important;align-items:flex-start!important;
     gap:6px!important;overflow:visible!important;pointer-events:none!important}
-  body.ps #bar .toolbar{flex-direction:column!important;width:auto!important;height:auto!important;padding:3px!important;gap:3px!important;
+  body.ps #bar .toolbar{flex-direction:column!important;width:auto!important;height:auto!important;padding:2px!important;gap:2px!important;
     overflow:visible!important;left:0!important;top:0!important}
   body.ps #bar .toolbar .lang{flex-direction:column!important;margin:0!important;position:static!important;gap:3px!important}
   body.ps #bar .drawer{flex:1 1 auto!important;width:auto!important;min-width:0!important;
@@ -42,10 +42,10 @@
   body.ps #bar .bar-scroll, body.ps #bar .pane, body.ps #bar .pad, body.ps #bar .in{width:auto!important;max-width:none!important}
   body.ps #bar .bar-scroll{max-height:calc(100dvh - var(--ps-h) - 40px)!important}
   /* finger-sized buttons */
-  .toolbar .btn{width:44px!important;height:44px!important;flex:0 0 44px!important}
-  .toolbar .btn.txt{width:44px!important}
+  .toolbar .btn{width:36px!important;height:36px!important;flex:0 0 36px!important}
+  .toolbar .btn.txt{width:36px!important}
   #btn-terrain,#btn-3d,#btn-light,#btn-flat,#btn-help,#btn-profile,#btn-select{display:none!important}
-  .toolbar .btn.txt, .toolbar .lang .btn{font-size:13px!important}
+  .toolbar .btn.txt, .toolbar .lang .btn{font-size:12px!important}
 
   /* north arrow and zoom as on the desktop (the desktop rules of the saved look), above the sheet */
   #map .maplibregl-ctrl-bottom-left, #map .maplibregl-ctrl-bottom-right{bottom:calc(var(--ps-h) + 8px)!important;transition:bottom .2s ease-out}
@@ -72,8 +72,12 @@
   #tabstrip .tab > svg{position:absolute!important;left:0!important;top:0!important;width:100%!important;height:100%!important;z-index:0!important}
   #deck .deck-scroll{flex:1 1 auto!important;overflow:auto!important;height:auto!important;max-height:none!important;display:block!important}
   #deck-size{display:none!important}
-  #deck table{width:100%!important;table-layout:fixed!important}
-  #deck tbody td{height:44px!important;white-space:normal!important}
+  #deck table{table-layout:fixed!important}
+  #site-table .c-op,#site-table .c-mat,#site-table .c-plan,#site-table .c-cap,#site-table .c-uid,#site-table .c-kom,#site-table .c-area{display:table-cell!important}
+  #deck tbody td{white-space:nowrap!important}
+  #deck tbody td:first-child{white-space:normal!important}
+  #deck tr > :first-child{position:sticky!important;left:0!important;background:#fff!important;z-index:2!important;box-shadow:.5px 0 0 #d8d8d8}
+  #deck tbody td{height:44px!important}
   #deck td.num,#deck th.num{white-space:nowrap!important}
 
   /* the record: no header row, a small photo beside the name, no lines between parts */
@@ -87,11 +91,18 @@
   #sb-dynamic-content{padding-left:14px!important;padding-right:14px!important;width:auto!important}
   #ps-top{display:flex;gap:12px;align-items:flex-start;padding:0 12px 0 0}
   #ps-top .sb-head{flex:1 1 auto;min-width:0}
-  #ps-top, #deck .deck-head{touch-action:pan-x}
+  #deck .deck-head{touch-action:pan-x}
   #ps-thumb{flex:0 0 76px;width:76px;height:76px;object-fit:cover;border:.5px solid #2b2b2b;margin-top:10px;display:block}
   #sidebar .sb-scroll-area *{border-top-width:0!important;border-bottom-width:0!important}
   #sidebar hr{display:none!important}
-  #sb-dynamic-content span.status-badge{width:auto!important;max-width:none!important;border-style:none!important}
+  body.ps #sidebar #sb-dynamic-content span.status-badge{width:auto!important;max-width:100%!important;height:auto!important;border-style:none!important;
+    display:flex!important;flex-wrap:wrap!important;align-items:center!important;letter-spacing:.04em!important;font-size:12px!important;line-height:1.4!important}
+  #ps-thumb{cursor:pointer}
+  #ps-view{position:fixed;inset:0;z-index:200;background:#fff;overflow-y:auto;display:none;padding:calc(env(safe-area-inset-top,0px) + 12px) 12px 24px}
+  #ps-view.on{display:block}
+  #ps-view img{display:block;width:100%;height:auto;margin:0 0 6px}
+  #ps-view .cr{font-size:11px;color:#666;margin:0 0 18px}
+  #ps-view .x{position:sticky;top:0;float:right;width:36px;height:36px;background:#fff;border:.5px solid #2b2b2b;font-size:18px;line-height:34px;text-align:center}
   #sb-dynamic-content div.sb-desc, #sb-dynamic-content div.sb-location{height:auto!important}
 }
 @media (max-width:760px) and (prefers-reduced-motion:reduce){
@@ -130,7 +141,7 @@
             var b = window.__pad && window.__pad().box;
             if (b && framed !== b.join()) {
                 framed = b.join(); target = null;
-                M.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: pad, maxZoom: 16, duration: still ? 0 : 900 });
+                M.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: pad, maxZoom: 17, duration: still ? 0 : 900 });
             } else if (target) {
                 var t = target; target = null;
                 M.flyTo({ center: t, zoom: Math.max(M.getZoom(), 14), padding: pad, duration: still ? 0 : 900 });
@@ -153,36 +164,46 @@
             dragOn(g, true);
         }
 
-        // swipe: up = next height, down = previous; down from a record = back to the table
-        function dragOn(el, always) {
-            var y0 = null, h0 = 0, moved = false;
-            el.addEventListener('pointerdown', function (e) {
-                y0 = e.clientY; h0 = heights()[stop]; moved = false;
-            });
-            window.addEventListener('pointermove', function (e) {
+        // swipe: up = next height, down = previous; down from a record = back to the table.
+        // sticky: always drags; otherwise only once the finger has gone 14 px up or down
+        // (and, on a scrolled list, only when the list is at its top and the finger goes down).
+        function dragOn(el, always, list) {
+            var y0 = null, yl = 0, h0 = 0, moved = false, ok = false;
+            function startAt(y) { y0 = y; yl = y; h0 = heights()[stop]; moved = false; ok = true; }
+            function moveTo(y, ev) {
                 if (y0 === null) return;
-                var dy = e.clientY - y0;
-                if (!moved && Math.abs(dy) < 8) return;
-                if (!moved && !always && Math.abs(dy) < 14) return;
-                moved = true; body.classList.add('ps-drag');
+                yl = y; var dy = y - y0;
+                if (!moved) {
+                    if (Math.abs(dy) < (always ? 6 : 14)) return;
+                    if (list && (list.scrollTop > 0 || dy < 0)) { y0 = null; return; }
+                    moved = true; body.classList.add('ps-drag');
+                }
                 var h = Math.max(48, Math.min(window.innerHeight - 80, h0 - dy));
                 document.documentElement.style.setProperty('--ps-h', h + 'px');
                 room(h);
-                e.preventDefault();
-            }, { passive: false });
-            var end = function (e) {
+                if (ev.cancelable) ev.preventDefault();
+            }
+            function endNow() {
                 if (y0 === null) return;
-                var dy = (e.clientY || y0) - y0; y0 = null;
+                var dy = yl - y0; y0 = null;
                 body.classList.remove('ps-drag');
-                if (!moved) return;
+                if (!moved) {
+                    // a tap on the grab line of a record: back to the table
+                    if (always && mode === 'record') closeRecord();
+                    return;
+                }
                 if (dy < -40) up(); else if (dy > 40) down(); else apply();
-                // a drag that started on a tab is not a tap on it
-                var stopClick = function (ev) { ev.stopPropagation(); ev.preventDefault(); window.removeEventListener('click', stopClick, true); };
+                var stopClick = function (ev) { ev.stopPropagation(); ev.preventDefault(); };
                 window.addEventListener('click', stopClick, true);
-                setTimeout(function () { window.removeEventListener('click', stopClick, true); }, 300);
-            };
-            window.addEventListener('pointerup', end);
-            window.addEventListener('pointercancel', end);
+                setTimeout(function () { window.removeEventListener('click', stopClick, true); }, 350);
+            }
+            el.addEventListener('touchstart', function (e) { startAt(e.touches[0].clientY); }, { passive: true });
+            el.addEventListener('touchmove', function (e) { moveTo(e.touches[0].clientY, e); }, { passive: false });
+            el.addEventListener('touchend', endNow);
+            el.addEventListener('touchcancel', endNow);
+            el.addEventListener('mousedown', function (e) { startAt(e.clientY); });
+            window.addEventListener('mousemove', function (e) { if (y0 !== null) moveTo(e.clientY, e); });
+            window.addEventListener('mouseup', endNow);
         }
         function up() { stop = stop === 'low' ? 'mid' : 'full'; apply(); }
         function down() {
@@ -197,25 +218,7 @@
         }
 
         // the table: one column for the name, one for the figure (the capacity bars go)
-        function fixTable() {
-            var deck = $('deck'); if (!deck) return;
-            deck.querySelectorAll('table').forEach(function (tb) {
-                var head = tb.querySelector('thead tr'); if (!head) return;
-                var i = Array.prototype.findIndex.call(head.children, function (c) { return c.classList.contains('bar'); });
-                if (i < 0) return;
-                var cols = tb.querySelectorAll('colgroup col'); if (cols[i]) cols[i].remove();
-                tb.querySelectorAll('tr').forEach(function (tr) {
-                    var c = tr.children[i];
-                    if (!c) return;
-                    if (c.classList.contains('bar') || tr.parentElement.tagName === 'TFOOT') {
-                        // the footer's total sits one cell further on: keep it
-                        if (tr.parentElement.tagName === 'TFOOT' && !c.textContent.trim() && tr.children[i + 1]) c.remove();
-                        else if (c.classList.contains('bar')) c.remove();
-                    }
-                });
-            });
-            raise(deck);
-        }
+        function fixTable() { var deck = $('deck'); if (deck) raise(deck); }
         // the folder tabs stretched round the bigger names
         function fixTabs() {
             document.querySelectorAll('#tabstrip .tab > svg').forEach(function (v) {
@@ -256,10 +259,26 @@
                     var s = e.currentSrc || e.src; if (s) { u = s; return; }
                     var m = /url\("?(.*?)"?\)/.exec(getComputedStyle(e).backgroundImage); if (m) u = m[1];
                 });
-                if (u) { var t = document.createElement('img'); t.id = 'ps-thumb'; t.src = u; t.alt = ''; top.appendChild(t); }
-                dragOn(top, false);
+                var t = null;
+                if (u) { t = document.createElement('img'); t.id = 'ps-thumb'; t.src = u; t.alt = ''; top.appendChild(t); }
+                if (t) t.addEventListener('click', function (e) { e.stopPropagation(); viewPhotos(media); });
             }
             raise(sb);
+        }
+        // the photos of the record, whole, one under the other; a tap closes
+        function viewPhotos(media) {
+            var v = $('ps-view');
+            if (!v) { v = document.createElement('div'); v.id = 'ps-view'; body.appendChild(v); v.addEventListener('click', function () { v.classList.remove('on'); }); }
+            var seen = {}, html = '<div class="x">\u00d7</div>';
+            media.querySelectorAll('img, [style*="background-image"]').forEach(function (e) {
+                var u = e.currentSrc || e.src;
+                if (!u) { var m = /url\("?(.*?)"?\)/.exec(getComputedStyle(e).backgroundImage); if (m) u = m[1]; }
+                if (!u || seen[u]) return; seen[u] = 1;
+                html += '<img src="' + u.replace(/"/g, '&quot;') + '" alt="">';
+            });
+            var cr = $('sidebar').querySelector('.sb-credit');
+            if (cr && cr.textContent.trim()) html += '<p class="cr">' + cr.innerHTML + '</p>';
+            v.innerHTML = html; v.classList.add('on'); v.scrollTop = 0;
         }
         function fixToolbar() {
             document.querySelectorAll('.toolbar > *').forEach(function (e) {
@@ -272,6 +291,8 @@
             body.classList.add('ps');
             $('deck').classList.add('ps-sheet'); $('sidebar').classList.add('ps-sheet');
             addGrab($('deck')); addGrab($('sidebar'));
+            var sa = $('sidebar').querySelector('.sb-scroll-area'); if (sa) dragOn(sa, false, sa);
+            var ds = document.querySelector('#deck .deck-scroll'); if (ds) dragOn(ds, false, ds);
             var dh = document.querySelector('#deck .deck-head'); if (dh) dragOn(dh, false);
             fixToolbar();
             document.querySelectorAll('#bar .toolbar .btn').forEach(function (b) { b.addEventListener('click', function () { setTimeout(function () { raise($('bar')); room(heights()[stop]); }, 120); }); });
@@ -287,7 +308,7 @@
                 var open = $('sidebar').classList.contains('active');
                 if (open && mode !== 'record') { mode = 'record'; stop = 'mid'; apply(); }
                 if (!open && mode === 'record') { mode = 'table'; stop = 'mid'; framed = ''; apply(); }
-                if (open && mode === 'record' && window.__pad && window.__pad().box && framed !== window.__pad().box.join()) setTimeout(recentre, 260);
+                if (open && mode === 'record' && window.__pad && window.__pad().box && framed !== window.__pad().box.join()) { setTimeout(recentre, 260); setTimeout(function () { framed = ''; recentre(); }, 1300); }
                 if (open) fixRecord();
             }).observe($('sidebar'), { attributes: true, attributeFilter: ['class'], childList: true, subtree: true });
             var busy = false;
@@ -305,6 +326,9 @@
 
     fetch('index.html?x=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) {
         t = t.replace("if (new URLSearchParams(window.location.search).has('debug')) window.__M = map;", 'window.__M = map;');
+        t = t.replace('return all.filter(c => !(phone() && c.nophone))', 'return all.filter(c => !(false && c.nophone))');
+        t = t.replace("if (phone()) { if (c.pw) col.style.width = c.pw + 'px'; }", "if (phone()) { col.style.width = (c.key === 'Name' ? 190 : Math.round(c.w * 0.7)) + 'px'; }");
+        t = t.replace("table.style.width = phone() ? '100%'", "table.style.width = phone() ? cols.reduce(function (a, c) { return a + (c.key === 'Name' ? 190 : Math.round(c.w * 0.7)); }, 0) + 'px'");
         t = t.replace('</head>', '<style id="phone-sheet">' + PHONE_CSS + '</style>\n</head>');
         t = t.replace(/<\/body>(?![\s\S]*<\/body>)/, '<script>(' + PHONE_JS.toString() + ')();<\/script>\n</body>');
         document.open(); document.write(t); document.close();
