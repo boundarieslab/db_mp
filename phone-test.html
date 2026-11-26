@@ -750,106 +750,110 @@ body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:no
    Paolo's decisions of 26 Nov, after insar.ngu.no on a phone: a thin tool column on the right,
    menu, search and key opening as a window beside it, a free north needle bottom right, no zoom
    buttons. The table and the record share one sheet at the bottom, moved by swiping. Selectors
-   start with html body so they win over the saved look's rules, which were set on a desktop. */
+   start with html:root:root body so they win over the saved look's rules, which were set on a desktop. */
 @media (max-width:760px){
   :root{--ps-h:36svh;--bar:calc(100vw - 70px)}
-  html body .status-strip{display:none!important}
+  html:root:root body .status-strip{display:none!important}
   /* tools: a column on the right; the panes open as a window to its left */
-  html body #bar{left:10px!important;right:10px!important;width:auto!important;flex-direction:row-reverse!important;align-items:flex-start!important;gap:6px!important;overflow:visible!important;
+  html:root:root body #bar{left:10px!important;right:10px!important;width:auto!important;flex-direction:row-reverse!important;align-items:flex-start!important;gap:6px!important;overflow:visible!important;
     max-height:calc(100% - var(--frame-top) - 20px)!important}
-  html body #bar .toolbar{flex-direction:column!important;width:auto!important;padding:2px!important;gap:2px!important;overflow:visible!important}
-  html body #bar .toolbar .sp{display:none!important}
-  html body #bar .toolbar .lang{flex-direction:column!important;position:static!important;margin:0!important;gap:2px!important;background:none!important;border:0!important;padding:0!important}
-  html body .btn, html body .toolbar .btn.txt{width:30px!important;height:30px!important;flex:0 0 30px!important;font-size:11px!important}
-  html body #btn-terrain, html body #btn-3d, html body #btn-light, html body #btn-flat, html body #btn-help,
-  html body #btn-profile, html body #btn-select{display:none!important}
-  html body #bar .drawer{flex:1 1 auto!important;width:auto!important;min-width:0!important}
-  html body #bar .bar-scroll{width:auto!important}
+  html:root:root body #bar .toolbar{flex-direction:column!important;width:auto!important;padding:2px!important;gap:2px!important;overflow:visible!important}
+  html:root:root body #bar .toolbar .sp{display:none!important}
+  html:root:root body #bar .toolbar .lang{flex-direction:column!important;position:static!important;margin:0!important;gap:2px!important;background:none!important;border:0!important;padding:0!important}
+  html:root:root body .btn, html:root:root body .toolbar .btn.txt{width:30px!important;height:30px!important;flex:0 0 30px!important;font-size:11px!important}
+  html:root:root body #btn-terrain, html:root:root body #btn-3d, html:root:root body #btn-light, html:root:root body #btn-flat, html:root:root body #btn-help,
+  html:root:root body #btn-profile, html:root:root body #btn-select{display:none!important}
+  html:root:root body #bar .drawer{flex:1 1 auto!important;width:auto!important;min-width:0!important}
+  html:root:root body #bar .bar-scroll{width:auto!important}
   /* the north needle, free, bottom right above the sheet; no zoom buttons, no scale */
-  html body #map .maplibregl-ctrl-bottom-left{left:auto!important;right:0!important;margin:0 12px 10px 0!important}
-  html body #map .maplibregl-ctrl-bottom-left .maplibregl-ctrl-group:not(.compass),
-  html body #map .maplibregl-ctrl-bottom-left .maplibregl-ctrl-scale{display:none!important}
-  html body #map .maplibregl-ctrl-bottom-right{right:auto!important;left:0!important;margin:0 0 10px 10px!important}
-  html body #compass{background:transparent!important;border:0!important;box-shadow:none!important}
-  html body #compass .n{bottom:-4px!important}
-  html body #compass{overflow:visible!important;margin-bottom:12px!important}
+  html:root:root body #map .maplibregl-ctrl-bottom-left{left:auto!important;right:0!important;margin:0 12px 10px 0!important}
+  html:root:root body #map .maplibregl-ctrl-bottom-left .maplibregl-ctrl-group:not(.compass),
+  html:root:root body #map .maplibregl-ctrl-bottom-left .maplibregl-ctrl-scale{display:none!important}
+  html:root:root body #map .maplibregl-ctrl-bottom-right{right:auto!important;left:0!important;margin:0 0 10px 10px!important}
+  html:root:root body #compass{background:transparent!important;border:0!important;box-shadow:none!important}
+  html:root:root body #compass .n{bottom:-4px!important}
+  html:root:root body #compass{overflow:visible!important;margin-bottom:12px!important}
   #shell:has(#sidebar.active) #map .maplibregl-ctrl-bottom-left,
   #shell:has(#sidebar.active) #map .maplibregl-ctrl-bottom-right{bottom:var(--ps-h)!important}
   body.ps-tall #map .maplibregl-ctrl-bottom-left, body.ps-tall #map .maplibregl-ctrl-bottom-right{display:none!important}
   body.ps-tall #bar{display:none!important}
-  html body .sheet-bar .size{display:none!important}
+  html:root:root body .sheet-bar .size{display:none!important}
   /* the sheet's grab line */
   .ps-grab{flex:0 0 20px!important;height:20px!important;display:flex!important;align-items:center!important;justify-content:center!important;background:#fff!important;touch-action:none!important;cursor:grab!important}
   .ps-grab i{display:block!important;width:40px!important;border-top:1px solid var(--frame,#2b2b2b)!important}
   /* the table */
-  html body #deck, html body #deck.half, html body #deck.full{position:relative!important;top:auto!important;bottom:auto!important;left:auto!important;right:auto!important;z-index:auto!important;
+  html:root:root body #deck, html:root:root body #deck.half, html:root:root body #deck.full{position:relative!important;top:auto!important;bottom:auto!important;left:auto!important;right:auto!important;z-index:auto!important;
     flex:0 0 var(--ps-h)!important;height:var(--ps-h)!important;padding-bottom:0!important;display:flex!important;flex-direction:column!important;transition:flex-basis .2s ease-out,height .2s ease-out!important}
   body.ps-drag #deck{transition:none!important}
   #shell:has(#sidebar.active) #deck{display:none!important}
-  html body #deck .deck-head{height:34px!important;flex:0 0 34px!important;padding:0 6px!important;align-items:flex-end!important;touch-action:pan-x!important}
-  html body #deck-size{display:none!important}
-  html body #tabstrip .tab{height:32px!important;padding:5px 20px 0 18px!important;margin-right:-10px!important;gap:6px!important;align-items:center!important}
-  html body #tabstrip .tab .tl, html body #tabstrip .tab .tc{font-family:Plex,Helvetica,Arial,sans-serif!important;font-size:12.5px!important;font-weight:700!important;letter-spacing:.02em!important}
-  html body #tabstrip .tab .tc{font-weight:400!important;color:#8a8a8a!important}
-  html body .deck-scroll{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important}
-  html body #site-table{font-size:12px!important}
-  html body #site-table .c-op, html body #site-table .c-mat, html body #site-table .c-plan, html body #site-table .c-cap,
-  html body #site-table .c-uid, html body #site-table .c-kom, html body #site-table .c-area{display:table-cell!important}
-  html body #site-table tbody td{height:44px!important;white-space:nowrap!important}
-  html body #site-table tbody td:first-child{white-space:normal!important}
-  html body #site-table tr > :first-child{position:sticky!important;left:0!important;background:#fff!important;z-index:1!important}
-  html body #site-table thead th{z-index:3!important}
-  html body #site-table thead th:first-child{z-index:4!important;top:0!important}
-  html body #site-table tr.hot > :first-child, html body #site-table tr.sel > :first-child{background:inherit!important}
-  html body .sheet-bar .chip{height:30px!important;min-width:30px!important}
-  html body .sheet-bar .find{height:30px!important;font-size:13px!important}
+  html:root:root body #deck .deck-head{height:34px!important;flex:0 0 34px!important;padding:0 6px!important;align-items:flex-end!important;touch-action:pan-x!important}
+  html:root:root body #deck-size{display:none!important}
+  html:root:root body #tabstrip .tab{height:32px!important;padding:5px 30px 0 28px!important;margin-right:-12px!important;gap:7px!important;align-items:center!important}
+  html:root:root body #tabstrip .tab .tl, html:root:root body #tabstrip .tab .tc{font-family:Plex,Helvetica,Arial,sans-serif!important;font-size:12.5px!important;font-weight:700!important;letter-spacing:.02em!important}
+  html:root:root body #tabstrip .tab .tc{font-weight:400!important;color:#8a8a8a!important}
+  html:root:root body .deck-scroll{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important}
+  html:root:root body #site-table{font-size:12px!important}
+  html:root:root body #site-table .c-op, html:root:root body #site-table .c-mat, html:root:root body #site-table .c-plan, html:root:root body #site-table .c-cap,
+  html:root:root body #site-table .c-uid, html:root:root body #site-table .c-kom, html:root:root body #site-table .c-area{display:table-cell!important}
+  html:root:root body #site-table tbody td{height:44px!important;white-space:nowrap!important}
+  html:root:root body #site-table tbody td:first-child{white-space:normal!important}
+  html:root:root body #site-table tr > :first-child{position:sticky!important;left:0!important;background:#fff!important;z-index:1!important}
+  html:root:root body #site-table thead th{z-index:3!important}
+  html:root:root body #site-table thead th:first-child{z-index:4!important;top:0!important}
+  html:root:root body #site-table tr.hot > :first-child, html:root:root body #site-table tr.sel > :first-child{background:inherit!important}
+  html:root:root body .sheet-bar .chip{height:30px!important;min-width:30px!important}
+  html:root:root body .sheet-bar .find{height:30px!important;font-size:13px!important}
   /* the record: the same sheet, no header row, the photo small beside the name */
-  html body #sidebar{left:0!important;right:0!important;top:auto!important;bottom:0!important;width:auto!important;max-width:none!important;height:var(--ps-h)!important;border-width:.5px 0 0!important;
+  html:root:root body #sidebar{left:0!important;right:0!important;top:auto!important;bottom:0!important;width:auto!important;max-width:none!important;height:var(--ps-h)!important;border-width:.5px 0 0!important;
     display:flex!important;flex-direction:column!important;transition:transform .22s ease-out,height .2s ease-out!important}
   body.ps-drag #sidebar{transition:none!important}
-  html body #sidebar .sb-header{display:none!important}
-  html body #sidebar .sb-scroll-area{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;width:auto!important}
-  html body #sb-dynamic-content{display:grid!important;grid-template-columns:minmax(0,1fr) 76px!important;column-gap:12px!important;padding:0 14px 24px!important;font-size:13px!important}
-  html body #sb-dynamic-content > *{grid-column:1 / -1!important;min-width:0!important;max-width:100%!important}
-  html body #sb-dynamic-content > .sb-head{grid-column:1!important;grid-row:1!important}
-  html body #sb-dynamic-content > div.sb-media{grid-column:2!important;grid-row:1!important;width:76px!important;height:76px!important;margin-top:10px!important;overflow:hidden!important;position:relative!important;left:0!important;top:0!important}
-  html body #sb-dynamic-content > div.sb-media:has(.no-images){display:none!important}
-  html body #sb-dynamic-content > div.sb-media:has(.no-images) ~ .sb-head{grid-column:1 / -1!important}
-  html body #sb-dynamic-content > .sb-head{border-bottom:0!important;padding-left:0!important;padding-right:0!important}
-  html body #sb-dynamic-content .sb-media .media-toggle, html body #sb-dynamic-content .sb-media .modes,
-  html body #sb-dynamic-content .sb-media .slideshow-counter, html body #sb-dynamic-content .sb-media .slide-nav,
-  html body #sb-dynamic-content .sb-media button{display:none!important}
-  html body #sb-dynamic-content .sb-media img{width:100%!important;height:100%!important;object-fit:cover!important}
-  html body #sb-dynamic-content > .sb-credit{display:none!important}
-  html body #sb-dynamic-content span.status-badge{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;width:auto!important;height:auto!important;min-height:20px!important;max-width:100%!important;border:0!important;font-size:12px!important;line-height:1.35!important;padding:12px 0 4px!important;margin:0!important;position:static!important}
-  html body #sb-dynamic-content .sb-head > *{position:static!important;top:auto!important;left:auto!important}
-  html body #sb-dynamic-content #sb-title{margin:2px 0 0!important}
-  html body #sb-dynamic-content #sb-title{height:auto!important;font-size:17px!important}
-  html body #sb-dynamic-content div.sb-location{height:auto!important;top:0!important}
-  html body #sb-dynamic-content div.sb-desc{height:auto!important;left:0!important;padding-left:0!important;padding-right:0!important;margin:10px 0 0!important}
-  html body #sb-dynamic-content .sb-content{padding-left:0!important;padding-right:0!important}
-  html body #sb-dynamic-content .sb-content > b, html body #sb-dynamic-content .column-set, html body #sb-dynamic-content div.graph-head, html body #sb-dynamic-content .link-row{padding-left:0!important;padding-right:0!important;margin-left:0!important}
-  html body #sb-dynamic-content .sb-head{padding-bottom:0!important}
-  html body #sb-dynamic-content div.graph-head{width:auto!important;left:0!important}
-  html body #sb-dynamic-content .sb-content *{border-top-width:0!important;border-bottom-width:0!important}
-  html body #sb-dynamic-content div.sb-content > b{height:auto!important;padding-top:16px!important}
-  html body #graph-container{max-width:100%!important}
-  html body #viewer .v-out, html body #viewer .v-in{display:none!important}
-  html body #viewer .v-prev, html body #viewer .v-next{display:none!important}
-  html body #viewer .v-layer{transition:transform .18s ease-out}
-  html body #key-list .ps-hd{cursor:pointer}
-  html body #key-list .ps-hd::after{content:"  +";font-weight:400}
-  html body #key-list .ps-hd.open::after{content:"  \2013"}
-  html body #key-list .ps-x:not(.show){display:none!important}
-  html body #filter-panel .kr{font-size:13px!important}
-  html body #data-panel .src, html body #data-panel .note{display:none!important}
-  html body.ps-more #data-panel .src, html body.ps-more #data-panel .note{display:block!important}
-  html body #data-panel .pane-title{cursor:pointer}
-  html body #data-panel .pane-title::after{content:"  +";font-weight:400}
-  html body.ps-more #data-panel .pane-title::after{content:"  \2013"}
-  html body #viewer .v-x{position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 10px)!important;right:10px!important;width:36px!important;height:36px!important;
+  html:root:root body #sidebar .sb-header{display:none!important}
+  html:root:root body #sidebar .sb-scroll-area{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;width:auto!important}
+  html:root:root body #sb-dynamic-content{display:grid!important;grid-template-columns:minmax(0,1fr) 76px!important;column-gap:12px!important;padding:0 14px 24px!important;font-size:13px!important}
+  html:root:root body #sb-dynamic-content > *{grid-column:1 / -1!important;min-width:0!important;max-width:100%!important}
+  html:root:root body #sb-dynamic-content > .sb-head{grid-column:1!important;grid-row:1!important}
+  html:root:root body #sb-dynamic-content > div.sb-media{grid-column:2!important;grid-row:1!important;width:76px!important;height:76px!important;margin-top:10px!important;overflow:hidden!important;position:relative!important;left:0!important;top:0!important}
+  html:root:root body #sb-dynamic-content > div.sb-media:has(.no-images){display:none!important}
+  html:root:root body #sb-dynamic-content > div.sb-media:has(.no-images) ~ .sb-head{grid-column:1 / -1!important}
+  html:root:root body #sb-dynamic-content > .sb-head{border-bottom:0!important;padding-left:0!important;padding-right:0!important}
+  html:root:root body #sb-dynamic-content .sb-media .media-toggle, html:root:root body #sb-dynamic-content .sb-media .modes,
+  html:root:root body #sb-dynamic-content .sb-media .slideshow-counter, html:root:root body #sb-dynamic-content .sb-media .slide-nav,
+  html:root:root body #sb-dynamic-content .sb-media button{display:none!important}
+  html:root:root body #sb-dynamic-content .sb-media .slideshow-slide, html:root:root body #sb-dynamic-content .sb-media .slideshow-slide > *{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;transform:none!important;background-size:cover!important;background-position:center!important}
+  html:root:root body #sb-dynamic-content .sb-media img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important;transform:none!important}
+  html:root:root body #sb-dynamic-content > .sb-credit{display:none!important}
+  html:root:root body #sb-dynamic-content span.status-badge{display:block!important;white-space:normal!important;width:auto!important;height:auto!important;min-height:20px!important;max-width:100%!important;border:0!important;font-size:12px!important;line-height:1.35!important;padding:12px 0 4px!important;margin:0!important;position:static!important}
+  html:root:root body #sb-dynamic-content .sb-head > *{position:static!important;top:auto!important;left:auto!important}
+  html:root:root body #sb-dynamic-content span.status-badge > svg, html:root:root body #sb-dynamic-content span.status-badge > .ring{display:inline-block!important;vertical-align:-2px!important;margin-right:8px!important;flex:none!important}
+  html:root:root body #sb-dynamic-content #sb-title{margin:4px 0 0!important;line-height:1.2!important;height:auto!important}
+  html:root:root body #sb-dynamic-content #sb-title .sb-uid{display:block!important;margin:3px 0 0!important;padding:0!important;font-size:12px!important;line-height:1.3!important}
+  html:root:root body #sb-dynamic-content div.sb-location{margin-top:4px!important;line-height:1.35!important}
+  html:root:root body #sb-dynamic-content #sb-title{height:auto!important;font-size:17px!important}
+  html:root:root body #sb-dynamic-content div.sb-location{height:auto!important;top:0!important}
+  html:root:root body #sb-dynamic-content div.sb-desc{height:auto!important;left:0!important;padding-left:0!important;padding-right:0!important;margin:16px 0 0!important}
+  html:root:root body #sb-dynamic-content .sb-content{padding-left:0!important;padding-right:0!important}
+  html:root:root body #sb-dynamic-content .sb-content > b, html:root:root body #sb-dynamic-content .column-set, html:root:root body #sb-dynamic-content div.graph-head, html:root:root body #sb-dynamic-content .link-row{padding-left:0!important;padding-right:0!important;margin-left:0!important}
+  html:root:root body #sb-dynamic-content .sb-head{padding-bottom:0!important}
+  html:root:root body #sb-dynamic-content div.graph-head{width:auto!important;left:0!important}
+  html:root:root body #sb-dynamic-content .sb-content *{border-top-width:0!important;border-bottom-width:0!important}
+  html:root:root body #sb-dynamic-content div.sb-content > b{height:auto!important;padding-top:16px!important}
+  html:root:root body #graph-container{max-width:100%!important}
+  html:root:root body #viewer .v-out, html:root:root body #viewer .v-in{display:none!important}
+  html:root:root body #viewer .v-prev, html:root:root body #viewer .v-next{display:none!important}
+  html:root:root body #viewer .v-layer{transition:transform .18s ease-out}
+  html:root:root body #key-list .ps-hd{cursor:pointer}
+  html:root:root body #key-list .ps-hd::after{content:"  +";font-weight:400}
+  html:root:root body #key-list .ps-hd.open::after{content:"  \2013"}
+  html:root:root body #key-list .ps-x:not(.show){display:none!important}
+  html:root:root body #filter-panel .kr{font-size:13px!important}
+  html:root:root body #data-panel .src, html:root:root body #data-panel .note{display:none!important}
+  html:root:root body.ps-more #data-panel .src, html:root:root body.ps-more #data-panel .note{display:block!important}
+  html:root:root body #data-panel .pane-title{cursor:pointer}
+  html:root:root body #data-panel .pane-title::after{content:"  +";font-weight:400}
+  html:root:root body.ps-more #data-panel .pane-title::after{content:"  \2013"}
+  html:root:root body #viewer .v-x{position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 10px)!important;right:10px!important;width:36px!important;height:36px!important;
     font-size:22px!important;line-height:1!important;z-index:4!important;background:#fff!important}
-  html body #viewer .v-bar{font-size:11px!important}
+  html:root:root body #viewer .v-bar{font-size:11px!important}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:0s!important;animation-duration:0s!important;animation-delay:0s!important}
